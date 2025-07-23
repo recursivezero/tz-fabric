@@ -1,2 +1,2 @@
 # tz-fabric
-fabric toolsfor threadzip
+fabric tools for threadzip
