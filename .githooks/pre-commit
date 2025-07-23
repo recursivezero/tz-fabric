@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Step 1: Validate branch naming convention
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+echo "Current branch: $BRANCH_NAME"
+
+# Define the branches to exclude
+EXCLUDED_BRANCHES="develop main release refactor"
+
+# Check if the current branch is in the excluded list
+for EXCLUDED_BRANCH in $EXCLUDED_BRANCHES; do
+    if [ "$BRANCH_NAME" = "$EXCLUDED_BRANCH" ]; then
+        echo "Skipping pre-commit checks for branch: $BRANCH_NAME"
+        exit 0
+    fi
+done
+
+# Pre-commit checks (e.g., linting, testing, etc.)
+echo "Running pre-commit checks for branch: $BRANCH_NAME"
+
+echo "$BRANCH_NAME" | grep -Eq '^(feature|bugfix|hotfix|task)/[A-Za-z]+-[0-9]+'
+if [ $? -ne 0 ]; then
+    echo "Error: Branch name '$BRANCH_NAME' is invalid."
+    echo "Use a valid branch naming convention, e.g., feature|bugfix|hotfix|task/XYZ-123."
+    exit 1
+fi
+
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "Lint failed. Commit aborted."
+  exit 1
+fi
+
+npm run build
+if [ $? -ne 0 ]; then
+  echo "Build failed. Commit aborted."
+  exit 1
+fi
