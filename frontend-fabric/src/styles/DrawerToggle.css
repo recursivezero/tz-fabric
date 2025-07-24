@@ -1,0 +1,17 @@
+.drawer-toggle-wrapper {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 999;
+  transition: right 0.3s;
+}
+
+.drawer-toggle-button {
+  padding: 8px 12px;
+  background: #737a7fff;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  align-items: center;
+  cursor: pointer;
+}
