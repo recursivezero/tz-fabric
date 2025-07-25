@@ -1,16 +1,17 @@
+import os
+
 import google.generativeai as genai
 import base64
+from dotenv import load_dotenv
 
-from docs.utils.constants import gemini_key
+load_dotenv()
 
-genai.configure(api_key=gemini_key)
+genai.configure(api_key=os.getenv("gemini_key"))
 
 def gemini_vision_check(image_base64: str, prompt: str) -> str:
     try:
-        # Decode base64 to bytes
         image_bytes = base64.b64decode(image_base64)
 
-        # Use Gemini Vision model
         model = genai.GenerativeModel("gemini-2.0-flash-lite")
 
         response = model.generate_content(
@@ -26,5 +27,5 @@ def gemini_vision_check(image_base64: str, prompt: str) -> str:
         return response.text.strip()
 
     except Exception as e:
-        print(f"❌ Gemini API error: {e}")
+        print(f"Gemini API error: {e}")
         return "No"

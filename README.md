@@ -154,3 +154,35 @@ Endpoint              Method     Description
 /api/regenerate        POST      Regenerates response (cache)
 /api/validate_image    POST      Validates if uploaded image is a fabric
 ```
+
+🖼️ Screenshots
+
+```text
+Homepage
+```
+
+![Homepage](./frontend/src/assests/screenshots/Screenshot(219).png)
+
+```text
+SampleImageResult
+```
+
+![Results](./frontend/src/assests/screenshots/Screenshot(223).png)
+
+```text
+UploadImage - When the image is not a valid fabric
+```
+
+![UploadImage](./frontend/src/assests/screenshots/Screenshot(220).png)
+
+```text
+UploadImage - When the image is a valid fabric
+```
+
+![Results](./frontend/src/assests/screenshots/Screenshot(221).png)
+
+```text
+UploadedImageResults
+```
+
+![Results](./frontend/src/assests/screenshots/Screenshot(222).png)
