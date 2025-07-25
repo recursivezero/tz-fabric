@@ -161,28 +161,28 @@ Endpoint              Method     Description
 Homepage
 ```
 
-![Homepage](./frontend/src/assests/screenshots/Screenshot(219).png)
+![Homepage](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(219).png)
 
 ```text
 SampleImageResult
 ```
 
-![Results](./frontend/src/assests/screenshots/Screenshot(223).png)
+![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(223).png)
 
 ```text
 UploadImage - When the image is not a valid fabric
 ```
 
-![UploadImage](./frontend/src/assests/screenshots/Screenshot(220).png)
+![UploadImage](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(220).png)
 
 ```text
 UploadImage - When the image is a valid fabric
 ```
 
-![Results](./frontend/src/assests/screenshots/Screenshot(221).png)
+![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(221).png)
 
 ```text
 UploadedImageResults
 ```
 
-![Results](./frontend/src/assests/screenshots/Screenshot(222).png)
+![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(222).png)
