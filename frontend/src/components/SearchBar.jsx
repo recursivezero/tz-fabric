@@ -19,14 +19,12 @@ const AnimatedSearchBox = ({ onSearch, loading }) => {
 
   return (
     <div className="search-container">
-      {!showPrompt && !selectedImage && (
-        <div className="top-texts">
-          <span className="animated-placeholder shimmer-text">
-            Upload a fabric image <span style={{ margin: "0 8px" }}>or</span>
-            <span className="sample-text">Try with our sample images →</span>
-          </span>
-        </div>
-      )}
+      <div className="top-texts">
+        <span className="animated-placeholder shimmer-text">
+          Upload a fabric image <span style={{ margin: "0 8px" }}>or</span>
+          <span className="sample-text">Try with our sample images →</span>
+        </span>
+      </div>
 
       <div className="search-box">
         <label htmlFor="file-upload" className="upload-icon">📁</label>

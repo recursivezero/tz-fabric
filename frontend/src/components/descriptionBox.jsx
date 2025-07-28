@@ -3,6 +3,8 @@ import Loader from "./Loader";
 import "../styles/DescriptionBox.css";
 
 const DescriptionBox = ({
+  isValidImage,
+  validationMessage,
   showResults,
   loading,
   responses,
@@ -12,10 +14,13 @@ const DescriptionBox = ({
   handlePrev,
   handleNext
 }) => {
+  const isError = isValidImage === false && validationMessage;
+
+  if (!showResults && !isError) return null;
+
   return (
-    showResults && (
-      <div className="description-wrapper">
-        {/* Navigation Buttons */}
+    <div className="description-wrapper">
+      {!isError && (
         <div className="nav-buttons">
           <button
             onClick={handlePrev}
@@ -32,26 +37,30 @@ const DescriptionBox = ({
             Next ➡
           </button>
         </div>
-        <div className="description-box">
-          <div className="description-content">
-            {loading ? (
-              <div className="loader-wrapper">
-                <Loader />
-              </div>
-            ) : currentIndex === 0 ? (
-              typedText || "Waiting for response..."
-            ) : (
-              description || "Waiting for response..."
-            )}
-          </div>
-          {!loading && responses.length > 0 && (
-            <div className="response-counter">
-              Viewing response {currentIndex + 1} of {responses.length}
+      )}
+
+      <div className={`description-box ${isError ? "error" : ""}`}>
+        <div className="description-content">
+          {loading ? (
+            <div className="loader-wrapper">
+              <Loader />
             </div>
+          ) : isError ? (
+            <p className="error-text">{validationMessage}</p>
+          ) : currentIndex === 0 ? (
+            typedText || "Waiting for response..."
+          ) : (
+            description || "Waiting for response..."
           )}
         </div>
+
+        {!loading && !isError && responses.length > 0 && (
+          <div className="response-counter">
+            Viewing response {currentIndex + 1} of {responses.length}
+          </div>
+        )}
       </div>
-    )
+    </div>
   );
 };
 

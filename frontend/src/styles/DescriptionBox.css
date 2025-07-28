@@ -22,7 +22,20 @@
   cursor: not-allowed;
 }
 
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .description-box {
+  animation: fadeSlideIn 1s ease-out forwards;
+  transition: opacity 0.3s ease-in-out;
   background: rgba(99, 94, 94, 0.51);
   border: 1px solid rgba(255, 255, 255, 0.71);
   padding: 20px;
@@ -54,4 +67,17 @@
   color: #000000ff;
   margin-top: 12px;
   font-weight: 600;
+}
+
+.description-box.error {
+  background: rgba(99, 94, 94, 0.51);
+  border: 1px solid rgba(255, 255, 255, 0.71);
+  animation: fadeSlideIn 1s ease-out forwards;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.error-text {
+  color: #ff4d4f;
+  font-weight: 600;
+  font-size: 19px;
 }

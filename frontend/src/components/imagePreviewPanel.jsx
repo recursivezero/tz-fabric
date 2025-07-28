@@ -6,12 +6,20 @@ const ImagePreviewPanel = ({
   sampleImageUrl,
   validationLoading,
   isValidImage,
-  validationMessage,
   loading,
   currentFile,
   handleRunAnalysis
 }) => {
-  const isImageValid = sampleImageUrl || isValidImage;
+  
+  const giveFileNameAndSize = (currentFile) => {
+    if (!currentFile) return "";
+    if(sampleImageUrl) return ""
+    const fileName = currentFile.name;
+    const fileSize = (currentFile.size / 1024).toFixed(2); // Size in KB
+    return `${fileName} (${fileSize} KB)`;
+  }
+  const isImageValid = sampleImageUrl ? true : isValidImage;
+  
 
   return (
     <div className="image-preview-container">
@@ -20,7 +28,11 @@ const ImagePreviewPanel = ({
         alt="Preview"
         className="preview-image"
       />
-
+      <div className="filesize-name">
+        <span className="filename">
+          {giveFileNameAndSize(currentFile)}
+        </span>
+      </div>
       <div className="preview-buttons-container">
         {validationLoading ? (
           <p className="validation-text">🔍 Checking if this is a valid fabric image...</p>
@@ -45,9 +57,6 @@ const ImagePreviewPanel = ({
           <>
             <button style={{ visibility: "hidden" }}>Short</button>
             <button style={{ visibility: "hidden" }}>Long</button>
-            {validationMessage && (
-              <p className="error-text">{validationMessage}</p>
-            )}
           </>
         )}
       </div>
