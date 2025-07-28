@@ -1,6 +1,7 @@
-import React from "react";
+import { useState } from "react";
 import Loader from "./Loader";
 import "../styles/DescriptionBox.css";
+import { FaRegCopy } from "react-icons/fa";
 
 const DescriptionBox = ({
   isValidImage,
@@ -14,7 +15,16 @@ const DescriptionBox = ({
   handlePrev,
   handleNext
 }) => {
+  const [copied, setCopied] = useState(false);
   const isError = isValidImage === false && validationMessage;
+
+  const handleCopy = () => {
+    const textToCopy = description || typedText;
+    if (!textToCopy) return;
+    navigator.clipboard.writeText(description || typedText || "");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (!showResults && !isError) return null;
 
@@ -56,7 +66,12 @@ const DescriptionBox = ({
 
         {!loading && !isError && responses.length > 0 && (
           <div className="response-counter">
-            Viewing response {currentIndex + 1} of {responses.length}
+            <span className="response-counter">
+              Viewing response {currentIndex + 1} of {responses.length}
+            </span>
+            <span className="copy-btn" onClick={handleCopy}>
+              {copied ? "Copied" : <FaRegCopy />}
+            </span>
           </div>
         )}
       </div>
