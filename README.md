@@ -167,22 +167,16 @@ Homepage
 SampleImageResult
 ```
 
-![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(223).png)
+![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(228).png)
 
 ```text
 UploadImage - When the image is not a valid fabric
 ```
 
-![UploadImage](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(220).png)
-
-```text
-UploadImage - When the image is a valid fabric
-```
-
-![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(221).png)
+![UploadImage](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(230).png)
 
 ```text
 UploadedImageResults
 ```
 
-![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(222).png)
+![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(229).png)
