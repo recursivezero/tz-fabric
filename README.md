@@ -1,6 +1,7 @@
-🧵 Fabric Analyzer
+# 🧵 Fabric Analyzer
+
 ```text
-**Fabric Analyzer** is an AI-powered web application that analyzes fabric images to provide insightful textual descriptions. 
+**Fabric Analyzer** is an AI-powered web application that analyzes fabric images to provide insightful textual descriptions.
 ```
 
 🚀 Features
@@ -46,7 +47,7 @@ frontend/
 │   ├── index.html
 │   ├── manifest.json
 │   ├── robots.txt
-│   
+│
 ├── src/
 │   │── components/
 │   │    │──descriptionBox.jsx        # Fabric sample images
@@ -57,15 +58,15 @@ frontend/
 │   │    │──SampleImageGalleryCard.jsx
 │   │    │──SearchBar.jsx
 │
-│   ├── hooks/                 
+│   ├── hooks/
 │   │    ├── useImageAnalysis.js
-│   
+│
 │   │── Pages/
 │   │    ├── Home.jsx
-│     
-│   ├── Services/  
-│   │    ├── analyze_Api.js 
-│     
+│
+│   ├── Services/
+│   │    ├── analyze_Api.js
+│
 │   │── components/
 │   │    │──DescriptionBox.css        # Fabric sample images
 │   │    │──DrawerToggle.css
@@ -74,7 +75,7 @@ frontend/
 │   │    │──Loader.css
 │   │    │──SampleImageGalleryCard.css
 │   │    │──SearchBar.css
-│     
+│
 │
 │   ├── utils/                       # Page-level logic
 │   │   └── imageUtils.js
@@ -86,10 +87,10 @@ frontend/
 ├── App.js
 ├── App.test.js
 ├── index.css                    # Utility functions
-├── index.js  
+├── index.js
 ├── logo.svg
-├── reportWebVitals.js 
-├── setupTests.js  
+├── reportWebVitals.js
+├── setupTests.js
 │
 ```
 
@@ -97,26 +98,26 @@ frontend/
 
 ```text
 backend/
-├── main.py                  
-├── .env               
+├── main.py
+├── .env
 ├── routes/
-│   ├── analysis.py        
-│   ├── regenerate.py         
-│   ├── validate_image.py     
-│              
+│   ├── analysis.py
+│   ├── regenerate.py
+│   ├── validate_image.py
+│
 ├── services/
 │   ├── generate_response.py
 │   ├── threaded.py
-│   
+│
 ├── utils/
-│   ├── cache.py       
-│   ├── gemini_ap_initialize.py             
-│   └── gemini_client.py          
-│   ├── image_utils.py       
-│   ├── prompt_generator.py             
-│   └── validate_image_base64.py            
+│   ├── cache.py
+│   ├── gemini_ap_initialize.py
+│   └── gemini_client.py
+│   ├── image_utils.py
+│   ├── prompt_generator.py
+│   └── validate_image_base64.py
 ```
-    
+
 🔄 API Flow
 
 ```text
@@ -125,9 +126,11 @@ POST /api/analyze-image — Runs Gemini analysis (short or long)
 POST /api/regenerate — Regenerates response set for same image + mode
 ```
 
-🛋️ Setup & Installation of backend
+## How to start
 
-```text
+🛋️ Backend
+
+```sh
 git clone https://github.com/recursivezero/tz-fabric.git
 cd backend
 curl -sSL https://install.python-poetry.org | python3 -
@@ -135,12 +138,12 @@ poetry install - to install all the dependencies
 uvicorn main:app --reload --port 8000 or you can choose another ports also
 ```
 
-🛋️ Setup & Installation of frontend
+🛋️ Frontend
 
-```text
+```sh
 git clone https://github.com/recursivezero/tz-fabric.git
 cd frontend_image_Search
-npm install  -> to downlaod the nod modules
+npm install  -> to download the nod modules
 npm axios -> for backend integration
 npm start -> if you find errors then remove the node modules and again run the insatll command
 ```
@@ -161,22 +164,22 @@ Endpoint              Method     Description
 Homepage
 ```
 
-![Homepage](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(219).png)
+![Homepage](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(219).png>)
 
 ```text
 SampleImageResult
 ```
 
-![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(228).png)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(228).png>)
 
 ```text
 UploadImage - When the image is not a valid fabric
 ```
 
-![UploadImage](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(230).png)
+![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(230).png>)
 
 ```text
 UploadedImageResults
 ```
 
-![Results](https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(229).png)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(229).png>)
