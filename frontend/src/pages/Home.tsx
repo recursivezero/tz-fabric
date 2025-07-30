@@ -48,7 +48,6 @@ const Home = () => {
             uploadedImageUrl={uploadedImageUrl}
             sampleImageUrl={sampleImageUrl}
             validationLoading={validationLoading}
-            validationMessage={validationMessage}
             isValidImage={isValidImage}
             loading={loading}
             currentFile={currentFile}
@@ -56,6 +55,8 @@ const Home = () => {
           />
 
           <DescriptionBox
+            isValidImage={isValidImage}
+            validationMessage={validationMessage}
             showResults={showResults}
             loading={loading}
             responses={responses}

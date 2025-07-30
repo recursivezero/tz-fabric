@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { fetchImageAsFile } from "../utils/imageUtils";
-import { analyzeImage, regenerateresposne, validateImageAPI } from "../services/analyze_Api";
+import { fetchImageAsFile } from "../utils/imageUtils.ts";
+import { analyzeImage, regenerateresposne, validateImageAPI } from "../services/analyze_Api.ts";
 
 const useImageAnalysis = () => {
   const [showResults, setShowResults] = useState(false);

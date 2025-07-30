@@ -4,7 +4,7 @@ export async function analyzeImage(file, analysisType) {
   formData.append("analysis_type", analysisType);
 
   try {
-    const res = await fetch("http://localhost:8000/api/analyse", {
+    const res = await fetch("http://localhost:8002/api/analyse", {
       method: "POST",
       body: formData,
     });
@@ -22,7 +22,7 @@ export async function analyzeImage(file, analysisType) {
 
 export async function regenerateresposne(cachekey, index) {
     try{
-      const res = await fetch(`http://localhost:8000/api/regenerate?key=${cachekey}&index=${index}`)
+      const res = await fetch(`http://localhost:8002/api/regenerate?key=${cachekey}&index=${index}`)
       const data = await res.json();
       return data
     } catch(error){
@@ -36,7 +36,7 @@ export async function validateImageAPI(imageFile) {
   formData.append("image", imageFile);
 
   try {
-    const res = await fetch("http://localhost:8000/api/validate-image", {
+    const res = await fetch("http://localhost:8002/api/validate-image", {
       method: "POST",
       body: formData,
     });
