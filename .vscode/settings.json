@@ -20,6 +20,7 @@
   },
   "peacock.color": "#a13d22",
   "cSpell.words": [
-    "recursivezero"
+    "recursivezero",
+    "uvicorn"
   ]
 }

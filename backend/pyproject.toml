@@ -1,18 +1,18 @@
-[project]
+[tool.poetry]
 name = "fabric-analyzer"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "aadityasarda",email = "adityasarda2004@gmail.com"}
-]
+description = "this is fabric analyzer backend"
+authors = ["recusrivezero <recusrivezero@example.com>"]
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "fastapi (>=0.116.1,<0.117.0)",
-    "dotenv (>=0.9.9,<0.10.0)",
-    "google-generativeai (>=0.8.5,<0.9.0)",
-    "pillow (>=11.3.0,<12.0.0)"
-]
+package-mode = false
+
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+fastapi = ">=0.116.1,<0.117.0"
+dotenv = ">=0.9.9,<0.10.0"
+google-generativeai = ">=0.8.5,<0.9.0"
+pillow = ">=11.3.0,<12.0.0"
 
 
 [build-system]

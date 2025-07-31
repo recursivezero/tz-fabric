@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse
-from backend_fabric.utils.gemini_client import gemini_vision_check
-from backend_fabric.utils.validate_image_base64 import convert_image_to_base64_for_validation
+from backend.utils.gemini_client import gemini_vision_check
+from backend.utils.validate_image_base64 import convert_image_to_base64_for_validation
 
 router = APIRouter()
 

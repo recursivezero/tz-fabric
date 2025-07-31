@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend_fabric.routes import analysis, regenerate, validate_image
+from backend.routes import analysis, regenerate, validate_image
 
 
 app = FastAPI()

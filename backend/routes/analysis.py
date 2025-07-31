@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from backend_fabric.services.threaded import analyse_all_variations
+from backend.services.threaded import analyse_all_variations
 from PIL import Image
 from io import BytesIO
 

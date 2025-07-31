@@ -1,9 +1,9 @@
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from backend_fabric.services.generate_response import analyse_fabric_image
-from backend_fabric.utils.image_utils import convert_image_to_base64
-from backend_fabric.utils.prompt_generator import generate_prompts
-from backend_fabric.utils.cache import generate_cache_key, store_response
+from backend.services.generate_response import analyse_fabric_image
+from backend.utils.image_utils import convert_image_to_base64
+from backend.utils.prompt_generator import generate_prompts
+from backend.utils.cache import generate_cache_key, store_response
 
 executor = ThreadPoolExecutor(max_workers=6)
 

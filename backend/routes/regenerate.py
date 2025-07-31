@@ -1,7 +1,7 @@
 import time
 
 from fastapi import APIRouter, HTTPException
-from backend_fabric.utils.cache import get_response
+from backend.utils.cache import get_response
 
 router = APIRouter()
 

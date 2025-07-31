@@ -1,4 +1,4 @@
-from backend_fabric.utils.gemini_ap_initialize import gemini_initialize
+from backend.utils.gemini_ap_initialize import gemini_initialize
 
 model = gemini_initialize()
 
