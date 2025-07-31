@@ -1,7 +1,7 @@
 import time
 
 from fastapi import APIRouter, HTTPException
-from backend.utils.cache import get_response
+from utils.cache import get_response
 
 router = APIRouter()
 

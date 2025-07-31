@@ -1,4 +1,6 @@
-const Base_Url = "http://localhost:8002"; // Update this URL to your backend API endpoint
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8002"; 
+
+console.log(BASE_URL);
 export async function analyzeImage(file, analysisType) {
   const formData = new FormData();
   formData.append("image", file);
@@ -6,7 +8,7 @@ export async function analyzeImage(file, analysisType) {
   
 
   try {
-    const res = await fetch(`${Base_Url}/api/analyze`, {
+    const res = await fetch(`${BASE_URL}/api/analyze`, {
       method: "POST",
       body: formData,
     });
@@ -24,7 +26,7 @@ export async function analyzeImage(file, analysisType) {
 
 export async function regenerateresposne(cachekey, index) {
     try{
-      const res = await fetch(`${Base_Url}/api/regenerate?key=${cachekey}&index=${index}`, )
+      const res = await fetch(`${BASE_URL}/api/regenerate?key=${cachekey}&index=${index}`, )
       const data = await res.json();
       return data
     } catch(error){
@@ -38,7 +40,7 @@ export async function validateImageAPI(imageFile) {
   formData.append("image", imageFile);
 
   try {
-    const res = await fetch(`${Base_Url}/api/validate-image`, {
+    const res = await fetch(`${BASE_URL}/api/validate-image`, {
       method: "POST",
       body: formData,
     });
