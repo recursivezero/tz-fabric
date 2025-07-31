@@ -1,10 +1,12 @@
+const Base_Url = "http://localhost:8002"; // Update this URL to your backend API endpoint
 export async function analyzeImage(file, analysisType) {
   const formData = new FormData();
   formData.append("image", file);
   formData.append("analysis_type", analysisType);
+  
 
   try {
-    const res = await fetch("http://localhost:8002/api/analyse", {
+    const res = await fetch(`${Base_Url}/api/analyze`, {
       method: "POST",
       body: formData,
     });
@@ -22,7 +24,7 @@ export async function analyzeImage(file, analysisType) {
 
 export async function regenerateresposne(cachekey, index) {
     try{
-      const res = await fetch(`http://localhost:8002/api/regenerate?key=${cachekey}&index=${index}`)
+      const res = await fetch(`${Base_Url}/api/regenerate?key=${cachekey}&index=${index}`, )
       const data = await res.json();
       return data
     } catch(error){
@@ -36,7 +38,7 @@ export async function validateImageAPI(imageFile) {
   formData.append("image", imageFile);
 
   try {
-    const res = await fetch("http://localhost:8002/api/validate-image", {
+    const res = await fetch(`${Base_Url}/api/validate-image`, {
       method: "POST",
       body: formData,
     });

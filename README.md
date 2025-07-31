@@ -143,8 +143,9 @@ uvicorn main:app --reload --port 8000 or you can choose another ports also
 ```sh
 git clone https://github.com/recursivezero/tz-fabric.git
 cd frontend_image_Search
-npm install  -> to download the nod modules
-npm axios -> for backend integration
+npm install  -> to download the node modules
+npm install axios -> for backend integration
+npm install react-icons // if react-icons is not installed
 npm start -> if you find errors then remove the node modules and again run the insatll command
 ```
 
