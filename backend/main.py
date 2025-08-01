@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+import uvicorn
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from routes import analysis, regenerate, validate_image
 
@@ -20,3 +22,8 @@ app.include_router(validate_image.router, prefix="/api")
 @app.get("/")
 def root():
     return {"Gemini Fabric analyzer"}
+
+if __name__ == "__main__":
+    
+    port = int(os.getenv("PORT"))
+    uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True)
