@@ -1,6 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8002"; 
+const BASE_URL = (import.meta.env.VITE_API_URL) || ""; 
 
-console.log(BASE_URL);
 export async function analyzeImage(file, analysisType) {
   const formData = new FormData();
   formData.append("image", file);
@@ -8,7 +7,8 @@ export async function analyzeImage(file, analysisType) {
   
 
   try {
-    const res = await fetch(`${BASE_URL}/api/analyze`, {
+    console.log("Hitting:", `${BASE_URL}/api/analyse`);
+    const res = await fetch(`${BASE_URL}/api/analyse`, {
       method: "POST",
       body: formData,
     });

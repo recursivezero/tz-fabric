@@ -15,7 +15,6 @@ const Home = () => {
     responses,
     currentIndex,
     currentFile,
-    showUploadedImage,
     uploadedImageUrl,
     sampleImageUrl,
     showDrawer,
@@ -34,7 +33,7 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <Header showBack={showResults || showUploadedImage} />
+      <Header  />
 
       <div className="upload-wrapper">
         <div className="upload-inner">
