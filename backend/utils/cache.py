@@ -11,7 +11,7 @@ def store_response(cache_key, index, response):
 
 def get_response(cache_key, index):
     with cache_lock:
-        return response_cache.get(cache_key,{}).get(index,None)
+        return response_cache.get(cache_key, {}).get(index)
 
 def generate_cache_key(cache_key):
     with cache_lock:

@@ -12,7 +12,6 @@ const ImagePreviewPanel = ({
   
   const giveFileNameAndSize = (currentFile) => {
     if (!currentFile) return "";
-    if(sampleImageUrl) return ""
     const fileName = currentFile.name;
     const fileSize = (currentFile.size / 1024).toFixed(2); // Size in KB
     return `${fileName} (${fileSize} KB)`;

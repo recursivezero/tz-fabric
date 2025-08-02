@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchImageAsFile } from "../utils/imageUtils.ts";
-import { analyzeImage, regenerateresposne, validateImageAPI } from "../services/analyze_Api.ts";
+import { analyzeImage, regenerateresposne, validateImageAPI} from "../services/analyze_Api.ts";
 
 const useImageAnalysis = () => {
   const [showResults, setShowResults] = useState(false);
@@ -33,16 +33,16 @@ const useImageAnalysis = () => {
 
     const simulatePrediction = async () => {
       while (index < tokens.length) {
-        await new Promise((res) => setTimeout(res, 170)); 
+        await new Promise((res) => setTimeout(res, 170));
 
         const nextToken = tokens[index];
         currentText = currentText ? `${currentText} ${nextToken}` : nextToken;
 
-        setTypedText(currentText); 
+        setTypedText(currentText);
         index++;
       }
 
-      setCanUpload(true); 
+      setCanUpload(true);
     };
 
     simulatePrediction();
@@ -52,9 +52,9 @@ const useImageAnalysis = () => {
     if (
       isValidImage === true &&
       currentFile &&
-      !sampleImageUrl &&         
+      !sampleImageUrl &&
       !loading &&
-      currentMode === null       
+      currentMode === null
     ) {
       handleRunAnalysis(currentFile, "short");
     }
@@ -77,9 +77,12 @@ const useImageAnalysis = () => {
     setCacheKey(null);
 
     try {
-      const file = await fetchImageAsFile(imagePath);
+      const filename = imagePath.split("/").pop();
+      const file = await fetchImageAsFile(imagePath, filename);
       const response = await analyzeImage(file, "short");
-      const first = response.first.response;
+      console.log("🔍 analyzeImage() returned:", response);
+      const firstObject = response.response;
+      const first = firstObject?.response;
       const allResponses = Array(6).fill(null);
       allResponses[0] = first;
       setResponses(allResponses);
@@ -91,6 +94,8 @@ const useImageAnalysis = () => {
       setShowUploadedImage(true);
       setUploadedImageUrl(URL.createObjectURL(file));
       setSampleImageUrl(URL.createObjectURL(file));
+
+
     } catch (err) {
       console.error("Short analysis failed:", err);
       alert("Upload a valid fabric image.");
@@ -168,7 +173,7 @@ const useImageAnalysis = () => {
       return;
     }
     try {
-      const res = await regenerateresposne(cacheKey, newIndex + 1);
+      const res = await regenerateresposne(cacheKey, newIndex);
       if (res?.response) {
         const updated = [...responses];
         updated[newIndex] = res.response;
