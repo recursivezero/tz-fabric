@@ -11,7 +11,9 @@ export const useUploadAndRecord = () => {
   const audioChunks = useRef<Blob[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [recordTime, setRecordTime] = useState(0);
-
+  const [searchInput, setSearchInput] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   
   const handleImageUpload = (file: File) => {
     setImageFile(file);
@@ -91,7 +93,7 @@ export const useUploadAndRecord = () => {
     formData.append("audio", audioFile);
 
     try {
-      const res = await fetch("http://localhost:8000/api/submit", {
+      const res = await fetch("http://localhost:8001/api/submit", {
         method: "POST",
         body: formData,
       });
@@ -103,15 +105,46 @@ export const useUploadAndRecord = () => {
     }
   };
 
+  const handleSearch = async () => {
+    if(!searchInput) return 
+
+    setLoading(true);
+    setError("");
+    setAudioUrl(null);
+
+    try{
+      const res = await fetch(`http://localhost:8001/api/search?image_name=${searchInput}`);
+
+      if(!res.ok){
+        const data = await res.json();
+        setError(data.error || "Search failed");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setAudioUrl(url);
+    } catch (err){
+      setError("Error fetching audio");
+    } finally{
+      setLoading(false);
+    }
+  }
+
   return {
     imageUrl,
     audioUrl,
     isRecording,
     recordTime,
+    searchInput,
+    loading,
+    error,
+    setSearchInput,
     handleImageUpload,
     handleAudioUpload,
     startRecording,
     stopRecording,
     handleSubmit,
+    handleSearch
   };
 };

@@ -1,4 +1,5 @@
 import { useUploadAndRecord } from "../hooks/feature";
+import Loader from "../components/Loader";
 
 const UploadPage = () => {
     const {
@@ -6,18 +7,24 @@ const UploadPage = () => {
         audioUrl,
         isRecording,
         recordTime,
+        searchInput,
+        loading,
+        error,
+        setSearchInput,
         handleImageUpload,
         handleAudioUpload,
         startRecording,
         stopRecording,
         handleSubmit,
+        handleSearch
+
     } = useUploadAndRecord();
 
     return (
         <div style={{ padding: "30px", maxWidth: "600px", margin: "0 auto" }}>
             <h2>📤 Upload Image & Audio (Max 1 min)</h2>
 
-            
+
             <div>
                 <label>Upload Image:</label><br />
                 <input
@@ -52,7 +59,7 @@ const UploadPage = () => {
                 />
             </div>
 
-            
+
             <div style={{ marginTop: "15px" }}>
                 <button onClick={startRecording} disabled={isRecording}>
                     🎙 Start Recording
@@ -62,7 +69,7 @@ const UploadPage = () => {
                 </button>
             </div>
 
-            
+
             {isRecording && (
                 <div
                     style={{
@@ -76,7 +83,7 @@ const UploadPage = () => {
                 </div>
             )}
 
-            
+
             {audioUrl && (
                 <div style={{ marginTop: "15px" }}>
                     <label style={{ fontWeight: "bold" }}>🎧 Preview Audio:</label><br />
@@ -84,7 +91,7 @@ const UploadPage = () => {
                 </div>
             )}
 
-            
+
             <div style={{ marginTop: "30px" }}>
                 <button
                     onClick={handleSubmit}
@@ -101,6 +108,40 @@ const UploadPage = () => {
                 >
                     🚀 Submit
                 </button>
+            </div>
+
+            <div style={{ padding: "30px", maxWidth: "600px", margin: "0 auto" }}>
+                <h2>🔍 Search Audio by Image Filename</h2>
+
+                <input
+                    type="text"
+                    placeholder="Enter image filename (e.g., fabric1.jpg)"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
+                />
+
+                <button onClick={handleSearch} disabled={loading}>
+                    {loading ? (
+                        <>
+                            Searching...
+                            <div>
+                                <Loader />
+                            </div>
+                        </>
+                    ) : (
+                        "Search"
+                    )}
+                </button>
+
+                {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+
+                {audioUrl && (
+                    <div style={{ marginTop: "20px" }}>
+                        <p>🎧 Matching Audio Found:</p>
+                        <audio controls src={audioUrl}></audio>
+                    </div>
+                )}
             </div>
         </div>
     );
