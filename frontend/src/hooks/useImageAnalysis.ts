@@ -151,7 +151,8 @@ const useImageAnalysis = () => {
     setCanUpload(false);
     try {
       const response = await analyzeImage(file, mode);
-      const first = response.first.response;
+      const firstObject = response.response;
+      const first = firstObject?.response;
       const allResponses = Array(6).fill(null);
       allResponses[0] = first;
       setResponses(allResponses);
