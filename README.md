@@ -184,3 +184,7 @@ UploadedImageResults
 ```
 
 ![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(229).png>)
+
+```text
+Note : you might see this that after clicking analysis the page got disappeared/blanked then this can be a issue of gemini free quota completed
+```

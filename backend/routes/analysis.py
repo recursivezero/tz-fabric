@@ -21,8 +21,14 @@ async def analyse(
         img = Image.open(image_stream)
 
         print("Image validated as fabric. Starting analysis...")
-        response = analyse_all_variations(img, analysis_type)
-        return response
+        result = analyse_all_variations(img, analysis_type)
+        print("ANALYSIS RESULT:", result)
+
+        return {
+            "status": "partial",
+            "cache_key": result["cache_key"],
+            "response": result["first"]
+        }
 
     except HTTPException:
         raise
