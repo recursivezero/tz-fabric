@@ -1,5 +1,9 @@
+import React, { useMemo, useRef, useState } from "react";
 import { useUploadAndRecord } from "../hooks/feature";
 import Loader from "../components/Loader";
+import "../styles/UploadPage.css";
+
+type AudioMode = "upload" | "record";
 
 const UploadPage = () => {
     const {
@@ -7,145 +11,236 @@ const UploadPage = () => {
         audioUrl,
         isRecording,
         recordTime,
-        searchInput,
         loading,
-        error,
-        setSearchInput,
         handleImageUpload,
         handleAudioUpload,
         startRecording,
         stopRecording,
         handleSubmit,
-        handleSearch
-
+        handleBack, 
+        clearImage, 
     } = useUploadAndRecord();
 
+    const imageInputRef = useRef<HTMLInputElement | null>(null);
+    const audioInputRef = useRef<HTMLInputElement | null>(null);
+    const [audioMode, setAudioMode] = useState<AudioMode>("record");
+
+    const canSubmit = !!imageUrl && !!audioUrl && !loading;
+    const showUploadAudio = audioMode === "upload" && !audioUrl ;
+
+    const recordPct = useMemo(() => {
+        const pct = Math.min(100, Math.round((recordTime / 60) * 100));
+        return Number.isFinite(pct) ? pct : 0;
+    }, [recordTime]);
+
+    const onDropImage = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file) handleImageUpload(file);
+    };
+
+    const onDropAudio = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file) handleAudioUpload(file);
+    };
+
     return (
-        <div style={{ padding: "30px", maxWidth: "600px", margin: "0 auto" }}>
-            <h2>📤 Upload Image & Audio (Max 1 min)</h2>
+        <div className="upload-page">
+            <div className="upload-card">
+                <header className="upload-header">
+                    <h1>Upload Image & Audio</h1>
+                    <p className="sub">Upload audio or switch to recording (max 60s)</p>
+                </header>
 
-
-            <div>
-                <label>Upload Image:</label><br />
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file);
-                    }}
-                />
-                {imageUrl && (
-                    <div>
-                        <img
-                            src={imageUrl}
-                            alt="preview"
-                            width="200"
-                            style={{ marginTop: "10px", borderRadius: "8px" }}
-                        />
-                    </div>
-                )}
-            </div>
-
-            <div style={{ marginTop: "20px" }}>
-                <label>Upload Audio (max 1 min):</label><br />
-                <input
-                    type="file"
-                    accept="audio/*"
-                    onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleAudioUpload(file);
-                    }}
-                />
-            </div>
-
-
-            <div style={{ marginTop: "15px" }}>
-                <button onClick={startRecording} disabled={isRecording}>
-                    🎙 Start Recording
-                </button>
-                <button onClick={stopRecording} disabled={!isRecording} style={{ marginLeft: "10px" }}>
-                    ⏹ Stop Recording
-                </button>
-            </div>
-
-
-            {isRecording && (
-                <div
-                    style={{
-                        marginTop: "12px",
-                        fontWeight: "bold",
-                        color: "red",
-                        fontSize: "16px",
-                    }}
-                >
-                    🔴 Recording... {String(recordTime).padStart(2, "0")} / 60 seconds
-                </div>
-            )}
-
-
-            {audioUrl && (
-                <div style={{ marginTop: "15px" }}>
-                    <label style={{ fontWeight: "bold" }}>🎧 Preview Audio:</label><br />
-                    <audio controls src={audioUrl}></audio>
-                </div>
-            )}
-
-
-            <div style={{ marginTop: "30px" }}>
-                <button
-                    onClick={handleSubmit}
-                    disabled={!imageUrl || !audioUrl}
-                    style={{
-                        padding: "10px 20px",
-                        fontSize: "16px",
-                        backgroundColor: (!imageUrl || !audioUrl) ? "#ccc" : "#4CAF50",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: (!imageUrl || !audioUrl) ? "not-allowed" : "pointer"
-                    }}
-                >
-                    🚀 Submit
-                </button>
-            </div>
-
-            <div style={{ padding: "30px", maxWidth: "600px", margin: "0 auto" }}>
-                <h2>🔍 Search Audio by Image Filename</h2>
-
-                <input
-                    type="text"
-                    placeholder="Enter image filename (e.g., fabric1.jpg)"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
-                />
-
-                <button onClick={handleSearch} disabled={loading}>
-                    {loading ? (
-                        <>
-                            Searching...
-                            <div>
-                                <Loader />
+                <div className="grid">
+                    <section className="preview-col">
+                        {imageUrl ? (
+                            <div className="image-preview-wrap">
+                                <img src={imageUrl} alt="Preview" className="image-preview-plain" />
+                                <button
+                                    className="chip chip-clear img-clear-btn"
+                                    onClick={clearImage}
+                                    title="Remove image"
+                                >
+                                    ✕
+                                </button>
                             </div>
-                        </>
-                    ) : (
-                        "Search"
-                    )}
-                </button>
+                        ) : (
+                            <div
+                                className="dropzone"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={onDropImage}
+                                onClick={() => imageInputRef.current?.click()}
+                                role="button"
+                                aria-label="Upload image"
+                            >
+                                <div className="dz-icon">🖼️</div>
+                                <div className="dz-text">
+                                    <strong>Drop image</strong> or <span className="link">browse</span>
+                                </div>
+                            </div>
+                        )}
 
-                {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+                        <input
+                            ref={imageInputRef}
+                            type="file"
+                            accept="image/*"
+                            hidden
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleImageUpload(file);
+                            }}
+                        />
+                    </section>
 
-                {audioUrl && (
-                    <div style={{ marginTop: "20px" }}>
-                        <p>🎧 Matching Audio Found:</p>
-                        <audio controls src={audioUrl}></audio>
-                    </div>
-                )}
+                    
+                    <section className="action-col">
+                        {audioMode === "record" && !audioUrl && (
+                            <>
+                                <div className="rec-controls">
+                                    <button
+                                        className="btn primary"
+                                        onClick={startRecording}
+                                        disabled={isRecording}
+                                    >
+                                        🎙 Start Recording
+                                    </button>
+                                    <button
+                                        className="btn"
+                                        onClick={stopRecording}
+                                        disabled={!isRecording}
+                                    >
+                                        Stop
+                                    </button>
+                                </div>
+                                <div className="alt-switch">
+                                    <button
+                                        className="link-btn"
+                                        onClick={() => setAudioMode("upload")}
+                                        disabled={isRecording}
+                                    >
+                                        ← Upload
+                                    </button>
+                                </div>
+
+                                <div className="recording-area">
+                                    {isRecording ? (
+                                        <div className="record-chip" aria-live="polite">
+                                            <span className="dot" />
+                                            Recording… {String(recordTime).padStart(2, "0")}/60s
+                                            <div className="progress">
+                                                <div className="bar" style={{ width: `${recordPct}%` }} />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="hint">Press Start to begin. Stop to see a preview.</div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                        
+                        {showUploadAudio && (
+                            <>
+                                {audioUrl ? (
+                                    <div className="audio-card">
+                                        <div className="audio-player">
+                                            <audio controls src={audioUrl} />
+                                        </div>
+                                        <div className="img-footer">
+                                            <span className="chip chip-ok">Audio ready</span>
+                                            <button
+                                                className="chip chip-clear"
+                                                onClick={handleBack}
+                                                title="Remove audio"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div
+                                        className="dropzone"
+                                        onDragOver={(e) => e.preventDefault()}
+                                        onDrop={onDropAudio}
+                                        onClick={() => audioInputRef.current?.click()}
+                                        role="button"
+                                        aria-label="Upload audio"
+                                    >
+                                        <div className="dz-icon">🎧</div>
+                                        <div className="dz-text">
+                                            <strong>Drop audio</strong> or <span className="link">browse</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <input
+                                    ref={audioInputRef}
+                                    type="file"
+                                    accept="audio/*"
+                                    hidden
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleAudioUpload(file);
+                                    }}
+                                />
+
+                                <div className="alt-switch">
+                                    <button
+                                        className="link-btn"
+                                        onClick={() => {
+                                            if (audioInputRef.current) audioInputRef.current.value = "";
+                                            setAudioMode("record");
+                                        }}
+                                    >
+                                        or Record instead →
+                                    </button>
+                                </div>
+                            </>
+                        )}
+
+                        {audioUrl && (
+                            <div className="audio-card">
+                                <div className="audio-player">
+                                    <audio controls src={audioUrl} />
+                                </div>
+                                <div className="lock-note">
+                                    Start/Stop disabled while preview exists. Discard to re-record or Submit.
+                                </div>
+                                <div className="img-footer">
+                                    <span className="chip chip-ok">Audio ready</span>
+                                    <button
+                                        className="chip chip-clear"
+                                        onClick={handleBack}
+                                        title="Remove audio"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </section>
+                </div>
             </div>
+
+        
+            <div className="submit-wrapper">
+                <button
+                    className="btn submit"
+                    onClick={async () => {
+                        await handleSubmit();
+                        handleBack();
+                        setAudioMode("upload");
+                    }}
+                    disabled={!canSubmit}
+                >
+                    {loading ? "Submitting…" : "Submit"}
+                </button>
+            </div>
+
+            {loading && <Loader />}
         </div>
     );
-
 };
 
 export default UploadPage;
