@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import useImageAnalysis from "../hooks/useImageAnalysis";
 import Header from "../components/Header";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
@@ -8,6 +9,7 @@ import DrawerToggle from "../components/drawerToggle";
 import "../styles/Home.css";
 
 const Home = () => {
+  const navigate = useNavigate();
   const {
     showResults,
     loading,
@@ -33,12 +35,17 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <Header  />
+      <Header />
+      
 
       <div className="upload-wrapper">
         <div className="upload-inner">
           <AnimatedSearchBox onSearch={handleUploadedImage} loading={!canUpload} />
         </div>
+      </div>
+
+      <div>
+        <button onClick={() => navigate("/upload")}>Upload and Record</button>
       </div>
 
       {(uploadedImageUrl || sampleImageUrl) && (
@@ -75,6 +82,7 @@ const Home = () => {
           <SampleImageGallery onAnalyze={handleSampleShortAnalysis} loading={loading} vertical />
         </div>
       )}
+      
     </div>
   );
 };

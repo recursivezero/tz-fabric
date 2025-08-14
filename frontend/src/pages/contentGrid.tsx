@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import { fetchContent, type MediaItem } from "../services/contentApi";
 import "../styles/ContentGrid.css";
 import { useUploadAndRecord } from "../hooks/feature";
-import AnimatedSearchBox from "../components/SearchBar";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function ContentGrid() {
-  const { imageUrl } = useUploadAndRecord();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(4);
@@ -15,6 +14,7 @@ export default function ContentGrid() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [mode, setMode] = useState<"all" | "similar">("all"); 
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (mode !== "all") return;
@@ -39,36 +39,6 @@ export default function ContentGrid() {
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const handleFindSimilar = async () => {
-    if (!imageUrl) {
-      alert("Pick or record an image first.");
-      return;
-    }
-    try {
-      setLoading(true);
-      setErr(null);
-      setMode("similar");
-
-      const blob = await fetch(imageUrl).then(r => r.blob());
-      const form = new FormData();
-      form.append("image", blob, "query.jpg"); // name doesn’t matter
-
-      const res = await fetch(`${API_URL}/api/search/similar?k=12`, {
-        method: "POST",
-        body: form
-      });
-      if (!res.ok) throw new Error("Similar search failed");
-      const data = await res.json(); 
-      setItems(data);
-      setTotal(data.length);
-      setPage(1);
-    } catch (e: any) {
-      setErr(e.message || "Similar search failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const showAll = () => {
     setMode("all");
     setPage(1);
@@ -78,15 +48,7 @@ export default function ContentGrid() {
     <div className="grid-page">
       <div className="upload-wrapper">
         <div className="upload-inner" style={{ display: "flex", gap: 8 }}>
-          <AnimatedSearchBox onSearch={imageUrl} loading={loading} />
-          <button
-            className="btn"
-            onClick={handleFindSimilar}
-            disabled={!imageUrl || loading}
-            title={!imageUrl ? "Select an image first" : "Find visually similar images"}
-          >
-            🔎 Find Similar
-          </button>
+          
           {mode === "similar" && (
             <button className="btn" onClick={showAll} disabled={loading}>
               ← Back to All
@@ -147,15 +109,18 @@ export default function ContentGrid() {
                 </span>
               )}
             </div>
+            
           </article>
+          
         ))}
-
+        <button onClick={() => navigate("/search")}>find similar images</button>
         {!loading && items.length === 0 && (
           <div className="empty-state">No items.</div>
         )}
       </div>
 
       {loading && <div className="grid-loading">Loading…</div>}
+
     </div>
   );
 }

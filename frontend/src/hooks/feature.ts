@@ -18,6 +18,7 @@ export const useUploadAndRecord = () => {
 
   const handleImageUpload = (file: File) => {
     setImageFile(null);
+    setImageUrl("")
     setImageFile(file);
     setImageUrl(URL.createObjectURL(file));
   };
@@ -182,32 +183,6 @@ export const useUploadAndRecord = () => {
     }
   };
 
-  // const handleSearch = async () => {
-  //   if(!searchInput) return 
-
-  //   setLoading(true);
-  //   setError("");
-  //   setAudioUrl(null);
-
-  //   try{
-  //     const res = await fetch(`http://localhost:8001/api/search?image_name=${searchInput}`);
-
-  //     if(!res.ok){
-  //       const data = await res.json();
-  //       setError(data.error || "Search failed");
-  //       return;
-  //     }
-
-  //     const blob = await res.blob();
-  //     const url = URL.createObjectURL(blob);
-  //     setAudioUrl(url);
-  //   } catch (err){
-  //     setError("Error fetching audio");
-  //   } finally{
-  //     setLoading(false);
-  //   }
-  // }
-
   const handleBack = () => {
     setAudioUrl(null);
     setIsRecording(false);
@@ -227,6 +202,8 @@ export const useUploadAndRecord = () => {
     searchInput,
     loading,
     error,
+    setImageUrl,
+    setAudioUrl,
     setSearchInput,
     handleImageUpload,
     handleAudioUpload,

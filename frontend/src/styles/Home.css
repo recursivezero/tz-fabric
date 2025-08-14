@@ -4,29 +4,29 @@
   height: 85vh;
 }
 
-.upload-wrapper {
+.home-container .upload-wrapper {
   width: 100%;
-  margin-top: 30px;
+  margin-top: 5px;
   display: flex;
   justify-content: center;
 }
 
-.upload-inner {
+.home-container .upload-inner {
   width: calc(100% - 80px);
-  margin-bottom: 15px;
+  margin-bottom: 5px;
 }
 
-.result-wrapper {
+.home-container .result-wrapper {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  margin-top: 20px;
+  margin-top: 17px;
   gap: 40px;
   padding: 0 40px;
   flex-wrap: wrap;
 }
 
-.drawer-panel {
+.home-container .drawer-panel {
   position: fixed;
   top: 0;
   right: 0;

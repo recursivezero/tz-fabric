@@ -7,7 +7,7 @@ const sampleImages = [
   { id: 3, name: "Sample 3", path: "src/assets/sample3.jpeg" },
 ];
 
-const SampleImageGallery = ({ onAnalyze, loading }) => {
+const SampleImageGallery = ({ onAnalyze, loading, vertical }) => {
   return (
     <div className="sample-gallery">
       <h2>Try with Sample Images</h2>

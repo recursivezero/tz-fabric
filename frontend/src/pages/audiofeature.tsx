@@ -1,17 +1,23 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useUploadAndRecord } from "../hooks/feature";
+import { useNavigate, useLocation } from "react-router-dom";
 import Loader from "../components/Loader";
 import "../styles/UploadPage.css";
 
 type AudioMode = "upload" | "record";
 
 const UploadPage = () => {
+    const navigate = useNavigate();
+    const location = useLocation()
+    const prefill = (location.state as any)?.prefill;
     const {
         imageUrl,
         audioUrl,
         isRecording,
         recordTime,
         loading,
+        setImageUrl,
+        setAudioUrl,
         handleImageUpload,
         handleAudioUpload,
         startRecording,
@@ -33,6 +39,13 @@ const UploadPage = () => {
         return Number.isFinite(pct) ? pct : 0;
     }, [recordTime]);
 
+    useEffect(()=>{
+        if(prefill?.imageUrl) setImageUrl(prefill.imageUrl)
+        if(prefill?.audioUrl) setAudioUrl(prefill.audioUrl)
+
+        if (prefill.audioUrl) setAudioMode("record");
+    }, [prefill, setImageUrl, setAudioUrl]);
+
     const onDropImage = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         const file = e.dataTransfer.files?.[0];
@@ -49,10 +62,11 @@ const UploadPage = () => {
         <div className="upload-page">
             <div className="upload-card">
                 <header className="upload-header">
-                    <h1>Upload Image & Audio</h1>
+                    <h2>Upload Image & Audio</h2>
                     <p className="sub">Upload audio or switch to recording (max 60s)</p>
                 </header>
 
+                
                 <div className="grid">
                     <section className="preview-col">
                         {imageUrl ? (
@@ -230,12 +244,15 @@ const UploadPage = () => {
                     onClick={async () => {
                         await handleSubmit();
                         handleBack();
-                        setAudioMode("upload");
                     }}
                     disabled={!canSubmit}
                 >
                     {loading ? "Submitting…" : "Submit"}
                 </button>
+
+                <div className="navigation">
+                    <button onClick={() => navigate("/view")}>Your Media</button>
+                </div>
             </div>
 
             {loading && <Loader />}

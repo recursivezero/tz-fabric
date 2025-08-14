@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from constants import UPLOAD_ROOT
 
 import os
-from routes import analysis, regenerate, validate_image, search, submit, media
+from routes import analysis, regenerate, validate_image, search, submit, media, delete
 
 app = FastAPI()
 load_dotenv()
