@@ -43,7 +43,7 @@ const UploadPage = () => {
         if(prefill?.imageUrl) setImageUrl(prefill.imageUrl)
         if(prefill?.audioUrl) setAudioUrl(prefill.audioUrl)
 
-        if (prefill.audioUrl) setAudioMode("record");
+        if (prefill?.audioUrl) setAudioMode("record");
     }, [prefill, setImageUrl, setAudioUrl]);
 
     const onDropImage = (e: React.DragEvent<HTMLDivElement>) => {

@@ -1,7 +1,7 @@
 import { useCallback, useState, useRef } from "react";
 
 export const useUploadAndRecord = () => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -22,7 +22,6 @@ export const useUploadAndRecord = () => {
     setImageFile(file);
     setImageUrl(URL.createObjectURL(file));
   };
-
 
   const handleAudioUpload = useCallback(async (file: File) => {
     const allowedMimeTypes = new Set([
@@ -99,8 +98,6 @@ export const useUploadAndRecord = () => {
     });
   }, [audioUrl]);
 
-
-
   const startRecording = async () => {
     try {
       setAudioUrl(null);
@@ -149,8 +146,6 @@ export const useUploadAndRecord = () => {
     }
   };
 
-
-
   const stopRecording = () => {
     if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
@@ -161,7 +156,6 @@ export const useUploadAndRecord = () => {
       timerRef.current = null;
     }
   };
-
 
   const handleSubmit = async () => {
     if (!imageFile || !audioFile) return;
