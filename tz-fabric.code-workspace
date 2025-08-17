@@ -24,6 +24,10 @@
 			"titleBar.inactiveBackground": "#a13d2299",
 			"titleBar.inactiveForeground": "#e7e7e799"
 		},
-		"peacock.color": "#a13d22"
+		"peacock.color": "#a13d22",
+		"cSpell.words": [
+			"generativeai",
+			"Threadzip"
+		]
 	}
 }

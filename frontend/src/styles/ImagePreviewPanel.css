@@ -1,0 +1,61 @@
+.image-preview-container {
+  width: 280px;
+  text-align: center;
+}
+
+.preview-image {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.preview-buttons-container {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.validation-text {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.error-text {
+  color: white;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.analysis-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  min-width: 100px;
+  cursor: pointer;
+}
+
+.analysis-btn.short {
+  background: #ffffff;
+  color: #000000;
+}
+
+.analysis-btn.long {
+  background: #000000;
+  color: #ffffff;
+}
+
+.analysis-btn.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.filename{
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+}
