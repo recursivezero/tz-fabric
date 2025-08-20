@@ -16,87 +16,104 @@ export const useUploadAndRecord = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+
   const handleImageUpload = (file: File) => {
     setImageFile(null);
-    setImageUrl("")
+    setImageUrl("");
     setImageFile(file);
     setImageUrl(URL.createObjectURL(file));
   };
 
-  const handleAudioUpload = useCallback(async (file: File) => {
-    const allowedMimeTypes = new Set([
-      "audio/mpeg",   
-      "audio/wav",   
-      "audio/webm",   
-      "audio/ogg",    
-      "video/webm",   
-      "video/mp4",    
-    ]);
+  const handleAudioUpload = useCallback(
+    async (file: File) => {
+      const allowedMimeTypes = new Set([
+        "audio/mpeg",
+        "audio/wav",
+        "audio/webm",
+        "audio/ogg",
+        "video/webm",
+        "video/mp4",
+      ]);
 
-    if (!file.type.startsWith("audio/") && !allowedMimeTypes.has(file.type)) {
-      alert("Please upload a valid audio file (mp3, wav, webm, or mp4).");
-      return;
-    }
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
-      setAudioUrl(null);
-    }
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const AudioCtx =
-        (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        const ctx = new AudioCtx();
-        const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
-        const duration = buffer?.duration ?? Number.POSITIVE_INFINITY;
-        await ctx.close?.();
-
-        if (!Number.isFinite(duration)) {
-          throw new Error("Duration not finite, fallback to <audio>.");
-        }
-        if (duration > 60) {
-          alert("Audio is longer than 1 minute.");
-          return;
-        }
-
-        const url = URL.createObjectURL(file);
-        setAudioUrl(url);
+      if (!file.type.startsWith("audio/") && !allowedMimeTypes.has(file.type)) {
+        setNotification({
+          message: "Please upload a valid audio file (mp3, wav, webm, or mp4).",
+          type: "error",
+        });
         return;
       }
-    } catch {
-    }
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+        setAudioUrl(null);
+      }
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const AudioCtx =
+          (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+          const duration = buffer?.duration ?? Number.POSITIVE_INFINITY;
+          await ctx.close?.();
 
-    const tempUrl = URL.createObjectURL(file);
-    await new Promise<void>((resolve) => {
-      const probe = new Audio();
-      const cleanup = () => {
-        probe.onloadedmetadata = null;
-        probe.onerror = null;
-      };
-      probe.onloadedmetadata = () => {
-        const dur = probe.duration;
-        if (Number.isFinite(dur) && dur <= 60) {
-          setAudioUrl(tempUrl);
-        } else {
-          URL.revokeObjectURL(tempUrl);
-          alert(
-            Number.isFinite(dur)
-              ? "Audio is longer than 1 minute."
-              : "Audio duration could not be determined. Please try a different file."
-          );
+          if (!Number.isFinite(duration)) {
+            throw new Error("Duration not finite, fallback to <audio>.");
+          }
+          if (duration > 60) {
+            setNotification({
+              message: "Audio is longer than 1 minute.",
+              type: "error",
+            });
+            return;
+          }
+
+          const url = URL.createObjectURL(file);
+          setAudioUrl(url);
+          return;
         }
-        cleanup();
-        resolve();
-      };
-      probe.onerror = () => {
-        URL.revokeObjectURL(tempUrl);
-        alert("Could not read audio. Please try a different file.");
-        cleanup();
-        resolve();
-      };
-      probe.src = tempUrl;
-    });
-  }, [audioUrl]);
+      } catch {}
+
+      const tempUrl = URL.createObjectURL(file);
+      await new Promise<void>((resolve) => {
+        const probe = new Audio();
+        const cleanup = () => {
+          probe.onloadedmetadata = null;
+          probe.onerror = null;
+        };
+        probe.onloadedmetadata = () => {
+          const dur = probe.duration;
+          if (Number.isFinite(dur) && dur <= 60) {
+            setAudioUrl(tempUrl);
+          } else {
+            URL.revokeObjectURL(tempUrl);
+            setNotification({
+              message: Number.isFinite(dur)
+                ? "Audio is longer than 1 minute."
+                : "Audio duration could not be determined. Please try a different file.",
+              type: "error",
+            });
+          }
+          cleanup();
+          resolve();
+        };
+        probe.onerror = () => {
+          URL.revokeObjectURL(tempUrl);
+          setNotification({
+            message: "Could not read audio. Please try a different file.",
+            type: "error",
+          });
+          cleanup();
+          resolve();
+        };
+        probe.src = tempUrl;
+      });
+    },
+    [audioUrl]
+  );
 
   const startRecording = async () => {
     try {
@@ -136,13 +153,16 @@ export const useUploadAndRecord = () => {
       timerRef.current = setInterval(() => {
         setRecordTime((prev) => {
           if (prev >= 59) {
-            stopRecording(); 
+            stopRecording();
           }
           return prev + 1;
         });
       }, 1000);
     } catch (err) {
-      alert("Microphone access denied or error occurred.");
+      setNotification({
+        message: "Microphone access denied or error occurred.",
+        type: "error",
+      });
     }
   };
 
@@ -164,16 +184,24 @@ export const useUploadAndRecord = () => {
     formData.append("image", imageFile);
     formData.append("audio", audioFile);
 
+    setLoading(true);
+    setNotification(null);
+
     try {
-      const res = await fetch("http://localhost:8000/api/submit", {
+      const res = await fetch("http://localhost:8001/api/submit", {
         method: "POST",
         body: formData,
       });
 
-      if (res.ok) alert("Submitted successfully!");
-      else alert("Submission failed");
+      if (res.ok) {
+        setNotification({ message: "Submitted successfully!", type: "success" });
+      } else {
+        setNotification({ message: "Submission failed", type: "error" });
+      }
     } catch (err) {
-      alert("Error submitting files");
+      setNotification({ message: "Error submitting files", type: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -181,7 +209,7 @@ export const useUploadAndRecord = () => {
     setAudioUrl(null);
     setIsRecording(false);
     setRecordTime(0);
-  }
+  };
 
   const clearImage = () => {
     setImageFile(null);
@@ -196,6 +224,8 @@ export const useUploadAndRecord = () => {
     searchInput,
     loading,
     error,
+    notification,
+    setNotification,
     setImageUrl,
     setAudioUrl,
     setSearchInput,
@@ -205,6 +235,6 @@ export const useUploadAndRecord = () => {
     stopRecording,
     handleSubmit,
     handleBack,
-    clearImage
+    clearImage,
   };
 };

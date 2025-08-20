@@ -38,6 +38,7 @@ app.include_router(validate_image.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
 app.include_router(submit.router, prefix="/api")    
 app.include_router(media.router, prefix="/api")
+app.include_router(delete.router, prefix="/api")
 
 
 # if __name__ == "__main__":

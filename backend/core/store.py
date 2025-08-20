@@ -1,21 +1,16 @@
-import numpy as np
-from typing import List, Dict, Tuple
-from core.indexer import build_index
+import chromadb
+from chromadb.api.models.Collection import Collection
 
-V: np.ndarray | None = None
-METAS: List[Dict] | None = None
+client = chromadb.PersistentClient(path="./vector_store")
 
-def ensure_index():
-    global V, METAS
-    if V is None or METAS is None:
-        V, METAS = build_index()
 
-def get_index() -> Tuple[np.ndarray, List[Dict]]:
-    ensure_index()
-    # type: ignore
-    return V, METAS
+collection: Collection = client.get_or_create_collection(
+    "fabric",
+    metadata={"hnsw:space": "cosine"} 
+)
 
-def reindex() -> Tuple[int, int]:
-    global V, METAS
-    V, METAS = build_index()
-    return V.shape[0], len(METAS)
+def get_index() -> Collection:
+    return collection
+
+def reindex():
+    pass

@@ -3,6 +3,7 @@ import { useUploadAndRecord } from "../hooks/feature";
 import { useNavigate, useLocation } from "react-router-dom";
 import Loader from "../components/Loader";
 import "../styles/UploadPage.css";
+import Notification from "../components/Notification";
 
 type AudioMode = "upload" | "record";
 
@@ -16,6 +17,7 @@ const UploadPage = () => {
         isRecording,
         recordTime,
         loading,
+        notification,
         setImageUrl,
         setAudioUrl,
         handleImageUpload,
@@ -23,8 +25,8 @@ const UploadPage = () => {
         startRecording,
         stopRecording,
         handleSubmit,
-        handleBack, 
-        clearImage, 
+        handleBack,
+        clearImage,
     } = useUploadAndRecord();
 
     const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -32,16 +34,16 @@ const UploadPage = () => {
     const [audioMode, setAudioMode] = useState<AudioMode>("record");
 
     const canSubmit = !!imageUrl && !!audioUrl && !loading;
-    const showUploadAudio = audioMode === "upload" && !audioUrl ;
+    const showUploadAudio = audioMode === "upload" && !audioUrl;
 
     const recordPct = useMemo(() => {
         const pct = Math.min(100, Math.round((recordTime / 60) * 100));
         return Number.isFinite(pct) ? pct : 0;
     }, [recordTime]);
 
-    useEffect(()=>{
-        if(prefill?.imageUrl) setImageUrl(prefill.imageUrl)
-        if(prefill?.audioUrl) setAudioUrl(prefill.audioUrl)
+    useEffect(() => {
+        if (prefill?.imageUrl) setImageUrl(prefill.imageUrl)
+        if (prefill?.audioUrl) setAudioUrl(prefill.audioUrl)
 
         if (prefill?.audioUrl) setAudioMode("record");
     }, [prefill, setImageUrl, setAudioUrl]);
@@ -66,7 +68,7 @@ const UploadPage = () => {
                     <p className="sub">Upload audio or switch to recording (max 60s)</p>
                 </header>
 
-                
+
                 <div className="grid">
                     <section className="preview-col">
                         {imageUrl ? (
@@ -108,7 +110,7 @@ const UploadPage = () => {
                         />
                     </section>
 
-                    
+
                     <section className="action-col">
                         {audioMode === "record" && !audioUrl && (
                             <>
@@ -153,7 +155,7 @@ const UploadPage = () => {
                                 </div>
                             </>
                         )}
-                        
+
                         {showUploadAudio && (
                             <>
                                 {audioUrl ? (
@@ -237,7 +239,7 @@ const UploadPage = () => {
                 </div>
             </div>
 
-        
+
             <div className="submit-wrapper">
                 <button
                     className="btn submit"
@@ -256,6 +258,10 @@ const UploadPage = () => {
             </div>
 
             {loading && <Loader />}
+
+            {notification && (
+                <Notification message={notification.message} type={notification.type} />
+            )}
         </div>
     );
 };

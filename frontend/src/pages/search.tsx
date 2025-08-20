@@ -2,14 +2,20 @@ import { useMemo, useState } from "react";
 import useImageSearch from "../hooks/search";
 import "../styles/Search.css";
 import { useNavigate } from "react-router-dom";
+import { deleteMediaByRelPath } from "../services/media_api";
+import Notification from "../components/Notification";
+import Loader from "../components/Loader";
 
 export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
   const [file, setFile] = useState<File | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [k, setK] = useState(1);
-  const navigate = useNavigate()
+  const [notification, setNotification] = useState<{ message: string, type: "success" | "error" } | null>(null);
 
-  const pageSize = 4; 
+  const navigate = useNavigate();
+
+  const pageSize = 4;
   const [page, setPage] = useState(1);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,6 +26,7 @@ export default function Search() {
 
   const handleSearch = async () => {
     if (!file) return;
+    setNotification(null);
     await runSearch(file, k);
     setPage(1);
   };
@@ -28,6 +35,7 @@ export default function Search() {
     setFile(null);
     clear();
     setPage(1);
+    setNotification(null);
   };
 
   const handleEdit = (item: any) => {
@@ -47,7 +55,37 @@ export default function Search() {
       },
     });
   };
-  
+
+  const handleDelete = async (item: any) => {
+    const imageUrl = item?.imageSrc;
+    if (!imageUrl) {
+      setNotification({ message: "No image URL found.", type: "error" });
+      return;
+    }
+
+    const match = imageUrl.match(/\/api\/assets\/(images\/.+)$/);
+    const relPath = match?.[1];
+    if (!relPath) {
+      setNotification({ message: "Could not extract relPath from image URL", type: "error" });
+      return;
+    }
+
+    const confirmDelete = confirm(`Are you sure you want to delete:\n${relPath}?`);
+    if (!confirmDelete) return;
+
+    try {
+      setDeletingId(relPath);
+      await deleteMediaByRelPath(relPath);
+      clear();
+      setFile(null);
+      setNotification({ message: "Deleted successfully.", type: "success" });
+    } catch (err: any) {
+      setNotification({ message: "Delete failed: " + (err?.message ?? "Unknown error"), type: "error" });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const paginatedResults = useMemo(() => {
     const start = (page - 1) * pageSize;
     return exactMatches.slice(start, start + pageSize);
@@ -59,7 +97,6 @@ export default function Search() {
     <div className="search-container">
       <h2>Exact Matches Only (Most Recent • Score 1.0000)</h2>
 
-      {/* Uploader + controls */}
       <div className="uploader-row">
         <input
           id="file-input"
@@ -101,6 +138,10 @@ export default function Search() {
         </button>
       </div>
 
+      {notification && (
+        <Notification message={notification.message} type={notification.type} />
+      )}
+      {loading && <Loader />}
       {error && <p className="search-error">{error}</p>}
 
       {file && (
@@ -117,19 +158,13 @@ export default function Search() {
       {exactMatches.length > 0 ? (
         <>
           <div className="pagination-controls">
-            <button
-              onClick={() => setPage((p) => p - 1)}
-              disabled={page === 1}
-            >
+            <button onClick={() => setPage((p) => p - 1)} disabled={page === 1}>
               Prev
             </button>
             <span>
               Page {page} / {totalPages}
             </span>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page === totalPages}
-            >
+            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>
               Next
             </button>
           </div>
@@ -138,35 +173,17 @@ export default function Search() {
             {paginatedResults.map((item, idx) => (
               <article className="result-card" key={idx}>
                 <div className="result-thumb">
-                  <img
-                    src={item.imageSrc}
-                    alt="Uploaded"
-                    loading="lazy"
-                  />
+                  <img src={item.imageSrc} alt="Uploaded" loading="lazy" />
                 </div>
 
                 <div className="result-audio">
                   {item.audioSrc && (
-                    <audio
-                      controls
-                      src={item.audioSrc}
-                      preload="metadata"
-                    />
+                    <audio controls src={item.audioSrc} preload="metadata" />
                   )}
-                </div>
-                <div className="result-actions">
-                  <button
-                    className="btn-edit"
-                    onClick={() => handleEdit(item)}
-                    title="Edit this media"
-                  >
-                    ✎ Edit
-                  </button>
                 </div>
               </article>
             ))}
           </div>
-
         </>
       ) : (
         !loading && (

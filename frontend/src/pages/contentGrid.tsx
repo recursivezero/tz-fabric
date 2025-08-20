@@ -113,12 +113,12 @@ export default function ContentGrid() {
           </article>
           
         ))}
-        <button onClick={() => navigate("/search")}>find similar images</button>
+        
         {!loading && items.length === 0 && (
           <div className="empty-state">No items.</div>
         )}
       </div>
-
+      <button onClick={() => navigate("/search")}>find similar images</button>
       {loading && <div className="grid-loading">Loading…</div>}
 
     </div>

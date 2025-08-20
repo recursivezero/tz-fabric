@@ -43,7 +43,7 @@ def list_media_content(
             "_id": str(img["_id"]),
             "imageUrl": f"/api/assets/images/{img_name}",
             "audioUrl": audio_url,
-            "createdAt": img["created_on"].isoformat()
+            "createdAt": img["created_on"]
         })
 
     return {"items": items, "page": page, "limit": limit, "total": len(items)}
