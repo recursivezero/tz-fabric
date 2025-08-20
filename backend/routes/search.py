@@ -1,13 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 from pydantic import BaseModel
-from typing import List, Tuple
+from typing import List
 from datetime import datetime, timezone
 import os
 import re
 
 from core.embedder import embed_image_bytes
-from core.search import topk_cosine
-from core.store import get_index, reindex as _reindex
+from core.search import topk_search
+from core.store import get_index
 
 router = APIRouter(tags=["search"])
 
@@ -44,16 +44,6 @@ def _parse_any_iso(s: str) -> float:
     except Exception:
         return 0.0
 
-def _extract_ts_from_name(rel: str) -> float:
-    m = re.search(r"(\d{8}T\d{6})", rel or "")
-    if not m:
-        return 0.0
-    try:
-        dt = datetime.strptime(m.group(1), "%Y%m%dT%H%M%S")
-        return _to_ts(dt)
-    except Exception:
-        return 0.0
-
 def _created_ts(meta: dict) -> float:
     for key in ("createdAt", "created_at", "timestamp"):
         if key in meta:
@@ -87,23 +77,24 @@ async def search_similar(
     debug_ts: bool = Query(False, description="Include computed _ts in metadata for debugging")
 ):
     try:
-        q = embed_image_bytes(await file.read())
+        embedding = embed_image_bytes(await file.read())
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid image file.")
 
-    V, METAS = get_index()
-    if V is None or V.shape[0] == 0:
-        return SearchResponse(count=0, results=[])
+    collection = get_index()
 
-    matches: List[Tuple[int, float]] = topk_cosine(q, V, k)
+    results = topk_search(collection, embedding, k)
+
+    metadatas = results.get("metadatas", [[]])[0]
+    similarities = results.get("similarities", [[]])[0]  # <-- use exact similarities
 
     items: List[SearchItem] = []
-    for idx, score in matches:
-        meta = dict(METAS[idx])  
+    for meta, sim in zip(metadatas, similarities):
         ts = _created_ts(meta)
         if debug_ts:
-            meta["_ts"] = ts  
-        items.append(SearchItem(score=score, metadata=meta))
+            meta["_ts"] = ts
+        # sim is already cosine similarity [0.0–1.0], exact = 1.000
+        items.append(SearchItem(score=sim, metadata=meta))
 
     if order == "recent":
         items.sort(key=lambda it: (_created_ts(it.metadata), it.score), reverse=True)
@@ -112,7 +103,3 @@ async def search_similar(
 
     return SearchResponse(count=len(items), results=items)
 
-@router.post("/reindex")
-def reindex():
-    n_vecs, n_metas = _reindex()
-    return {"indexed_vectors": n_vecs, "indexed_metas": n_metas}
