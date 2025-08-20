@@ -29,6 +29,9 @@ def list_media_content(
     limit: int = Query(4, ge=1)
 ):
     db = request.app.database
+
+    total_count = db.images.count_documents({})
+
     images = list(db.images.find().sort("created_on", -1).skip((page - 1) * limit).limit(limit))
     items = []
 
@@ -46,4 +49,4 @@ def list_media_content(
             "createdAt": img["created_on"]
         })
 
-    return {"items": items, "page": page, "limit": limit, "total": len(items)}
+    return {"items": items, "page": page, "limit": limit, "total": total_count}
