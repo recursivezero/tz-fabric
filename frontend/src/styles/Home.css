@@ -1,40 +1,139 @@
-.home-container {
-  padding: 20px;
+
+
+.home {
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  isolation: isolate;
+  color: #e6edf3;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.home__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+
+}
+
+
+.home__container {
+  width: auto;
+  padding: 36px 20px 64px;
+  margin: 0 auto;
+}
+
+.home__hero {
+  text-align: center;
+  margin: 24px 0 40px;
+}
+
+.home__badge {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(34,211,238,0.12));
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.home__title {
+  margin: 0 0 8px;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.1;
+}
+
+.home__sub {
+  margin: 0 auto;
+  max-width: 720px;
+  color: #000000;
+}
+
+.home__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+
+@media (max-width: 900px) {
+  .home__grid { grid-template-columns: 1fr; }
+}
+
+.home__card {
+  position: relative;
+  display: block;
+  background: rgba(87, 85, 85, 0.273);  
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 22px;
   overflow: hidden;
-  height: 85vh;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  text-decoration: none; /* ensure Links look like cards */
+  color: inherit;
 }
 
-.home-container .upload-wrapper {
-  width: 100%;
-  margin-top: 5px;
-  display: flex;
-  justify-content: center;
+.home__card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 18px;
+  background:
+    radial-gradient(600px 200px at 0% 0%, rgba(124,58,237,0.15), transparent 60%),
+    radial-gradient(400px 160px at 100% 100%, rgba(34,211,238,0.12), transparent 55%);
+  opacity: 0;
+  transition: opacity 160ms ease;
+  pointer-events: none;
 }
 
-.home-container .upload-inner {
-  width: calc(100% - 80px);
-  margin-bottom: 5px;
+.home__card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124,58,237,0.35);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+.home__card:hover::before { opacity: 1; }
+
+.home__icon {
+  font-size: 34px;
+  display: inline-flex;
+  width: 48px; height: 48px;
+  align-items: center; justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(34,211,238,0.15));
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
-.home-container .result-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-top: 17px;
-  gap: 40px;
-  padding: 0 40px;
-  flex-wrap: wrap;
+.home__cardTitle {
+  margin: 14px 0 6px;
+  font-size: 20px;
 }
 
-.home-container .drawer-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: 250px;
-  background: #f4f4f4;
-  padding: 20px 10px;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  z-index: 998;
+.home__cardText {
+  margin: 0 0 18px;
+  color: #000000;
+}
+
+.home__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(34,211,238,0.14));
+}
+
+/* Footer */
+.home__footer {
+  margin-top: 46px;
+  text-align: center;
+  color: #000000;
+  font-size: 14px;
+  opacity: 0.9;
 }

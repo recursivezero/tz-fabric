@@ -1,90 +1,54 @@
-import { useNavigate } from "react-router-dom";
-import useImageAnalysis from "../hooks/useImageAnalysis";
-import Header from "../components/Header";
-import SampleImageGallery from "../components/SampleImageGalleryCard";
-import AnimatedSearchBox from "../components/SearchBar";
-import ImagePreview from "../components/imagePreviewPanel";
-import DescriptionBox from "../components/descriptionBox";
-import DrawerToggle from "../components/drawerToggle";
+import { Link } from "react-router-dom";
 import "../styles/Home.css";
 
-const Home = () => {
-  const navigate = useNavigate();
-  const {
-    showResults,
-    loading,
-    description,
-    responses,
-    currentIndex,
-    currentFile,
-    uploadedImageUrl,
-    sampleImageUrl,
-    showDrawer,
-    typedText,
-    isValidImage,
-    validationLoading,
-    validationMessage,
-    canUpload,
-    setShowDrawer,
-    handleUploadedImage,
-    handleRunAnalysis,
-    handleSampleShortAnalysis,
-    handlePrev,
-    handleNext
-  } = useImageAnalysis();
-
+export default function Home() {
   return (
-    <div className="home-container">
-      <Header />
-      
+    <div className="home">
+      <div className="home__bg" />
 
-      <div className="upload-wrapper">
-        <div className="upload-inner">
-          <AnimatedSearchBox onSearch={handleUploadedImage} loading={!canUpload} />
-        </div>
-      </div>
+      <main className="home__container">
+        <header className="home__hero">
+          <span className="home__badge">Fabric Analyzer</span>
+          <h1 className="home__title">Work with your media, faster.</h1>
+          <p className="home__sub">
+            Upload & record audio, describe images with AI, and revisit your saved
+            documents — all in one place.
+          </p>
+        </header>
 
-      <div>
-        <button onClick={() => navigate("/upload")}>Upload and Record</button>
-      </div>
+        <section className="home__grid">
+          <Link to="/upload" className="home__card">
+            <div className="home__icon">🎙️</div>
+            <h2 className="home__cardTitle">Upload & Record</h2>
+            <p className="home__cardText">
+              Add images and record audio notes in a single flow.
+            </p>
+            <span className="home__cta">Open →</span>
+          </Link>
 
-      {(uploadedImageUrl || sampleImageUrl) && (
-        <div className="result-wrapper">
-          <ImagePreview
-            uploadedImageUrl={uploadedImageUrl}
-            sampleImageUrl={sampleImageUrl}
-            validationLoading={validationLoading}
-            isValidImage={isValidImage}
-            loading={loading}
-            currentFile={currentFile}
-            handleRunAnalysis={handleRunAnalysis}
-          />
+          <Link to="/describe" className="home__card">
+            <div className="home__icon">🖼️</div>
+            <h2 className="home__cardTitle">Image Description</h2>
+            <p className="home__cardText">
+              Generate short or long analyses for any fabric image.
+            </p>
+            <span className="home__cta">Describe →</span>
+          </Link>
 
-          <DescriptionBox
-            isValidImage={isValidImage}
-            validationMessage={validationMessage}
-            showResults={showResults}
-            loading={loading}
-            responses={responses}
-            currentIndex={currentIndex}
-            typedText={typedText}
-            description={description}
-            handlePrev={handlePrev}
-            handleNext={handleNext}
-          />
-        </div>
-      )}
+          <Link to="/view" className="home__card">
+            <div className="home__icon">📂</div>
+            <h2 className="home__cardTitle">Saved Documents</h2>
+            <p className="home__cardText">
+              Browse, search, and manage everything you’ve saved.
+            </p>
+            <span className="home__cta">View →</span>
+          </Link>
+        </section>
 
-      <DrawerToggle showDrawer={showDrawer} setShowDrawer={setShowDrawer} />
-
-      {showDrawer && (
-        <div className="drawer-panel">
-          <SampleImageGallery onAnalyze={handleSampleShortAnalysis} loading={loading} vertical />
-        </div>
-      )}
-      
+        <footer className="home__footer">
+          <span>© {new Date().getFullYear()} Recursive Zero · Fabric Analyzer</span>
+        </footer>
+      </main>
     </div>
   );
-};
-
-export default Home;
+}

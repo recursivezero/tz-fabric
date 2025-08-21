@@ -1,0 +1,40 @@
+.home-container {
+  padding: 20px;
+  overflow: hidden;
+  height: 85vh;
+}
+
+.home-container .upload-wrapper {
+  width: 100%;
+  margin-top: 5px;
+  display: flex;
+  justify-content: center;
+}
+
+.home-container .upload-inner {
+  width: calc(100% - 80px);
+  margin-bottom: 5px;
+}
+
+.home-container .result-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 17px;
+  gap: 40px;
+  padding: 0 40px;
+  flex-wrap: wrap;
+}
+
+.home-container .drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 250px;
+  background: #f4f4f4;
+  padding: 20px 10px;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  z-index: 998;
+}
