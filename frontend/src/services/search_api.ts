@@ -1,3 +1,4 @@
+
 export interface SearchItem {
   score: number;
   metadata: {
@@ -12,6 +13,7 @@ export interface SearchItem {
     [k: string]: any;
   };
 }
+
 export interface SearchResponse {
   count: number;
   results: SearchItem[];
@@ -19,11 +21,35 @@ export interface SearchResponse {
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8001";
 
-export async function searchSimilar(file: File, k = 1,  order: "recent" | "score" = "recent", debug_ts=false): Promise<SearchResponse> {
+export async function searchSimilar(
+  file: File,
+  k: number = 50,
+  order: "recent" | "score" = "recent",
+  debug_ts: boolean = false,
+  min_sim: number = 0.5,
+  require_audio: boolean = true
+): Promise<SearchResponse> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${API_BASE}/api/search?k=${k}&order=${order}&debug_ts=${debug_ts}`, { method: "POST", body: form });
-  if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+
+  const params = new URLSearchParams({
+    k: String(k),
+    order,
+    debug_ts: String(debug_ts),
+    min_sim: String(min_sim),
+    require_audio: String(require_audio),
+  });
+
+  const res = await fetch(`${API_BASE}/api/search?${params.toString()}`, {
+    method: "POST",
+    body: form,
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    throw new Error(`Search failed: ${res.status} ${msg}`);
+  }
+
   return res.json();
 }
 

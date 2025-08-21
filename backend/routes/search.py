@@ -74,7 +74,9 @@ async def search_similar(
     file: UploadFile = File(...),
     k: int = Query(1, ge=1, le=300),
     order: str = Query("recent", pattern="^(recent|score)$"),
-    debug_ts: bool = Query(False, description="Include computed _ts in metadata for debugging")
+    debug_ts: bool = Query(False, description="Include computed _ts in metadata for debugging"),
+    min_sim: float = Query(0.5, ge=0.0, le=1.0),          
+    require_audio: bool = Query(True)                     
 ):
     try:
         embedding = embed_image_bytes(await file.read())
@@ -83,23 +85,31 @@ async def search_similar(
 
     collection = get_index()
 
-    results = topk_search(collection, embedding, k)
+    pool_k = max(k * 30, 300)                             
+    results = topk_search(collection, embedding, pool_k)
 
     metadatas = results.get("metadatas", [[]])[0]
-    similarities = results.get("similarities", [[]])[0]  # <-- use exact similarities
+    similarities = results.get("similarities", [[]])[0]     
 
     items: List[SearchItem] = []
     for meta, sim in zip(metadatas, similarities):
+        if sim < min_sim:
+            continue
+        if require_audio and not (meta.get("audioUrl") and str(meta.get("audioUrl")).strip()):
+            continue
+
         ts = _created_ts(meta)
         if debug_ts:
             meta["_ts"] = ts
-        # sim is already cosine similarity [0.0–1.0], exact = 1.000
         items.append(SearchItem(score=sim, metadata=meta))
 
     if order == "recent":
-        items.sort(key=lambda it: (_created_ts(it.metadata), it.score), reverse=True)
+        items.sort(key=lambda it: (it.score, _created_ts(it.metadata)), reverse=True)
     else:
         items.sort(key=lambda it: it.score, reverse=True)
 
+    items = items[:k]
+
     return SearchResponse(count=len(items), results=items)
+
 

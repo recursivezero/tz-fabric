@@ -4,30 +4,24 @@ import { searchSimilar, type SearchResponse, type SearchItem, API_BASE } from ".
 export type UiItem = {
   score: number;
   filename: string;
-  imageSrc: string | undefined;
-  audioSrc: string | undefined;
+  imageSrc?: string;
+  audioSrc?: string;
   raw: SearchItem;
 };
 
-function isExactScore(score: number): boolean {
-  return Number(score.toFixed(4)) === 1;
-}
-
-function buildImageUrl(item: SearchItem): string | undefined {
-  const md = item.metadata || {};
+function buildImageUrl(md: any): string | undefined {
   if (md.imageUrl) return md.imageUrl;
   if (md.imagePath) return md.imagePath;
   if (md.relPath)  return `${API_BASE}/static/${md.relPath}`;
   return undefined;
 }
 
-function buildAudioUrl(item: SearchItem): string | undefined {
-  const md = item.metadata || {};
+function buildAudioUrl(md: any): string | undefined {
   if (md.audioUrl) return md.audioUrl;
   if (md.audioPath) return md.audioPath;
   if (md.audioRelPath) return `${API_BASE}/static/${md.audioRelPath}`;
   if (md.relPath) {
-    const swapped = md.relPath.replace(/\/images\//, "/audios/");
+    const swapped = String(md.relPath).replace(/\/images\//, "/audios/");
     const withWebm = swapped.replace(/\.[a-zA-Z0-9]+$/, ".webm");
     return `${API_BASE}/static/${withWebm}`;
   }
@@ -35,40 +29,33 @@ function buildAudioUrl(item: SearchItem): string | undefined {
 }
 
 function toUiItem(item: SearchItem): UiItem {
-  const imageSrc = buildImageUrl(item);
-  const audioSrc = buildAudioUrl(item);
-  const filename = item.metadata?.filename || item.metadata?.relPath || "result";
-  return { score: item.score, filename, imageSrc, audioSrc, raw: item };
-}
-
-function getCreatedAtMs(it: UiItem): number {
-  const md = it.raw?.metadata || {};
-  const val = md.createdAt || md.created_at || md.created_on || md.timestamp || null;
-  const t = val ? Date.parse(String(val)) : NaN;
-  if (!Number.isNaN(t)) return t;
-  if (typeof md.id === "number") return md.id;
-  const maybeNum = Number(md.id);
-  if (!Number.isNaN(maybeNum)) return maybeNum;
-  return 0;
+  const md = item.metadata ?? {};
+  return {
+    score: item.score,
+    filename: md.filename || md.relPath || "result",
+    imageSrc: buildImageUrl(md),
+    audioSrc: buildAudioUrl(md),
+    raw: item,
+  };
 }
 
 export default function useImageSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [exactMatches, setExactMatches] = useState<UiItem[]>([]);
+  const [results, setResults] = useState<UiItem[]>([]);
 
-  const runSearch = async (file: File, k = 200) => {
+  const runSearch = async (file: File, k = 50, minSim = 0.5) => {
     setLoading(true);
     setError(null);
-    setExactMatches([]);
-
+    setResults([]);
     try {
-      const res: SearchResponse = await searchSimilar(file, k);
+      const res: SearchResponse = await searchSimilar(file, k, "recent", true, minSim, true);
+      console.log("[search] count", res.count, res.results?.length);
       const mapped = (res.results ?? []).map(toUiItem);
-      const onlyExact = mapped.filter((x) => isExactScore(x.score));
-      const recencySorted = onlyExact.sort((a, b) => getCreatedAtMs(b) - getCreatedAtMs(a));
-      const limited = recencySorted.slice(0, k);
-      setExactMatches(limited);
+      // client-side safety check (mirrors backend)
+      const filtered = mapped.filter(it => it.score >= minSim && !!it.audioSrc);
+      setResults(filtered.slice(0, k));
+      console.log("[search] mapped/filtered", mapped.length, filtered.length);
     } catch (e: any) {
       setError(e?.message ?? "Search failed");
     } finally {
@@ -77,9 +64,9 @@ export default function useImageSearch() {
   };
 
   const clear = () => {
-    setExactMatches([]);
+    setResults([]);
     setError(null);
   };
 
-  return { loading, error, exactMatches, runSearch, clear };
+  return { loading, error, results, exactMatches: results, runSearch, clear };
 }

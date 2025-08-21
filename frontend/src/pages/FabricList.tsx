@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchContent, type MediaItem } from "../services/contentApi";
 import "../styles/ContentGrid.css";
-import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -13,7 +12,6 @@ export default function ContentGrid() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [mode, setMode] = useState<"all" | "similar">("all"); 
-  const navigate = useNavigate()
 
   useEffect(() => {
     if (mode !== "all") return;
@@ -117,7 +115,6 @@ export default function ContentGrid() {
           <div className="empty-state">No items.</div>
         )}
       </div>
-      <button onClick={() => navigate("/search")}>find similar images</button>
       {loading && <div className="grid-loading">Loading…</div>}
 
     </div>

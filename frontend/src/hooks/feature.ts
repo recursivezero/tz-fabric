@@ -21,6 +21,14 @@ export const useUploadAndRecord = () => {
     type: "success" | "error";
   } | null>(null);
 
+  const showNotification = (type: "success" | "error", message: string) => {
+    setNotification({ type, message });
+
+    setTimeout(() => {
+      setNotification(null);
+    }, 2000);
+  };
+
   const handleImageUpload = (file: File) => {
     setImageFile(null);
     setImageUrl("");
@@ -75,7 +83,7 @@ export const useUploadAndRecord = () => {
           setAudioUrl(url);
           return;
         }
-      } catch {}
+      } catch { }
 
       const tempUrl = URL.createObjectURL(file);
       await new Promise<void>((resolve) => {
@@ -194,10 +202,14 @@ export const useUploadAndRecord = () => {
       });
 
       if (res.ok) {
-        setNotification({ message: "Submitted successfully!", type: "success" });
+        showNotification( "success", "Submitted successfully!" );
       } else {
-        setNotification({ message: "Submission failed", type: "error" });
+        showNotification("error", "Submission failed" );
       }
+      setImageFile(null);
+      setAudioFile(null);
+      setImageUrl(null);
+      setAudioUrl(null);
     } catch (err) {
       setNotification({ message: "Error submitting files", type: "error" });
     } finally {
