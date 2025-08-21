@@ -40,3 +40,34 @@
 .read-the-docs {
   color: #888;
 }
+
+nav {
+  ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+
+    li {
+      border: 2px solid #414e41;
+      padding: 0.6em;
+      margin-inline-end: 1rem;
+
+      &:last-child {
+        margin-inline-end: 0;
+      }
+      &:hover {
+        border-color: #646cff;
+      }
+      a {
+        text-decoration: none;
+        color: #333;
+
+        &:hover {
+          color: #646cff;
+        }
+      }
+    }
+  }
+}

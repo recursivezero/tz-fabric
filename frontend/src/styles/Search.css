@@ -32,7 +32,7 @@
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid #c7d2fe;
-  background: #eff6ff;
+  background: #2467c0;
   cursor: pointer;
   font-size: 12px;
   transition: transform 0.05s ease, box-shadow 0.15s ease, background 0.2s ease;
@@ -70,14 +70,11 @@
   padding: 8px 14px;
   border: 1px solid #dcdcdc;
   border-radius: 8px;
-  background: #f8fafc;
+  background: #1c76cb;
   cursor: pointer;
   transition: transform 0.05s ease, box-shadow 0.15s ease, background 0.2s ease;
 }
-.search-container .primary-btn {
-  background: #eff6ff;
-  border-color: #c7d2fe;
-}
+
 .search-container .primary-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -126,8 +123,6 @@
   font-size: 13px;
   color: #374151;
 }
-
-
 
 .search-container .grid {
   display: flex;

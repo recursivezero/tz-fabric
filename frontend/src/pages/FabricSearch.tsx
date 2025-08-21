@@ -1,19 +1,15 @@
 import { useMemo, useState } from "react";
 import useImageSearch from "../hooks/search";
 import "../styles/Search.css";
-import { useNavigate } from "react-router-dom";
-import { deleteMediaByRelPath } from "../services/media_api";
 import Notification from "../components/Notification";
 import Loader from "../components/Loader";
 
 export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
   const [file, setFile] = useState<File | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [k, setK] = useState(1);
   const [notification, setNotification] = useState<{ message: string, type: "success" | "error" } | null>(null);
 
-  const navigate = useNavigate();
 
   const pageSize = 4;
   const [page, setPage] = useState(1);
@@ -36,54 +32,6 @@ export default function Search() {
     clear();
     setPage(1);
     setNotification(null);
-  };
-
-  const handleEdit = (item: any) => {
-    const md = item?.raw?.metadata || {};
-    const mediaId =
-      md.id || md._id || md.mediaId || md.filename || md.relPath || null;
-    navigate("/upload", {
-      state: {
-        prefill: {
-          id: mediaId,
-          imageUrl: item.imageSrc || null,
-          audioUrl: item.audioSrc || null,
-          filename: item.filename || null,
-          metadata: md,
-        },
-        mode: "edit",
-      },
-    });
-  };
-
-  const handleDelete = async (item: any) => {
-    const imageUrl = item?.imageSrc;
-    if (!imageUrl) {
-      setNotification({ message: "No image URL found.", type: "error" });
-      return;
-    }
-
-    const match = imageUrl.match(/\/api\/assets\/(images\/.+)$/);
-    const relPath = match?.[1];
-    if (!relPath) {
-      setNotification({ message: "Could not extract relPath from image URL", type: "error" });
-      return;
-    }
-
-    const confirmDelete = confirm(`Are you sure you want to delete:\n${relPath}?`);
-    if (!confirmDelete) return;
-
-    try {
-      setDeletingId(relPath);
-      await deleteMediaByRelPath(relPath);
-      clear();
-      setFile(null);
-      setNotification({ message: "Deleted successfully.", type: "success" });
-    } catch (err: any) {
-      setNotification({ message: "Delete failed: " + (err?.message ?? "Unknown error"), type: "error" });
-    } finally {
-      setDeletingId(null);
-    }
   };
 
   const paginatedResults = useMemo(() => {

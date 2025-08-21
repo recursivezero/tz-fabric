@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchContent, type MediaItem } from "../services/contentApi";
 import "../styles/ContentGrid.css";
-import { useUploadAndRecord } from "../hooks/feature";
 import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;

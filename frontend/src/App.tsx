@@ -1,22 +1,26 @@
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import ImageDescription from './pages/ImageDescription';
-import UploadPage from './pages/audiofeature';
-import ContentGrid from './pages/contentGrid';
-import Search from './pages/search';
-import Home from './pages/Home';
-import './App.css';
 
-function App() {
+import './App.css';
+import { Routing } from './Routing';
+
+const App = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/describe" element={<ImageDescription />} />
-        <Route path="/upload" element={<UploadPage />} />
-        <Route path="/view" element={<ContentGrid />} />
-        <Route path='/search' element={<Search />} />
-      </Routes>
-    </Router>
+    <div className='container'>
+      <header>
+        <h1>Fabric Finder</h1>
+        <nav>
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/describe">Describe</a></li>
+            <li><a href="/upload">Upload</a></li>
+            <li><a href="/view">List</a></li>
+            <li><a href="/search">Search</a></li>
+        </ul>
+      </nav>
+      </header>
+      <main>
+        <Routing/>
+      </main>
+    </div>
   );
 }
 
