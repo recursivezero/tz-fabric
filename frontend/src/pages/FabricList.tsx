@@ -11,7 +11,7 @@ export default function ContentGrid() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [mode, setMode] = useState<"all" | "similar">("all"); 
+  const [mode, setMode] = useState<"all" | "similar">("all");
 
   useEffect(() => {
     if (mode !== "all") return;
@@ -40,12 +40,17 @@ export default function ContentGrid() {
     setMode("all");
     setPage(1);
   };
-
+  function pickDisplayName(it: MediaItem) {
+    if (it.basename) return it.basename;                          
+    if (it.imageFilename) return it.imageFilename.replace(/\.[^.]+$/, ""); 
+    const last = (it.imageUrl || "").split("/").pop() || "";      
+    return last.replace(/\.[^.]+$/, "");
+  }
   return (
     <div className="grid-page">
       <div className="upload-wrapper">
         <div className="upload-inner" style={{ display: "flex", gap: 8 }}>
-          
+
           {mode === "similar" && (
             <button className="btn" onClick={showAll} disabled={loading}>
               ← Back to All
@@ -83,6 +88,9 @@ export default function ContentGrid() {
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.3"; }}
               />
             </div>
+            <div className="media-name" title={pickDisplayName(it)}>
+              {pickDisplayName(it)}
+            </div>
 
             <div className="media-audio">
               {it.audioUrl && (
@@ -106,11 +114,11 @@ export default function ContentGrid() {
                 </span>
               )}
             </div>
-            
+
           </article>
-          
+
         ))}
-        
+
         {!loading && items.length === 0 && (
           <div className="empty-state">No items.</div>
         )}

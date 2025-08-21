@@ -1,19 +1,41 @@
-const BASE_URL = (import.meta.env.VITE_API_URL) || ""; 
+const BASE_URL = (import.meta.env.VITE_API_URL) || "";
 
 export type MediaItem = {
   _id: string;
   imageUrl: string;
-  audioUrl: string;
+  audioUrl: string | null;
   createdAt: string;
+
+  basename?: string;         
+  imageFilename?: string;     
+  audioFilename?: string | null; 
 };
 
-export async function fetchContent(page = 1, limit = 4): Promise<{
+export type ContentResponse = {
   items: MediaItem[];
   page: number;
   limit: number;
   total: number;
-}> {
+};
+
+export async function fetchContent(
+  page = 1,
+  limit = 4
+): Promise<ContentResponse> {
   const res = await fetch(`${BASE_URL}/api/media/content?page=${page}&limit=${limit}`);
-  if (!res.ok) throw new Error("Failed to load content");
-  return res.json();
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "Failed to load content");
+    throw new Error(msg || "Failed to load content");
+  }
+  const data = (await res.json()) as ContentResponse;
+
+  data.items = data.items.map((it) => ({
+    ...it,
+    audioUrl: it.audioUrl ?? null,
+    basename: it.basename ?? undefined,
+    imageFilename: it.imageFilename ?? undefined,
+    audioFilename: it.audioFilename ?? null,
+  }));
+
+  return data;
 }

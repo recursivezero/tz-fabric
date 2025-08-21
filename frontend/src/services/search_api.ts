@@ -1,15 +1,20 @@
-
 export interface SearchItem {
   score: number;
   metadata: {
-    id: number;
-    filename: string;
-    relPath: string;
+    id?: number;
+    filename?: string;
+    relPath?: string;
+
     imagePath?: string;
     imageUrl?: string;
     audioUrl?: string;
     audioPath?: string;
     audioRelPath?: string;
+
+    basename?: string;
+    imageFilename?: string;
+    audioFilename?: string;
+
     [k: string]: any;
   };
 }

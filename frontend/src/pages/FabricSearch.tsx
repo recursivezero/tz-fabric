@@ -43,7 +43,7 @@ export default function Search() {
 
   return (
     <div className="search-container">
-      <h2>Exact Matches Only (Most Recent • Score 1.0000)</h2>
+      <h2>Similar Images</h2>
 
       <div className="uploader-row">
         <input
@@ -124,6 +124,10 @@ export default function Search() {
                   <img src={item.imageSrc} alt="Uploaded" loading="lazy" />
                 </div>
 
+                <div className="result-name" title={item.filename}>
+                  {item.filename}
+                </div>
+
                 <div className="result-audio">
                   {item.audioSrc && (
                     <audio controls src={item.audioSrc} preload="metadata" />
@@ -137,7 +141,7 @@ export default function Search() {
         !loading && (
           <p className="empty-hint">
             {file
-              ? "No exact (1.0000) matches found for this image."
+              ? "No matches found for this image."
               : "Pick an image and search."}
           </p>
         )

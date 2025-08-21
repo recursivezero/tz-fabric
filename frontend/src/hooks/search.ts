@@ -3,12 +3,19 @@ import { searchSimilar, type SearchResponse, type SearchItem, API_BASE } from ".
 
 export type UiItem = {
   score: number;
-  filename: string;
+  filename: string;      
   imageSrc?: string;
   audioSrc?: string;
   raw: SearchItem;
 };
 
+function pickDisplayName(md: any): string {
+  if (md?.basename) return md.basename;                               
+  if (md?.imageFilename) return String(md.imageFilename).replace(/\.[^.]+$/, "");
+  if (md?.filename) return String(md.filename).replace(/\.[^.]+$/, "");
+  if (md?.relPath) return String(md.relPath).split("/").pop()?.replace(/\.[^.]+$/, "") ?? "result";
+  return "result";
+}
 function buildImageUrl(md: any): string | undefined {
   if (md.imageUrl) return md.imageUrl;
   if (md.imagePath) return md.imagePath;
@@ -32,7 +39,7 @@ function toUiItem(item: SearchItem): UiItem {
   const md = item.metadata ?? {};
   return {
     score: item.score,
-    filename: md.filename || md.relPath || "result",
+    filename: pickDisplayName(md),       
     imageSrc: buildImageUrl(md),
     audioSrc: buildAudioUrl(md),
     raw: item,
@@ -52,7 +59,6 @@ export default function useImageSearch() {
       const res: SearchResponse = await searchSimilar(file, k, "recent", true, minSim, true);
       console.log("[search] count", res.count, res.results?.length);
       const mapped = (res.results ?? []).map(toUiItem);
-      // client-side safety check (mirrors backend)
       const filtered = mapped.filter(it => it.score >= minSim && !!it.audioSrc);
       setResults(filtered.slice(0, k));
       console.log("[search] mapped/filtered", mapped.length, filtered.length);

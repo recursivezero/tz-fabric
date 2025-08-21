@@ -32,6 +32,7 @@ const UploadPage = () => {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const [audioMode, setAudioMode] = useState<AudioMode>("record");
+  const [name, setName] = useState<string>("");
 
   const canSubmit = !!imageUrl && !!audioUrl && !loading;
   const showUploadAudio = audioMode === "upload" && !audioUrl;
@@ -249,12 +250,21 @@ const UploadPage = () => {
           </section>
         </div>
       </div>
-
+      <div className="name-field">
+        <label className="name-label">Optional name</label>
+        <input
+          type="text"
+          placeholder="e.g. wedding_saree"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          aria-label="Optional name for saving files"
+        />
+      </div>
       <div className="submit-wrapper">
         <button
           className="btn submit"
           onClick={async () => {
-            await handleSubmit();
+            await handleSubmit(name);
             handleBack();
           }}
           disabled={!canSubmit}

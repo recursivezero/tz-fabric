@@ -15,6 +15,7 @@ export const useUploadAndRecord = () => {
   const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState<string>("");
 
   const [notification, setNotification] = useState<{
     message: string;
@@ -185,16 +186,19 @@ export const useUploadAndRecord = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (name?: string) => {
     if (!imageFile || !audioFile) return;
 
     const formData = new FormData();
     formData.append("image", imageFile);
     formData.append("audio", audioFile);
 
+    if (name && name.trim()) formData.append("name", name.trim());
     setLoading(true);
     setNotification(null);
 
+    setLoading(true);
+    setNotification(null);
     try {
       const res = await fetch("http://localhost:8001/api/submit", {
         method: "POST",
@@ -202,14 +206,16 @@ export const useUploadAndRecord = () => {
       });
 
       if (res.ok) {
-        showNotification( "success", "Submitted successfully!" );
+        const data = await res.json();
+        showNotification("success", `Submitted! Saved as ${data.base}`);
       } else {
-        showNotification("error", "Submission failed" );
+        showNotification("error", "Submission failed");
       }
       setImageFile(null);
       setAudioFile(null);
       setImageUrl(null);
       setAudioUrl(null);
+      setName("");
     } catch (err) {
       setNotification({ message: "Error submitting files", type: "error" });
     } finally {

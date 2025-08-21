@@ -31,22 +31,57 @@ def list_media_content(
     db = request.app.database
 
     total_count = db.images.count_documents({})
+    skip = (page - 1) * limit
 
-    images = list(db.images.find().sort("created_on", -1).skip((page - 1) * limit).limit(limit))
+    cursor = (
+        db.images.find(
+            {},
+            {
+                "_id": 1,
+                "filename": 1,     
+                "imageUrl": 1,
+                "audioUrl": 1,
+                "created_on": 1,
+                "basename": 1,        
+            }
+        )
+        .sort("created_on", -1)
+        .skip(skip)
+        .limit(limit)
+    )
+
     items = []
+    for img in cursor:
+        image_filename = img.get("filename")
+        image_url = img.get("imageUrl") or f"/api/assets/images/{image_filename}"
+        created_at = img.get("created_on")
 
-    for img in images:
-        img_name = img["filename"]
-        base_name = Path(img_name).stem
+        basename = img.get("basename") or Path(image_filename).stem
 
-        audio_doc = db.audios.find_one({"filename": {"$regex": f"^{base_name}"}})
-        audio_url = f"/api/assets/audios/{audio_doc['filename']}" if audio_doc else None
+        
+        audio_doc = db.audios.find_one(
+            {"basename": basename},
+            {"filename": 1}
+        )
+
+        
+        if not audio_doc:
+            audio_doc = db.audios.find_one(
+                {"filename": {"$regex": f"^{basename}\\.", "$options": "i"}},
+                {"filename": 1}
+            )
+
+        audio_filename = audio_doc["filename"] if audio_doc else None
+        audio_url = img.get("audioUrl") or (f"/api/assets/audios/{audio_filename}" if audio_filename else None)
 
         items.append({
             "_id": str(img["_id"]),
-            "imageUrl": f"/api/assets/images/{img_name}",
+            "imageUrl": image_url,
             "audioUrl": audio_url,
-            "createdAt": img["created_on"]
+            "createdAt": created_at,
+            "basename": basename,                  
+            "imageFilename": image_filename,       
+            "audioFilename": audio_filename,       
         })
 
     return {"items": items, "page": page, "limit": limit, "total": total_count}
