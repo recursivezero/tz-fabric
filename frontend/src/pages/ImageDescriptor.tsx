@@ -44,10 +44,6 @@ const ImageDescription = () => {
         </div>
       </div>
 
-      <div>
-        <button onClick={() => navigate("/upload")}>Upload and Record</button>
-      </div>
-
       {(uploadedImageUrl || sampleImageUrl) && (
         <div className="result-wrapper">
           <ImagePreview

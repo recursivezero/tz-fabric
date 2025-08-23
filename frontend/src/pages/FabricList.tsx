@@ -46,6 +46,10 @@ export default function ContentGrid() {
     const last = (it.imageUrl || "").split("/").pop() || "";      
     return last.replace(/\.[^.]+$/, "");
   }
+  const cleanName = (filename: string) => {
+    if (!filename) return "";
+    return filename.split("_")[0].split(".")[0];
+  };
   return (
     <div className="grid-page">
       <div className="upload-wrapper">
@@ -89,7 +93,7 @@ export default function ContentGrid() {
               />
             </div>
             <div className="media-name" title={pickDisplayName(it)}>
-              {pickDisplayName(it)}
+              {cleanName(pickDisplayName(it))}
             </div>
 
             <div className="media-audio">

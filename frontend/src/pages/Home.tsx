@@ -8,7 +8,6 @@ export default function Home() {
 
       <main className="home__container">
         <header className="home__hero">
-          <span className="home__badge">Fabric Analyzer</span>
           <h1 className="home__title">Work with your media, faster.</h1>
           <p className="home__sub">
             Upload & record audio, describe images with AI, and revisit your saved

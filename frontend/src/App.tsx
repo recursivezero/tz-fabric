@@ -1,12 +1,13 @@
-
 import './App.css';
 import { Routing } from './Routing';
 
 const App = () => {
   return (
-    <div className='container'>
-      <header>
-        <h1>Fabric Finder</h1>
+    <div className="container">
+      <header className="header">
+        <div className="logo-title">
+          <h1>Fabric Finder</h1>
+        </div>
         <nav>
           <ul>
             <li><a href="/">Home</a></li>
@@ -14,11 +15,11 @@ const App = () => {
             <li><a href="/upload">Upload</a></li>
             <li><a href="/view">List</a></li>
             <li><a href="/search">Search</a></li>
-        </ul>
-      </nav>
+          </ul>
+        </nav>
       </header>
       <main>
-        <Routing/>
+        <Routing />
       </main>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useUploadAndRecord } from "../hooks/feature";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Loader from "../components/Loader";
 import "../styles/UploadPage.css";
 import Notification from "../components/Notification";
@@ -8,7 +8,6 @@ import Notification from "../components/Notification";
 type AudioMode = "upload" | "record";
 
 const UploadPage = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const prefill = (location.state as any)?.prefill;
   const {
@@ -32,7 +31,7 @@ const UploadPage = () => {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const [audioMode, setAudioMode] = useState<AudioMode>("record");
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState<string>("test");
 
   const canSubmit = !!imageUrl && !!audioUrl && !loading;
   const showUploadAudio = audioMode === "upload" && !audioUrl;
@@ -251,10 +250,9 @@ const UploadPage = () => {
         </div>
       </div>
       <div className="name-field">
-        <label className="name-label">Optional name</label>
+        <label className="name-label">Your Filename</label>
         <input
           type="text"
-          placeholder="e.g. wedding_saree"
           value={name}
           onChange={(e) => setName(e.target.value)}
           aria-label="Optional name for saving files"
@@ -271,10 +269,6 @@ const UploadPage = () => {
         >
           {loading ? "Submitting…" : "Submit"}
         </button>
-
-        <div className="navigation">
-          <button onClick={() => navigate("/view")}>Your Media</button>
-        </div>
       </div>
 
       {loading && <Loader />}

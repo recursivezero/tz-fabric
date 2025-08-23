@@ -19,7 +19,10 @@ export default function Search() {
     setFile(f);
     setPage(1);
   };
-
+  const cleanName = (filename: string) => {
+    if (!filename) return "";
+    return filename.split("_")[0].split(".")[0];
+  };
   const handleSearch = async () => {
     if (!file) return;
     setNotification(null);
@@ -125,7 +128,7 @@ export default function Search() {
                 </div>
 
                 <div className="result-name" title={item.filename}>
-                  {item.filename}
+                  {cleanName(item.filename)}
                 </div>
 
                 <div className="result-audio">
