@@ -3,7 +3,13 @@
   margin-bottom: 40px;
 }
 
-.sample-grid {
+.sample-gallery h2 {
+  font-size: 1.8em;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.sample-gallery .sample-grid {
   display: flex;
   justify-content: center;
   gap: 20px;
@@ -11,7 +17,7 @@
   margin-top: 20px;
 }
 
-.sample-card {
+.sample-gallery .sample-card {
   position: relative;
   width: 200px;
   height: 200px;
@@ -21,11 +27,11 @@
   transition: transform 1s ease;
 }
 
-.sample-card:hover {
+.sample-gallery .sample-card:hover {
   transform: scale(1.03);
 }
 
-.sample-img {
+.sample-gallery .sample-img {
   width: 100%;
   height: 100%;
   object-fit: cover; 
@@ -33,7 +39,7 @@
   display: block;
 }
 
-.analyze-button {
+.sample-gallery .analyze-button {
   position: absolute;
   bottom: 10px;
   left: 50%;
@@ -47,7 +53,7 @@
   cursor: pointer;
 }
 
-.sample-card:hover .analyze-button {
+.sample-gallery .sample-card:hover .analyze-button {
   display: block;
   transition: ease-out;
 }

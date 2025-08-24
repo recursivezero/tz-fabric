@@ -3,9 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from routes import analysis, regenerate, validate_image
+from pymongo import MongoClient
+from dotenv import load_dotenv
+from constants import UPLOAD_ROOT
+
+import os
+from routes import analysis, regenerate, validate_image, search, submit, media
 
 app = FastAPI()
+load_dotenv()
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,15 +21,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files (CSS, JS, etc.)
+client = MongoClient(os.getenv("MongoDB_URI"))
+db  = client.get_database("tz-fabric")
+
+app.monogo_client = client
+app.database = db
+
+os.makedirs(UPLOAD_ROOT, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Set up templates
 templates = Jinja2Templates(directory="templates")
 
 app.include_router(analysis.router, prefix="/api")
 app.include_router(regenerate.router, prefix="/api")
 app.include_router(validate_image.router, prefix="/api")
+app.include_router(search.router, prefix="/api")
+app.include_router(submit.router, prefix="/api")    
+app.include_router(media.router, prefix="/api")
+
 
 
 # if __name__ == "__main__":
