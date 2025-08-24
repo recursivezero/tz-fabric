@@ -15,6 +15,7 @@
   text-align: center;
   color: #ffffff;
   text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+  margin-top: 5px;
 }
 
 .search-container .uploader-row {
@@ -78,7 +79,7 @@
 .search-container .empty-hint { color: #b7c3d1; }
 
 .search-container .section-header {
-  margin: 0;                           /* compact */
+  margin: 0;                           
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -101,7 +102,6 @@
   border: 1px solid rgba(255,255,255,0.16);
 }
 
-/* Pager (kept small and inline) */
 .pagination-controls,
 .search-container .pager {
   display: inline-flex;
@@ -120,21 +120,17 @@
 .pagination-controls button:disabled { opacity: .5; cursor: not-allowed; }
 .search-container .page-indicator { font-size: 12px; color: #d8e0ea; }
 
-/* --- Results grid (fills remaining height, internal scroll only if needed) --- */
 .result-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 14px;
   align-content: start;
-
-  /* no page scroll; only this section scrolls if needed */
   overflow: auto;
   padding-right: 4px;
 }
 .result-grid::-webkit-scrollbar { width: 8px; }
 .result-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 8px; }
 
-/* Cards */
 .result-card {
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: 14px;
@@ -158,8 +154,7 @@
   border: 1px solid rgba(255,255,255,0.18);
 }
 
-/* Legacy grid/card styles kept compatible (if still used elsewhere) */
-.search-container .grid { display: contents; } /* let .result-grid handle layout */
+.search-container .grid { display: contents; } 
 .search-container .card,
 .search-container .card-body,
 .search-container .card-img,
