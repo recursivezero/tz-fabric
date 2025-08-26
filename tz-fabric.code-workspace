@@ -28,6 +28,9 @@
 		"cSpell.words": [
 			"generativeai",
 			"Threadzip"
-		]
+		],
+		"files.exclude": {
+			"**/node_modules": true
+		}
 	}
 }
