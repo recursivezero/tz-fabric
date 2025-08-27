@@ -44,7 +44,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(27, 34, 48, 0.85);
   backdrop-filter: blur(6px);
   padding: 0.5rem 1rem;
   border-radius: 12px;
@@ -60,7 +60,7 @@
   font-size: 1.6rem;
   font-weight: 700;
   margin: 0;
-  color: #333;
+  color: #ffffff;
   letter-spacing: 1px;
 }
 
@@ -78,7 +78,7 @@ nav li {
 
 nav a {
   text-decoration: none;
-  color: #333;
+  color: #f3f3f3;
   font-weight: 500;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;

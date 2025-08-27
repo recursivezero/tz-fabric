@@ -7,7 +7,7 @@ import Loader from "../components/Loader";
 export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
   const [file, setFile] = useState<File | null>(null);
-  const [k, setK] = useState(1);
+  const [k, setK] = useState('');
   const [notification, setNotification] = useState<{ message: string, type: "success" | "error" } | null>(null);
 
 
@@ -89,12 +89,6 @@ export default function Search() {
         </button>
       </div>
 
-      {notification && (
-        <Notification message={notification.message} type={notification.type} />
-      )}
-      {loading && <Loader />}
-      {error && <p className="search-error">{error}</p>}
-
       {file && (
         <div className="preview-box">
           <p className="section-title">Query Image</p>
@@ -105,7 +99,11 @@ export default function Search() {
           />
         </div>
       )}
-
+      {notification && (
+        <Notification message={notification.message} type={notification.type} />
+      )}
+      {loading && <Loader />}
+      {error && <p className="search-error">{error}</p>}
       {exactMatches.length > 0 ? (
         <>
           <div className="pagination-controls">
