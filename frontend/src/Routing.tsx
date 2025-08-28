@@ -4,6 +4,7 @@ import ContentGrid from "./pages/FabricList";
 import Search from "./pages/FabricSearch";
 import Home from "./pages/Home";
 import ImageDescription from "./pages/ImageDescriptor";
+import Chat from "./pages/Chat";
 
 export const Routing = () => {
   return (
@@ -14,6 +15,7 @@ export const Routing = () => {
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/view" element={<ContentGrid />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/chat" element={<Chat />} />
       </Routes>
     </Router>
   );

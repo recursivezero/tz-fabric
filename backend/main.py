@@ -8,10 +8,7 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from constants import API_PREFIX, ASSETS
 import os
-from routes import analysis, regenerate, validate_image, search, submit, media
-from utils.emoji_logger import get_logger
-
-load_dotenv()
+from routes import analysis, regenerate, validate_image, search, submit, media, chat
 
 app = FastAPI()
 logger = get_logger(__name__)
@@ -95,6 +92,7 @@ app.include_router(validate_image.router, prefix=API_PREFIX)
 app.include_router(search.router, prefix=API_PREFIX)
 app.include_router(submit.router, prefix=API_PREFIX)
 app.include_router(media.router, prefix=API_PREFIX)
+app.include_router(chat.router, prefix=API_PREFIX)
 
 
 @app.get("/", response_class=HTMLResponse)
