@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 
+
 def sanitize_filename(filename: str) -> str:
     base = filename.rsplit(".", 1)[0]
     base = re.sub(r'\s+', '', base)

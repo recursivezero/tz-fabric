@@ -15,6 +15,7 @@ const App = () => {
             <li><a href="/upload">Upload</a></li>
             <li><a href="/view">List</a></li>
             <li><a href="/search">Search</a></li>
+            <li><a href="/chat">Chat</a></li>
           </ul>
         </nav>
       </header>

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from constants import UPLOAD_ROOT
 
 import os
-from routes import analysis, regenerate, validate_image, search, submit, media
+from routes import analysis, regenerate, validate_image, search, submit, media, chat
 
 app = FastAPI()
 load_dotenv()
@@ -38,7 +38,7 @@ app.include_router(validate_image.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
 app.include_router(submit.router, prefix="/api")    
 app.include_router(media.router, prefix="/api")
-
+app.include_router(chat.router, prefix="/api")
 
 
 # if __name__ == "__main__":
