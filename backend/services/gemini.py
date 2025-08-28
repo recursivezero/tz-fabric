@@ -12,7 +12,6 @@ SYSTEM_PROMPT = (
     "Always answer in simple, clear language."
 )
 
-# Create a reusable model client
 model = genai.GenerativeModel(
     model_name=settings.GEMINI_MODEL,
     system_instruction=SYSTEM_PROMPT,
