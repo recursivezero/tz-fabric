@@ -10,7 +10,6 @@ export default function useChat() {
   const [error, setError] = useState<string>("");
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
-  // auto-scroll to bottom on new messages
   useEffect(() => {
     const el = scrollerRef.current;
     if (el) el.scrollTop = el.scrollHeight;

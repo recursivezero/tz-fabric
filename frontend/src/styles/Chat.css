@@ -1,52 +1,153 @@
+
 .chat-page {
-  height: 100%;
+  min-height: 90vh;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr auto; 
+  background: transparent;
 }
-
+.link {
+  background: none;
+  border: none;
+  color: #ae00ff;
+  cursor: pointer;
+  padding: 12px 16px;
+  text-decoration: underline;
+}
 .chat-header {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:12px 16px; border-bottom:1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
-
-.link { background:none; border:none; color:#2563eb; cursor:pointer; }
 
 .chat-list {
+  margin-top: 0;                
   padding: 12px 16px;
   overflow-y: auto;
-  background:#fafafa;
+  padding-bottom: 88px;          
 }
 
-.chat-bubble {
-  display:flex; margin:8px 0;
+.content-col {
+  max-width: 920px;
+  margin: 0 auto;
 }
-.chat-bubble.user { justify-content:flex-end; }
-.chat-bubble.bot { justify-content:flex-start; }
+
+.msg-row {
+  display: flex;
+  margin: 8px 0;
+}
+
+.msg-row.right { justify-content: flex-end; }
+.msg-row.left  { justify-content: flex-start; }
+
+.bubble {
+  max-width: min(75ch, 80%);
+  padding: 10px 12px;
+  border-radius: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.bubble.user {
+  background: #2563eb;
+  color: #fff;
+  border-top-right-radius: 4px;
+}
+
+.assistant-block {
+  background: #fff;
+  color: #000;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  border-top-left-radius: 4px;
+  padding: 12px 14px;
+}
+
+.chat-bubble { display: flex; margin: 8px 0; }
+.chat-bubble.user { justify-content: flex-end; }
+.chat-bubble.bot  { justify-content: flex-start; }
 
 .chat-bubble .bubble {
   max-width: min(75ch, 80%);
-  padding:10px 12px; border-radius:12px;
-  line-height:1.4; white-space:pre-wrap;
+  padding: 10px 12px; border-radius: 12px;
+  line-height: 1.4; white-space: pre-wrap;
 }
-.chat-bubble.user .bubble { background:#2563eb; color:white; border-top-right-radius:4px; }
-.chat-bubble.bot .bubble { background:white; border:1px solid #e5e7eb; border-top-left-radius:4px; color: black;}
+.chat-bubble.user .bubble {
+  background: #2563eb; color: #fff; border-top-right-radius: 4px;
+}
+.chat-bubble.bot .bubble {
+  background: #fff; color: #000;
+  border: 1px solid #e5e7eb; border-top-left-radius: 4px;
+}
+
 
 .composer {
-  display:flex; gap:8px; padding:12px; border-top:1px solid #e5e7eb; background:white;
+  position: sticky;  
+  bottom: 0;
+  z-index: 5;
+
+  display: flex;
+  gap: 8px;
+  padding: 12px;
 }
+
 .composer textarea {
-  flex:1; resize:none; padding:10px; border:1px solid #e5e7eb; border-radius:8px; outline:none;
+  flex: 1;
+  resize: none;
+  padding: 10px;
+  border-radius: 8px;
+  outline: none;
+  max-height: 35dvh;     
+  font: inherit;
 }
+
 .composer button {
-  padding:0 14px; border:none; border-radius:8px; background:#2563eb; color:white; cursor:pointer;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
 }
-.composer button[disabled] { opacity:.6; cursor:not-allowed; }
+.composer button[disabled] {
+  opacity: .6;
+  cursor: not-allowed;
+}
 
-.empty-state { padding:24px; text-align:center; }
-.empty-state .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px; }
-.chip { border:1px solid #e5e7eb; padding:8px 10px; border-radius:999px; background:white; cursor:pointer; }
+.typing {
+  padding: 4px 16px;
+  font-size: 14px;
+  color: #6b7280;
+}
 
-.typing { padding:4px 16px; font-size:14px; color:#6b7280; }
+.error {
+  padding: 8px 16px;
+  color: #b91c1c;
+  background: #fee2e2;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid #fecaca;
+  border-bottom: 1px solid #fecaca;
+}
 
-.error { padding:8px 16px; color:#b91c1c; background:#fee2e2; display:flex; gap:12px; align-items:center; }
-.error button { background:none; border:1px solid #ef4444; color:#b91c1c; padding:4px 8px; border-radius:6px; cursor:pointer; }
+.error button {
+  background: none;
+  border: 1px solid #ef4444;
+  color: #b91c1c;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.empty-state { padding: 24px; text-align: center; }
+.empty-state h2 { margin: 0 0 12px; font-size: 24px; color: #000; }
+.empty-state p  { margin: 0 0 12px; color: #000; }
+.empty-state .chips {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px;
+}
+.chip {
+  border: 1px solid #e5e7eb; padding: 8px 10px; border-radius: 999px; background: #fff; cursor: pointer;
+}
