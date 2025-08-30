@@ -2,13 +2,13 @@
   width: 55%;
 }
 
-.nav-buttons {
+.description-wrapper .nav-buttons {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
 }
 
-.nav-btn {
+.description-wrapper .nav-btn {
   background: #5842742d;
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -17,7 +17,7 @@
   cursor: pointer;
 }
 
-.nav-btn.disabled {
+.description-wrapper .nav-btn.disabled {
   background: #ccc;
   cursor: not-allowed;
 }
@@ -33,7 +33,7 @@
   }
 }
 
-.description-box {
+.description-wrapper .description-box {
   animation: fadeSlideIn 1s ease-out forwards;
   transition: opacity 0.3s ease-in-out;
   background: rgba(99, 94, 94, 0.51);
@@ -50,7 +50,7 @@
   position: relative;
 }
 
-.description-content {
+.description-wrapper .description-content {
   overflow-y: auto;
   max-height: 150px;
   padding-right: 5px;
@@ -58,24 +58,24 @@
   -ms-overflow-style: none;
 }
 
-.loader-wrapper {
+.description-wrapper .loader-wrapper {
   text-align: center;
 }
 
-.description-box.error {
+.description-wrapper .description-box.error {
   background: rgba(99, 94, 94, 0.51);
   border: 1px solid rgba(255, 255, 255, 0.71);
   animation: fadeSlideIn 1s ease-out forwards;
   transition: opacity 0.3s ease-in-out;
 }
 
-.error-text {
+.description-wrapper .error-text {
   color: #ff4d4f;
   font-weight: 600;
   font-size: 19px;
 }
 
-.response-counter{
+.description-wrapper .response-counter{
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -86,7 +86,7 @@
   font-weight: 600;
 }
 
-.copy-btn {
+.description-wrapper .copy-btn {
   color: #ffffff;
   cursor: pointer;
   font-size: 14px;
@@ -98,7 +98,7 @@
   transition: background 0.2s ease;
 }
 
-.copy-btn:hover {
+.description-wrapper .copy-btn:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 

@@ -18,7 +18,7 @@ const AnimatedSearchBox = ({ onSearch, loading }) => {
   };
 
   return (
-    <div className="search-container">
+    <div className="searchbar-container">
       <div className="top-texts">
         <span className="animated-placeholder shimmer-text">
           Upload a fabric image <span style={{ margin: "0 8px" }}>or</span>

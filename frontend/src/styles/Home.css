@@ -1,40 +1,150 @@
-.home-container {
-  padding: 20px;
+
+.home {
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  isolation: isolate;
+  color: var(--text-100);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+}
+
+.home__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.home__bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(1px);
+}
+
+.home__container {
+  width: auto;
+  padding: 36px 20px 64px;
+  margin: 0 auto;
+}
+
+
+.home__hero { text-align: center; margin: 24px 0 40px; }
+
+.home__badge {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-1);
+  background: linear-gradient(135deg, rgba(124,58,237,0.22), rgba(34,211,238,0.16));
+  color: var(--text-200);
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.home__title {
+  margin: 0 0 8px;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.15;
+  color: #351010;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+}
+
+.home__sub {
+  margin: 0 auto;
+  width: auto;
+  color: #00e5ff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.home__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+@media (max-width: 900px) { .home__grid { grid-template-columns: 1fr; } }
+
+.home__card {
+  position: relative;
+  display: block;
+  background: rgba(21, 26, 33, 0.85);            
+  border: 1px solid var(--border-2);
+  border-radius: 18px;
+  padding: 22px;
   overflow: hidden;
-  height: 85vh;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+  text-decoration: none;
+  color: var(--text-100);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  backdrop-filter: blur(6px);
+}
+.home__card::before {
+  content: "";
+  position: absolute; inset: -1px; border-radius: 18px;
+  background:
+    radial-gradient(600px 200px at 0% 0%, rgba(124,58,237,0.18), transparent 60%),
+    radial-gradient(400px 160px at 100% 100%, rgba(34,211,238,0.16), transparent 55%);
+  opacity: 0; transition: opacity 160ms ease; pointer-events: none;
+}
+.home__card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124,58,237,0.45);
+  background: rgba(21,26,33,0.92);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+}
+.home__card:hover::before { opacity: 1; }
+
+
+.home__icon {
+  font-size: 34px;
+  display: inline-flex;
+  width: 48px; height: 48px;
+  align-items: center; justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(124,58,237,0.28), rgba(34,211,238,0.22));
+  border: 1px solid var(--border-1);
+  color: var(--text-100);
 }
 
-.upload-wrapper {
-  width: 100%;
-  margin-top: 30px;
-  display: flex;
-  justify-content: center;
+.home__cardTitle {
+  margin: 14px 0 6px;
+  font-size: 20px;
+  color: var(--text-100);
+}
+.home__cardText {
+  margin: 0 0 18px;
+  color: var(--text-300);
 }
 
-.upload-inner {
-  width: calc(100% - 80px);
-  margin-bottom: 15px;
+.home__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  color: var(--text-100);
+  background: linear-gradient(135deg, rgba(124,58,237,0.32), rgba(34,211,238,0.24));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+.home__cta:hover {
+  filter: brightness(1.05);
+  border-color: rgba(124,58,237,0.55);
 }
 
-.result-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-top: 20px;
-  gap: 40px;
-  padding: 0 40px;
-  flex-wrap: wrap;
+.home__footer {
+  margin-top: 46px;
+  text-align: center;
+  color: var(--text-300);
+  font-size: 14px;
+  opacity: 0.95;
 }
 
-.drawer-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: 250px;
-  background: #f4f4f4;
-  padding: 20px 10px;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  z-index: 998;
+.home__footer span{
+  font-weight: 900;
 }
