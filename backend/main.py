@@ -24,7 +24,7 @@ app.add_middleware(
 client = MongoClient(os.getenv("MongoDB_URI"))
 db  = client.get_database("tz-fabric")
 
-app.monogo_client = client
+app.mongo_client = client
 app.database = db
 
 os.makedirs(UPLOAD_ROOT, exist_ok=True)

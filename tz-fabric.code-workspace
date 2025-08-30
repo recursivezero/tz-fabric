@@ -26,8 +26,10 @@
 		},
 		"peacock.color": "#a13d22",
 		"cSpell.words": [
+			"dotenv",
 			"generativeai",
-			"Threadzip"
+			"Threadzip",
+			"VITE"
 		],
 		"files.exclude": {
 			"**/node_modules": true
