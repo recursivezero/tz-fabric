@@ -56,13 +56,27 @@
 }
 
 .assistant-block {
+  width: 100%;
+  height: auto;
   background: #fff;
   color: #000;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   border-top-left-radius: 4px;
   padding: 12px 14px;
+  text-align: left;  
 }
+
+.assistant-block ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.assistant-block li {
+  margin-bottom: 0.25rem;
+}
+
 
 .chat-bubble { display: flex; margin: 8px 0; }
 .chat-bubble.user { justify-content: flex-end; }

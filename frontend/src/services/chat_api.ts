@@ -9,8 +9,7 @@ interface ChatResponse {
   reply: Message;
 }
 
-const API_BASE =
-  (import.meta as any)?.env?.VITE_API_BASE || "http://127.0.0.1:8001";
+const API_BASE = "http://127.0.0.1:8000";
 
 export async function chatOnce(messages: Message[]): Promise<Message> {
   const res = await fetch(`${API_BASE}/api/chat`, {

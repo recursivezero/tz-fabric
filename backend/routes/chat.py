@@ -29,17 +29,32 @@ ALLOWED_HINTS = [
     "analysis","analyser","analyzer","upload","image","model","tagging","feature","chatbot","ui","ux"
 ]
 
+CHITCHAT_HINTS = [
+    "hi", "hello", "hey", "good morning", "good evening",
+    "how are you", "what can you do", "help", "thanks", "thank you"
+]
+
 REFUSAL_MESSAGE = (
-    "Sorry—this chatbot only answers **fabric/textile** questions or **how to use this app**.\n"
+    "❌ I can only answer **fabric/textile** questions or **how to use this app**.\n\n"
     "Try asking things like:\n"
     "• Difference between knit and woven\n"
     "• What is GSM and how is it measured?\n"
     "• How to use the image analysis feature here"
 )
 
-def is_on_topic(user_text: str) -> bool:
+CHITCHAT_RESPONSE = (
+    "👋 Hi there! I’m your Fabric Finder assistant. "
+    "I can help you with fabrics, textiles, and how to use this app. "
+    "Ask me about weave, knit, GSM, fibers, or try uploading an image for analysis!"
+)
+
+def classify_message(user_text: str) -> str:
     t = user_text.lower()
-    return any(h in t for h in ALLOWED_HINTS)
+    if any(h in t for h in ALLOWED_HINTS):
+        return "fabric"
+    if any(h in t for h in CHITCHAT_HINTS):
+        return "chitchat"
+    return "blocked"
 
 MAX_MESSAGES = 30
 MAX_TOTAL_CHARS = 20000
@@ -57,8 +72,14 @@ async def chat_endpoint(body: ChatRequest):
     if not last_user:
         raise HTTPException(status_code=400, detail="Need at least one user message.")
 
-    if not is_on_topic(last_user):
+    category = classify_message(last_user)
+
+    if category == "blocked":
         reply = Message(role="assistant", content=REFUSAL_MESSAGE)
+        return ChatResponse(reply=reply)
+
+    if category == "chitchat":
+        reply = Message(role="assistant", content=CHITCHAT_RESPONSE)
         return ChatResponse(reply=reply)
 
     if len(body.messages) > MAX_MESSAGES:
