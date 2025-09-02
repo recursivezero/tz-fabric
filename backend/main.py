@@ -6,12 +6,16 @@ from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from constants import UPLOAD_ROOT
+import logging
 
 import os
 from routes import analysis, regenerate, validate_image, search, submit, media
 
 app = FastAPI()
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,6 +43,14 @@ app.include_router(search.router, prefix="/api")
 app.include_router(submit.router, prefix="/api")    
 app.include_router(media.router, prefix="/api")
 
+
+@app.on_event("startup")
+async def startup_db_client():
+    try:
+        client.admin.command("ping")  # simple health check
+        logger.info("Successfully connected to MongoDB!")
+    except errors.ConnectionFailure as e:
+        logger.error(f"Could not connect to MongoDB: {e}")
 
 
 # if __name__ == "__main__":

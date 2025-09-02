@@ -200,7 +200,7 @@ export const useUploadAndRecord = () => {
     setLoading(true);
     setNotification(null);
     try {
-      const res = await fetch("http://localhost:8001/api/submit", {
+      const res = await fetch("http://localhost:8000/api/submit", {
         method: "POST",
         body: formData,
       });

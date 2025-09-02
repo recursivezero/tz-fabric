@@ -24,7 +24,7 @@ export interface SearchResponse {
   results: SearchItem[];
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8001";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 export async function searchSimilar(
   file: File,
