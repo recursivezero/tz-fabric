@@ -39,10 +39,8 @@ def list_media_content(
             {
                 "_id": 1,
                 "filename": 1,     
-                "imageUrl": 1,
-                "audioUrl": 1,
                 "created_on": 1,
-                "basename": 1,        
+                "basename": 1,
             }
         )
         .sort("created_on", -1)
@@ -53,35 +51,27 @@ def list_media_content(
     items = []
     for img in cursor:
         image_filename = img.get("filename")
-        image_url = img.get("imageUrl") or f"/api/assets/images/{image_filename}"
+        basename = img.get("basename") or Path(image_filename).stem
         created_at = img.get("created_on")
 
-        basename = img.get("basename") or Path(image_filename).stem
+        image_url = f"/api/assets/images/{image_filename}" if image_filename else None
 
-        
+        # find matching audio by basename
         audio_doc = db.audios.find_one(
             {"basename": basename},
             {"filename": 1}
         )
-
-        
-        if not audio_doc:
-            audio_doc = db.audios.find_one(
-                {"filename": {"$regex": f"^{basename}\\.", "$options": "i"}},
-                {"filename": 1}
-            )
-
         audio_filename = audio_doc["filename"] if audio_doc else None
-        audio_url = img.get("audioUrl") or (f"/api/assets/audios/{audio_filename}" if audio_filename else None)
+        audio_url = f"/api/assets/audios/{audio_filename}" if audio_filename else None
 
         items.append({
             "_id": str(img["_id"]),
             "imageUrl": image_url,
             "audioUrl": audio_url,
             "createdAt": created_at,
-            "basename": basename,                  
-            "imageFilename": image_filename,       
-            "audioFilename": audio_filename,       
+            "basename": basename,
+            "imageFilename": image_filename,
+            "audioFilename": audio_filename,
         })
 
     return {"items": items, "page": page, "limit": limit, "total": total_count}

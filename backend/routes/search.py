@@ -95,12 +95,21 @@ async def search_similar(
     for meta, sim in zip(metadatas, similarities):
         if sim < min_sim:
             continue
-        if require_audio and not (meta.get("audioUrl") and str(meta.get("audioUrl")).strip()):
+
+        
+        image_fn = meta.get("imageFilename")
+        audio_fn = meta.get("audioFilename")
+
+        meta["imageUrl"] = f"/api/assets/images/{image_fn}" if image_fn else None
+        meta["audioUrl"] = f"/api/assets/audios/{audio_fn}" if audio_fn else None
+
+        if require_audio and not audio_fn:
             continue
 
         ts = _created_ts(meta)
         if debug_ts:
             meta["_ts"] = ts
+
         items.append(SearchItem(score=sim, metadata=meta))
 
     if order == "recent":
