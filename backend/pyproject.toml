@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "fabric-analyzer"
 version = "0.1.0"
-description = "this is fabric analyzer backend"
-authors = ["recursivezero <recursivezero@example.com>"]
+description = "This is fabric analyzer backend"
+authors = ["recursivezero <recursivezero@outlook.com>"]
 readme = "README.md"
 package-mode = false
 packages = [{ include = "cli.py" }]
