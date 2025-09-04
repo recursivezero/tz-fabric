@@ -8,19 +8,23 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from constants import API_PREFIX, ASSETS
 import os
-from routes import analysis, regenerate, validate_image, search, submit, media, chat
 
 app = FastAPI()
 logger = get_logger(__name__)
 
 origins = [
-    "http://localhost:5173",  # Allow requests from your frontend origin
-    # You can add more origins here if needed
+    "http://localhost:5173", 
 ]
+from routes import analysis, regenerate, validate_image, search, submit, media, chat
+from tools.mcpserver import sse_app
 
+app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
+load_dotenv()
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:5173"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -51,6 +55,10 @@ else:
 print("Connected to MongoDB, using database:", db.name)
 
 app.mongo_client = client
+client = MongoClient(os.getenv("MongoDB_URI"))
+db = client.get_database("tz-fabric")
+
+app.mongo_client = client   
 app.database = db
 
 os.makedirs(ASSETS, exist_ok=True)
@@ -94,6 +102,8 @@ app.include_router(submit.router, prefix=API_PREFIX)
 app.include_router(media.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix=API_PREFIX)
 
+
+app.mount("/mcp", sse_app())
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):

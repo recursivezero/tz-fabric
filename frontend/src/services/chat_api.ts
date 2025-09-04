@@ -5,13 +5,21 @@ export interface Message {
   content: string;
 }
 
-interface ChatResponse {
+// NEW: Action type from backend
+export interface Action {
+  type: "redirect_to_analysis";
+  params: { image_url: string | null; mode: string };
+}
+
+export interface ChatResponse {
   reply: Message;
+  action?: Action;
+  bot_messages?: string[];
 }
 
 const API_BASE = "http://127.0.0.1:8000";
 
-export async function chatOnce(messages: Message[]): Promise<Message> {
+export async function chatOnce(messages: Message[]): Promise<ChatResponse> {
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -31,6 +39,5 @@ export async function chatOnce(messages: Message[]): Promise<Message> {
     throw new Error(msg);
   }
 
-  const data = (await res.json()) as ChatResponse;
-  return data.reply;
+  return (await res.json()) as ChatResponse;
 }
