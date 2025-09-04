@@ -8,23 +8,26 @@ from dotenv import load_dotenv
 from constants import UPLOAD_ROOT
 
 import os
-from routes import analysis, regenerate, validate_image, search, submit, media, chat
 
-app = FastAPI()
+from routes import analysis, regenerate, validate_image, search, submit, media, chat
+from tools.mcpserver import sse_app
+
+app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
 load_dotenv()
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 client = MongoClient(os.getenv("MongoDB_URI"))
-db  = client.get_database("tz-fabric")
+db = client.get_database("tz-fabric")
 
-app.monogo_client = client
+app.mongo_client = client   
 app.database = db
 
 os.makedirs(UPLOAD_ROOT, exist_ok=True)
@@ -36,15 +39,13 @@ app.include_router(analysis.router, prefix="/api")
 app.include_router(regenerate.router, prefix="/api")
 app.include_router(validate_image.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
-app.include_router(submit.router, prefix="/api")    
+app.include_router(submit.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 
+app.mount("/mcp", sse_app())
 
-# if __name__ == "__main__":
-    
-#     port = int(os.getenv("PORT"))
-#     uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True)
+# Root
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})

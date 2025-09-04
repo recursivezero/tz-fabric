@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { fetchImageAsFile } from "../utils/imageUtils.ts";
-import { analyzeImage, regenerateresposne, validateImageAPI} from "../services/analyze_Api.ts";
+import { analyzeImage, regenerateresposne, validateImageAPI } from "../services/analyze_Api.ts";
 
 const useImageAnalysis = () => {
   const [showResults, setShowResults] = useState(false);
@@ -22,7 +23,29 @@ const useImageAnalysis = () => {
   const [canUpload, setCanUpload] = useState(true);
 
 
+  const location = useLocation();
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const mode = params.get("mode");
+    const imageUrl = params.get("image_url");
+
+    if (imageUrl && mode && !currentFile) {
+      // Auto-fetch image from URL and run analysis
+      const run = async () => {
+        try {
+          const filename = imageUrl.split("/").pop() || "fabric.jpg";
+          const file = await fetchImageAsFile(imageUrl, filename);
+          setCurrentFile(file);
+          setUploadedImageUrl(imageUrl);
+          await handleRunAnalysis(file, mode);
+        } catch (err) {
+          console.error("Failed to auto-run analysis from query params:", err);
+        }
+      };
+      run();
+    }
+  }, [location.search]);
   useEffect(() => {
     const tokens = description.split(" ");
     if (currentIndex !== 0 || !description) return;

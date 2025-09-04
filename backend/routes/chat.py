@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
-from datetime import datetime
-from services.gemini import chat_once
+from typing import List, Literal, Optional, Dict, Any
+from agent.graph import agent_graph, SYSTEM_PROMPT
 
 router = APIRouter(tags=["chat"])
 
@@ -15,8 +14,14 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     messages: List[Message]
 
+class Action(BaseModel):
+    type: Literal["redirect_to_analysis"]
+    params: Dict[str, Any]
+
 class ChatResponse(BaseModel):
     reply: Message
+    action: Optional[Action] = None
+    bot_messages: Optional[List[str]] = None
 
 ALLOWED_HINTS = [
     "fabric","textile","cloth","garment","apparel","yarn","fiber","fibre","cotton","polyester",
@@ -59,6 +64,7 @@ def classify_message(user_text: str) -> str:
 MAX_MESSAGES = 30
 MAX_TOTAL_CHARS = 20000
 
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(body: ChatRequest):
     if not body.messages:
@@ -88,10 +94,37 @@ async def chat_endpoint(body: ChatRequest):
     if total_len > MAX_TOTAL_CHARS:
         raise HTTPException(status_code=400, detail="Conversation too long for this endpoint.")
 
-    try:
-        reply_text = chat_once([m.model_dump() for m in body.messages])
-    except Exception:
-        raise HTTPException(status_code=502, detail="Model error. Please try again.")
+    messages_payload = [m.model_dump() for m in body.messages]
+    if not any(m["role"] == "system" for m in messages_payload):
+        messages_payload = [{"role": "system", "content": SYSTEM_PROMPT}] + messages_payload
 
-    reply = Message(role="assistant", content=reply_text)
+    try:
+        events = agent_graph.stream(
+            {"messages": messages_payload},
+            stream_mode="values",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Agent error: {str(e)}")
+
+    final = None
+    for ev in events:
+        final = ev
+
+    if not final:
+        raise HTTPException(status_code=502, detail="No response from agent.")
+
+    if isinstance(final, dict) and "type" in final and "bot_messages" in final:
+        resp_type = final["type"]
+        bot_messages = final.get("bot_messages", [])
+        params = final.get("params")
+        reply_text = bot_messages[0] if bot_messages else "OK."
+        reply = Message(role="assistant", content=reply_text)
+
+        if resp_type == "redirect_to_analysis" and isinstance(params, dict):
+            action = Action(type="redirect_to_analysis", params=params)
+            return ChatResponse(reply=reply, action=action, bot_messages=bot_messages)
+
+        return ChatResponse(reply=reply, action=None, bot_messages=bot_messages)
+
+    reply = Message(role="assistant", content=str(final))
     return ChatResponse(reply=reply)
