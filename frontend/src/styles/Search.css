@@ -77,7 +77,7 @@
   box-shadow: 0 0 0 2px rgba(25,162,226,0.35);
 }
 
-.search-container .search-error { color: #ffb5b5; }
+.search-container .search-error { color: #ff0000; }
 .search-container .empty-hint { color: #000811; margin-top: 5px; margin-bottom: 0;}
 
 .search-container .section-header {

@@ -19,16 +19,13 @@ UPLOAD_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 def _process_index_job(
     db,
     image_path: Path,
-    rel_path: str,
-    image_url: str,
-    audio_url: str,
+    basename: str,
+    image_filename: str,
+    audio_filename: str,
     created_on: str,
-    basename: str,               
-    image_filename: str,         
-    audio_filename: str          
 ):
     db.images.update_one(
-        {"relPath": rel_path, "status": "queued"},
+        {"filename": image_filename, "status": "queued"},
         {"$set": {"status": "processing"}}
     )
 
@@ -38,28 +35,28 @@ def _process_index_job(
 
         collection = get_index()
         metadata = {
-            "imageUrl": image_url,
-            "audioUrl": audio_url,
-            "createdAt": created_on,
-            "relPath": rel_path,
             "basename": basename,
             "imageFilename": image_filename,
             "audioFilename": audio_filename,
+            "createdAt": created_on,
         }
         collection.add(
-            ids=[rel_path],
+            ids=[image_filename],
             embeddings=[embedding],
             metadatas=[metadata]
         )
 
         db.images.update_one(
-            {"relPath": rel_path},
-            {"$set": {"status": "indexed", "indexedAt": datetime.utcnow().isoformat()},
+            {"filename": image_filename},
+            {"$set": {
+                "status": "indexed",
+                "indexedAt": datetime.utcnow().isoformat()
+            },
              "$unset": {"errorMessage": ""}}
         )
     except Exception as e:
         db.images.update_one(
-            {"relPath": rel_path},
+            {"filename": image_filename},
             {"$set": {"status": "failed", "errorMessage": str(e)}}
         )
 
@@ -74,12 +71,12 @@ async def submit_file(
 ):
     db = request.app.database
 
+    # pick base name
     if name and name.strip():
         base_name = sanitize_filename(name)
     else:
         base_name = sanitize_filename(image.filename)
 
-    
     image_ext = Path(image.filename).suffix.lower().lstrip(".")
     audio_ext = Path(audio.filename).suffix.lower().lstrip(".")
 
@@ -89,6 +86,7 @@ async def submit_file(
     image_path = UPLOAD_IMAGE_DIR / image_filename
     audio_path = UPLOAD_AUDIO_DIR / audio_filename
 
+    # save files
     image.file.seek(0)
     with image_path.open("wb") as out:
         shutil.copyfileobj(image.file, out)
@@ -97,47 +95,40 @@ async def submit_file(
     with audio_path.open("wb") as out:
         shutil.copyfileobj(audio.file, out)
 
-    rel_path = f"images/{image_filename}"  
-    image_url = f"/api/assets/images/{image_filename}"
-    audio_url = f"/api/assets/audios/{audio_filename}"
     created_on = datetime.utcnow().isoformat()
 
+    # store only clean metadata in DB
     db.images.insert_one({
-        "basename": base_name,             
+        "basename": base_name,
         "filename": image_filename,
         "created_on": created_on,
         "file_type": image.content_type,
-        "relPath": rel_path,
-        "imageUrl": image_url,
-        "audioUrl": audio_url,
         "status": "queued",
         "indexedAt": None,
         "errorMessage": None
     })
 
     db.audios.insert_one({
-        "basename": base_name,             
+        "basename": base_name,
         "filename": audio_filename,
         "created_on": created_on,
         "file_type": audio.content_type
     })
 
+    # schedule background indexing
     background.add_task(
         _process_index_job,
         db=db,
         image_path=image_path,
-        rel_path=rel_path,
-        image_url=image_url,
-        audio_url=audio_url,
-        created_on=created_on,
-        basename=base_name,                
-        image_filename=image_filename,      
-        audio_filename=audio_filename
+        basename=base_name,
+        image_filename=image_filename,
+        audio_filename=audio_filename,
+        created_on=created_on
     )
 
     return {
         "message": "Uploaded",
-        "base": base_name,      
+        "base": base_name,
         "status": "queued",
-        "relPath": rel_path
+        "filename": image_filename
     }

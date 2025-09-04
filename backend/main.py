@@ -30,13 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+mongo_uri = os.getenv("MongoDB_URI")
+if not mongo_uri:
+    raise RuntimeError("MongoDB_URI is not set in environment variables. Please configure it in .env")
 
-database_uri = os.getenv("DATABASE_URI","mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority")
-print(f"Database URI: {database_uri}")
-
-client = MongoClient(database_uri)
-db  = client.get_database("tz-fabric")
-print(db)
+try:
+    client = MongoClient(mongo_uri)
+    db = client.get_database("tz-fabric")
+except errors.ConnectionFailure as e:
+    raise RuntimeError(f"Could not connect to MongoDB: {e}")
 
 app.mongo_client = client
 app.database = db
