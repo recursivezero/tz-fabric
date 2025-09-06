@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors
 from dotenv import load_dotenv
-from constants import UPLOAD_ROOT
+from constants import ASSETS
 import logging
 import os
 from routes import analysis, regenerate, validate_image, search, submit, media
@@ -43,7 +43,7 @@ except errors.ConnectionFailure as e:
 app.mongo_client = client
 app.database = db
 
-os.makedirs(UPLOAD_ROOT, exist_ok=True)
+os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")

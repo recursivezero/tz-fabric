@@ -4,14 +4,14 @@ from datetime import datetime
 import shutil
 
 from utils.filename import sanitize_filename
-from constants import UPLOAD_ROOT
+from constants import IMAGES_DIR, AUDIOS_DIR
 from core.embedder import embed_image_bytes
 from core.store import get_index
 
 router = APIRouter()
 
-UPLOAD_IMAGE_DIR = Path(UPLOAD_ROOT) / "images"
-UPLOAD_AUDIO_DIR = Path(UPLOAD_ROOT) / "audios"
+UPLOAD_IMAGE_DIR = IMAGES_DIR
+UPLOAD_AUDIO_DIR = AUDIOS_DIR
 UPLOAD_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 UPLOAD_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 

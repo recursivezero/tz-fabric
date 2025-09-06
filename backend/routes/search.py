@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List
 from datetime import datetime, timezone
 import os
-import re
+from constants import IMAGES_PATH, AUDIOS_PATH
 
 from core.embedder import embed_image_bytes
 from core.search import topk_search
@@ -100,8 +100,8 @@ async def search_similar(
         image_fn = meta.get("imageFilename")
         audio_fn = meta.get("audioFilename")
 
-        meta["imageUrl"] = f"/api/assets/images/{image_fn}" if image_fn else None
-        meta["audioUrl"] = f"/api/assets/audios/{audio_fn}" if audio_fn else None
+        meta["imageUrl"] = f"/api/{IMAGES_PATH}/{image_fn}" if image_fn else None
+        meta["audioUrl"] = f"/api/{AUDIOS_PATH}/{audio_fn}" if audio_fn else None
 
         if require_audio and not audio_fn:
             continue
