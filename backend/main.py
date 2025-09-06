@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pymongo import MongoClient, errors
+from pymongo import MongoClient, errors, uri_parser
 from dotenv import load_dotenv
 from constants import ASSETS
 import logging
@@ -34,11 +34,24 @@ mongo_uri = os.getenv("MongoDB_URI")
 if not mongo_uri:
     raise RuntimeError("MongoDB_URI is not set in environment variables. Please configure it in .env")
 
-try:
-    client = MongoClient(mongo_uri)
-    db = client.get_database("tz-fabric")
-except errors.ConnectionFailure as e:
-    raise RuntimeError(f"Could not connect to MongoDB: {e}")
+database_uri = os.getenv("DATABASE_URI","mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority")
+# Parse the URI to extract db name
+parsed_uri = uri_parser.parse_uri(database_uri)
+db_name = parsed_uri.get("database")
+print(f"Database URI: {database_uri}")
+if not db_name:
+    db_name = "tz-fabric"  # Default database name if not specified in URI
+
+client = MongoClient(database_uri)
+default_db = client.get_default_database()
+if default_db is not None:
+    db = default_db
+elif db_name is not None:
+    db = client[db_name]
+else:
+    raise ValueError("No database specified in URI and no default database available")
+
+print("Connected to database:", db.name)
 
 app.mongo_client = client
 app.database = db
@@ -60,7 +73,7 @@ app.include_router(media.router, prefix="/api")
 async def startup_db_client():
     try:
         client.admin.command("ping")  # simple health check
-        logger.info("Successfully connected to MongoDB!")
+        logger.info("successfully connected to MongoDB!")
     except errors.ConnectionFailure as e:
         logger.error(f"Could not connect to MongoDB: {e}")
 
