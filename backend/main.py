@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 from constants import ASSETS
 import os
 from routes import analysis, regenerate, validate_image, search, submit, media
@@ -27,18 +28,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-database_uri = os.getenv("DATABASE_URI","mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority")
-if not database_uri:
+DATABASE_URI = os.getenv("DATABASE_URI")
+if not DATABASE_URI:
     raise RuntimeError("DATABASE_URI is not set in environment variables. Please configure it in .env")
 # Parse the URI to extract db name
-parsed_uri = uri_parser.parse_uri(database_uri)
+parsed_uri = uri_parser.parse_uri(DATABASE_URI)
 db_name = parsed_uri.get("database")
-logger.info(f"Database URI: {database_uri}")
+logger.info(f"Database URI: {DATABASE_URI}")
 if not db_name:
     db_name = "tz-fabric"  # Default database name if not specified in URI
 
-client = MongoClient(database_uri)
+client = MongoClient(DATABASE_URI)
 default_db = client.get_default_database()
 if default_db is not None:
     db = default_db
@@ -55,21 +55,38 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Attach the client and db to the app so routes can access them
+    app.mongo_client = client
+    app.database = db
+
+    # Startup: perform a simple health check
+    try:
+        client.admin.command("ping")
+        logger.info("successfully connected to MongoDB!")
+    except errors.OperationFailure as e:
+        # Authentication or operation errors
+        logger.error(f"MongoDB operation failed during startup: {e}")
+    except errors.ConnectionFailure as e:
+        logger.error(f"Could not connect to MongoDB during startup: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error when connecting to MongoDB: {e}")
+
+    yield
+
+    try:
+        client.close()
+        logger.info("MongoDB connection closed")
+    except Exception as e:
+        logger.warning(f"Error while closing MongoDB client: {e}")
+
 app.include_router(analysis.router, prefix="/api")
 app.include_router(regenerate.router, prefix="/api")
 app.include_router(validate_image.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
 app.include_router(submit.router, prefix="/api")    
 app.include_router(media.router, prefix="/api")
-
-
-@app.on_event("startup")
-async def startup_db_client():
-    try:
-        client.admin.command("ping")  # simple health check
-        logger.info("successfully connected to MongoDB!")
-    except errors.ConnectionFailure as e:
-        logger.error(f"Could not connect to MongoDB: {e}")
 
 
 @app.get("/", response_class=HTMLResponse)
