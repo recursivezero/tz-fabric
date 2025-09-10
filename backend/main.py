@@ -6,16 +6,13 @@ from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
 from dotenv import load_dotenv
 from constants import ASSETS
-import logging
 import os
 from routes import analysis, regenerate, validate_image, search, submit, media
-
-app = FastAPI()
+from utils.emoji_logger import get_logger
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+app = FastAPI()
+logger = get_logger(__name__)
 
 origins = [
     "http://localhost:5173",  # Allow requests from your frontend origin
@@ -30,15 +27,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-mongo_uri = os.getenv("MongoDB_URI")
-if not mongo_uri:
-    raise RuntimeError("MongoDB_URI is not set in environment variables. Please configure it in .env")
 
 database_uri = os.getenv("DATABASE_URI","mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority")
+if not database_uri:
+    raise RuntimeError("DATABASE_URI is not set in environment variables. Please configure it in .env")
 # Parse the URI to extract db name
 parsed_uri = uri_parser.parse_uri(database_uri)
 db_name = parsed_uri.get("database")
-print(f"Database URI: {database_uri}")
+logger.info(f"Database URI: {database_uri}")
 if not db_name:
     db_name = "tz-fabric"  # Default database name if not specified in URI
 
@@ -50,8 +46,6 @@ elif db_name is not None:
     db = client[db_name]
 else:
     raise ValueError("No database specified in URI and no default database available")
-
-print("Connected to database:", db.name)
 
 app.mongo_client = client
 app.database = db
