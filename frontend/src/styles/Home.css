@@ -48,14 +48,14 @@
   margin: 0 0 8px;
   font-size: clamp(28px, 4vw, 44px);
   line-height: 1.15;
-  color: #351010;
   text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+  color: black
 }
 
 .home__sub {
   margin: 0 auto;
   width: auto;
-  color: #5a7d81;
+
   font-size: 18px;
   font-weight: 700;
 }
