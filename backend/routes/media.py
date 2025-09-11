@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, Query, HTTPException
 from fastapi.responses import FileResponse
 from pathlib import Path
-from constants import IMAGES_DIR, AUDIOS_DIR, IMAGES_PATH, AUDIOS_PATH
+from constants import IMAGES_DIR, AUDIOS_DIR
+from utils.paths import build_image_url, build_audio_url
 
 router = APIRouter(tags=["media"])
 
@@ -53,7 +54,8 @@ def list_media_content(
         basename = img.get("basename") or Path(image_filename).stem
         created_at = img.get("created_on")
 
-        image_url = f"/api/{IMAGES_PATH}/{image_filename}" if image_filename else None
+        image_url = build_image_url(image_filename) if image_filename else None
+        print("Image URL:", image_url)
 
         # find matching audio by basename
         audio_doc = db.audios.find_one(
@@ -61,7 +63,8 @@ def list_media_content(
             {"filename": 1}
         )
         audio_filename = audio_doc["filename"] if audio_doc else None
-        audio_url = f"/api/{AUDIOS_PATH}/{audio_filename}" if audio_filename else None
+        audio_url = build_audio_url(audio_filename) if audio_filename else None
+        print("Audio URL:", audio_url)
 
         items.append({
             "_id": str(img["_id"]),

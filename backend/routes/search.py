@@ -3,11 +3,11 @@ from pydantic import BaseModel
 from typing import List
 from datetime import datetime, timezone
 import os
-from constants import IMAGES_PATH, AUDIOS_PATH
 
 from core.embedder import embed_image_bytes
 from core.search import topk_search
 from core.store import get_index
+from utils.paths import build_image_url, build_audio_url
 
 router = APIRouter(tags=["search"])
 
@@ -100,8 +100,8 @@ async def search_similar(
         image_fn = meta.get("imageFilename")
         audio_fn = meta.get("audioFilename")
 
-        meta["imageUrl"] = f"/api/{IMAGES_PATH}/{image_fn}" if image_fn else None
-        meta["audioUrl"] = f"/api/{AUDIOS_PATH}/{audio_fn}" if audio_fn else None
+        meta["imageUrl"] = build_image_url(image_fn)
+        meta["audioUrl"] = build_audio_url(audio_fn)
 
         if require_audio and not audio_fn:
             continue
