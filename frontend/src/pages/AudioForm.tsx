@@ -17,6 +17,7 @@ const UploadPage = () => {
     recordTime,
     loading,
     notification,
+    audioNotification,
     setImageUrl,
     setAudioUrl,
     handleImageUpload,
@@ -139,7 +140,7 @@ const UploadPage = () => {
                     onClick={() => setAudioMode("upload")}
                     disabled={isRecording}
                   >
-                    ← Upload
+                    ← OR Upload
                   </button>
                 </div>
 
@@ -161,6 +162,9 @@ const UploadPage = () => {
                     </div>
                   )}
                 </div>
+                {audioNotification && (
+                  <Notification message={audioNotification.message} type={audioNotification.type} />
+                )}
               </>
             )}
 
@@ -193,9 +197,12 @@ const UploadPage = () => {
                   >
                     <div className="dz-icon">🎧</div>
                     <div className="dz-text">
-                      <strong>Drop audio</strong> or{" "}
+                      <strong>Drop audio of max 1 min</strong> or{" "}
                       <span className="link">browse</span>
                     </div>
+                    {audioNotification && (
+                      <Notification message={audioNotification.message} type={audioNotification.type} />
+                    )}
                   </div>
                 )}
 
@@ -250,32 +257,33 @@ const UploadPage = () => {
         </div>
       </div>
       <div className="name-field">
-        <label className="name-label">Your Filename</label>
-        <input
+        <div><label className="name-label">Your Filename</label></div>
+        <div><input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           aria-label="Optional name for saving files"
         />
+        </div>
+        <div className="submit-wrapper">
+          <button
+            className="btn submit"
+            onClick={async () => {
+              await handleSubmit(name);
+              handleBack();
+            }}
+            disabled={!canSubmit}
+          >
+            {loading ? "Submitting…" : "Submit"}
+          </button>
+        </div>
       </div>
-      <div className="submit-wrapper">
-        <button
-          className="btn submit"
-          onClick={async () => {
-            await handleSubmit(name);
-            handleBack();
-          }}
-          disabled={!canSubmit}
-        >
-          {loading ? "Submitting…" : "Submit"}
-        </button>
-      </div>
-
       {loading && <Loader />}
 
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
+
     </div>
   );
 };

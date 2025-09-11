@@ -139,7 +139,7 @@
 .upload-page .btn.primary { background: rgba(124,58,237,0.18); color: #c7b6ff; }
 .upload-page .btn.danger  { background: rgba(229,62,62,0.18); color: #ffb5b5; }
 
-.upload-page .submit-wrapper { display: flex; justify-content: center; margin-top: 16px; }
+.upload-page .submit-wrapper { display: flex; justify-content: center; }
 .upload-page .btn.submit {
   min-width: 160px; padding: 14px 24px;
   background: #19a2e2; color: #ffffff;
@@ -164,14 +164,12 @@
   margin: 12px 0 6px;
   font-size: 20px;
   font-weight: 800;
-  color: #ddff00;               
-  letter-spacing: 0.3px;
+  color: #2c1616; 
   text-shadow: 0 1px 1px rgba(0,0,0,0.35);  
 }
 
 .upload-page input[type="text"] {
-  width: 100%;
-  padding: 10px 12px;
+  padding: 20px 12px;
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.18);
   background: rgba(21,26,33,0.9);
@@ -183,6 +181,13 @@
   outline: none;
   border-color: #19a2e2;
   box-shadow: 0 0 0 2px rgba(25,162,226,0.35);
+}
+
+.upload-page .name-field {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;  
 }
 
 .action-col{

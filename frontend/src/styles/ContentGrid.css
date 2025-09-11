@@ -33,7 +33,8 @@
 .grid-page .grid-controls button {
   padding: 8px 12px;
   border: 1px solid #ddd;
-  background: #fff;
+  background: rgba(27, 34, 48, 0.9);
+  color: white;
   border-radius: 8px;
   cursor: pointer;
 }
