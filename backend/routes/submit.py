@@ -4,16 +4,15 @@ from datetime import datetime
 import shutil
 
 from utils.filename import sanitize_filename
-from constants import IMAGES_DIR, AUDIOS_DIR
+from constants import IMAGE_DIR, AUDIO_DIR
 from core.embedder import embed_image_bytes
 from core.store import get_index
 
 router = APIRouter()
 
-UPLOAD_IMAGE_DIR = IMAGES_DIR
-UPLOAD_AUDIO_DIR = AUDIOS_DIR
-UPLOAD_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
-UPLOAD_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _process_index_job(
@@ -83,8 +82,8 @@ async def submit_file(
     image_filename = f"{base_name}.{image_ext}"
     audio_filename = f"{base_name}.{audio_ext}"
 
-    image_path = UPLOAD_IMAGE_DIR / image_filename
-    audio_path = UPLOAD_AUDIO_DIR / audio_filename
+    image_path = IMAGE_DIR / image_filename
+    audio_path = AUDIO_DIR / audio_filename
 
     # save files
     image.file.seek(0)

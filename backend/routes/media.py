@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Query, HTTPException
 from fastapi.responses import FileResponse
 from pathlib import Path
-from constants import IMAGES_DIR, AUDIOS_DIR
+from constants import IMAGE_DIR, AUDIO_DIR
 from utils.paths import build_image_url, build_audio_url
 
 router = APIRouter(tags=["media"])
@@ -10,14 +10,14 @@ router = APIRouter(tags=["media"])
 
 @router.get("/assets/images/{filename}")
 def get_image(filename: str):
-    path = IMAGES_DIR / filename
+    path = IMAGE_DIR / filename
     if not path.exists():
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(path)
 
 @router.get("/assets/audios/{filename}")
 def get_audio(filename: str):
-    path = AUDIOS_DIR / filename
+    path = AUDIO_DIR / filename
     if not path.exists():
         raise HTTPException(status_code=404, detail="Audio not found")
     return FileResponse(path)

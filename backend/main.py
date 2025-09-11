@@ -34,7 +34,6 @@ if not DATABASE_URI:
 # Parse the URI to extract db name
 parsed_uri = uri_parser.parse_uri(DATABASE_URI)
 db_name = parsed_uri.get("database")
-logger.info(f"Database URI: {DATABASE_URI}")
 if not db_name:
     db_name = "tz-fabric"  # Default database name if not specified in URI
 
@@ -46,6 +45,7 @@ elif db_name is not None:
     db = client[db_name]
 else:
     raise ValueError("No database specified in URI and no default database available")
+print("Connected to MongoDB, using database:", db.name)
 
 app.mongo_client = client
 app.database = db

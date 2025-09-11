@@ -1,7 +1,5 @@
 from pathlib import Path
-Parent_DIR = Path(__file__).parent
-ASSETS = Parent_DIR / "assets"
-IMAGES_DIR = ASSETS / "images"
-AUDIOS_DIR = ASSETS / "audios"
-IMAGES_URL_BASE = "/api/assets/images"
-AUDIOS_URL_BASE = "/api/assets/audios"
+PROJECT_DIR = Path(__file__).parent
+ASSETS = PROJECT_DIR / "assets"
+IMAGE_DIR = ASSETS / "images"
+AUDIO_DIR = ASSETS / "audios"
