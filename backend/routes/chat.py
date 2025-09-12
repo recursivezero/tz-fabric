@@ -1,7 +1,9 @@
+# rotes/chat.py
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
 from agent.graph import agent_graph, SYSTEM_PROMPT
+import json
 
 router = APIRouter(tags=["chat"])
 
@@ -22,6 +24,7 @@ class ChatResponse(BaseModel):
     reply: Message
     action: Optional[Action] = None
     bot_messages: Optional[List[str]] = None
+    analysis_responses: Optional[List[Dict[str, Any]]] = None
 
 ALLOWED_HINTS = [
     "fabric","textile","cloth","garment","apparel","yarn","fiber","fibre","cotton","polyester",
@@ -113,18 +116,33 @@ async def chat_endpoint(body: ChatRequest):
     if not final:
         raise HTTPException(status_code=502, detail="No response from agent.")
 
-    if isinstance(final, dict) and "type" in final and "bot_messages" in final:
-        resp_type = final["type"]
-        bot_messages = final.get("bot_messages", [])
-        params = final.get("params")
+    parsed = final
+    if isinstance(final, str):
+        try:
+            parsed = json.loads(final)
+        except Exception:
+            parsed = None
+
+    if isinstance(parsed, dict) and "type" in parsed and "bot_messages" in parsed:
+        resp_type = parsed.get("type")
+        bot_messages = parsed.get("bot_messages", [])
+        params = parsed.get("params")
         reply_text = bot_messages[0] if bot_messages else "OK."
         reply = Message(role="assistant", content=reply_text)
 
         if resp_type == "redirect_to_analysis" and isinstance(params, dict):
             action = Action(type="redirect_to_analysis", params=params)
-            return ChatResponse(reply=reply, action=action, bot_messages=bot_messages)
+            # Pass analysis_responses through (or None)
+            analysis_responses = parsed.get("analysis_responses")
+            return ChatResponse(
+                reply=reply,
+                action=action,
+                bot_messages=bot_messages,
+                analysis_responses=analysis_responses,
+            )
 
         return ChatResponse(reply=reply, action=None, bot_messages=bot_messages)
 
-    reply = Message(role="assistant", content=str(final))
+    reply_text = final if isinstance(final, str) else str(final)
+    reply = Message(role="assistant", content=reply_text)
     return ChatResponse(reply=reply)

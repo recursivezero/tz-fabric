@@ -1,3 +1,4 @@
+// src/services/chat_api.ts
 export type Role = "user" | "assistant" | "system";
 
 export interface Message {
@@ -5,7 +6,6 @@ export interface Message {
   content: string;
 }
 
-// NEW: Action type from backend
 export interface Action {
   type: "redirect_to_analysis";
   params: { image_url: string | null; mode: string };
@@ -15,29 +15,37 @@ export interface ChatResponse {
   reply: Message;
   action?: Action;
   bot_messages?: string[];
+  analysis_responses?: { id: string; text: string }[];
 }
 
 const API_BASE = "http://127.0.0.1:8000";
 
 export async function chatOnce(messages: Message[]): Promise<ChatResponse> {
+  console.log("chatOnce called, messages:", messages);
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),
   });
 
+  console.log("/api/chat status:", res.status);
+
+  // parse body once
+  let json: any;
+  try {
+    json = await res.json();
+    console.log("/api/chat response json:", json);
+  } catch (e) {
+    console.error("Failed to parse /api/chat JSON response", e);
+    throw new Error(`Failed to parse server response (status ${res.status})`);
+  }
+
   if (!res.ok) {
     let msg = `Request failed with ${res.status}`;
-    try {
-      const data = await res.json();
-      if (data?.detail) msg = String(data.detail);
-    } catch {
-      try {
-        msg = await res.text();
-      } catch {}
-    }
+    if (json?.detail) msg = String(json.detail);
+    else if (typeof json === "string") msg = json;
     throw new Error(msg);
   }
 
-  return (await res.json()) as ChatResponse;
+  return json as ChatResponse;
 }

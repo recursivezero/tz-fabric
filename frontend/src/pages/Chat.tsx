@@ -5,6 +5,7 @@ import MessageList from "../components/messageList";
 import Composer from "../components/composer";
 import EmptyState from "../components/emptyState";
 import TypingIndicator from "../components/typingIndicator";
+import HandleRedirectAction from "../components/handleRedirectAction";
 
 export default function Chat() {
   const {
@@ -20,9 +21,13 @@ export default function Chat() {
     uploadedPreviewUrl,
     handleUpload,
     clearUpload,
+    pendingAction,
+    acceptAction,
+    rejectAction,
   } = useChat();
 
   const pickSample = useCallback((text: string) => setInput(text), [setInput]);
+  console.log("Pending action:", pendingAction);
 
   return (
     <div className="chat-page">
@@ -32,6 +37,14 @@ export default function Chat() {
         <EmptyState onPick={pickSample} />
       ) : (
         <MessageList messages={messages} scrollerRef={scrollerRef} />
+      )}
+
+      {pendingAction && (
+        <HandleRedirectAction
+          pendingAction={pendingAction}
+          onAccept={acceptAction}
+          onReject={rejectAction}
+        />
       )}
 
       {status === "sending" && <TypingIndicator />}

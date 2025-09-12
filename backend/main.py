@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 origins = [
     "http://localhost:5173", 
 ]
-from routes import analysis, regenerate, validate_image, search, submit, media, chat
+from routes import analysis, regenerate, validate_image, search, submit, media, chat, mcp_proxy
 from tools.mcpserver import sse_app
 
 app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
@@ -24,7 +24,7 @@ load_dotenv()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  
+    allow_origins=origins,  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -93,15 +93,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Error while closing MongoDB client: {e}")
 
-
-app.include_router(analysis.router, prefix=API_PREFIX)
-app.include_router(regenerate.router, prefix=API_PREFIX)
-app.include_router(validate_image.router, prefix=API_PREFIX)
-app.include_router(search.router, prefix=API_PREFIX)
-app.include_router(submit.router, prefix=API_PREFIX)
-app.include_router(media.router, prefix=API_PREFIX)
-app.include_router(chat.router, prefix=API_PREFIX)
-
+app.include_router(analysis.router, prefix="/api")
+app.include_router(regenerate.router, prefix="/api")
+app.include_router(validate_image.router, prefix="/api")
+app.include_router(search.router, prefix="/api")
+app.include_router(submit.router, prefix="/api")
+app.include_router(media.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(mcp_proxy.router, prefix="/api")
 
 app.mount("/mcp", sse_app())
 
