@@ -1,3 +1,5 @@
+import { FULL_API_URL } from "../constants";
+
 export interface SearchItem {
   score: number;
   metadata: {
@@ -45,7 +47,7 @@ export async function searchSimilar(
     require_audio: String(require_audio),
   });
 
-  const res = await fetch(`${API_BASE}/api/search?${params.toString()}`, {
+  const res = await fetch(`${FULL_API_URL}/search?${params.toString()}`, {
     method: "POST",
     body: form,
   });

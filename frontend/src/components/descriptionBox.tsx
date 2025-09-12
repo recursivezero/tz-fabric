@@ -1,7 +1,7 @@
 import { useState } from "react";
-import Loader from "./Loader";
-import "../styles/DescriptionBox.css";
 import { FaRegCopy } from "react-icons/fa";
+import "../styles/DescriptionBox.css";
+import Loader from "./Loader";
 
 const DescriptionBox = ({
   isValidImage,
@@ -33,6 +33,7 @@ const DescriptionBox = ({
       {!isError && (
         <div className="nav-buttons">
           <button
+            type="button"
             onClick={handlePrev}
             disabled={currentIndex === 0}
             className={`nav-btn ${currentIndex === 0 ? "disabled" : ""}`}
@@ -69,7 +70,7 @@ const DescriptionBox = ({
             <span className="response-counter">
               Viewing response {currentIndex + 1} of {responses.length}
             </span>
-            <span className="copy-btn" onClick={handleCopy}>
+            <span className="copy-btn" onKeyDown={handleCopy}>
               {copied ? "Copied" : <FaRegCopy />}
             </span>
           </div>

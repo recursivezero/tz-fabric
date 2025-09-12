@@ -2,7 +2,7 @@ import { useState } from "react";
 import "../styles/SearchBar.css";
 
 const AnimatedSearchBox = ({ onSearch, loading }) => {
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   const handleImageChange = async (e) => {
@@ -27,15 +27,10 @@ const AnimatedSearchBox = ({ onSearch, loading }) => {
       </div>
 
       <div className="search-box">
-        <label htmlFor="file-upload" className="upload-icon">📁</label>
-        <input
-          id="file-upload"
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          hidden
-          disabled={loading}
-        />
+        <label htmlFor="file-upload" className="upload-icon">
+          📁
+        </label>
+        <input id="file-upload" type="file" accept="image/*" onChange={handleImageChange} hidden disabled={loading} />
 
         {showPrompt && selectedImage ? (
           <>
@@ -46,7 +41,9 @@ const AnimatedSearchBox = ({ onSearch, loading }) => {
           <div className="text-container" />
         )}
 
-        <button className="search-btn" disabled>🔍</button>
+        <button className="search-btn" disabled>
+          🔍
+        </button>
       </div>
     </div>
   );

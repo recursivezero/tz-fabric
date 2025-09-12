@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchImageAsFile } from "../utils/imageUtils.ts";
-import { analyzeImage, regenerateresposne, validateImageAPI} from "../services/analyze_Api.ts";
+import { analyzeImage, regenerateResponse, validateImageAPI} from "../services/analyze_Api.ts";
 
 const useImageAnalysis = () => {
   const [showResults, setShowResults] = useState(false);
@@ -174,7 +174,7 @@ const useImageAnalysis = () => {
       return;
     }
     try {
-      const res = await regenerateresposne(cacheKey, newIndex);
+      const res = await regenerateResponse(cacheKey, newIndex);
       if (res?.response) {
         const updated = [...responses];
         updated[newIndex] = res.response;

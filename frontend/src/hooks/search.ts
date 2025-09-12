@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { searchSimilar, type SearchResponse, type SearchItem, API_BASE } from "../services/search_api";
+import { API_BASE, searchSimilar, type SearchItem, type SearchResponse } from "../services/search_api";
 
 export type UiItem = {
   score: number;

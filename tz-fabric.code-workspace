@@ -95,6 +95,7 @@
     },
     "peacock.color": "#34ea23",
     "cSpell.words": [
+      "analyse",
       "gitstash"
     ],
     "files.autoSave": "onFocusChange",
@@ -144,7 +145,8 @@
       "./src"
     ],
     "files.exclude": {
-      ".poetry/**": true
+      ".poetry/**": true,
+      "**/node_modules": true
     },
     "mcp": {
       "inputs": [],

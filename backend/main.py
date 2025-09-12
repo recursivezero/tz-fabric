@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
-from constants import ASSETS
+from constants import API_PREFIX, ASSETS
 import os
 from routes import analysis, regenerate, validate_image, search, submit, media
 from utils.emoji_logger import get_logger
@@ -81,12 +81,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Error while closing MongoDB client: {e}")
 
-app.include_router(analysis.router, prefix="/api")
-app.include_router(regenerate.router, prefix="/api")
-app.include_router(validate_image.router, prefix="/api")
-app.include_router(search.router, prefix="/api")
-app.include_router(submit.router, prefix="/api")    
-app.include_router(media.router, prefix="/api")
+app.include_router(analysis.router, prefix=API_PREFIX)
+app.include_router(regenerate.router, prefix=API_PREFIX)
+app.include_router(validate_image.router, prefix=API_PREFIX)
+app.include_router(search.router, prefix=API_PREFIX)
+app.include_router(submit.router, prefix=API_PREFIX)    
+app.include_router(media.router, prefix=API_PREFIX)
 
 
 @app.get("/", response_class=HTMLResponse)
