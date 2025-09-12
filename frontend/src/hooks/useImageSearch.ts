@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { API_BASE, searchSimilar, type SearchItem, type SearchResponse } from "../services/search_api";
+import { BASE_URL } from "../constants";
+import { searchSimilar, type SearchItem, type SearchResponse } from "../services/search_api";
 
 export type UiItem = {
   score: number;
@@ -19,18 +20,18 @@ function pickDisplayName(md: any): string {
 function buildImageUrl(md: any): string | undefined {
   if (md.imageUrl) return md.imageUrl;
   if (md.imagePath) return md.imagePath;
-  if (md.relPath)  return `${API_BASE}/static/${md.relPath}`;
+  if (md.relPath)  return `${BASE_URL}/static/${md.relPath}`;
   return undefined;
 }
 
 function buildAudioUrl(md: any): string | undefined {
   if (md.audioUrl) return md.audioUrl;
   if (md.audioPath) return md.audioPath;
-  if (md.audioRelPath) return `${API_BASE}/static/${md.audioRelPath}`;
+  if (md.audioRelPath) return `${BASE_URL}/static/${md.audioRelPath}`;
   if (md.relPath) {
     const swapped = String(md.relPath).replace(/\/images\//, "/audios/");
     const withWebm = swapped.replace(/\.[a-zA-Z0-9]+$/, ".webm");
-    return `${API_BASE}/static/${withWebm}`;
+    return `${BASE_URL}/static/${withWebm}`;
   }
   return undefined;
 }

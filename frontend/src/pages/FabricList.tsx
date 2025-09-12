@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchContent, type MediaItem } from "../services/contentApi";
+import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -42,10 +42,10 @@ export default function ContentGrid() {
     setMode("all");
     setPage(1);
   };
-  function pickDisplayName(it: MediaItem) {
-    if (it.basename) return it.basename;
-    if (it.imageFilename) return it.imageFilename.replace(/\.[^.]+$/, "");
-    const last = (it.imageUrl || "").split("/").pop() || "";
+  function pickDisplayName(item: MediaItem) {
+    if (item.basename) return item.basename;
+    if (item.imageFilename) return item.imageFilename.replace(/\.[^.]+$/, "");
+    const last = (item.imageUrl || "").split("/").pop() || "";
     return last.replace(/\.[^.]+$/, "");
   }
   const cleanName = (filename: string) => {
@@ -83,11 +83,11 @@ export default function ContentGrid() {
       {err && <div className="grid-error">⚠️ {err}</div>}
 
       <div className="media-grid">
-        {items.map((it) => (
-          <article className="media-card" key={it._id ?? it.imageUrl}>
+        {items.map((item) => (
+          <article className="media-card" key={item._id ?? item.imageUrl}>
             <div className="media-thumb">
               <img
-                src={it.imageUrl?.startsWith("http") ? it.imageUrl : `${API_URL}${it.imageUrl}`}
+                src={item.imageUrl?.startsWith("http") ? item.imageUrl : `${API_URL}${item.imageUrl}`}
                 alt="Uploaded"
                 loading="lazy"
                 onError={(e) => {
@@ -95,25 +95,25 @@ export default function ContentGrid() {
                 }}
               />
             </div>
-            <div className="media-name" title={pickDisplayName(it)}>
-              {cleanName(pickDisplayName(it))}
+            <div className="media-name" title={pickDisplayName(item)}>
+              {cleanName(pickDisplayName(item))}
             </div>
 
             <div className="media-audio">
-              {it.audioUrl && (
+              {item.audioUrl && (
                 <audio
                   controls
-                  src={it.audioUrl?.startsWith("http") ? it.audioUrl : `${API_URL}${it.audioUrl}`}
+                  src={item.audioUrl?.startsWith("http") ? item.audioUrl : `${API_URL}${item.audioUrl}`}
                   preload="metadata"
                 />
               )}
             </div>
 
             <div className="media-meta">
-              {it.createdAt && <time dateTime={it.createdAt}>{new Date(it.createdAt).toLocaleString()}</time>}
-              {"score" in it && it.score !== undefined ? (
-                <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>score: {it.score}</span>
-              ) : null}
+              {item.createdAt && <time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time>}
+              {/*{"score" in item && item.score !== undefined ? (
+                <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>score: {item.score}</span>
+              ) : null}*/}
             </div>
           </article>
         ))}

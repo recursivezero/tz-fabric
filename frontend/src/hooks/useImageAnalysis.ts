@@ -1,22 +1,22 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { analyzeImage, regenerateResponse, validateImageAPI } from "../services/analyze_api.ts";
 import { fetchImageAsFile } from "../utils/imageUtils.ts";
-import { analyzeImage, regenerateResponse, validateImageAPI} from "../services/analyze_Api.ts";
 
 const useImageAnalysis = () => {
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
   const [cacheKey, setCacheKey] = useState(null);
-  const [responses, setResponses] = useState([]);
+  const [responses, setResponses] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [currentFile, setCurrentFile] = useState(null);
-  const [currentMode, setCurrentMode] = useState(null);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [currentMode, setCurrentMode] = useState<"short" | "long" | null>(null);
   const [showUploadedImage, setShowUploadedImage] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
-  const [sampleImageUrl, setSampleImageUrl] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [sampleImageUrl, setSampleImageUrl] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(true);
   const [typedText, setTypedText] = useState("");
-  const [isValidImage, setIsValidImage] = useState(null);
+  const [isValidImage, setIsValidImage] = useState<boolean | null>(null);
   const [validationLoading, setValidationLoading] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
   const [canUpload, setCanUpload] = useState(true);
@@ -85,7 +85,7 @@ const useImageAnalysis = () => {
       const first = firstObject?.response;
       const allResponses = Array(6).fill(null);
       allResponses[0] = first;
-      setResponses(allResponses);
+      setResponses(allResponses as string[])
       setDescription(first);
       setCacheKey(response.cache_key);
       setCurrentIndex(0);
@@ -117,7 +117,7 @@ const useImageAnalysis = () => {
         setIsValidImage(false);
         setValidationMessage("This image doesn't focus on fabric. Please upload a close-up fabric image.");
       }
-    } catch (error) {
+    } catch (error: any) {
       setValidationMessage(error.message);
       setIsValidImage(false);
     }

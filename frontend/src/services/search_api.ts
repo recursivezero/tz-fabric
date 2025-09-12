@@ -26,7 +26,6 @@ export interface SearchResponse {
   results: SearchItem[];
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export async function searchSimilar(
   file: File,
@@ -60,4 +59,3 @@ export async function searchSimilar(
   return res.json();
 }
 
-export { API_BASE };

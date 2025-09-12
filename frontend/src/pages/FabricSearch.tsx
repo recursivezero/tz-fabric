@@ -1,15 +1,14 @@
 import { useMemo, useState } from "react";
-import useImageSearch from "../hooks/search";
-import "../styles/Search.css";
-import Notification from "../components/Notification";
 import Loader from "../components/Loader";
+import Notification from "../components/Notification";
+import useImageSearch from "../hooks/useImageSearch";
+import "../styles/Search.css";
 
 export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
   const [file, setFile] = useState<File | null>(null);
-  const [k, setK] = useState('');
-  const [notification, setNotification] = useState<{ message: string, type: "success" | "error" } | null>(null);
-
+  const [k, setK] = useState(0);
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const pageSize = 4;
   const [page, setPage] = useState(1);
@@ -49,13 +48,7 @@ export default function Search() {
       <h2>Similar Images</h2>
 
       <div className="uploader-row">
-        <input
-          id="file-input"
-          type="file"
-          accept="image/*"
-          onChange={onFileChange}
-          className="file-input-hidden"
-        />
+        <input id="file-input" type="file" accept="image/*" onChange={onFileChange} className="file-input-hidden" />
         <label htmlFor="file-input" className="file-button">
           Choose Image
         </label>
@@ -63,28 +56,14 @@ export default function Search() {
 
         <label className="k-input">
           K (max results):
-          <input
-            type="number"
-            min={1}
-            max={1000}
-            value={k}
-            onChange={(e) => setK(Number(e.target.value))}
-          />
+          <input type="number" min={1} max={1000} value={k} onChange={(e) => setK(e.target.valueAsNumber)} />
         </label>
 
-        <button
-          onClick={handleSearch}
-          disabled={loading || !file}
-          className="primary-btn"
-        >
+        <button onClick={handleSearch} disabled={loading || !file} className="primary-btn">
           {loading ? "Searching..." : "Find Exact"}
         </button>
 
-        <button
-          onClick={handleClear}
-          className="secondary-btn"
-          disabled={loading}
-        >
+        <button onClick={handleClear} className="secondary-btn" disabled={loading}>
           Clear
         </button>
       </div>
@@ -92,16 +71,10 @@ export default function Search() {
       {file && (
         <div className="preview-box">
           <p className="section-title">Query Image</p>
-          <img
-            className="preview-img"
-            src={URL.createObjectURL(file)}
-            alt="query"
-          />
+          <img className="preview-img" src={URL.createObjectURL(file)} alt="query" />
         </div>
       )}
-      {notification && (
-        <Notification message={notification.message} type={notification.type} />
-      )}
+      {notification && <Notification message={notification.message} type={notification.type} />}
       {loading && <Loader />}
       {error && <p className="search-error">{error}</p>}
       {exactMatches.length > 0 ? (
@@ -130,9 +103,7 @@ export default function Search() {
                 </div>
 
                 <div className="result-audio">
-                  {item.audioSrc && (
-                    <audio controls src={item.audioSrc} preload="metadata" />
-                  )}
+                  {item.audioSrc && <audio controls src={item.audioSrc} preload="metadata" />}
                 </div>
               </article>
             ))}
@@ -140,11 +111,7 @@ export default function Search() {
         </>
       ) : (
         !loading && (
-          <p className="empty-hint">
-            {file
-              ? "No matches found for this image."
-              : "Pick an image and search."}
-          </p>
+          <p className="empty-hint">{file ? "No matches found for this image." : "Pick an image and search."}</p>
         )
       )}
     </div>

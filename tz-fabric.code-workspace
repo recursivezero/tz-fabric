@@ -145,6 +145,7 @@
       "./src"
     ],
     "files.exclude": {
+      ".git": true,
       ".poetry/**": true,
       "**/node_modules": true
     },

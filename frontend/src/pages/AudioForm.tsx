@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
-import { useUploadAndRecord } from "../hooks/feature";
+import { useUploadAndRecord } from "../hooks/useUploadAndRecord";
 import { useLocation } from "react-router-dom";
 import Loader from "../components/Loader";
 import "../styles/UploadPage.css";
@@ -26,7 +26,7 @@ const UploadPage = () => {
     stopRecording,
     handleSubmit,
     handleBack,
-    clearImage,
+    clearImage
   } = useUploadAndRecord();
 
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -73,16 +73,8 @@ const UploadPage = () => {
           <section className="preview-col">
             {imageUrl ? (
               <div className="image-preview-wrap">
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="image-preview-plain"
-                />
-                <button
-                  className="chip chip-clear img-clear-btn"
-                  onClick={clearImage}
-                  title="Remove image"
-                >
+                <img src={imageUrl} alt="Preview" className="image-preview-plain" />
+                <button className="chip chip-clear img-clear-btn" onClick={clearImage} title="Remove image">
                   ✕
                 </button>
               </div>
@@ -97,8 +89,7 @@ const UploadPage = () => {
               >
                 <div className="dz-icon">🖼️</div>
                 <div className="dz-text">
-                  <strong>Drop image</strong> or{" "}
-                  <span className="link">browse</span>
+                  <strong>Drop image</strong> or <span className="link">browse</span>
                 </div>
               </div>
             )}
@@ -119,27 +110,15 @@ const UploadPage = () => {
             {audioMode === "record" && !audioUrl && (
               <>
                 <div className="rec-controls">
-                  <button
-                    className="btn primary"
-                    onClick={startRecording}
-                    disabled={isRecording}
-                  >
+                  <button className="btn primary" onClick={startRecording} disabled={isRecording}>
                     🎙 Start Recording
                   </button>
-                  <button
-                    className="btn"
-                    onClick={stopRecording}
-                    disabled={!isRecording}
-                  >
+                  <button className="btn" onClick={stopRecording} disabled={!isRecording}>
                     Stop
                   </button>
                 </div>
                 <div className="alt-switch">
-                  <button
-                    className="link-btn"
-                    onClick={() => setAudioMode("upload")}
-                    disabled={isRecording}
-                  >
+                  <button className="link-btn" onClick={() => setAudioMode("upload")} disabled={isRecording}>
                     ← OR Upload
                   </button>
                 </div>
@@ -150,16 +129,11 @@ const UploadPage = () => {
                       <span className="dot" />
                       Recording… {String(recordTime).padStart(2, "0")}/60s
                       <div className="progress">
-                        <div
-                          className="bar"
-                          style={{ width: `${recordPct}%` }}
-                        />
+                        <div className="bar" style={{ width: `${recordPct}%` }} />
                       </div>
                     </div>
                   ) : (
-                    <div className="hint">
-                      Press Start to begin. Stop to see a preview.
-                    </div>
+                    <div className="hint">Press Start to begin. Stop to see a preview.</div>
                   )}
                 </div>
                 {audioNotification && (
@@ -177,11 +151,7 @@ const UploadPage = () => {
                     </div>
                     <div className="img-footer">
                       <span className="chip chip-ok">Audio ready</span>
-                      <button
-                        className="chip chip-clear"
-                        onClick={handleBack}
-                        title="Remove audio"
-                      >
+                      <button className="chip chip-clear" onClick={handleBack} title="Remove audio">
                         ✕
                       </button>
                     </div>
@@ -197,8 +167,7 @@ const UploadPage = () => {
                   >
                     <div className="dz-icon">🎧</div>
                     <div className="dz-text">
-                      <strong>Drop audio of max 1 min</strong> or{" "}
-                      <span className="link">browse</span>
+                      <strong>Drop audio of max 1 min</strong> or <span className="link">browse</span>
                     </div>
                     {audioNotification && (
                       <Notification message={audioNotification.message} type={audioNotification.type} />
@@ -221,8 +190,7 @@ const UploadPage = () => {
                   <button
                     className="link-btn"
                     onClick={() => {
-                      if (audioInputRef.current)
-                        audioInputRef.current.value = "";
+                      if (audioInputRef.current) audioInputRef.current.value = "";
                       setAudioMode("record");
                     }}
                   >
@@ -238,16 +206,11 @@ const UploadPage = () => {
                   <audio controls src={audioUrl} />
                 </div>
                 <div className="lock-note">
-                  Start/Stop disabled while preview exists. Discard to re-record
-                  or Submit.
+                  Start/Stop disabled while preview exists. Discard to re-record or Submit.
                 </div>
                 <div className="img-footer">
                   <span className="chip chip-ok">Audio ready</span>
-                  <button
-                    className="chip chip-clear"
-                    onClick={handleBack}
-                    title="Remove audio"
-                  >
+                  <button className="chip chip-clear" onClick={handleBack} title="Remove audio">
                     ✕
                   </button>
                 </div>
@@ -257,13 +220,16 @@ const UploadPage = () => {
         </div>
       </div>
       <div className="name-field">
-        <div><label className="name-label">Your Filename</label></div>
-        <div><input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          aria-label="Optional name for saving files"
-        />
+        <div>
+          <label className="name-label">Your Filename</label>
+        </div>
+        <div>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            aria-label="Optional name for saving files"
+          />
         </div>
         <div className="submit-wrapper">
           <button
@@ -280,10 +246,7 @@ const UploadPage = () => {
       </div>
       {loading && <Loader />}
 
-      {notification && (
-        <Notification message={notification.message} type={notification.type} />
-      )}
-
+      {notification && <Notification message={notification.message} type={notification.type} />}
     </div>
   );
 };
