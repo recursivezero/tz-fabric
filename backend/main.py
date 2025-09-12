@@ -28,7 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATABASE_URI = os.getenv("DATABASE_URI")
+DATABASE_URI = os.getenv("DATABASE_URI","mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority")
 if not DATABASE_URI:
     raise RuntimeError("DATABASE_URI is not set in environment variables. Please configure it in .env")
 # Parse the URI to extract db name
