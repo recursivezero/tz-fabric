@@ -1,25 +1,30 @@
 # agent/graph.py
-from typing import Optional, Literal, Dict
+from typing import Optional, Literal, Dict, Any
 from langgraph.prebuilt import create_react_agent
 from langchain.tools import StructuredTool
 from langchain_groq import ChatGroq
-import json
 
 from core.config import settings
-from tools.logic import redirect_to_analysis_logic
+from tools.mcpserver import redirect_to_analysis as mcp_redirect_to_analysis
 
 def _redirect_to_analysis(
     image_url: Optional[str] = None,
     mode: Literal["short", "long"] = "short",
-) -> str:
-    payload: Dict = redirect_to_analysis_logic(image_url=image_url, mode=mode)
-    return json.dumps(payload)
+) -> Dict[str, Any]:
+    payload = mcp_redirect_to_analysis(image_url=image_url, mode=mode)
+    if isinstance(payload, str):
+        try:
+            import json
+            payload = json.loads(payload)
+        except Exception:
+            payload = {"type": "redirect_to_analysis", "params": {"image_url": image_url, "mode": mode}, "bot_messages": [str(payload)]}
+    return payload
 
 redirect_tool = StructuredTool.from_function(
     func=_redirect_to_analysis,
     name="redirect_to_analysis",
     description="Redirect user to the Fabric Analysis page with an image and mode.",
-    return_direct=True, 
+    return_direct=True,
 )
 
 llm = ChatGroq(

@@ -9,7 +9,7 @@ from constants import UPLOAD_ROOT
 
 import os
 
-from routes import analysis, regenerate, validate_image, search, submit, media, chat
+from routes import analysis, regenerate, validate_image, search, submit, media, chat, mcp_proxy
 from tools.mcpserver import sse_app
 
 app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
@@ -42,6 +42,7 @@ app.include_router(search.router, prefix="/api")
 app.include_router(submit.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
+app.include_router(mcp_proxy.router, prefix="/api")
 
 app.mount("/mcp", sse_app())
 
