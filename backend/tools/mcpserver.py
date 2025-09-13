@@ -3,13 +3,15 @@ from typing import Optional, Literal, Dict, Any, List
 from mcp.server.fastmcp import FastMCP
 import importlib
 import traceback
+import requests
+from io import BytesIO
+from PIL import Image
 
-from tools.logic import redirect_to_analysis_logic
-from utils.cache import get_response  # ✅ use the in-memory cache
+from services.threaded import analyse_all_variations
+from utils.cache import get_response
 
 mcp = FastMCP("fabric-tools")
 
-# Add candidate module/function names for your analyze/regenerate implementations here if different.
 _ANALYZE_CANDIDATES = [
     ("tools.analyze", "analyze"),
     ("tools.analyze", "analyze_image"),
@@ -97,57 +99,55 @@ def redirect_to_analysis(
     image_url: Optional[str] = None,
     mode: Literal["short", "long"] = "short",
 ) -> Dict[str, Any]:
-    """
-    Returns a payload that the client expects:
-    - `action`: { type: "redirect_to_analysis", "params": {...} }
-    - `bot_messages`: list of messages (strings)
-    - optionally `analysis_responses`: list of {id, text}
-    """
+    print("🔍 MCP redirect_to_analysis called")
+    print("  image_url =", image_url, "mode =", mode)
+
     params = {"image_url": image_url, "mode": mode}
-    default_payload = redirect_to_analysis_logic(image_url=image_url, mode=mode)
-    bot_messages = list(default_payload.get("bot_messages", []))
+    bot_messages = ["Debugging redirect_to_analysis..."]
 
-    responses = []
-    cache_key = None
+    try:
+        if not image_url:
+            print("❌ No image_url provided")
+            return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["No image url"]}
 
-    if _analyze_fn:
-        try:
-            try:
-                raw = _analyze_fn(image_url=image_url, mode=mode)
-            except TypeError:
-                try:
-                    raw = _analyze_fn(image_url, mode)
-                except Exception:
-                    raw = _analyze_fn(image_url)
-            responses = _normalize_responses(raw)
-            cache_key = _extract_cache_key(raw)
-        except Exception as e:
-            bot_messages.append(f"⚠️ Analysis tool call failed: {str(e)}")
-            bot_messages.append("Do you prefer this response? (Yes / No)")
-            return {
-                "action": {"type": "redirect_to_analysis", "params": params},
-                "bot_messages": bot_messages,
-            }
+        # Download image
+        r = requests.get(image_url, timeout=20)
+        print("  HTTP GET status =", r.status_code, "bytes =", len(r.content))
+        r.raise_for_status()
 
-    if cache_key:
-        params["cache_key"] = cache_key  # ✅ include cache_key in action params
+        # Open with PIL
+        from PIL import Image
+        from io import BytesIO
+        img = Image.open(BytesIO(r.content))
+        print("  Opened image format =", img.format, "size =", img.size)
 
-    if responses:
-        first = responses[0]
-        bot_messages.append("I ran the fabric analysis. Here is the first result:")
-        bot_messages.append(first["text"])
-        bot_messages.append("Do you prefer this response? (Yes / No)")
+        # Call analyzer
+        raw = analyse_all_variations(img, mode)
+        print("  analyse_all_variations returned:", raw)
+
+        cache_key = raw.get("cache_key")
+        first = raw.get("first")
+        print("  cache_key =", cache_key, "first =", first)
+
+        if not first:
+            print("❌ No first response received")
+            return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["No response from analyzer"]}
+
+        response_text = first.get("response")
+        print("✅ First response:", response_text[:100] if response_text else None)
+
         return {
-            "action": {"type": "redirect_to_analysis", "params": params},
-            "bot_messages": bot_messages,
-            "analysis_responses": responses,
+            "action": {"type": "redirect_to_analysis", "params": {**params, "cache_key": cache_key}},
+            "bot_messages": ["Here is the first result:", response_text, "Do you prefer this response? (Yes / No)"],
+            "analysis_responses": [{"id": first["id"], "text": response_text}],
         }
 
-    bot_messages.append("Do you prefer this response? (Yes / No)")
-    return {
-        "action": {"type": "redirect_to_analysis", "params": params},
-        "bot_messages": bot_messages,
-    }
+    except Exception as e:
+        import traceback
+        print("💥 Exception in redirect_to_analysis:", e)
+        print(traceback.format_exc())
+        return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": [f"Error: {e}"]}
+
 
 
 @mcp.tool()
@@ -162,7 +162,7 @@ def regenerate(
     """
     Regenerate using either cache (preferred) or fallback analyze tool.
     """
-    # ✅ First try cache_key path
+    # First try cache_key path
     if cache_key:
         if index is not None:
             resp = get_response(cache_key, index)
@@ -180,7 +180,7 @@ def regenerate(
                 return {"response": resp, "selected_index": i}
         return {"error": "exhausted", "message": "No cached alternatives ready; call with fresh=true to generate new set."}
 
-    # fallback to old regenerate logic
+    # fallback to any available regenerate tool
     if _regenerate_fn:
         try:
             try:

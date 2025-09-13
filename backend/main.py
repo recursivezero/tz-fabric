@@ -9,13 +9,7 @@ from contextlib import asynccontextmanager
 from constants import API_PREFIX, ASSETS
 import os
 
-app = FastAPI()
-logger = get_logger(__name__)
-
-origins = [
-    "http://localhost:5173", 
-]
-from routes import analysis, regenerate, validate_image, search, submit, media, chat, mcp_proxy
+from routes import analysis, regenerate, validate_image, search, submit, media, chat, mcp_proxy, uploads
 from tools.mcpserver import sse_app
 
 app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
@@ -64,6 +58,8 @@ app.database = db
 os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.mount("/assets/images", StaticFiles(directory=UPLOAD_ROOT), name="assets_images")
+
 templates = Jinja2Templates(directory="templates")
 
 
@@ -101,6 +97,7 @@ app.include_router(submit.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(mcp_proxy.router, prefix="/api")
+app.include_router(uploads.router, prefix="/api")
 
 app.mount("/mcp", sse_app())
 

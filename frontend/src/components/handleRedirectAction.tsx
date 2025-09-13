@@ -19,18 +19,7 @@ export default function HandleRedirectAction({ pendingAction, onAccept, onReject
 
   return (
     <div style={{ border: "1px solid #e2e8f0", padding: 10, borderRadius: 6, marginTop: 8, background: "#fff" }}>
-      <div style={{ marginBottom: 8 }}>
-        <strong>Analysis</strong>
-      </div>
-
-      {firstText && (
-        <div style={{ whiteSpace: "pre-wrap", padding: 8, background: "#07090bff", borderRadius: 4, marginBottom: 8 }}>
-          {firstText}
-        </div>
-      )}
-
-      <div style={{ marginBottom: 8 }}>Do you prefer this response? (Yes / No)</div>
-
+      <div style={{ marginBottom: 8, color:"black" }}>Do you prefer this response? (Yes / No)</div>
       <div>
         <button onClick={onAccept}>Yes — I prefer this</button>
         <button onClick={onReject} style={{ marginLeft: 8 }}>No — show another</button>
