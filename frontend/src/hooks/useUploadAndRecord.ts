@@ -75,7 +75,9 @@ export const useUploadAndRecord = () => {
       }
       try {
         const arrayBuffer = await file.arrayBuffer();
-        const AudioCtx = (window.AudioContext || (window as any).webkitAudioContext);
+        const AudioCtx =
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext ??
+          window.AudioContext;
         if (AudioCtx) {
           const ctx = new AudioCtx();
           const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
@@ -98,7 +100,7 @@ export const useUploadAndRecord = () => {
           setAudioFile(file);
           return;
         }
-      } catch (e) { 
+      } catch (e) {
         console.warn("Web Audio API failed, fallback to <audio>.", e);
       }
 
@@ -215,7 +217,7 @@ export const useUploadAndRecord = () => {
     formData.append("image", imageFile);
     formData.append("audio", audioFile);
 
-    if (name && name.trim()) formData.append("name", name.trim());
+    if (name?.trim()) formData.append("name", name.trim());
     setLoading(true);
     setNotification(null);
 

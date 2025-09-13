@@ -17,7 +17,7 @@ export interface SearchItem {
     imageFilename?: string;
     audioFilename?: string;
 
-    [k: string]: any;
+    [k: string]: string | number | boolean | null | undefined;
   };
 }
 

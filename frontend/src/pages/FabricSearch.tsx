@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState, useEffect } from "react";
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import useImageSearch from "../hooks/useImageSearch";
@@ -42,14 +42,27 @@ export default function Search() {
   }, [page, exactMatches]);
 
   const totalPages = Math.ceil(exactMatches.length / pageSize);
+  const fileid = useId();
+  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
   return (
     <div className="search-container">
       <h2>Similar Images</h2>
 
       <div className="uploader-row">
-        <input id="file-input" type="file" accept="image/*" onChange={onFileChange} className="file-input-hidden" />
-        <label htmlFor="file-input" className="file-button">
+        <input
+          id={fileid}
+          type="file"
+          accept="image/*"
+          onChange={onFileChange}
+          className="file-input-hidden"
+        />
+        <label htmlFor={fileid} className="file-button">
           Choose Image
         </label>
         <span className="file-name">{file ? file.name : "No file chosen"}</span>
@@ -71,7 +84,7 @@ export default function Search() {
       {file && (
         <div className="preview-box">
           <p className="section-title">Query Image</p>
-          <img className="preview-img" src={URL.createObjectURL(file)} alt="query" />
+          <img className="preview-img" src={previewUrl ?? ""} alt="query" />
         </div>
       )}
       {notification && <Notification message={notification.message} type={notification.type} />}

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useUploadAndRecord } from "../hooks/useUploadAndRecord";
 import { useLocation } from "react-router-dom";
 import Loader from "../components/Loader";
@@ -7,9 +7,19 @@ import Notification from "../components/Notification";
 
 type AudioMode = "upload" | "record";
 
+type Prefill = {
+  title?: string;
+  audioUrl?: string;
+  imageUrl?: string;
+};
+
+type LocationState = {
+  prefill?: Prefill 
+};
+
 const UploadPage = () => {
-  const location = useLocation();
-  const prefill = (location.state as any)?.prefill;
+  const location = useLocation<LocationState>();
+  const prefill = (location.state)?.prefill;
   const {
     imageUrl,
     audioUrl,

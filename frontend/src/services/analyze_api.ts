@@ -28,7 +28,7 @@ export async function analyzeImage(file, analysisType) {
 export async function regenerateResponse(cachekey, index) {
     try{
       const res = await fetch(`${FULL_API_URL}/regenerate?key=${cachekey}&index=${index}`, {
-        method: "POST",
+        method: "GET",
       });
       const data = await res.json();
       return data

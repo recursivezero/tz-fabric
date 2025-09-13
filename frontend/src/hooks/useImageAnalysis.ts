@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { analyzeImage, regenerateResponse, validateImageAPI } from "../services/analyze_api.ts";
 import { fetchImageAsFile } from "../utils/imageUtils.ts";
 
@@ -48,17 +48,7 @@ const useImageAnalysis = () => {
     simulatePrediction();
   }, [description, currentIndex]);
 
-  useEffect(() => {
-    if (
-      isValidImage === true &&
-      currentFile &&
-      !sampleImageUrl &&
-      !loading &&
-      currentMode === null
-    ) {
-      handleRunAnalysis(currentFile, "short");
-    }
-  }, [isValidImage]);
+  
 
   const handleSampleShortAnalysis = async (imagePath) => {
     setShowDrawer(false);
@@ -103,27 +93,46 @@ const useImageAnalysis = () => {
     setLoading(false);
   };
 
-  const validateImage = async (imageFile) => {
+  const validateImage = useCallback(
+  async (imageFile: File | null): Promise<void> => {
+    // defensive: handle no-file case early
+    if (!imageFile) {
+      setValidationMessage("No image provided.");
+      setIsValidImage(false);
+      return;
+    }
+
     setValidationLoading(true);
     setIsValidImage(null);
     setValidationMessage("");
 
     try {
-      const data = await validateImageAPI(imageFile);
+      const data = await validateImageAPI(imageFile); // typed at its declaration ideally
 
-      if (data.valid) {
+      if (data?.valid) {
         setIsValidImage(true);
       } else {
         setIsValidImage(false);
-        setValidationMessage("This image doesn't focus on fabric. Please upload a close-up fabric image.");
+        setValidationMessage(
+          "This image doesn't focus on fabric. Please upload a close-up fabric image."
+        );
       }
-    } catch (error: any) {
-      setValidationMessage(error.message);
+    } catch (error: unknown) {
+      // Narrow the unknown to Error
+      if (error instanceof Error) {
+        setValidationMessage(error.message);
+      } else {
+        // fallback for non-Error throws (string, number, etc.)
+        setValidationMessage(String(error ?? "An unknown error occurred during image validation."));
+      }
       setIsValidImage(false);
+    } finally {
+      setValidationLoading(false);
     }
-
-    setValidationLoading(false);
-  };
+  },
+  [
+  ]
+);
 
   const handleUploadedImage = (file) => {
 
@@ -143,7 +152,14 @@ const useImageAnalysis = () => {
     setTypedText("");
   };
 
-  const handleRunAnalysis = async (file, mode) => {
+  const latestRunIdRef = useRef(0);
+  
+
+  const handleRunAnalysis = useCallback(
+  async (file: File | null, mode: "short" | "long") => {
+
+    if (!file) return;
+    const runId = latestRunIdRef.current;
     setShowResults(true);
     setLoading(true);
     setCurrentMode(mode);
@@ -151,6 +167,7 @@ const useImageAnalysis = () => {
     setCanUpload(false);
     try {
       const response = await analyzeImage(file, mode);
+      if (runId !== latestRunIdRef.current) return;
       const firstObject = response.response;
       const first = firstObject?.response;
       const allResponses = Array(6).fill(null);
@@ -160,11 +177,33 @@ const useImageAnalysis = () => {
       setCurrentIndex(0);
       setCacheKey(response.cache_key);
     } catch (err) {
+      if (runId !== latestRunIdRef.current) return;
       console.error(`${mode} analysis failed:`, err);
       alert(`${mode} analysis failed.`);
+      setIsValidImage(false);
+    } finally {
+      // only flip loading off for the latest run
+      if (runId === latestRunIdRef.current) setLoading(false);
     }
-    setLoading(false);
-  };
+  },
+  // dependencies for the callback:
+  // - include any non-stable values used inside (e.g. analyzeImage if it's a prop or re-created)
+  // - state setters (setX) are stable and don't need to be listed
+  // Example: [analyzeImage] if analyzeImage is not a module-level import.
+  []
+);
+
+useEffect(() => {
+    if (
+      isValidImage === true &&
+      currentFile &&
+      !sampleImageUrl &&
+      !loading &&
+      currentMode === null
+    ) {
+      handleRunAnalysis(currentFile, "short");
+    }
+  }, [isValidImage, currentFile, loading, currentMode, sampleImageUrl,handleRunAnalysis]);
 
   const handleNext = async () => {
     const newIndex = currentIndex + 1;

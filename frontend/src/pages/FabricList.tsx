@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
 
@@ -13,28 +13,38 @@ export default function ContentGrid() {
   const [err, setErr] = useState<string | null>(null);
   const [mode, setMode] = useState<"all" | "similar">("all");
 
-  useEffect(() => {
-    if (mode !== "all") return;
-    let ignore = false;
-    (async () => {
-      setLoading(true);
-      setErr(null);
-      try {
-        const data = await fetchContent(page, limit);
-        if (!ignore) {
-          setItems(data.items);
-          setTotal(data.total);
-        }
-      } catch (e: any) {
-        if (!ignore) setErr(e.message || "Failed to load");
-      } finally {
-        if (!ignore) setLoading(false);
+  const getErrorMessage = useCallback((e: unknown): string => {
+  if (e instanceof Error) return e.message;
+  if (typeof e === "string") return e;
+  if (typeof e === "object" && e !== null && "message" in e) {
+    const maybeMsg = (e as { message?: unknown }).message;
+    if (typeof maybeMsg === "string") return maybeMsg;
+  }
+  return "Failed to load";
+}, []); // no deps -> stable across renders
+
+useEffect(() => {
+  if (mode !== "all") return;
+  let ignore = false;
+  (async () => {
+    setLoading(true);
+    setErr(null);
+    try {
+      const data = await fetchContent(page, limit);
+      if (!ignore) {
+        setItems(data.items);
+        setTotal(data.total);
       }
-    })();
-    return () => {
-      ignore = true;
-    };
-  }, [page, limit, mode]);
+    } catch (err: unknown) {
+      if (!ignore) setErr(getErrorMessage(err));
+    } finally {
+      if (!ignore) setLoading(false);
+    }
+  })();
+  return () => {
+    ignore = true;
+  };
+}, [page, limit, mode, getErrorMessage]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 

@@ -1,6 +1,5 @@
 import { FULL_API_URL } from "../constants";
 
-const BASE_URL = (import.meta.env.VITE_API_URL) || "";
 
 export type MediaItem = {
   _id: string;
