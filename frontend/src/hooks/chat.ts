@@ -49,7 +49,6 @@ export default function useChat() {
   }, []);
 
   const handleResponse = useCallback((res: ChatResponse) => {
-    // Add bot messages or the assistant reply into chat history
     if (res.bot_messages && res.bot_messages.length > 0) {
       setMessages((prev) => [
         ...prev,
@@ -59,18 +58,15 @@ export default function useChat() {
       setMessages((prev) => [...prev, res.reply]);
     }
 
-    // If this is the redirect_to_analysis action, set pendingAction and set currentResponse from the first analysis
     if ((res as any).action?.type === "redirect_to_analysis") {
       const action = (res as any).action;
       const rawResponses = (res as any).analysis_responses || [];
 
-      // Normalize analysis_responses (ids -> string)
       const normalizedResponses = rawResponses.map((r: any, i: number) => ({
         id: normalizeId(r.id ?? `r${i}`),
         text: r.text ?? r.content ?? String(r),
       }));
 
-      // Determine the firstUsedId (if provided), fallback to first normalized response id or "1"
       let firstUsedId = normalizedResponses.length > 0 ? normalizedResponses[0].id : null;
       if (!firstUsedId && action.params) {
         const possibleFirst =
@@ -82,12 +78,20 @@ export default function useChat() {
       }
       if (!firstUsedId) firstUsedId = "1";
 
-      // If we have a first normalized response, show it in the black box
       if (normalizedResponses.length > 0) {
-        setCurrentResponse(normalizedResponses[0].text);
+        const firstText = normalizedResponses[0].text;
+
+        // Append as a normal assistant message (so it appears in chat history)
+        setMessages((prev) => [...prev, { role: "assistant", content: firstText }]);
+
+        // Also show it in the highlighted black box
+        setCurrentResponse(firstText);
       } else if (action.params?.cache_key && action.params?.first_text) {
         // fallback if analyze returned first_text in params
         setCurrentResponse(action.params.first_text);
+
+        // optionally also push this into messages:
+        setMessages((prev) => [...prev, { role: "assistant", content: action.params.first_text }]);
       }
 
       setPendingAction({
@@ -98,9 +102,9 @@ export default function useChat() {
       return;
     }
 
-    // Not an analysis redirect — clear pendingAction & keep currentResponse as-is
     setPendingAction(null);
   }, [normalizeId]);
+
 
   const acceptAction = useCallback(() => {
     if (!pendingAction) return;
@@ -111,22 +115,21 @@ export default function useChat() {
     setPendingAction(null);
   }, [pendingAction]);
 
-  // helper: call backend MCP endpoint
   const callMcp = useCallback(async (tool: string, args: Record<string, any> = {}) => {
-    const resp = await fetch("http://127.0.0.1:8000/api/mcp/call", {
+    const resp = await fetch("/api/mcp/call", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tool, args }),
     });
     if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status}`);
+      const txt = await resp.text().catch(() => "");
+      throw new Error(`HTTP ${resp.status} ${txt}`);
     }
     const data = await resp.json();
     if (!data.ok) throw new Error(data.error || "MCP call failed");
     return data.result;
   }, []);
 
-  // Poll for cached index (useful when server returns pending). Returns the response object or null if timed out.
   const pollForCachedIndex = useCallback(
     async (cache_key: string, index: number, timeoutMs = 15000, intervalMs = 800) => {
       const start = Date.now();
@@ -140,7 +143,6 @@ export default function useChat() {
             return null;
           }
         } catch (e) {
-          // swallow and retry until timeout
         }
         await new Promise((r) => setTimeout(r, intervalMs));
       }
@@ -183,7 +185,7 @@ export default function useChat() {
           const result = await callMcp("regenerate", { cache_key, index: idx, image_url, mode, used_ids });
           if (result && result.response) {
             const r = result.response as { id: any; response?: string; text?: string };
-            const rText = r.response ?? (r as any).text ?? "";
+            const rText = (r.response ?? (r as any).text) ?? "";
             const rId = normalizeId(r.id ?? idx);
 
             // show chat message + update highlighted black box + mark used
@@ -222,6 +224,7 @@ export default function useChat() {
           continue;
         }
 
+        // If no cache_key path, try regenerate without cache_key (server fallback)
         const result = await callMcp("regenerate", { image_url, used_ids, mode });
         if (result && result.response) {
           const r = result.response as { id: any; text?: string; response?: string };
@@ -267,61 +270,63 @@ export default function useChat() {
 
     try {
       let res: ChatResponse;
+
+      // --- IMAGE FLOW: upload -> MCP redirect_to_analysis ---
       if (uploadedFile) {
+        // 1) upload file to the server and get back an accessible image_url
         const formData = new FormData();
-        formData.append("image", uploadedFile);
-        formData.append("analysis_type", "short");
-        const resp = await fetch("http://127.0.0.1:8000/api/analyse", { method: "POST", body: formData });
-        const data = await resp.json();
-
-        // Extract cache_key + first response if present
-        const cacheKey = data?.cache_key ?? null;
-
-        // Build analysis_responses array with normalized ids if server returned array form
-        const responses: { id: string; text: string }[] = [];
-        if (data?.response?.responses && Array.isArray(data.response.responses)) {
-          for (let i = 0; i < data.response.responses.length; i++) {
-            const r = data.response.responses[i];
-            responses.push({ id: normalizeId(r.id ?? `r${i}`), text: r.text ?? r.content ?? String(r) });
-          }
-        } else if (data?.response && (data.response.response || data.response.text)) {
-          const firstResp = data.response;
-          const rid = normalizeId(firstResp.id ?? "1");
-          const rtext = firstResp.response ?? firstResp.text ?? String(firstResp);
-          responses.push({ id: rid, text: rtext });
-        } else if (data?.responses && Array.isArray(data.responses)) {
-          for (let i = 0; i < data.responses.length; i++) {
-            const r = data.responses[i];
-            responses.push({ id: normalizeId(r.id ?? `r${i}`), text: r.text ?? r.content ?? String(r) });
-          }
+        formData.append("file", uploadedFile);
+        // endpoint: add /api/uploads/tmp on your backend (see server patch)
+        const upResp = await fetch("/api/uploads/tmp", { method: "POST", body: formData });
+        if (!upResp.ok) {
+          const txt = await upResp.text().catch(() => "");
+          throw new Error(`Image upload failed: ${upResp.status} ${txt}`);
         }
+        const upJson = await upResp.json();
+        const imageUrl = upJson?.image_url ?? null;
 
-        if (responses.length > 0) {
-          setCurrentResponse(responses[0].text);
-        } else if (data?.response && typeof data.response === "string") {
-          setCurrentResponse(data.response);
-        }
+        // 2) call MCP proxy (which will run tools.mcpserver.redirect_to_analysis)
+        const mcpResult = await callMcp("redirect_to_analysis", { image_url: imageUrl, mode: "short" });
 
+        // Build a ChatResponse that matches your UI handlers
         res = {
-          reply: { role: "assistant", content: "Image uploaded and analyzed." },
-          bot_messages: ["Image uploaded and analyzed."],
+          reply: { role: "assistant", content: "Image uploaded and analysis started." },
+          bot_messages: ["Image uploaded and analysis started."],
         } as ChatResponse;
 
-        const actionParams: any = {
-          image_url: data?.image_url ?? uploadedPreviewUrl ?? null,
-          mode: "short",
-        };
-        if (cacheKey) actionParams.cache_key = cacheKey;
+        const actionParams: any = { image_url: imageUrl, mode: "short" };
+        if (mcpResult && mcpResult.action && mcpResult.action.params) {
+          Object.assign(actionParams, mcpResult.action.params || {});
+        } else if (mcpResult && mcpResult.params) {
+          Object.assign(actionParams, mcpResult.params || {});
+        }
+
+        // attach analysis_responses if MCP returned them
+        if (Array.isArray(mcpResult?.analysis_responses)) {
+          (res as any).analysis_responses = mcpResult.analysis_responses.map((r: any, i: number) => ({
+            id: normalizeId(r.id ?? `r${i}`),
+            text: r.text ?? r.response ?? r.content ?? String(r),
+          }));
+        } else if (Array.isArray(mcpResult?.responses)) {
+          (res as any).analysis_responses = mcpResult.responses.map((r: any, i: number) => ({
+            id: normalizeId(r.id ?? `r${i}`),
+            text: r.text ?? r.response ?? String(r),
+          }));
+        }
 
         (res as any).action = { type: "redirect_to_analysis", params: actionParams };
-        (res as any).analysis_responses = responses;
-      } else {
-        res = await chatOnce(next);
+
+        // Hand over to the existing handler which sets pendingAction/currentResponse etc.
+        handleResponse(res);
+        setStatus("idle");
+        clearUpload();
+        return;
       }
 
+      // --- NORMAL CHAT FLOW (no image) ---
+      res = await chatOnce(next);
       handleResponse(res);
       setStatus("idle");
-      clearUpload();
     } catch (e: any) {
       setStatus("error");
       setError(e?.message || "Something went wrong.");
@@ -368,6 +373,6 @@ export default function useChat() {
     pendingAction,
     acceptAction,
     rejectAction,
-    currentResponse, 
+    currentResponse,
   };
 }

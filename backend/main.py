@@ -9,7 +9,7 @@ from constants import UPLOAD_ROOT
 
 import os
 
-from routes import analysis, regenerate, validate_image, search, submit, media, chat, mcp_proxy
+from routes import analysis, regenerate, validate_image, search, submit, media, chat, mcp_proxy, uploads
 from tools.mcpserver import sse_app
 
 app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
@@ -33,6 +33,8 @@ app.database = db
 os.makedirs(UPLOAD_ROOT, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.mount("/assets/images", StaticFiles(directory=UPLOAD_ROOT), name="assets_images")
+
 templates = Jinja2Templates(directory="templates")
 
 app.include_router(analysis.router, prefix="/api")
@@ -43,6 +45,7 @@ app.include_router(submit.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(mcp_proxy.router, prefix="/api")
+app.include_router(uploads.router, prefix="/api")
 
 app.mount("/mcp", sse_app())
 
