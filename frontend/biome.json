@@ -8,16 +8,13 @@
   "files": {
     "ignoreUnknown": false,
     "includes": [
-      "src/**/*.js",
-      "src/**/*.ts",
-      "src/**/*.tsx",
-      "!**/dist",
-      "!**/*.generated.js"
+      "src/**",
+      "!**/dist"
     ]
   },
   "formatter": {
     "enabled": true,
-    "indentStyle": "tab",
+    "indentStyle": "space",
     "formatWithErrors": false,
     "indentWidth": 2,
     "lineEnding": "lf",

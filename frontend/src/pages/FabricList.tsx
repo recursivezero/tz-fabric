@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
 
@@ -14,37 +14,37 @@ export default function ContentGrid() {
   const [mode, setMode] = useState<"all" | "similar">("all");
 
   const getErrorMessage = useCallback((e: unknown): string => {
-  if (e instanceof Error) return e.message;
-  if (typeof e === "string") return e;
-  if (typeof e === "object" && e !== null && "message" in e) {
-    const maybeMsg = (e as { message?: unknown }).message;
-    if (typeof maybeMsg === "string") return maybeMsg;
-  }
-  return "Failed to load";
-}, []); // no deps -> stable across renders
-
-useEffect(() => {
-  if (mode !== "all") return;
-  let ignore = false;
-  (async () => {
-    setLoading(true);
-    setErr(null);
-    try {
-      const data = await fetchContent(page, limit);
-      if (!ignore) {
-        setItems(data.items);
-        setTotal(data.total);
-      }
-    } catch (err: unknown) {
-      if (!ignore) setErr(getErrorMessage(err));
-    } finally {
-      if (!ignore) setLoading(false);
+    if (e instanceof Error) return e.message;
+    if (typeof e === "string") return e;
+    if (typeof e === "object" && e !== null && "message" in e) {
+      const maybeMsg = (e as { message?: unknown }).message;
+      if (typeof maybeMsg === "string") return maybeMsg;
     }
-  })();
-  return () => {
-    ignore = true;
-  };
-}, [page, limit, mode, getErrorMessage]);
+    return "Failed to load";
+  }, []); // no deps -> stable across renders
+
+  useEffect(() => {
+    if (mode !== "all") return;
+    let ignore = false;
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      try {
+        const data = await fetchContent(page, limit);
+        if (!ignore) {
+          setItems(data.items);
+          setTotal(data.total);
+        }
+      } catch (err: unknown) {
+        if (!ignore) setErr(getErrorMessage(err));
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [page, limit, mode, getErrorMessage]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -74,17 +74,25 @@ useEffect(() => {
         </div>
       </div>
 
-      <div className="grid-title">{mode === "all" ? "All Uploads" : "Similar Results"}</div>
+      <div className="grid-title">
+        {mode === "all" ? "All Uploads" : "Similar Results"}
+      </div>
 
       {mode === "all" && (
         <div className="grid-controls">
-          <button disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
             ← Prev
           </button>
           <span>
             Page {page} / {totalPages}
           </span>
-          <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Next →
           </button>
         </div>
@@ -97,7 +105,11 @@ useEffect(() => {
           <article className="media-card" key={item._id ?? item.imageUrl}>
             <div className="media-thumb">
               <img
-                src={item.imageUrl?.startsWith("http") ? item.imageUrl : `${API_URL}${item.imageUrl}`}
+                src={
+                  item.imageUrl?.startsWith("http")
+                    ? item.imageUrl
+                    : `${API_URL}${item.imageUrl}`
+                }
                 alt="Uploaded"
                 loading="lazy"
                 onError={(e) => {
@@ -113,14 +125,22 @@ useEffect(() => {
               {item.audioUrl && (
                 <audio
                   controls
-                  src={item.audioUrl?.startsWith("http") ? item.audioUrl : `${API_URL}${item.audioUrl}`}
+                  src={
+                    item.audioUrl?.startsWith("http")
+                      ? item.audioUrl
+                      : `${API_URL}${item.audioUrl}`
+                  }
                   preload="metadata"
                 />
               )}
             </div>
 
             <div className="media-meta">
-              {item.createdAt && <time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time>}
+              {item.createdAt && (
+                <time dateTime={item.createdAt}>
+                  {new Date(item.createdAt).toLocaleString()}
+                </time>
+              )}
               {/*{"score" in item && item.score !== undefined ? (
                 <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>score: {item.score}</span>
               ) : null}*/}
@@ -128,7 +148,9 @@ useEffect(() => {
           </article>
         ))}
 
-        {!loading && items.length === 0 && <div className="empty-state">No items.</div>}
+        {!loading && items.length === 0 && (
+          <div className="empty-state">No items.</div>
+        )}
       </div>
       {loading && <div className="grid-loading">Loading…</div>}
     </div>

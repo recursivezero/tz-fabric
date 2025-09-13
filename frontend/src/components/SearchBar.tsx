@@ -8,7 +8,10 @@ type AnimatedSearchBoxProps = {
   loading?: boolean;
 };
 
-const AnimatedSearchBox = ({ onSearch, loading = false }: AnimatedSearchBoxProps) => {
+const AnimatedSearchBox = ({
+  onSearch,
+  loading = false,
+}: AnimatedSearchBoxProps) => {
   const [selectedImage, setSelectedImage] = useState<SelectedImage>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
@@ -39,7 +42,12 @@ const AnimatedSearchBox = ({ onSearch, loading = false }: AnimatedSearchBoxProps
 
       <div className="search-box">
         {/* htmlFor now matches the input id */}
-        <label htmlFor={fileid} className="upload-icon" role="button" aria-disabled={loading}>
+        <label
+          htmlFor={fileid}
+          className="upload-icon"
+          role="button"
+          aria-disabled={loading}
+        >
           📁
         </label>
 
@@ -55,8 +63,14 @@ const AnimatedSearchBox = ({ onSearch, loading = false }: AnimatedSearchBoxProps
 
         {showPrompt && selectedImage ? (
           <>
-            <span className="file-name">{typeof selectedImage === "string" ? selectedImage : selectedImage.name}</span>
-            <p className="search-instruction">Image uploaded successfully. Showing preview...</p>
+            <span className="file-name">
+              {typeof selectedImage === "string"
+                ? selectedImage
+                : selectedImage.name}
+            </span>
+            <p className="search-instruction">
+              Image uploaded successfully. Showing preview...
+            </p>
           </>
         ) : (
           <div className="text-container" />

@@ -1,4 +1,5 @@
 from pathlib import Path
+
 PROJECT_DIR = Path(__file__).parent
 ASSETS = PROJECT_DIR / "assets"
 IMAGE_DIR = ASSETS / "images"

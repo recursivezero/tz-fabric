@@ -13,30 +13,29 @@ const DescriptionBox = ({
   typedText = "",
   description = "",
   handlePrev,
-  handleNext
+  handleNext,
 }) => {
   const [copied, setCopied] = useState(false);
   const isError = isValidImage === false && validationMessage;
 
   // Determine the text currently shown to the user
-  const displayedText =
-    isError
-      ? validationMessage
-      : loading
+  const displayedText = isError
+    ? validationMessage
+    : loading
       ? ""
       : currentIndex === 0
-      ? typedText || "Waiting for response..."
-      : description || "Waiting for response...";
+        ? typedText || "Waiting for response..."
+        : description || "Waiting for response...";
 
   const handleCopy = async () => {
-    const textToCopy = 
+    const textToCopy =
       // if it's an error or loading or placeholder, don't copy
-      isError || loading ? "" : (currentIndex === 0 ? typedText : description);
+      isError || loading ? "" : currentIndex === 0 ? typedText : description;
 
     if (!textToCopy) return;
 
     try {
-      if(navigator.clipboard?.writeText){
+      if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(textToCopy);
       } else {
         // Fallback for older browsers

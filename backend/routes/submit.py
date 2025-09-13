@@ -25,7 +25,7 @@ def _process_index_job(
 ):
     db.images.update_one(
         {"filename": image_filename, "status": "queued"},
-        {"$set": {"status": "processing"}}
+        {"$set": {"status": "processing"}},
     )
 
     try:
@@ -40,23 +40,23 @@ def _process_index_job(
             "createdAt": created_on,
         }
         collection.add(
-            ids=[image_filename],
-            embeddings=[embedding],
-            metadatas=[metadata]
+            ids=[image_filename], embeddings=[embedding], metadatas=[metadata]
         )
 
         db.images.update_one(
             {"filename": image_filename},
-            {"$set": {
-                "status": "indexed",
-                "indexedAt": datetime.utcnow().isoformat()
+            {
+                "$set": {
+                    "status": "indexed",
+                    "indexedAt": datetime.utcnow().isoformat(),
+                },
+                "$unset": {"errorMessage": ""},
             },
-             "$unset": {"errorMessage": ""}}
         )
     except Exception as e:
         db.images.update_one(
             {"filename": image_filename},
-            {"$set": {"status": "failed", "errorMessage": str(e)}}
+            {"$set": {"status": "failed", "errorMessage": str(e)}},
         )
 
 
@@ -66,7 +66,7 @@ async def submit_file(
     background: BackgroundTasks,
     image: UploadFile = File(...),
     audio: UploadFile = File(...),
-    name: str = Form(None)  
+    name: str = Form(None),
 ):
     db = request.app.database
 
@@ -97,22 +97,26 @@ async def submit_file(
     created_on = datetime.utcnow().isoformat()
 
     # store only clean metadata in DB
-    db.images.insert_one({
-        "basename": base_name,
-        "filename": image_filename,
-        "created_on": created_on,
-        "file_type": image.content_type,
-        "status": "queued",
-        "indexedAt": None,
-        "errorMessage": None
-    })
+    db.images.insert_one(
+        {
+            "basename": base_name,
+            "filename": image_filename,
+            "created_on": created_on,
+            "file_type": image.content_type,
+            "status": "queued",
+            "indexedAt": None,
+            "errorMessage": None,
+        }
+    )
 
-    db.audios.insert_one({
-        "basename": base_name,
-        "filename": audio_filename,
-        "created_on": created_on,
-        "file_type": audio.content_type
-    })
+    db.audios.insert_one(
+        {
+            "basename": base_name,
+            "filename": audio_filename,
+            "created_on": created_on,
+            "file_type": audio.content_type,
+        }
+    )
 
     # schedule background indexing
     background.add_task(
@@ -122,12 +126,12 @@ async def submit_file(
         basename=base_name,
         image_filename=image_filename,
         audio_filename=audio_filename,
-        created_on=created_on
+        created_on=created_on,
     )
 
     return {
         "message": "Uploaded",
         "base": base_name,
         "status": "queued",
-        "filename": image_filename
+        "filename": image_filename,
     }

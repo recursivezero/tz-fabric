@@ -1,12 +1,13 @@
+import base64
 import os
 
 import google.generativeai as genai
-import base64
 from dotenv import load_dotenv
 
 load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
 
 def gemini_vision_check(image_base64: str, prompt: str) -> str:
     try:

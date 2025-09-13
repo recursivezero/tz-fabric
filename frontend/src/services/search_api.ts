@@ -26,14 +26,13 @@ export interface SearchResponse {
   results: SearchItem[];
 }
 
-
 export async function searchSimilar(
   file: File,
   k: number = 50,
   order: "recent" | "score" = "recent",
   debug_ts: boolean = false,
   min_sim: number = 0.5,
-  require_audio: boolean = true
+  require_audio: boolean = true,
 ): Promise<SearchResponse> {
   const form = new FormData();
   form.append("file", file);
@@ -58,4 +57,3 @@ export async function searchSimilar(
 
   return res.json();
 }
-

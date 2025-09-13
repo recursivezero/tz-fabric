@@ -17,7 +17,6 @@ export const useUploadAndRecord = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error";
@@ -76,8 +75,8 @@ export const useUploadAndRecord = () => {
       try {
         const arrayBuffer = await file.arrayBuffer();
         const AudioCtx =
-          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext ??
-          window.AudioContext;
+          (window as unknown as { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext ?? window.AudioContext;
         if (AudioCtx) {
           const ctx = new AudioCtx();
           const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
@@ -139,7 +138,7 @@ export const useUploadAndRecord = () => {
         probe.src = tempUrl;
       });
     },
-    [audioUrl]
+    [audioUrl],
   );
 
   const startRecording = async () => {
@@ -157,7 +156,9 @@ export const useUploadAndRecord = () => {
 
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(audioChunks.current, { type: "audio/webm" });
-        const file = new File([blob], "recorded_audio.webm", { type: "audio/webm" });
+        const file = new File([blob], "recorded_audio.webm", {
+          type: "audio/webm",
+        });
         const url = URL.createObjectURL(blob);
         setAudioFile(file);
         setAudioUrl(url);

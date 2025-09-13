@@ -8,7 +8,10 @@ export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
   const [file, setFile] = useState<File | null>(null);
   const [k, setK] = useState(0);
-  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const pageSize = 4;
   const [page, setPage] = useState(1);
@@ -43,7 +46,10 @@ export default function Search() {
 
   const totalPages = Math.ceil(exactMatches.length / pageSize);
   const fileid = useId();
-  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  const previewUrl = useMemo(
+    () => (file ? URL.createObjectURL(file) : null),
+    [file],
+  );
 
   useEffect(() => {
     return () => {
@@ -69,14 +75,28 @@ export default function Search() {
 
         <label className="k-input">
           K (max results):
-          <input type="number" min={1} max={1000} value={k} onChange={(e) => setK(e.target.valueAsNumber)} />
+          <input
+            type="number"
+            min={1}
+            max={1000}
+            value={k}
+            onChange={(e) => setK(e.target.valueAsNumber)}
+          />
         </label>
 
-        <button onClick={handleSearch} disabled={loading || !file} className="primary-btn">
+        <button
+          onClick={handleSearch}
+          disabled={loading || !file}
+          className="primary-btn"
+        >
           {loading ? "Searching..." : "Find Exact"}
         </button>
 
-        <button onClick={handleClear} className="secondary-btn" disabled={loading}>
+        <button
+          onClick={handleClear}
+          className="secondary-btn"
+          disabled={loading}
+        >
           Clear
         </button>
       </div>
@@ -87,7 +107,9 @@ export default function Search() {
           <img className="preview-img" src={previewUrl ?? ""} alt="query" />
         </div>
       )}
-      {notification && <Notification message={notification.message} type={notification.type} />}
+      {notification && (
+        <Notification message={notification.message} type={notification.type} />
+      )}
       {loading && <Loader />}
       {error && <p className="search-error">{error}</p>}
       {exactMatches.length > 0 ? (
@@ -99,7 +121,10 @@ export default function Search() {
             <span>
               Page {page} / {totalPages}
             </span>
-            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page === totalPages}
+            >
               Next
             </button>
           </div>
@@ -116,7 +141,9 @@ export default function Search() {
                 </div>
 
                 <div className="result-audio">
-                  {item.audioSrc && <audio controls src={item.audioSrc} preload="metadata" />}
+                  {item.audioSrc && (
+                    <audio controls src={item.audioSrc} preload="metadata" />
+                  )}
                 </div>
               </article>
             ))}
@@ -124,7 +151,11 @@ export default function Search() {
         </>
       ) : (
         !loading && (
-          <p className="empty-hint">{file ? "No matches found for this image." : "Pick an image and search."}</p>
+          <p className="empty-hint">
+            {file
+              ? "No matches found for this image."
+              : "Pick an image and search."}
+          </p>
         )
       )}
     </div>

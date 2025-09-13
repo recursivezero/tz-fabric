@@ -2,22 +2,27 @@
 
 ## How to start
 
-````sh
+```sh
 poetry install
 ```
 
-create `.env` file and add these variables in that
+create `.env` file and add content from `.env.local` file anc change value according to your project
+
+Note: according to your port change the port in `frontend/vite.config.ts` and `VITE_API_URL`
 
 ```sh
-GEMINI_API_KEY = ' your gemini api key'
-PORT = 8000
+poetry shell
+poetry run dev
 ```
 
-Note:  according to your port change the port in `frontend/vite.config.ts` and `VITE_API_URL`
+## Lint
 
+to lint the code run
 
-poetry shell
-poetry run fabric
-````
+```sh
+poetry run black .
+#then
+poetry run ruff .
+```
 
 open [http://localhost:8000](http://127.0.0.1:8000)

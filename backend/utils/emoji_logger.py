@@ -1,12 +1,13 @@
 import logging
 
+
 class EmojiFormatter(logging.Formatter):
     EMOJIS = {
         logging.DEBUG: "🐛 ",
         logging.INFO: "ℹ️ ",
         logging.WARNING: "⚠️ ",
         logging.ERROR: "❌ ",
-        logging.CRITICAL: "🔥  "
+        logging.CRITICAL: "🔥  ",
     }
 
     def format(self, record):

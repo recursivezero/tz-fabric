@@ -28,7 +28,7 @@ const ImageDescription = () => {
     handleRunAnalysis,
     handleSampleShortAnalysis,
     handlePrev,
-    handleNext
+    handleNext,
   } = useImageAnalysis();
 
   return (
@@ -37,7 +37,10 @@ const ImageDescription = () => {
 
       <div className="upload-wrapper">
         <div className="upload-inner">
-          <AnimatedSearchBox onSearch={handleUploadedImage} loading={!canUpload} />
+          <AnimatedSearchBox
+            onSearch={handleUploadedImage}
+            loading={!canUpload}
+          />
         </div>
       </div>
 
@@ -72,7 +75,10 @@ const ImageDescription = () => {
 
       {showDrawer && (
         <div className="drawer-panel">
-          <SampleImageGallery onAnalyze={handleSampleShortAnalysis} loading={loading} />
+          <SampleImageGallery
+            onAnalyze={handleSampleShortAnalysis}
+            loading={loading}
+          />
         </div>
       )}
     </div>

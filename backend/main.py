@@ -10,6 +10,7 @@ from constants import API_PREFIX, ASSETS
 import os
 from routes import analysis, regenerate, validate_image, search, submit, media
 from utils.emoji_logger import get_logger
+
 load_dotenv()
 
 app = FastAPI()
@@ -28,9 +29,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATABASE_URI = os.getenv("DATABASE_URI","mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority")
+DATABASE_URI = os.getenv(
+    "DATABASE_URI",
+    "mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority",
+)
 if not DATABASE_URI:
-    raise RuntimeError("DATABASE_URI is not set in environment variables. Please configure it in .env")
+    raise RuntimeError(
+        "DATABASE_URI is not set in environment variables. Please configure it in .env"
+    )
 # Parse the URI to extract db name
 parsed_uri = uri_parser.parse_uri(DATABASE_URI)
 db_name = parsed_uri.get("database")
@@ -54,6 +60,7 @@ os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -81,11 +88,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Error while closing MongoDB client: {e}")
 
+
 app.include_router(analysis.router, prefix=API_PREFIX)
 app.include_router(regenerate.router, prefix=API_PREFIX)
 app.include_router(validate_image.router, prefix=API_PREFIX)
 app.include_router(search.router, prefix=API_PREFIX)
-app.include_router(submit.router, prefix=API_PREFIX)    
+app.include_router(submit.router, prefix=API_PREFIX)
 app.include_router(media.router, prefix=API_PREFIX)
 
 

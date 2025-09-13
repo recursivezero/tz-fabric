@@ -38,10 +38,10 @@ async def validate_image(image: UploadFile = File(...)):
         response = gemini_vision_check(base64_img, VALIDATION_PROMPT)
 
         if "Invalid image" in response:
-            return JSONResponse(content={ "valid": False })
+            return JSONResponse(content={"valid": False})
 
-        return JSONResponse(content={ "valid": True })
+        return JSONResponse(content={"valid": True})
 
     except Exception as e:
         print("Validation error:", e)
-        return JSONResponse(status_code=500, content={ "valid": False, "error": str(e) })
+        return JSONResponse(status_code=500, content={"valid": False, "error": str(e)})
