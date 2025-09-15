@@ -114,7 +114,7 @@
 .search-container .section-title {
   text-align: start;
   margin: 0 0 3px;
-  font-weight: 600;
+  font-weight: 700;
   color: #070707;
 }
 .search-container .preview-img {
@@ -150,9 +150,7 @@
   color: #d8e0ea;
 }
 
-.pagination-controls span {
-  color: #010101;
-}
+
 
 .result-grid {
   display: grid;

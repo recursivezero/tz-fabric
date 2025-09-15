@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import { useUploadAndRecord } from "../hooks/useUploadAndRecord";
@@ -70,6 +70,8 @@ const UploadPage = () => {
     const file = e.dataTransfer.files?.[0];
     if (file) handleAudioUpload(file);
   };
+
+  const navigate = useNavigate();
 
   return (
     <div className="upload-page">
@@ -144,13 +146,16 @@ const UploadPage = () => {
                     Stop
                   </button>
                 </div>
+                <span className="alt-text">
+                  OR
+                </span>
                 <div className="alt-switch">
                   <button
                     className="link-btn"
                     onClick={() => setAudioMode("upload")}
                     disabled={isRecording}
                   >
-                    ← OR Upload
+                    ← Upload
                   </button>
                 </div>
 
@@ -274,7 +279,7 @@ const UploadPage = () => {
       </div>
       <div className="name-field">
         <div>
-          <label className="name-label">Your Filename</label>
+          <label className="name-label">File Name(optional)</label>
         </div>
         <div>
           <input
@@ -295,6 +300,9 @@ const UploadPage = () => {
           >
             {loading ? "Submitting…" : "Submit"}
           </button>
+        </div>
+        <div>
+          <button className="cancel" onClick={()=>navigate("/")}>cancel</button>
         </div>
       </div>
       {loading && <Loader />}
