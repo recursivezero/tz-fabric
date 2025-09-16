@@ -27,10 +27,9 @@ export async function chatOnce(messages: Message[]): Promise<ChatResponse> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),
   });
-
+  console.log("response received from /api/chat", res);
   console.log("/api/chat status:", res.status);
 
-  // parse body once
   let json: any;
   try {
     json = await res.json();
