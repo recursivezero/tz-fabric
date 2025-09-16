@@ -1,7 +1,23 @@
-import "./App.css";
-import { Routing } from "./Routing";
+import './App.css';
+import { Routing } from './Routing';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+
 
 const App = () => {
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const body = document.body;
+
+    if (location.pathname === "/chat") {
+      body.classList.remove("app-background");
+    } else {
+      body.classList.add("app-background");
+    }
+  }, [location]);
   return (
     <div className="container">
       <header className="header">
