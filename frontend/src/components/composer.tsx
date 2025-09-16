@@ -79,7 +79,7 @@ export default function Composer({
       />
 
       <button onClick={onSend} disabled={disabled || !canSend}>
-        Send
+        ASK
       </button>
     </div>
   );

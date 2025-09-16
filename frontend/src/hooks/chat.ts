@@ -12,11 +12,8 @@ export default function useChat() {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string>("");
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-
-  // The highlighted description shown in the black background
   const [currentResponse, setCurrentResponse] = useState<string | null>(null);
 
-  // pendingAction contains action.params (including cache_key) + analysis_responses + used_ids (all ids stored as strings)
   const [pendingAction, setPendingAction] = useState<{
     action: { type: string; params: any };
     analysis_responses?: { id: string; text: string }[];
@@ -80,17 +77,12 @@ export default function useChat() {
 
       if (normalizedResponses.length > 0) {
         const firstText = normalizedResponses[0].text;
-
-        // Append as a normal assistant message (so it appears in chat history)
         setMessages((prev) => [...prev, { role: "assistant", content: firstText }]);
 
-        // Also show it in the highlighted black box
         setCurrentResponse(firstText);
       } else if (action.params?.cache_key && action.params?.first_text) {
-        // fallback if analyze returned first_text in params
         setCurrentResponse(action.params.first_text);
 
-        // optionally also push this into messages:
         setMessages((prev) => [...prev, { role: "assistant", content: action.params.first_text }]);
       }
 
@@ -121,11 +113,13 @@ export default function useChat() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tool, args }),
     });
+    console.log(`MCP call response for tool ${tool}:`, resp);
     if (!resp.ok) {
       const txt = await resp.text().catch(() => "");
       throw new Error(`HTTP ${resp.status} ${txt}`);
     }
     const data = await resp.json();
+    console.log(`MCP call data for tool ${tool}:`, data);
     if (!data.ok) throw new Error(data.error || "MCP call failed");
     return data.result;
   }, []);
@@ -162,7 +156,6 @@ export default function useChat() {
       const mode = action.params?.mode ?? "short";
       const cache_key = action.params?.cache_key ?? null;
 
-      // Build candidate indices 1..6, skipping used ids (compare strings)
       const usedSet = new Set((used_ids || []).map((u) => normalizeId(u)));
       const max = 6;
       const candidateIndices: number[] = [];
@@ -179,7 +172,6 @@ export default function useChat() {
         return;
       }
 
-      // Try each candidate index until one returns a response (or handle pending by polling)
       for (const idx of candidateIndices) {
         if (cache_key) {
           const result = await callMcp("regenerate", { cache_key, index: idx, image_url, mode, used_ids });
@@ -187,8 +179,6 @@ export default function useChat() {
             const r = result.response as { id: any; response?: string; text?: string };
             const rText = (r.response ?? (r as any).text) ?? "";
             const rId = normalizeId(r.id ?? idx);
-
-            // show chat message + update highlighted black box + mark used
             setMessages((prev) => [...prev, { role: "assistant", content: rText }]);
             setCurrentResponse(rText);
             setPendingAction((prev) => (prev ? { ...prev, used_ids: [...(prev.used_ids || []), rId] } : prev));
@@ -197,7 +187,6 @@ export default function useChat() {
           }
 
           if (result && result.error === "pending") {
-            // poll for this index until it becomes available
             const polled = await pollForCachedIndex(cache_key, idx, 15000, 800);
             if (polled) {
               const rId = normalizeId(polled.id ?? idx);
@@ -223,8 +212,6 @@ export default function useChat() {
 
           continue;
         }
-
-        // If no cache_key path, try regenerate without cache_key (server fallback)
         const result = await callMcp("regenerate", { image_url, used_ids, mode });
         if (result && result.response) {
           const r = result.response as { id: any; text?: string; response?: string };
@@ -271,12 +258,9 @@ export default function useChat() {
     try {
       let res: ChatResponse;
 
-      // --- IMAGE FLOW: upload -> MCP redirect_to_analysis ---
       if (uploadedFile) {
-        // 1) upload file to the server and get back an accessible image_url
         const formData = new FormData();
         formData.append("file", uploadedFile);
-        // endpoint: add /api/uploads/tmp on your backend (see server patch)
         const upResp = await fetch("/api/uploads/tmp", { method: "POST", body: formData });
         if (!upResp.ok) {
           const txt = await upResp.text().catch(() => "");
@@ -285,10 +269,8 @@ export default function useChat() {
         const upJson = await upResp.json();
         const imageUrl = upJson?.image_url ?? null;
 
-        // 2) call MCP proxy (which will run tools.mcpserver.redirect_to_analysis)
         const mcpResult = await callMcp("redirect_to_analysis", { image_url: imageUrl, mode: "short" });
 
-        // Build a ChatResponse that matches your UI handlers
         res = {
           reply: { role: "assistant", content: "Image uploaded and analysis started." },
           bot_messages: ["Image uploaded and analysis started."],
@@ -301,7 +283,6 @@ export default function useChat() {
           Object.assign(actionParams, mcpResult.params || {});
         }
 
-        // attach analysis_responses if MCP returned them
         if (Array.isArray(mcpResult?.analysis_responses)) {
           (res as any).analysis_responses = mcpResult.analysis_responses.map((r: any, i: number) => ({
             id: normalizeId(r.id ?? `r${i}`),
@@ -316,15 +297,14 @@ export default function useChat() {
 
         (res as any).action = { type: "redirect_to_analysis", params: actionParams };
 
-        // Hand over to the existing handler which sets pendingAction/currentResponse etc.
         handleResponse(res);
         setStatus("idle");
         clearUpload();
         return;
       }
 
-      // --- NORMAL CHAT FLOW (no image) ---
       res = await chatOnce(next);
+      console.log("chatOnce response:", res);
       handleResponse(res);
       setStatus("idle");
     } catch (e: any) {
