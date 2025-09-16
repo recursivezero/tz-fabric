@@ -1,15 +1,13 @@
-import { useNavigate } from "react-router-dom";
-import useImageAnalysis from "../hooks/useImageAnalysis";
 import Header from "../components/Header";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
 import AnimatedSearchBox from "../components/SearchBar";
-import ImagePreview from "../components/imagePreviewPanel";
 import DescriptionBox from "../components/descriptionBox";
 import DrawerToggle from "../components/drawerToggle";
+import ImagePreview from "../components/imagePreviewPanel";
+import useImageAnalysis from "../hooks/useImageAnalysis";
 import "../styles/ImageDescription.css";
 
 const ImageDescription = () => {
-  const navigate = useNavigate();
   const {
     showResults,
     loading,
@@ -30,17 +28,19 @@ const ImageDescription = () => {
     handleRunAnalysis,
     handleSampleShortAnalysis,
     handlePrev,
-    handleNext
+    handleNext,
   } = useImageAnalysis();
 
   return (
     <div className="home-container">
       <Header />
-      
 
       <div className="upload-wrapper">
         <div className="upload-inner">
-          <AnimatedSearchBox onSearch={handleUploadedImage} loading={!canUpload} />
+          <AnimatedSearchBox
+            onSearch={handleUploadedImage}
+            loading={!canUpload}
+          />
         </div>
       </div>
 
@@ -75,10 +75,12 @@ const ImageDescription = () => {
 
       {showDrawer && (
         <div className="drawer-panel">
-          <SampleImageGallery onAnalyze={handleSampleShortAnalysis} loading={loading} vertical />
+          <SampleImageGallery
+            onAnalyze={handleSampleShortAnalysis}
+            loading={loading}
+          />
         </div>
       )}
-      
     </div>
   );
 };

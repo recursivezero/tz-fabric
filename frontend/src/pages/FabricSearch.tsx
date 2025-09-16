@@ -1,15 +1,17 @@
-import { useMemo, useState } from "react";
-import useImageSearch from "../hooks/search";
-import "../styles/Search.css";
-import Notification from "../components/Notification";
+import { useId, useMemo, useState, useEffect } from "react";
 import Loader from "../components/Loader";
+import Notification from "../components/Notification";
+import useImageSearch from "../hooks/useImageSearch";
+import "../styles/Search.css";
 
 export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
   const [file, setFile] = useState<File | null>(null);
-  const [k, setK] = useState('');
-  const [notification, setNotification] = useState<{ message: string, type: "success" | "error" } | null>(null);
-
+  const [k, setK] = useState(0);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const pageSize = 4;
   const [page, setPage] = useState(1);
@@ -43,20 +45,30 @@ export default function Search() {
   }, [page, exactMatches]);
 
   const totalPages = Math.ceil(exactMatches.length / pageSize);
+  const fileid = useId();
+  const previewUrl = useMemo(
+    () => (file ? URL.createObjectURL(file) : null),
+    [file],
+  );
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
   return (
     <div className="search-container">
       <h2>Similar Images</h2>
 
       <div className="uploader-row">
         <input
-          id="file-input"
+          id={fileid}
           type="file"
           accept="image/*"
           onChange={onFileChange}
           className="file-input-hidden"
         />
-        <label htmlFor="file-input" className="file-button">
+        <label htmlFor={fileid} className="file-button">
           Choose Image
         </label>
         <span className="file-name">{file ? file.name : "No file chosen"}</span>
@@ -68,7 +80,7 @@ export default function Search() {
             min={1}
             max={1000}
             value={k}
-            onChange={(e) => setK(Number(e.target.value))}
+            onChange={(e) => setK(e.target.valueAsNumber)}
           />
         </label>
 
@@ -92,11 +104,7 @@ export default function Search() {
       {file && (
         <div className="preview-box">
           <p className="section-title">Query Image</p>
-          <img
-            className="preview-img"
-            src={URL.createObjectURL(file)}
-            alt="query"
-          />
+          <img className="preview-img" src={previewUrl ?? ""} alt="query" />
         </div>
       )}
       {notification && (
@@ -113,7 +121,10 @@ export default function Search() {
             <span>
               Page {page} / {totalPages}
             </span>
-            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page === totalPages}
+            >
               Next
             </button>
           </div>

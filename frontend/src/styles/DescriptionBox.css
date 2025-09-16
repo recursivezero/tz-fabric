@@ -75,19 +75,17 @@
   font-size: 19px;
 }
 
-.description-wrapper .response-counter{
+.description-wrapper .response-counter {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 12px;
   font-size: 16px;
   color: #000000ff;
-  margin-top: 12px;
   font-weight: 600;
 }
 
 .description-wrapper .copy-btn {
-  color: #ffffff;
   cursor: pointer;
   font-size: 14px;
   display: flex;
@@ -101,4 +99,3 @@
 .description-wrapper .copy-btn:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
-

@@ -1,6 +1,5 @@
 import "../styles/DrawerToggle.css";
 
-
 const DrawerToggle = ({ showDrawer, setShowDrawer }) => {
   return (
     <div
@@ -8,6 +7,7 @@ const DrawerToggle = ({ showDrawer, setShowDrawer }) => {
       style={{ right: showDrawer ? "250px" : "0px" }}
     >
       <button
+        type="button"
         className="drawer-toggle-button"
         onClick={() => setShowDrawer(!showDrawer)}
       >

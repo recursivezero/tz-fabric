@@ -1,21 +1,20 @@
-const BASE_URL = (import.meta.env.VITE_API_URL) || ""; 
+import { FULL_API_URL } from "../constants";
 
 export async function analyzeImage(file, analysisType) {
   const formData = new FormData();
   formData.append("image", file);
   formData.append("analysis_type", analysisType);
-  
 
   try {
-    console.log("Hitting:", `${BASE_URL}/api/analyse`);
-    const res = await fetch(`${BASE_URL}/api/analyse`, {
+    console.log("Hitting:", `${FULL_API_URL}/analyse`);
+    const res = await fetch(`${FULL_API_URL}/analyse`, {
       method: "POST",
       body: formData,
     });
 
-    console.log("Status:", res.status); 
+    console.log("Status:", res.status);
     const data = await res.json();
-    console.log("Received:", data);     
+    console.log("Received:", data);
 
     return data;
   } catch (error) {
@@ -24,15 +23,20 @@ export async function analyzeImage(file, analysisType) {
   }
 }
 
-export async function regenerateresposne(cachekey, index) {
-    try{
-      const res = await fetch(`${BASE_URL}/api/regenerate?key=${cachekey}&index=${index}`, )
-      const data = await res.json();
-      return data
-    } catch(error){
-      console.error("failed to regenerate to other responses", error)
-    }
-    return null;
+export async function regenerateResponse(cachekey, index) {
+  try {
+    const res = await fetch(
+      `${FULL_API_URL}/regenerate?key=${cachekey}&index=${index}`,
+      {
+        method: "GET",
+      },
+    );
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("failed to regenerate to other responses", error);
+  }
+  return null;
 }
 
 export async function validateImageAPI(imageFile) {
@@ -40,7 +44,7 @@ export async function validateImageAPI(imageFile) {
   formData.append("image", imageFile);
 
   try {
-    const res = await fetch(`${BASE_URL}/api/validate-image`, {
+    const res = await fetch(`${FULL_API_URL}/validate-image`, {
       method: "POST",
       body: formData,
     });
@@ -51,4 +55,4 @@ export async function validateImageAPI(imageFile) {
     console.error("Validation error:", error);
     throw new Error("Error validating image.");
   }
-};
+}

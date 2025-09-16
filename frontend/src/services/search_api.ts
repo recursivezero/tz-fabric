@@ -1,3 +1,5 @@
+import { FULL_API_URL } from "../constants";
+
 export interface SearchItem {
   score: number;
   metadata: {
@@ -15,7 +17,7 @@ export interface SearchItem {
     imageFilename?: string;
     audioFilename?: string;
 
-    [k: string]: any;
+    [k: string]: string | number | boolean | null | undefined;
   };
 }
 
@@ -24,15 +26,13 @@ export interface SearchResponse {
   results: SearchItem[];
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
 export async function searchSimilar(
   file: File,
   k: number = 50,
   order: "recent" | "score" = "recent",
   debug_ts: boolean = false,
   min_sim: number = 0.5,
-  require_audio: boolean = true
+  require_audio: boolean = true,
 ): Promise<SearchResponse> {
   const form = new FormData();
   form.append("file", file);
@@ -45,7 +45,7 @@ export async function searchSimilar(
     require_audio: String(require_audio),
   });
 
-  const res = await fetch(`${API_BASE}/api/search?${params.toString()}`, {
+  const res = await fetch(`${FULL_API_URL}/search?${params.toString()}`, {
     method: "POST",
     body: form,
   });
@@ -57,5 +57,3 @@ export async function searchSimilar(
 
   return res.json();
 }
-
-export { API_BASE };

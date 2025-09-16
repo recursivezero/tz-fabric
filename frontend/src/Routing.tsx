@@ -1,16 +1,9 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from "react-router-dom";
-import Search from "./pages/FabricSearch";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import UploadPage from "./pages/AudioForm";
 import ContentGrid from "./pages/FabricList";
+import Search from "./pages/FabricSearch";
 import Home from "./pages/Home";
 import ImageDescription from "./pages/ImageDescriptor";
-
-
-
 
 export const Routing = () => {
   return (

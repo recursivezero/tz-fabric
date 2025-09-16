@@ -5,17 +5,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
 from dotenv import load_dotenv
-from constants import UPLOAD_ROOT
-import logging
+from contextlib import asynccontextmanager
+from constants import API_PREFIX, ASSETS
 import os
 from routes import analysis, regenerate, validate_image, search, submit, media
+from utils.emoji_logger import get_logger
 
-app = FastAPI()
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+app = FastAPI()
+logger = get_logger(__name__)
 
 origins = [
     "http://localhost:5173",  # Allow requests from your frontend origin
@@ -30,16 +29,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-database_uri = os.getenv("DATABASE_URI","mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority")
+DATABASE_URI = os.getenv(
+    "DATABASE_URI",
+    "mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority",
+)
+if not DATABASE_URI:
+    raise RuntimeError(
+        "DATABASE_URI is not set in environment variables. Please configure it in .env"
+    )
 # Parse the URI to extract db name
-parsed_uri = uri_parser.parse_uri(database_uri)
+parsed_uri = uri_parser.parse_uri(DATABASE_URI)
 db_name = parsed_uri.get("database")
-print(f"Database URI: {database_uri}")
 if not db_name:
     db_name = "tz-fabric"  # Default database name if not specified in URI
 
-client = MongoClient(database_uri)
+client = MongoClient(DATABASE_URI)
 default_db = client.get_default_database()
 if default_db is not None:
     db = default_db
@@ -47,32 +51,50 @@ elif db_name is not None:
     db = client[db_name]
 else:
     raise ValueError("No database specified in URI and no default database available")
-
-print("Connected to database:", db.name)
+print("Connected to MongoDB, using database:", db.name)
 
 app.mongo_client = client
 app.database = db
 
-os.makedirs(UPLOAD_ROOT, exist_ok=True)
+os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
-app.include_router(analysis.router, prefix="/api")
-app.include_router(regenerate.router, prefix="/api")
-app.include_router(validate_image.router, prefix="/api")
-app.include_router(search.router, prefix="/api")
-app.include_router(submit.router, prefix="/api")    
-app.include_router(media.router, prefix="/api")
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Attach the client and db to the app so routes can access them
+    app.mongo_client = client
+    app.database = db
 
-@app.on_event("startup")
-async def startup_db_client():
+    # Startup: perform a simple health check
     try:
-        client.admin.command("ping")  # simple health check
+        client.admin.command("ping")
         logger.info("successfully connected to MongoDB!")
+    except errors.OperationFailure as e:
+        # Authentication or operation errors
+        logger.error(f"MongoDB operation failed during startup: {e}")
     except errors.ConnectionFailure as e:
-        logger.error(f"Could not connect to MongoDB: {e}")
+        logger.error(f"Could not connect to MongoDB during startup: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error when connecting to MongoDB: {e}")
+
+    yield
+
+    try:
+        client.close()
+        logger.info("MongoDB connection closed")
+    except Exception as e:
+        logger.warning(f"Error while closing MongoDB client: {e}")
+
+
+app.include_router(analysis.router, prefix=API_PREFIX)
+app.include_router(regenerate.router, prefix=API_PREFIX)
+app.include_router(validate_image.router, prefix=API_PREFIX)
+app.include_router(search.router, prefix=API_PREFIX)
+app.include_router(submit.router, prefix=API_PREFIX)
+app.include_router(media.router, prefix=API_PREFIX)
 
 
 @app.get("/", response_class=HTMLResponse)

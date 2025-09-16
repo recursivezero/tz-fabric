@@ -1,4 +1,5 @@
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
+import { FULL_API_URL } from "../constants";
 
 export const useUploadAndRecord = () => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -15,20 +16,30 @@ export const useUploadAndRecord = () => {
   const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState<string>("");
-
-
 
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
 
-  const showNotification = (type: "success" | "error", message: string) => {
-    setNotification({ type, message });
+  const [audioNotification, setAudioNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
+  const successNotification = (type: "success", message: string) => {
+    setNotification({ type, message });
     setTimeout(() => {
       setNotification(null);
+    }, 2000);
+  };
+
+  const errorNotification = (type: "error", message: string) => {
+    setAudioNotification({ type, message });
+    setError(message);
+
+    setTimeout(() => {
+      setAudioNotification(null);
     }, 2000);
   };
 
@@ -51,10 +62,8 @@ export const useUploadAndRecord = () => {
       ]);
 
       if (!file.type.startsWith("audio/") && !allowedMimeTypes.has(file.type)) {
-        setNotification({
-          message: "Please upload a valid audio file (mp3, wav, webm, or mp4).",
-          type: "error",
-        });
+        // Use errorNotification consistently for audio errors
+        errorNotification("error", "Please upload a valid audio file (mp3, wav, webm, or mp4).");
         return;
       }
       if (audioUrl) {
@@ -64,7 +73,8 @@ export const useUploadAndRecord = () => {
       try {
         const arrayBuffer = await file.arrayBuffer();
         const AudioCtx =
-          (window as any).AudioContext || (window as any).webkitAudioContext;
+          (window as unknown as { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext ?? window.AudioContext;
         if (AudioCtx) {
           const ctx = new AudioCtx();
           const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
@@ -74,19 +84,20 @@ export const useUploadAndRecord = () => {
           if (!Number.isFinite(duration)) {
             throw new Error("Duration not finite, fallback to <audio>.");
           }
-          if (duration > 60) {
-            setNotification({
-              message: "Audio is longer than 1 minute.",
-              type: "error",
-            });
+          if (duration > 61) {
+            // fixed incorrect call shape — use errorNotification properly
+            errorNotification("error", "Audio is longer than 1 minute.");
             return;
           }
 
           const url = URL.createObjectURL(file);
           setAudioUrl(url);
+          setAudioFile(file);
           return;
         }
-      } catch { }
+      } catch (e) {
+        console.warn("Web Audio API failed, fallback to <audio>.", e);
+      }
 
       const tempUrl = URL.createObjectURL(file);
       await new Promise<void>((resolve) => {
@@ -101,29 +112,27 @@ export const useUploadAndRecord = () => {
             setAudioUrl(tempUrl);
           } else {
             URL.revokeObjectURL(tempUrl);
-            setNotification({
-              message: Number.isFinite(dur)
+            // Use errorNotification for these audio errors too
+            errorNotification(
+              "error",
+              Number.isFinite(dur)
                 ? "Audio is longer than 1 minute."
-                : "Audio duration could not be determined. Please try a different file.",
-              type: "error",
-            });
+                : "Audio duration could not be determined. Please try a different file."
+            );
           }
           cleanup();
           resolve();
         };
         probe.onerror = () => {
           URL.revokeObjectURL(tempUrl);
-          setNotification({
-            message: "Could not read audio. Please try a different file.",
-            type: "error",
-          });
+          errorNotification("error", "Could not read audio. Please try a different file.");
           cleanup();
           resolve();
         };
         probe.src = tempUrl;
       });
     },
-    [audioUrl]
+    [audioUrl],
   );
 
   const startRecording = async () => {
@@ -141,7 +150,9 @@ export const useUploadAndRecord = () => {
 
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(audioChunks.current, { type: "audio/webm" });
-        const file = new File([blob], "recorded_audio.webm", { type: "audio/webm" });
+        const file = new File([blob], "recorded_audio.webm", {
+          type: "audio/webm",
+        });
         const url = URL.createObjectURL(blob);
         setAudioFile(file);
         setAudioUrl(url);
@@ -169,11 +180,15 @@ export const useUploadAndRecord = () => {
           return prev + 1;
         });
       }, 1000);
-    } catch (err) {
-      setNotification({
-        message: "Microphone access denied or error occurred.",
-        type: "error",
-      });
+    } catch (error) {
+      // Use errorNotification consistently
+      errorNotification("error", "Microphone access denied or error occurred.");
+      console.error("Error accessing microphone:", error);
+      setIsRecording(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
   };
 
@@ -195,31 +210,33 @@ export const useUploadAndRecord = () => {
     formData.append("image", imageFile);
     formData.append("audio", audioFile);
 
-    if (name && name.trim()) formData.append("name", name.trim());
+    if (name?.trim()) formData.append("name", name.trim());
     setLoading(true);
     setNotification(null);
 
     setLoading(true);
     setNotification(null);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/submit`, {
+      const res = await fetch(`${FULL_API_URL}/submit`, {
         method: "POST",
         body: formData,
       });
 
       if (res.ok) {
         const data = await res.json();
-        showNotification("success", `Submitted! Saved as ${data.base}`);
+        successNotification("success", `Submitted! Saved as ${data.base}`);
       } else {
-        showNotification("error", "Submission failed");
+        errorNotification("error", "Submission failed");
       }
       setImageFile(null);
       setAudioFile(null);
       setImageUrl(null);
       setAudioUrl(null);
-      setName("");
-    } catch (err) {
+      setNotification(null);
+      setAudioNotification(null);
+    } catch (error) {
       setNotification({ message: "Error submitting files", type: "error" });
+      console.error("Submission error:", error);
     } finally {
       setLoading(false);
     }
@@ -246,6 +263,8 @@ export const useUploadAndRecord = () => {
     error,
     notification,
     setNotification,
+    audioNotification,
+    setAudioNotification,
     setImageUrl,
     setAudioUrl,
     setSearchInput,

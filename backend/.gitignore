@@ -102,3 +102,5 @@ target/
 
 vector_store/
 .env
+/backend/assets/
+/backend/vector_store/

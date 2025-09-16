@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { fetchContent, type MediaItem } from "../services/contentApi";
+import { useCallback, useEffect, useState } from "react";
+import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -13,6 +13,16 @@ export default function ContentGrid() {
   const [err, setErr] = useState<string | null>(null);
   const [mode, setMode] = useState<"all" | "similar">("all");
 
+  const getErrorMessage = useCallback((e: unknown): string => {
+    if (e instanceof Error) return e.message;
+    if (typeof e === "string") return e;
+    if (typeof e === "object" && e !== null && "message" in e) {
+      const maybeMsg = (e as { message?: unknown }).message;
+      if (typeof maybeMsg === "string") return maybeMsg;
+    }
+    return "Failed to load";
+  }, []); // no deps -> stable across renders
+
   useEffect(() => {
     if (mode !== "all") return;
     let ignore = false;
@@ -25,14 +35,16 @@ export default function ContentGrid() {
           setItems(data.items);
           setTotal(data.total);
         }
-      } catch (e: any) {
-        if (!ignore) setErr(e.message || "Failed to load");
+      } catch (err: unknown) {
+        if (!ignore) setErr(getErrorMessage(err));
       } finally {
         if (!ignore) setLoading(false);
       }
     })();
-    return () => { ignore = true; };
-  }, [page, limit, mode]);
+    return () => {
+      ignore = true;
+    };
+  }, [page, limit, mode, getErrorMessage]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -40,10 +52,10 @@ export default function ContentGrid() {
     setMode("all");
     setPage(1);
   };
-  function pickDisplayName(it: MediaItem) {
-    if (it.basename) return it.basename;                          
-    if (it.imageFilename) return it.imageFilename.replace(/\.[^.]+$/, ""); 
-    const last = (it.imageUrl || "").split("/").pop() || "";      
+  function pickDisplayName(item: MediaItem) {
+    if (item.basename) return item.basename;
+    if (item.imageFilename) return item.imageFilename.replace(/\.[^.]+$/, "");
+    const last = (item.imageUrl || "").split("/").pop() || "";
     return last.replace(/\.[^.]+$/, "");
   }
   const cleanName = (filename: string) => {
@@ -54,7 +66,6 @@ export default function ContentGrid() {
     <div className="grid-page">
       <div className="upload-wrapper">
         <div className="upload-inner" style={{ display: "flex", gap: 8 }}>
-
           {mode === "similar" && (
             <button className="btn" onClick={showAll} disabled={loading}>
               ← Back to All
@@ -69,11 +80,19 @@ export default function ContentGrid() {
 
       {mode === "all" && (
         <div className="grid-controls">
-          <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
             ← Prev
           </button>
-          <span>Page {page} / {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+          <span>
+            Page {page} / {totalPages}
+          </span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Next →
           </button>
         </div>
@@ -82,45 +101,51 @@ export default function ContentGrid() {
       {err && <div className="grid-error">⚠️ {err}</div>}
 
       <div className="media-grid">
-        {items.map((it) => (
-          <article className="media-card" key={it._id ?? it.imageUrl}>
+        {items.map((item) => (
+          <article className="media-card" key={item._id ?? item.imageUrl}>
             <div className="media-thumb">
               <img
-                src={it.imageUrl?.startsWith("http") ? it.imageUrl : `${API_URL}${it.imageUrl}`}
+                src={
+                  item.imageUrl?.startsWith("http")
+                    ? item.imageUrl
+                    : `${API_URL}${item.imageUrl}`
+                }
                 alt="Uploaded"
                 loading="lazy"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.3"; }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.opacity = "0.3";
+                }}
               />
             </div>
-            <div className="media-name" title={pickDisplayName(it)}>
-              {cleanName(pickDisplayName(it))}
+            <div className="media-name" title={pickDisplayName(item)}>
+              {cleanName(pickDisplayName(item))}
             </div>
 
             <div className="media-audio">
-              {it.audioUrl && (
+              {item.audioUrl && (
                 <audio
                   controls
-                  src={it.audioUrl?.startsWith("http") ? it.audioUrl : `${API_URL}${it.audioUrl}`}
+                  src={
+                    item.audioUrl?.startsWith("http")
+                      ? item.audioUrl
+                      : `${API_URL}${item.audioUrl}`
+                  }
                   preload="metadata"
                 />
               )}
             </div>
 
             <div className="media-meta">
-              {it.createdAt && (
-                <time dateTime={it.createdAt}>
-                  {new Date(it.createdAt).toLocaleString()}
+              {item.createdAt && (
+                <time dateTime={item.createdAt}>
+                  {new Date(item.createdAt).toLocaleString()}
                 </time>
               )}
-              {"score" in it && it.score !== undefined && (
-                <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>
-                  score: {it.score}
-                </span>
-              )}
+              {/*{"score" in item && item.score !== undefined ? (
+                <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>score: {item.score}</span>
+              ) : null}*/}
             </div>
-
           </article>
-
         ))}
 
         {!loading && items.length === 0 && (
@@ -128,7 +153,6 @@ export default function ContentGrid() {
         )}
       </div>
       {loading && <div className="grid-loading">Loading…</div>}
-
     </div>
   );
 }

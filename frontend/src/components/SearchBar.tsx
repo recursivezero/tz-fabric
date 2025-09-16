@@ -1,12 +1,22 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import "../styles/SearchBar.css";
 
-const AnimatedSearchBox = ({ onSearch, loading }) => {
-  const [selectedImage, setSelectedImage] = useState(null);
+type SelectedImage = File | string | null;
+
+type AnimatedSearchBoxProps = {
+  onSearch?: (file: File) => void;
+  loading?: boolean;
+};
+
+const AnimatedSearchBox = ({
+  onSearch,
+  loading = false,
+}: AnimatedSearchBoxProps) => {
+  const [selectedImage, setSelectedImage] = useState<SelectedImage>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
     if (file) {
       setSelectedImage(file);
       setShowPrompt(true);
@@ -16,6 +26,10 @@ const AnimatedSearchBox = ({ onSearch, loading }) => {
       }
     }
   };
+
+  // useId() can include ":" in generated id on some runtimes — remove it to be safe for htmlFor
+  const rawId = useId();
+  const fileid = rawId.replace(/[:]/g, "");
 
   return (
     <div className="searchbar-container">
@@ -27,26 +41,44 @@ const AnimatedSearchBox = ({ onSearch, loading }) => {
       </div>
 
       <div className="search-box">
-        <label htmlFor="file-upload" className="upload-icon">📁</label>
+        {/* htmlFor now matches the input id */}
+        <label
+          htmlFor={fileid}
+          className="upload-icon"
+          role="button"
+          aria-disabled={loading}
+        >
+          📁
+        </label>
+
+        {/* keep input present but visually hidden; label will trigger it */}
         <input
-          id="file-upload"
+          id={fileid}
           type="file"
           accept="image/*"
           onChange={handleImageChange}
-          hidden
-          disabled={loading}
+          style={{ display: "none" }}
+          disabled={!!loading}
         />
 
         {showPrompt && selectedImage ? (
           <>
-            <span className="file-name">{selectedImage?.name}</span>
-            <p className="search-instruction">Image uploaded successfully. Showing preview...</p>
+            <span className="file-name">
+              {typeof selectedImage === "string"
+                ? selectedImage
+                : selectedImage.name}
+            </span>
+            <p className="search-instruction">
+              Image uploaded successfully. Showing preview...
+            </p>
           </>
         ) : (
           <div className="text-container" />
         )}
 
-        <button className="search-btn" disabled>🔍</button>
+        <button className="search-btn" disabled>
+          🔍
+        </button>
       </div>
     </div>
   );

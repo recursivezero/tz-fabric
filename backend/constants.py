@@ -1,5 +1,8 @@
 from pathlib import Path
 
-UPLOAD_ROOT = Path(__file__).parent / "assets"
-IMG_DIR = UPLOAD_ROOT / "images"
-AUD_DIR = UPLOAD_ROOT / "audios"
+PROJECT_DIR = Path(__file__).parent
+ASSETS = PROJECT_DIR / "assets"
+IMAGE_DIR = ASSETS / "images"
+AUDIO_DIR = ASSETS / "audios"
+
+API_PREFIX = "/api/v1"
