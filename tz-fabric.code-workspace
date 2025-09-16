@@ -180,7 +180,8 @@
     "folder-color.pathColors": [
       {
         "folderPath": "tz-fabric/frontend/",
-        "color": "foldercolorizer.color_6666ff"
+        "color": "foldercolorizer.color_9966ff",
+        "badge": "UI"
       },
       {
         "folderPath": "tz-fabric/backend/",
