@@ -27,7 +27,7 @@ export const useUploadAndRecord = () => {
     type: "success" | "error";
   } | null>(null);
 
-  const successNotification = (type: "success" | "error", message: string) => {
+  const successNotification = (type: "success", message: string) => {
     setNotification({ type, message });
     setTimeout(() => {
       setNotification(null);
@@ -62,10 +62,8 @@ export const useUploadAndRecord = () => {
       ]);
 
       if (!file.type.startsWith("audio/") && !allowedMimeTypes.has(file.type)) {
-        setAudioNotification({
-          message: "Please upload a valid audio file (mp3, wav, webm, or mp4).",
-          type: "error",
-        });
+        // Use errorNotification consistently for audio errors
+        errorNotification("error", "Please upload a valid audio file (mp3, wav, webm, or mp4).");
         return;
       }
       if (audioUrl) {
@@ -87,10 +85,8 @@ export const useUploadAndRecord = () => {
             throw new Error("Duration not finite, fallback to <audio>.");
           }
           if (duration > 61) {
-            setAudioNotification({
-              message: "Audio is longer than 1 minute.",
-              type: "error",
-            });
+            // fixed incorrect call shape — use errorNotification properly
+            errorNotification("error", "Audio is longer than 1 minute.");
             return;
           }
 
@@ -116,22 +112,20 @@ export const useUploadAndRecord = () => {
             setAudioUrl(tempUrl);
           } else {
             URL.revokeObjectURL(tempUrl);
-            setAudioNotification({
-              message: Number.isFinite(dur)
+            // Use errorNotification for these audio errors too
+            errorNotification(
+              "error",
+              Number.isFinite(dur)
                 ? "Audio is longer than 1 minute."
-                : "Audio duration could not be determined. Please try a different file.",
-              type: "error",
-            });
+                : "Audio duration could not be determined. Please try a different file."
+            );
           }
           cleanup();
           resolve();
         };
         probe.onerror = () => {
           URL.revokeObjectURL(tempUrl);
-          setAudioNotification({
-            message: "Could not read audio. Please try a different file.",
-            type: "error",
-          });
+          errorNotification("error", "Could not read audio. Please try a different file.");
           cleanup();
           resolve();
         };
@@ -187,10 +181,8 @@ export const useUploadAndRecord = () => {
         });
       }, 1000);
     } catch (error) {
-      setAudioNotification({
-        message: "Microphone access denied or error occurred.",
-        type: "error",
-      });
+      // Use errorNotification consistently
+      errorNotification("error", "Microphone access denied or error occurred.");
       console.error("Error accessing microphone:", error);
       setIsRecording(false);
       if (timerRef.current) {
@@ -240,6 +232,8 @@ export const useUploadAndRecord = () => {
       setAudioFile(null);
       setImageUrl(null);
       setAudioUrl(null);
+      setNotification(null);
+      setAudioNotification(null);
     } catch (error) {
       setNotification({ message: "Error submitting files", type: "error" });
       console.error("Submission error:", error);
