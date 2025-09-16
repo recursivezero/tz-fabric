@@ -176,7 +176,17 @@
     },
     "[typescriptreact]": {
       "editor.defaultFormatter": "biomejs.biome"
-    }
+    },
+    "folder-color.pathColors": [
+      {
+        "folderPath": "tz-fabric/frontend/",
+        "color": "foldercolorizer.color_6666ff"
+      },
+      {
+        "folderPath": "tz-fabric/backend/",
+        "color": "foldercolorizer.color_66cc66"
+      }
+    ]
   },
   "extensions": {
     "recommendations": [

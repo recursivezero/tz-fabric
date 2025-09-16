@@ -4,21 +4,15 @@ import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import { useUploadAndRecord } from "../hooks/useUploadAndRecord";
 import "../styles/UploadPage.css";
+import { generateFabricName } from "../utils/fabric-name";
 
 type AudioMode = "upload" | "record";
 
-type Prefill = {
-  title?: string;
-  audioUrl?: string;
-  imageUrl?: string;
-};
 
-type LocationState = {
-  prefill?: Prefill;
-};
 
+;
 const UploadPage = () => {
-  const location = useLocation<LocationState>();
+  const location = useLocation();
   const prefill = location.state?.prefill;
   const {
     imageUrl,
@@ -42,7 +36,7 @@ const UploadPage = () => {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const [audioMode, setAudioMode] = useState<AudioMode>("record");
-  const [name, setName] = useState<string>("test");
+  const [name, setName] = useState<string>(() => generateFabricName());
 
   const canSubmit = !!imageUrl && !!audioUrl && !loading;
   const showUploadAudio = audioMode === "upload" && !audioUrl;
