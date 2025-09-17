@@ -215,7 +215,6 @@ def regenerate(
             if responses:
                 return {"responses": responses, "selected_index": 0}
             return {"error": "analyze returned no responses on fresh regenerate"}
-
         try:
             raw = _analyze_fn(image_url=image_url, mode=mode)
         except TypeError:

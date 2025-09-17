@@ -39,6 +39,18 @@ export async function chatOnce(messages: Message[]): Promise<ChatResponse> {
     throw new Error(`Failed to parse server response (status ${res.status})`);
   }
 
+  console.log("/api/chat status:", res.status);
+
+  // parse body once
+  let json: any;
+  try {
+    json = await res.json();
+    console.log("/api/chat response json:", json);
+  } catch (e) {
+    console.error("Failed to parse /api/chat JSON response", e);
+    throw new Error(`Failed to parse server response (status ${res.status})`);
+  }
+
   if (!res.ok) {
     let msg = `Request failed with ${res.status}`;
     if (json?.detail) msg = String(json.detail);
