@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function ContentGrid() {
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -108,7 +108,7 @@ export default function ContentGrid() {
                 src={
                   item.imageUrl?.startsWith("http")
                     ? item.imageUrl
-                    : `${API_URL}${item.imageUrl}`
+                    : `${BASE_URL}${item.imageUrl}`
                 }
                 alt="Uploaded"
                 loading="lazy"
@@ -128,7 +128,7 @@ export default function ContentGrid() {
                   src={
                     item.audioUrl?.startsWith("http")
                       ? item.audioUrl
-                      : `${API_URL}${item.audioUrl}`
+                      : `${BASE_URL}${item.audioUrl}`
                   }
                   preload="metadata"
                 />

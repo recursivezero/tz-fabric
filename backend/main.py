@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -8,6 +9,7 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from constants import API_PREFIX, ASSETS
 import os
+from utils.emoji_logger import get_logger
 
 from routes import analysis, regenerate, validate_image, search, submit, media, chat, mcp_proxy, uploads
 from tools.mcpserver import sse_app
@@ -15,10 +17,16 @@ from tools.mcpserver import sse_app
 app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
 load_dotenv()
 
-# CORS
+logger = get_logger(__name__)
+
+origins = [
+    "http://localhost:5173",  # Allow requests from your frontend origin
+    # You can add more origins here if needed
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,16 +57,12 @@ else:
 print("Connected to MongoDB, using database:", db.name)
 
 app.mongo_client = client
-client = MongoClient(os.getenv("MongoDB_URI"))
-db = client.get_database("tz-fabric")
-
-app.mongo_client = client   
 app.database = db
 
 os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.mount("/assets/images", StaticFiles(directory=UPLOAD_ROOT), name="assets_images")
+app.mount("/assets/images", StaticFiles(directory=ASSETS), name="assets_images")
 
 templates = Jinja2Templates(directory="templates")
 
@@ -89,12 +93,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Error while closing MongoDB client: {e}")
 
-app.include_router(analysis.router, prefix="/api")
-app.include_router(regenerate.router, prefix="/api")
-app.include_router(validate_image.router, prefix="/api")
-app.include_router(search.router, prefix="/api")
-app.include_router(submit.router, prefix="/api")
-app.include_router(media.router, prefix="/api")
+app.include_router(analysis.router, prefix=API_PREFIX)
+app.include_router(regenerate.router, prefix=API_PREFIX)
+app.include_router(validate_image.router, prefix=API_PREFIX)
+app.include_router(search.router, prefix=API_PREFIX)
+app.include_router(submit.router, prefix=API_PREFIX)
+app.include_router(media.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix="/api")
 app.include_router(mcp_proxy.router, prefix="/api")
 app.include_router(uploads.router, prefix="/api")

@@ -2,11 +2,11 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pathlib import Path
 import shutil, uuid
-from constants import UPLOAD_ROOT
+from constants import ASSETS
 
 router = APIRouter()
 
-upload_dir = Path(UPLOAD_ROOT)
+upload_dir = Path(ASSETS)
 upload_dir.mkdir(parents=True, exist_ok=True)
 
 @router.post("/uploads/tmp")

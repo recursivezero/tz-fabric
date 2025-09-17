@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { fetchImageAsFile } from "../utils/imageUtils.ts";
+import { fetchImageAsFile } from "../utils/image-helper.ts";
 import { analyzeImage, regenerateResponse, validateImageAPI } from "../services/analyze_Api.ts";
 
 const useImageAnalysis = () => {
