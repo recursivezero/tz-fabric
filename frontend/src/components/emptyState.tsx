@@ -11,9 +11,9 @@ interface Props {
 
 export default function EmptyState({ onPick }: Props) {
   return (
-    <div className="empty-state">
-      <h2>Chatbot</h2>
-      <p>Ask questions about fabrics or how to use this app.</p>
+    <div className="empty-state-large">
+      <h3>Ask questions about fabrics</h3>
+      <p>Try one of the sample prompts below to get started.</p>
       <div className="chips">
         {samples.map((s, i) => (
           <button key={i} className="chip" onClick={() => onPick(s)}>

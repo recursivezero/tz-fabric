@@ -1,6 +1,8 @@
 // hooks/chat.ts
 import { useCallback, useEffect, useRef, useState } from "react";
 import { chatOnce, type Message, type ChatResponse } from "../services/chat_api";
+import { BASE_URL } from "../constants";
+console.log("BASE_URL in useChat:", BASE_URL);
 
 type Status = "idle" | "sending" | "error";
 
@@ -108,7 +110,7 @@ export default function useChat() {
   }, [pendingAction]);
 
   const callMcp = useCallback(async (tool: string, args: Record<string, any> = {}) => {
-    const resp = await fetch("/api/mcp/call", {
+    const resp = await fetch(`${BASE_URL}/api/mcp/call`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tool, args }),
@@ -261,7 +263,7 @@ export default function useChat() {
       if (uploadedFile) {
         const formData = new FormData();
         formData.append("file", uploadedFile);
-        const upResp = await fetch("/api/uploads/tmp", { method: "POST", body: formData });
+        const upResp = await fetch(`${BASE_URL}/api/uploads/tmp`, { method: "POST", body: formData });
         if (!upResp.ok) {
           const txt = await upResp.text().catch(() => "");
           throw new Error(`Image upload failed: ${upResp.status} ${txt}`);

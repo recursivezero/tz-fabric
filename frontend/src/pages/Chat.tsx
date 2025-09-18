@@ -27,43 +27,67 @@ export default function Chat() {
   } = useChat();
 
   const pickSample = useCallback((text: string) => setInput(text), [setInput]);
-  console.log("Pending action:", pendingAction);
 
   return (
-    <div className="chat-page">
-      <button className="link" onClick={newChat}>New Chat</button>
+    <div className="page-root">
+      <header className="page-hero">
+        <h1>AI Chat Assistant</h1>
+        <p className="subtitle">Discuss your fabric analysis results with our AI expert</p>
+      </header>
 
-      {messages.length === 0 ? (
-        <EmptyState onPick={pickSample} />
-      ) : (
-        <MessageList messages={messages} scrollerRef={scrollerRef} />
-      )}
+      <div className="chat-container">
+        <div className="chat-card">
+          <div className="chat-card-topbar">
+            <div className="chat-card-title">
+              <div className="avatar-sm">FI</div>
+              <div className="title-text">
+                <div className="main">FabricAI Assistant</div>
+                <div className="status-dot" title="online" />
+              </div>
+            </div>
 
-      {pendingAction && (
-        <HandleRedirectAction
-          pendingAction={pendingAction}
-          onAccept={acceptAction}
-          onReject={rejectAction}
-        />
-      )}
+            <div className="chat-card-actions">
+              <button className="download-link">Download Chat</button>
+            </div>
+          </div>
 
-      {status === "sending" && <TypingIndicator />}
+          <div className="chat-body">
+            <div className="chat-scroll-area">
+              {messages.length === 0 ? (
+                <EmptyState onPick={pickSample} />
+              ) : (
+                <MessageList messages={messages} scrollerRef={scrollerRef} />
+              )}
 
-      {error && (
-        <div className="error">
-          {error} <button onClick={retryLast}>Retry</button>
+              {pendingAction && (
+                <HandleRedirectAction
+                  pendingAction={pendingAction}
+                  onAccept={acceptAction}
+                  onReject={rejectAction}
+                />
+              )}
+
+              {status === "sending" && <TypingIndicator />}
+
+              {error && (
+                <div className="error">
+                  {error} <button onClick={retryLast}>Retry</button>
+                </div>
+              )}
+            </div>
+
+            <Composer
+              value={input}
+              onChange={setInput}
+              onSend={send}
+              disabled={status === "sending"}
+              onUpload={handleUpload}
+              previewUrl={uploadedPreviewUrl}
+              onClearUpload={clearUpload}
+            />
+          </div>
         </div>
-      )}
-
-      <Composer
-        value={input}
-        onChange={setInput}
-        onSend={send}
-        disabled={status === "sending"}
-        onUpload={handleUpload}
-        previewUrl={uploadedPreviewUrl}
-        onClearUpload={clearUpload}
-      />
+      </div>
     </div>
   );
 }

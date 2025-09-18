@@ -1,4 +1,3 @@
-// MessageBubble.tsx
 import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -10,7 +9,6 @@ import { normalizeMarkdown } from "../utils/normalizeMarkdown";
 type Props = Pick<Message, "role" | "content">;
 
 export default function MessageBubble({ role, content }: Props) {
-  // user bubble (no markdown)
   if (role === "user") {
     return (
       <div className="msg-row right">
@@ -18,11 +16,13 @@ export default function MessageBubble({ role, content }: Props) {
       </div>
     );
   }
+
   const normalized = useMemo(() => normalizeMarkdown(content ?? ""), [content]);
   const typed = useTypingEffect(normalized, 25);
 
   return (
     <div className="msg-row left">
+      <div className="assistant-avatar">🤖</div>
       <div className="assistant-block">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{typed ?? ""}</ReactMarkdown>
       </div>
