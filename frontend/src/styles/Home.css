@@ -90,7 +90,7 @@
 .home__card {
   position: relative;
   display: block;
-  background: rgba(21, 26, 33, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   border: 1px solid var(--border-2);
   border-radius: 18px;
   padding: 22px;
