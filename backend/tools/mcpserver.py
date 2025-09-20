@@ -227,7 +227,43 @@ def regenerate(
         return {"error": "exhausted", "message": "All cached alternatives exhausted; call with fresh=true to generate a new set."}
     except Exception as e:
         return {"error": f"regenerate fallback failed: {str(e)}", "trace": traceback.format_exc()}
+    
 
+from tools.media_tools import redirect_to_media_analysis as _media_tool   # import your separated media tool
+
+
+@mcp.tool()
+def redirect_to_media_analysis(
+    image_url: Optional[str] = None,
+    audio_url: Optional[str] = None,
+    filename: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Media tool wrapper:
+    - If only image_url is given -> just call normal analysis (same as redirect_to_analysis).
+    - If image_url + audio_url -> call media analysis tool (_media_tool).
+    """
+    try:
+        # Case 1: only image uploaded, treat as analysis
+        if image_url and not audio_url:
+            return redirect_to_analysis(image_url=image_url, mode="short")
+
+        # Case 2: image + audio uploaded, treat as submission -> call full media tool
+        if image_url and audio_url:
+            return _media_tool(image_url=image_url, audio_url=audio_url, filename=filename)
+
+        # Case 3: neither provided
+        return {
+            "action": {"type": "redirect_to_media_analysis", "params": {"image_url": image_url, "audio_url": audio_url}},
+            "bot_messages": ["❌ No image_url provided."],
+        }
+
+    except Exception as e:
+        import traceback
+        return {
+            "action": {"type": "redirect_to_media_analysis", "params": {"image_url": image_url, "audio_url": audio_url}},
+            "bot_messages": [f"💥 Error in redirect_to_media_analysis: {e}", traceback.format_exc()],
+        }
 
 def sse_app():
     return mcp.sse_app()

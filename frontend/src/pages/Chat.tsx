@@ -1,3 +1,4 @@
+// src/pages/Chat.tsx
 import { useCallback } from "react";
 import "../styles/chat.css";
 import useChat from "../hooks/chat";
@@ -16,11 +17,13 @@ export default function Chat() {
     error,
     send,
     retryLast,
-    newChat,
     scrollerRef,
     uploadedPreviewUrl,
-    handleUpload,
-    clearUpload,
+    uploadedAudioUrl,
+    handleImageUpload,
+    handleAudioUpload,
+    clearImage,
+    clearAudio,
     pendingAction,
     acceptAction,
     rejectAction,
@@ -63,7 +66,7 @@ export default function Chat() {
                 <HandleRedirectAction
                   pendingAction={pendingAction}
                   onAccept={acceptAction}
-                  onReject={rejectAction}
+                  onReject={rejectAction}   // <- re-added rejectAction wiring
                 />
               )}
 
@@ -81,9 +84,12 @@ export default function Chat() {
               onChange={setInput}
               onSend={send}
               disabled={status === "sending"}
-              onUpload={handleUpload}
+              onUpload={handleImageUpload}
+              onAudioUpload={handleAudioUpload}
               previewUrl={uploadedPreviewUrl}
-              onClearUpload={clearUpload}
+              audioUrl={uploadedAudioUrl}
+              onClearUpload={clearImage}
+              onClearAudio={clearAudio}
             />
           </div>
         </div>

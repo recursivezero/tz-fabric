@@ -6,25 +6,104 @@ import { type Message } from "../services/chat_api";
 import useTypingEffect from "../utils/typingEffect";
 import { normalizeMarkdown } from "../utils/normalizeMarkdown";
 
-type Props = Pick<Message, "role" | "content">;
+type Props = {
+  role: Message["role"];
+  content: Message["content"];
+  // keep open to accept extended message fields if you pass them later
+  type?: "text" | "image" | "audio";
+  url?: string;
+  filename?: string;
+};
 
-export default function MessageBubble({ role, content }: Props) {
-  if (role === "user") {
+// helper: simple URL test
+const looksLikeUrl = (s?: string) => {
+  if (!s) return false;
+  try {
+    const u = new URL(s);
+    return !!u.protocol;
+  } catch {
+    return false;
+  }
+};
+
+const isImageUrl = (s?: string) => {
+  if (!s) return false;
+  const lower = s.toLowerCase();
+  return /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/.test(lower) || lower.startsWith("data:image/");
+};
+
+const isAudioUrl = (s?: string) => {
+  if (!s) return false;
+  const lower = s.toLowerCase();
+  return /\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/.test(lower) || lower.startsWith("data:audio/");
+};
+
+export default function MessageBubble({ role, content, type, url, filename }: Props) {
+  // If the caller passed an explicit type/url prefer that
+  const explicitType = type;
+  const explicitUrl = url;
+
+  // Determine final url/value to render
+  const possibleUrl = explicitUrl ?? (looksLikeUrl(content) ? content : undefined);
+
+  // Decide rendering type
+  let renderType: "image" | "audio" | "text" = "text";
+  if (explicitType === "image" || (possibleUrl && isImageUrl(possibleUrl))) renderType = "image";
+  else if (explicitType === "audio" || (possibleUrl && isAudioUrl(possibleUrl))) renderType = "audio";
+
+  // TEXT PATH: use markdown + typing effect for assistant, plain for user
+  if (renderType === "text") {
+    if (role === "user") {
+      // show user text bubble (no typing effect)
+      return (
+        <div className="msg-row right">
+          <div className="bubble user">{content}</div>
+        </div>
+      );
+    }
+
+    const normalized = useMemo(() => normalizeMarkdown(String(content ?? "")), [content]);
+    const typed = useTypingEffect(normalized, 25);
+
     return (
-      <div className="msg-row right">
-        <div className="bubble user">{content}</div>
+      <div className="msg-row left">
+        <div className="assistant-avatar">🤖</div>
+        <div className="assistant-block">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{typed ?? ""}</ReactMarkdown>
+        </div>
       </div>
     );
   }
 
-  const normalized = useMemo(() => normalizeMarkdown(content ?? ""), [content]);
-  const typed = useTypingEffect(normalized, 25);
+  // IMAGE PATH
+  if (renderType === "image") {
+    const src = String(possibleUrl ?? content);
+    // show image for both user and assistant
+    return (
+      <div className={`msg-row ${role === "user" ? "right" : "left"}`}>
+        {role === "assistant" && <div className="assistant-avatar">🤖</div>}
+        <div className={`assistant-block ${role === "user" ? "user-block" : ""}`}>
+          <div className="media-bubble image-bubble">
+            <img src={src} alt={filename ?? "image"} className="chat-image" />
+            {typeof content === "string" && !looksLikeUrl(content) && (
+              <div className="image-caption">{content}</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  // AUDIO PATH
+  const src = String(possibleUrl ?? content);
   return (
-    <div className="msg-row left">
-      <div className="assistant-avatar">🤖</div>
+    <div className={`msg-row ${role === "user" ? "right" : "left"}`}>
+      {role === "assistant" && <div className="assistant-avatar">🤖</div>}
       <div className="assistant-block">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{typed ?? ""}</ReactMarkdown>
+        <div className="media-bubble audio-bubble">
+          <audio controls src={src} />
+          {filename && <div className="media-filename">{filename}</div>}
+        </div>
       </div>
     </div>
   );

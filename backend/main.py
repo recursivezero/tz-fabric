@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
-from constants import API_PREFIX, ASSETS
+from constants import API_PREFIX, IMAGE_DIR,AUDIO_DIR, ASSETS
 import os
 from utils.emoji_logger import get_logger
 
@@ -62,7 +62,8 @@ app.database = db
 os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.mount("/assets/images", StaticFiles(directory=ASSETS), name="assets_images")
+app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_images")
+app.mount("/assets/audio", StaticFiles(directory=AUDIO_DIR), name="assets_audio")
 
 templates = Jinja2Templates(directory="templates")
 
