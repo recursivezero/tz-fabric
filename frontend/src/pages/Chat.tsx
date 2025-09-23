@@ -1,12 +1,12 @@
 // src/pages/Chat.tsx
 import { useCallback } from "react";
-import "../styles/chat.css";
-import useChat from "../hooks/chat";
-import MessageList from "../components/messageList";
 import Composer from "../components/composer";
-import EmptyState from "../components/emptyState";
-import TypingIndicator from "../components/typingIndicator";
-import HandleRedirectAction from "../components/handleRedirectAction";
+import EmptyState from "../components/EmptyState";
+import HandleRedirectAction from "../components/HandleRedirectAction";
+import MessageList from "../components/MessageList";
+import TypingIndicator from "../components/TypingIndicator";
+import useChat from "../hooks/chat";
+import "../styles/Chat.css";
 
 export default function Chat() {
   const {

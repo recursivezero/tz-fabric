@@ -67,9 +67,9 @@ uvicorn = { extras = ["standard"], version = "^0.35.0" }
 black = "^24.10.0"
 flake8 = "^7.1.1"
 mypy = "^1.14.1"
-ruff = "^0.2.1"
 pip-audit = "^2.9.0"
 pipreqs = "0.5.0"
+ruff = "^0.13.1"
 
 [tool.poetry.scripts]
 fabric = "cli:app"

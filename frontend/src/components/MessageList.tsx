@@ -1,6 +1,6 @@
 import { type RefObject } from "react";
 import { type Message } from "../services/chat_api";
-import MessageBubble from "./messageBubble";
+import MessageBubble from "./MessageBubble";
 import "../styles/Messages.css";
 
 interface Props {

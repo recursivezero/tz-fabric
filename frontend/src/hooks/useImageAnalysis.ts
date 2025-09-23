@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { analyzeImage, regenerateResponse, validateImageAPI } from "../services/analyze_api.ts";
 import { fetchImageAsFile } from "../utils/image-helper.ts";
-import { analyzeImage, regenerateResponse, validateImageAPI } from "../services/analyze_Api.ts";
 
 const useImageAnalysis = () => {
   const [showResults, setShowResults] = useState(false);
