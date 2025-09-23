@@ -16,6 +16,7 @@ export default function Chat() {
     status,
     error,
     send,
+    newChat,
     retryLast,
     scrollerRef,
     uploadedPreviewUrl,
@@ -27,6 +28,7 @@ export default function Chat() {
     pendingAction,
     acceptAction,
     rejectAction,
+    stop
   } = useChat();
 
   const pickSample = useCallback((text: string) => setInput(text), [setInput]);
@@ -48,7 +50,7 @@ export default function Chat() {
                 <div className="status-dot" title="online" />
               </div>
             </div>
-
+            <button onClick={newChat}>New Chat</button>
             <div className="chat-card-actions">
               <button className="download-link">Download Chat</button>
             </div>
@@ -56,17 +58,19 @@ export default function Chat() {
 
           <div className="chat-body">
             <div className="chat-scroll-area">
-              {messages.length === 0 ? (
-                <EmptyState onPick={pickSample} />
-              ) : (
-                <MessageList messages={messages} scrollerRef={scrollerRef} />
-              )}
+              {/* Always show the EmptyState (examples / chips) above the message stream */}
+              <EmptyState onPick={pickSample} />
+
+              {/* MessageList shows the actual conversation bubbles.
+                  Your useChat hook should inject the assistant welcome message
+                  into messages when appropriate. */}
+              <MessageList messages={messages} scrollerRef={scrollerRef} />
 
               {pendingAction && (
                 <HandleRedirectAction
                   pendingAction={pendingAction}
                   onAccept={acceptAction}
-                  onReject={rejectAction}   // <- re-added rejectAction wiring
+                  onReject={rejectAction}
                 />
               )}
 
@@ -83,6 +87,7 @@ export default function Chat() {
               value={input}
               onChange={setInput}
               onSend={send}
+              onStop={stop}
               disabled={status === "sending"}
               onUpload={handleImageUpload}
               onAudioUpload={handleAudioUpload}

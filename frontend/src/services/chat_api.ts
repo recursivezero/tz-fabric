@@ -1,3 +1,5 @@
+import { FULL_API_URL } from "../constants";
+
 // src/services/chat_api.ts
 export type Role = "user" | "assistant" | "system";
 
@@ -22,7 +24,7 @@ const API_BASE = "http://127.0.0.1:8000";
 
 export async function chatOnce(messages: Message[]): Promise<ChatResponse> {
   console.log("chatOnce called, messages:", messages);
-  const res = await fetch(`${API_BASE}/api/chat`, {
+  const res = await fetch(`${FULL_API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),

@@ -1,6 +1,7 @@
 import { type RefObject } from "react";
 import { type Message } from "../services/chat_api";
 import MessageBubble from "./messageBubble";
+import "../styles/Messages.css";
 
 interface Props {
   messages: Message[];
@@ -12,7 +13,6 @@ export default function MessageList({ messages, scrollerRef }: Props) {
     <div className="chat-list" ref={scrollerRef}>
       <div className="content-col">
         {messages.map((m, i) => {
-          // Support older Message shape (role, content) and also extended shapes
           const role = (m as any).role ?? "assistant";
           const content = (m as any).content ?? "";
           const type = (m as any).type as any;

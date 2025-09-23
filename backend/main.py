@@ -100,9 +100,9 @@ app.include_router(validate_image.router, prefix=API_PREFIX)
 app.include_router(search.router, prefix=API_PREFIX)
 app.include_router(submit.router, prefix=API_PREFIX)
 app.include_router(media.router, prefix=API_PREFIX)
-app.include_router(chat.router, prefix="/api")
-app.include_router(mcp_proxy.router, prefix="/api")
-app.include_router(uploads.router, prefix="/api")
+app.include_router(chat.router, prefix=API_PREFIX)
+app.include_router(mcp_proxy.router, prefix=API_PREFIX)
+app.include_router(uploads.router, prefix=API_PREFIX)
 
 app.mount("/mcp", sse_app())
 

@@ -1,3 +1,4 @@
+import "../styles/EmptyState.css";
 const samples = [
   "Explain knit vs woven (simple).",
   "How do I use the image analysis feature?",

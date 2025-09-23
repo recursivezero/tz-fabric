@@ -126,6 +126,7 @@ def redirect_to_analysis(
         print("  analyse_all_variations returned:", raw)
 
         cache_key = raw.get("cache_key")
+        print("  extracted cache_key =", cache_key)
         first = raw.get("first")
         print("  cache_key =", cache_key, "first =", first)
 
@@ -163,6 +164,9 @@ def regenerate(
     Regenerate using either cache (preferred) or fallback analyze tool.
     """
     # First try cache_key path
+    print("🔄 MCP regenerate called")
+    print()
+    print("  cache_key =", cache_key, "index =", index, "used_ids =", used_ids, "image_url =", image_url, "mode =", mode, "fresh =", fresh)
     if cache_key:
         if index is not None:
             resp = get_response(cache_key, index)

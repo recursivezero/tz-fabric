@@ -1,0 +1,172 @@
+/* composer.css - composer area, input, controls, upload buttons, send */
+.composer {
+  position: relative; /* important: previews are absolutely positioned relative to composer */
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  align-items: center;
+}
+
+.composer-input {
+  flex: 1;
+  resize: none;
+  padding: 12px;
+  border-radius: 10px;
+  border: 3px solid #000000;
+  font: inherit;
+  min-height: 44px;
+  max-height: 160px;
+  box-sizing: border-box;
+}
+
+/* controls wrapper inside composer */
+.composer-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* file upload button */
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  border: 3px solid #000000;
+  height: 40px;
+}
+.file-upload-btn input { display: none; }
+
+/* send button */
+.send-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  height: 40px;
+  width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.send-btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+/* recording banner (if Composer renders it) */
+.recording-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1200;
+  background: #fff5f5;
+  border: 1px solid #000000;
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+/* ================= PREVIEWS (scoped to composer) =================
+   The preview UI is positioned absolutely so it does NOT push content.
+   It sits just above the composer (left-aligned to the composer content).
+   ================================================================ */
+
+/* wrapper: sits above the composer, out of normal flow */
+.composer .upload-previews {
+  position: absolute;
+  bottom: calc(100% + 12px); /* 12px gap above composer */
+  left: 16px;                /* align with composer padding */
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  z-index: 90;
+  pointer-events: auto;
+  transform: none;
+  /* optional: subtle space so it doesn't collide with rounded card bottom */
+  padding: 0;
+}
+
+/* each preview card */
+.composer .upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;           /* white card to match composer */
+  border: 1px solid #eef2f6;
+  border-radius: 10px;
+  padding: 8px 10px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+  max-width: 420px;
+  min-width: 120px;
+}
+
+/* image thumbnail sizing */
+.composer .upload-preview.image-preview .upload-thumb {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* audio preview sizing (player width) */
+.composer .upload-preview.audio-preview audio {
+  width: 220px;
+  height: 36px;
+}
+
+/* action area inside preview (remove button etc) */
+.composer .upload-preview .preview-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* remove button */
+.composer .upload-preview .upload-remove {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* When both image and audio are present, place them horizontally */
+.composer .upload-previews .upload-preview + .upload-preview {
+  margin-left: 0; /* gap is handled by container gap, keep consistent */
+}
+
+/* If the composer is narrower (mobile), allow previews to wrap/stack */
+@media (max-width: 720px) {
+  .composer .upload-previews {
+    left: 12px;
+    bottom: calc(100% + 8px);
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .composer .upload-preview.image-preview .upload-thumb {
+    width: 72px;
+    height: 56px;
+  }
+  .composer .upload-preview.audio-preview audio {
+    width: 160px;
+  }
+
+  /* stack previews vertically on tiny screens */
+  @media (max-width: 480px) {
+    .composer .upload-previews { flex-direction: column; align-items: flex-start; }
+    .composer .upload-preview { width: 100%; box-sizing: border-box; }
+    .composer .upload-preview.image-preview .upload-thumb { width: 100%; height: auto; }
+    .composer .upload-preview.audio-preview audio { width: 100%; }
+  }
+}

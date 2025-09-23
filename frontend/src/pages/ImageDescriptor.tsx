@@ -1,9 +1,9 @@
 import Header from "../components/Header";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
 import AnimatedSearchBox from "../components/SearchBar";
-import DescriptionBox from "../components/descriptionBox";
-import DrawerToggle from "../components/drawerToggle";
-import ImagePreview from "../components/imagePreviewPanel";
+import DescriptionBox from "../components/DescriptionBox";
+import DrawerToggle from "../components/DrawerToggle";
+import ImagePreview from "../components/ImagePreviewPanel";
 import useImageAnalysis from "../hooks/useImageAnalysis";
 import "../styles/ImageDescription.css";
 
