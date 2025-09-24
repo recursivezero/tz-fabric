@@ -8,7 +8,7 @@ type Status = "idle" | "sending" | "error";
 export default function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
-
+  const [fileName, setFileName] = useState<string>("");
   // Media uploads
   const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
   const [uploadedAudioFile, setUploadedAudioFile] = useState<File | null>(null);
@@ -36,7 +36,7 @@ export default function useChat() {
     if (abortRef.current) {
       try {
         abortRef.current.abort();
-      } catch {}
+      } catch { }
     }
     const ac = new AbortController();
     abortRef.current = ac;
@@ -165,6 +165,18 @@ I can help you with:
     },
     [uploadedAudioUrl]
   );
+
+  const getModeFromText = (text: string | undefined | null): "short" | "long" => {
+    if (!text) return "short";
+    const s = String(text).toLowerCase();
+    if (/\blong\b|\bdetailed\b|\bfull\b|\bin-depth\b|\bextended\b|\bcomprehensive\b/.test(s)) {
+      return "long";
+    }
+    if (/\bshort\b|\bbrief\b|\bsummary\b|\bconcise\b|\bquick\b/.test(s)) {
+      return "short";
+    }
+    return "short";
+  };
 
   const clearImage = useCallback(() => {
     setUploadedImageFile(null);
@@ -381,7 +393,7 @@ I can help you with:
         if (filename) form.append("filename", filename);
 
         // Upload temporarily (we pass the current abort signal implicitly via fetch inside callMcp)
-        const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }), );
+        const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
         if (!upResp.ok) {
           const t = await upResp.text().catch(() => "");
           throw new Error(`Upload failed: ${upResp.status} ${t}`);
@@ -402,9 +414,13 @@ I can help you with:
           } as any);
         } else {
           if (wantsAnalysis && imageUrl) {
-            const mcpResult = await withAbort(callMcp("redirect_to_analysis", { image_url: imageUrl, mode: "short" }));
+            const mode = getModeFromText(text); 
+            console.log("Detected analysis request, using mode:", mode);
+            const mcpResult = await withAbort(
+              callMcp("redirect_to_analysis", { image_url: imageUrl, mode })
+            );
             handleResponse({
-              reply: { role: "assistant", content: "Image uploaded and analysis started." },
+              reply: { role: "assistant", content: `Image uploaded and ${mode} analysis started.` },
               bot_messages: mcpResult.bot_messages || [],
               action: mcpResult.action,
             } as any);
@@ -417,12 +433,9 @@ I can help you with:
             } as any);
           }
         }
-
-        // cleanup
         clearImage();
         clearAudio();
         setStatus("idle");
-        // clear controller
         if (abortRef.current) {
           abortRef.current = null;
         }
@@ -434,7 +447,6 @@ I can help you with:
       if (abortRef.current) abortRef.current = null;
     } catch (e: any) {
       if ((e as any)?.name === "AbortError" || e?.message === "Aborted") {
-        // user stopped the request
         setStatus("idle");
         setError("");
       } else {
@@ -473,7 +485,7 @@ I can help you with:
     if (abortRef.current) {
       try {
         abortRef.current.abort();
-      } catch {}
+      } catch { }
       abortRef.current = null;
     }
     setStatus("idle");
@@ -484,7 +496,7 @@ I can help you with:
     if (abortRef.current) {
       try {
         abortRef.current.abort();
-      } catch {}
+      } catch { }
       abortRef.current = null;
     }
 
@@ -510,6 +522,7 @@ I can help you with:
     scrollerRef,
     uploadedPreviewUrl,
     uploadedAudioUrl,
+    uploadedAudioFile,
     handleImageUpload,
     handleAudioUpload,
     clearImage,
@@ -518,6 +531,7 @@ I can help you with:
     acceptAction,
     rejectAction,
     currentResponse,
-    stop, 
+    stop,
+    fileName, setFileName,
   };
 }

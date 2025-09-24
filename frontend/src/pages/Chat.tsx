@@ -1,6 +1,6 @@
 // src/pages/Chat.tsx
 import { useCallback } from "react";
-import Composer from "../components/composer";
+import Composer from "../components/Composer";
 import EmptyState from "../components/EmptyState";
 import HandleRedirectAction from "../components/HandleRedirectAction";
 import MessageList from "../components/MessageList";
@@ -21,6 +21,7 @@ export default function Chat() {
     scrollerRef,
     uploadedPreviewUrl,
     uploadedAudioUrl,
+    uploadedAudioFile,
     handleImageUpload,
     handleAudioUpload,
     clearImage,
@@ -28,10 +29,14 @@ export default function Chat() {
     pendingAction,
     acceptAction,
     rejectAction,
-    stop
+    stop,
+    fileName,
+    setFileName,
   } = useChat();
 
   const pickSample = useCallback((text: string) => setInput(text), [setInput]);
+
+  
 
   return (
     <div className="page-root">
@@ -66,7 +71,7 @@ export default function Chat() {
                   into messages when appropriate. */}
               <MessageList messages={messages} scrollerRef={scrollerRef} />
 
-              {pendingAction && (
+              {pendingAction && uploadedAudioFile &&(
                 <HandleRedirectAction
                   pendingAction={pendingAction}
                   onAccept={acceptAction}
@@ -95,6 +100,8 @@ export default function Chat() {
               audioUrl={uploadedAudioUrl}
               onClearUpload={clearImage}
               onClearAudio={clearAudio}
+              fileName={fileName}          // <-- pass down
+              setFileName={setFileName}
             />
           </div>
         </div>
