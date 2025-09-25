@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { chatOnce, type Message, type ChatResponse } from "../services/chat_api";
 import { FULL_API_URL } from "../constants";
+import { extractFilenameFromText } from "../utils/extractFilenameFromText";
 
 type Status = "idle" | "sending" | "error";
 
@@ -9,11 +10,15 @@ export default function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [fileName, setFileName] = useState<string>("");
+
   // Media uploads
   const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
   const [uploadedAudioFile, setUploadedAudioFile] = useState<File | null>(null);
   const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
   const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [shouldNavigateToList, setShouldNavigateToList] = useState<boolean>(false);
+
 
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string>("");
@@ -27,12 +32,20 @@ export default function useChat() {
     used_ids?: string[];
   } | null>(null);
 
-  // Abort controller ref for stop functionality
   const abortRef = useRef<AbortController | null>(null);
+  const navigateTimeoutRef = useRef<number | null>(null);
 
-  // Helper: create a fresh AbortController and return its signal; also store it in abortRef
+  const scheduleNavigateToList = useCallback((delay = 3000) => {
+    if (navigateTimeoutRef.current) {
+      window.clearTimeout(navigateTimeoutRef.current);
+      navigateTimeoutRef.current = null;
+    }
+    navigateTimeoutRef.current = window.setTimeout(() => {
+      setShouldNavigateToList(true);
+      navigateTimeoutRef.current = null;
+    }, delay);
+  }, []);
   const createAbort = useCallback(() => {
-    // abort previous if still present
     if (abortRef.current) {
       try {
         abortRef.current.abort();
@@ -43,8 +56,6 @@ export default function useChat() {
     return ac.signal;
   }, []);
 
-  // Helper: wrap any promise so it rejects quickly if current abortRef is aborted
-  // If the promise doesn't accept a signal, this will still allow us to cancel via race
   const withAbort = useCallback(
     <T,>(p: Promise<T>) => {
       const ac = abortRef.current;
@@ -99,7 +110,6 @@ I can help you with:
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, pendingAction, currentResponse]);
 
-  // ---- Media handlers ----
   const validateImageFile = useCallback(async (file: File) => {
     try {
       const form = new FormData();
@@ -196,11 +206,6 @@ I can help you with:
     return String(id);
   }, []);
 
-  const extractFilenameFromText = (text: string): string | null => {
-    const m = text.match(/(?:as|named)\s+(\w+)/i);
-    return m ? m[1] : null;
-  };
-
   // ---- MCP helper (now supports optional signal) ----
   const callMcp = useCallback(async (tool: string, args: Record<string, any> = {}) => {
     // include signal if abortRef exists
@@ -254,7 +259,6 @@ I can help you with:
         });
         return;
       }
-
       setPendingAction(null);
     },
     [normalizeId]
@@ -376,6 +380,7 @@ I can help you with:
     createAbort();
 
     setStatus("sending");
+    setIsGenerating(true);
     setError("");
 
     if (text) setMessages((prev) => [...prev, { role: "user", content: text }]);
@@ -389,43 +394,79 @@ I can help you with:
         if (uploadedImageFile) form.append("image", uploadedImageFile);
         if (uploadedAudioFile) form.append("audio", uploadedAudioFile);
 
-        const filename = extractFilenameFromText(text);
-        if (filename) form.append("filename", filename);
+        // --- debug-enabled upload + MCP block (replace the existing block after upResp/json)
+        const filenameFromText = extractFilenameFromText(text);
+        if (filenameFromText) form.append("filename", filenameFromText);
+        setFileName(filenameFromText || "");
 
-        // Upload temporarily (we pass the current abort signal implicitly via fetch inside callMcp)
+        // Build a plain object copy to inspect what's being sent
+        try {
+          const formDebug: Record<string, any> = {};
+          for (const pair of (Array.from(form.entries()) as [string, any][])) {
+            const k = pair[0];
+            const v = pair[1];
+            // For files, show name + type
+            if (v && typeof v === "object" && typeof v.name === "string") {
+              formDebug[k] = { filename: v.name, type: v.type || "unknown", size: v.size ?? "?" };
+            } else {
+              formDebug[k] = String(v);
+            }
+          }
+          console.log("[DEBUG] Upload FormData prepared:", formDebug);
+        } catch (ex) {
+          console.warn("[DEBUG] Could not enumerate FormData for debug:", ex);
+        }
+
+        // Upload temporarily
+        console.log("[DEBUG] uploading to /uploads/tmp_media (filenameFromText):", filenameFromText);
         const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
         if (!upResp.ok) {
           const t = await upResp.text().catch(() => "");
           throw new Error(`Upload failed: ${upResp.status} ${t}`);
         }
         const upJson = await upResp.json();
+        console.log("[DEBUG] upload response upJson:", upJson);
+
+        const finalBasename = (filenameFromText && filenameFromText.trim().length > 0)
+          ? filenameFromText.trim()
+          : (upJson && (upJson.basename ?? upJson.filename) ? (upJson.basename ?? upJson.filename) : null);
+        console.log("[DEBUG] filenameFromText:", filenameFromText, "finalBasename (used for MCP):", finalBasename);
 
         const hasAudio = Boolean(upJson.audio_url) || Boolean(uploadedAudioFile);
         const imageUrl = upJson.image_url;
         const audioUrl = upJson.audio_url;
 
         if (hasAudio) {
-          const toolArgs: any = { image_url: imageUrl, audio_url: audioUrl, filename: upJson.basename ?? upJson.filename ?? filename };
+          const toolArgs: any = { image_url: imageUrl, audio_url: audioUrl };
+          if (finalBasename) toolArgs.filename = finalBasename;
+          console.log("[DEBUG] calling MCP redirect_to_media_analysis with args:", toolArgs);
           const mcpResult = await withAbort(callMcp("redirect_to_media_analysis", toolArgs));
+          console.log("[DEBUG] mcpResult:", mcpResult);
           handleResponse({
             reply: { role: "assistant", content: "Media uploaded and queued." },
             bot_messages: mcpResult.bot_messages || [],
             action: mcpResult.action,
           } as any);
+          scheduleNavigateToList();
         } else {
           if (wantsAnalysis && imageUrl) {
-            const mode = getModeFromText(text); 
-            console.log("Detected analysis request, using mode:", mode);
+            const mode = getModeFromText(text);
+            console.log("[DEBUG] calling MCP redirect_to_analysis with image_url and mode:", { imageUrl, mode });
             const mcpResult = await withAbort(
               callMcp("redirect_to_analysis", { image_url: imageUrl, mode })
             );
+            console.log("[DEBUG] mcpResult (analysis):", mcpResult);
             handleResponse({
               reply: { role: "assistant", content: `Image uploaded and ${mode} analysis started.` },
               bot_messages: mcpResult.bot_messages || [],
               action: mcpResult.action,
             } as any);
           } else {
-            const mcpResult = await withAbort(callMcp("redirect_to_media_analysis", { image_url: imageUrl, audio_url: null, filename: upJson.basename ?? upJson.filename ?? filename }));
+            const toolArgs: any = { image_url: imageUrl, audio_url: null };
+            if (finalBasename) toolArgs.filename = finalBasename;
+            console.log("[DEBUG] calling MCP redirect_to_media_analysis (no-audio) with args:", toolArgs);
+            const mcpResult = await withAbort(callMcp("redirect_to_media_analysis", toolArgs));
+            console.log("[DEBUG] mcpResult (no-audio):", mcpResult);
             handleResponse({
               reply: { role: "assistant", content: "Image uploaded and queued for processing." },
               bot_messages: mcpResult.bot_messages || [],
@@ -433,6 +474,8 @@ I can help you with:
             } as any);
           }
         }
+
+
         clearImage();
         clearAudio();
         setStatus("idle");
@@ -443,7 +486,6 @@ I can help you with:
       }
       const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }]));
       handleResponse(chatRes);
-      setStatus("idle");
       if (abortRef.current) abortRef.current = null;
     } catch (e: any) {
       if ((e as any)?.name === "AbortError" || e?.message === "Aborted") {
@@ -453,7 +495,9 @@ I can help you with:
         setStatus("error");
         setError(e?.message || "Something went wrong.");
       }
-      // Clear any lingering controller
+    }
+    finally {
+      setIsGenerating(false);     // ✅ move here
       if (abortRef.current) abortRef.current = null;
     }
   }, [input, messages, uploadedImageFile, uploadedAudioFile, status, callMcp, handleResponse, clearImage, clearAudio, createAbort, withAbort]);
@@ -481,18 +525,23 @@ I can help you with:
     }
   }, [messages, status, handleResponse, createAbort, withAbort]);
 
-  const stop = useCallback(() => {
+  const abort = useCallback(() => {
     if (abortRef.current) {
       try {
         abortRef.current.abort();
       } catch { }
       abortRef.current = null;
     }
+
     setStatus("idle");
+    setIsGenerating(false);
+    setPendingAction(null);
+    setCurrentResponse(null);
+
+    setMessages((m) => [...m, { role: "assistant", content: "Generation aborted." }]);
   }, []);
 
   const newChat = useCallback(() => {
-    // cancel any in-flight request
     if (abortRef.current) {
       try {
         abortRef.current.abort();
@@ -531,7 +580,10 @@ I can help you with:
     acceptAction,
     rejectAction,
     currentResponse,
+    abort,
     stop,
     fileName, setFileName,
+    isGenerating,
+    shouldNavigateToList, setShouldNavigateToList,
   };
 }

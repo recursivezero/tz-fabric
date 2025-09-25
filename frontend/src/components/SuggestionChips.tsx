@@ -1,11 +1,9 @@
-// src/components/SuggestionChips.tsx
-import  { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "../styles/SuggestionChips.css";
 
 type Props = {
   hasImage: boolean;
   hasAudio: boolean;
- 
   onAction: (actionId: string, opts?: { name?: string }) => void;
   resetKey?: string | number | null;
   hint?: string;
@@ -22,16 +20,15 @@ export default function SuggestionChips({
 }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
 
-  // Reset selection when inputs change
   useEffect(() => {
     setSelected(null);
-  }, [resetKey, hasImage, hasAudio]);
+  }, [resetKey, hasImage, hasAudio, name]);
 
   const chips = useMemo(() => {
     if (hasImage && !hasAudio) {
       return [
-        { id: "image:analyze_short", label: "Short analysis of this image", primary: true },
-        { id: "image:analyze_long", label: "Long analysis of this image" },
+        { id: "image:analyze_short", label: "Analyze this image (short analysis).", primary: true },
+        { id: "image:analyze_long", label: "Analyze this image (long analysis)." },
       ];
     }
 
@@ -40,7 +37,7 @@ export default function SuggestionChips({
         { id: "submit:both", label: "Submit files", primary: true },
         {
           id: "submit:both_with_names",
-          label: name ? `Submit the files with a name of ${name}` : "Submit the files with a name",
+          label: `Please submit the attached image and audio with [name]`,
         },
       ];
     }
@@ -55,11 +52,9 @@ export default function SuggestionChips({
     if (selected) return;
     setSelected(id);
 
-    if (id === "submit:both_with_names") {
-      onAction(id, { name: name ?? undefined });
-    } else {
-      onAction(id);
-    }
+    // extract name to send back in opts when available (so parent handlers can use it)
+    const opts = id === "submit:both_with_names" && name ? { name } : undefined;
+    onAction(id, opts);
   };
 
   return (
@@ -69,22 +64,22 @@ export default function SuggestionChips({
       <div className="chips-row">
         {selected
           ? chips
-              .filter((c) => c.id === selected)
-              .map((c) => (
-                <button key={c.id} className="chip selected" disabled>
-                  {c.label}
-                </button>
-              ))
-          : chips.map((c) => (
-              <button
-                key={c.id}
-                className={`chip ${c.primary ? "primary" : ""}`}
-                type="button"
-                onClick={() => onClick(c.id)}
-              >
+            .filter((c) => c.id === selected)
+            .map((c) => (
+              <button key={c.id} className="chip selected" disabled>
                 {c.label}
               </button>
-            ))}
+            ))
+          : chips.map((c) => (
+            <button
+              key={c.id}
+              className={`chip ${c.primary ? "primary" : ""}`}
+              type="button"
+              onClick={() => onClick(c.id)}
+            >
+              {c.label}
+            </button>
+          ))}
       </div>
     </div>
   );

@@ -36,7 +36,8 @@
 
 /* composer input wrapper positions the attach menu relative to it */
 .composer-input-wrapper {
-  position: relative; /* IMPORTANT: attach-menu positioned relative to this */
+  position: relative;
+  /* IMPORTANT: attach-menu positioned relative to this */
   display: flex;
   align-items: center;
   border-radius: 10px;
@@ -50,7 +51,7 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  border: 1px solid rgba(2,6,23,0.08);
+  border: 1px solid rgba(2, 6, 23, 0.08);
   background: #fff;
   display: inline-flex;
   align-items: center;
@@ -68,9 +69,9 @@
   width: 34px;
   height: 34px;
   padding: 0;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
+  border-radius: 20px;
+  border: crimson;
+  background: #c3b9d84f;
   color: #475569;
   font-weight: 600;
   display: flex;
@@ -85,10 +86,11 @@
 /* composer input */
 .composer-input {
   width: 100%;
-  padding: 12px 12px 12px 48px; /* left padding to accommodate attach button */
+  padding: 12px 12px 12px 48px;
+  /* left padding to accommodate attach button */
   border-radius: 12px;
-  font-size: 16px;
-  border: 1px solid rgba(2,6,23,0.08);
+  font-size: 18px;
+  border: 1px solid rgb(0 0 0 / 86%);
   resize: none;
   font-family: inherit;
   box-sizing: border-box;
@@ -100,19 +102,20 @@
 /* Attach menu: anchored to composer-input-wrapper; appears above the input */
 .attach-menu {
   position: absolute;
-  bottom: calc(100% + 8px); /* pop above the input */
+  bottom: calc(100% + 8px);
+  /* pop above the input */
   left: 6px;
   min-width: 160px;
   background: #fff;
-  border: 1px solid rgba(2,6,23,0.08);
-  box-shadow: 0 10px 30px rgba(2,6,23,0.12);
+  border: 1px solid rgba(2, 6, 23, 0.08);
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.12);
   border-radius: 10px;
   padding: 8px;
   z-index: 3000;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  animation: slideUp 160ms cubic-bezier(.2,.9,.2,1);
+  animation: slideUp 160ms cubic-bezier(.2, .9, .2, 1);
 }
 
 /* slight entrance animation */
@@ -121,6 +124,7 @@
     opacity: 0;
     transform: translateY(6px) scale(0.995);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -143,7 +147,8 @@
 }
 
 .attach-menu-item:hover {
-  background: #eef4ff; /* subtle blue hover */
+  background: #eef4ff;
+  /* subtle blue hover */
   transform: translateX(2px);
 }
 
@@ -163,7 +168,7 @@
   background: white;
   padding: 6px;
   border-radius: 8px;
-  border: 1px solid rgba(2,6,23,0.04);
+  border: 1px solid rgba(2, 6, 23, 0.04);
 }
 
 .upload-thumb {
@@ -171,7 +176,7 @@
   height: 72px;
   object-fit: cover;
   border-radius: 8px;
-  border: 1px solid rgba(2,6,23,0.06);
+  border: 1px solid rgba(2, 6, 23, 0.06);
 }
 
 .upload-remove {
@@ -185,8 +190,8 @@
 /* recording and send button styles (kept from your original) */
 .record-btn {
   padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+  border-radius: 18px;
+  border: 1px solid #332f2f;
   background: #fff;
   cursor: pointer;
 }
@@ -209,7 +214,7 @@
   background: linear-gradient(180deg, #2563eb, #1e40af);
   color: white;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(37,99,235,0.16);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.16);
   transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
 }
 
@@ -230,7 +235,7 @@
 
 .send-btn:not(:disabled):active {
   transform: translateY(1px) scale(0.995);
-  box-shadow: 0 4px 12px rgba(37,99,235,0.12);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
 }
 
 /* keep overflow visible so the menu can float above other containers */

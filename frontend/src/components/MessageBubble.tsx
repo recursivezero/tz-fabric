@@ -39,11 +39,9 @@ const isAudioUrl = (s?: string) => {
 };
 
 export default function MessageBubble({ role, content, type, url, filename }: Props) {
-  // If the caller passed an explicit type/url prefer that
   const explicitType = type;
   const explicitUrl = url;
 
-  // Determine final url/value to render
   const possibleUrl = explicitUrl ?? (looksLikeUrl(content) ? content : undefined);
 
   // Decide rendering type

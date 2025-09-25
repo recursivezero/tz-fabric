@@ -20,8 +20,6 @@ export interface ChatResponse {
   analysis_responses?: { id: string; text: string }[];
 }
 
-const API_BASE = "http://127.0.0.1:8000";
-
 export async function chatOnce(messages: Message[]): Promise<ChatResponse> {
   console.log("chatOnce called, messages:", messages);
   const res = await fetch(`${FULL_API_URL}/chat`, {
