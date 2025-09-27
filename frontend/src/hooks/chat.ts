@@ -19,7 +19,6 @@ export default function useChat() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [shouldNavigateToList, setShouldNavigateToList] = useState<boolean>(false);
 
-
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string>("");
 
@@ -63,7 +62,6 @@ export default function useChat() {
       return new Promise<T>((resolve, reject) => {
         const onAbort = () => {
           const err = new Error("Aborted");
-          // mimic DOMException name to allow detection
           (err as any).name = "AbortError";
           reject(err);
         };
@@ -93,13 +91,11 @@ export default function useChat() {
         {
           id: "welcome",
           role: "assistant",
-          content: `👋 Hi, I’m FabricAI!  
-I can help you with:
-- 📤 Uploading fabric images or audio
+          content: `👋 Hi, I’m FabricAI! I can help you with:
+- 📤 Uploading fabric images and audio
 - 📝 Giving short or long analysis
-- 🔁 Regenerating and comparing results  
-
-👉 Try typing: "Analyze this image" or upload a file to begin.`,
+- 🔍 Searching for similar images
+- 🔁 Regenerating and comparing results`,
         },
       ]);
     }
@@ -208,7 +204,6 @@ I can help you with:
 
   // ---- MCP helper (now supports optional signal) ----
   const callMcp = useCallback(async (tool: string, args: Record<string, any> = {}) => {
-    // include signal if abortRef exists
     const signal = abortRef.current ? abortRef.current.signal : undefined;
     const resp = await fetch(`${FULL_API_URL}/mcp/call`, {
       method: "POST",
@@ -225,7 +220,29 @@ I can help you with:
     return data.result;
   }, []);
 
-  // ---- Response handling ----
+  // ---- Convert File -> base64 (no prefix) ----
+  const fileToBase64 = useCallback((file: File): Promise<{ base64: string; dataUrl: string }> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        // data:[mime];base64,xxxxx
+        const comma = result.indexOf(",");
+        if (comma === -1) {
+          // not a data url (unlikely) — assume raw base64
+          resolve({ base64: result, dataUrl: result });
+          return;
+        }
+        const dataUrl = result;
+        const base64 = result.slice(comma + 1);
+        resolve({ base64, dataUrl });
+      };
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  // ---- Response handling (unchanged) ----
   const handleResponse = useCallback(
     (res: ChatResponse) => {
       if (res.bot_messages && res.bot_messages.length > 0) {
@@ -297,11 +314,9 @@ I can help you with:
       if (action?.params?.image_url) regenArgs.image_url = action.params.image_url;
       if (action?.params?.mode) regenArgs.mode = action.params.mode;
 
-      // create abort signal for this call
       createAbort();
       const regenResult = await withAbort(callMcp("regenerate", regenArgs));
 
-      // Normalize responses
       let newResponses: { id: string; text: string }[] = [];
       if (regenResult?.response) {
         newResponses = [
@@ -353,7 +368,6 @@ I can help you with:
       );
     } catch (err: any) {
       if ((err as any)?.name === "AbortError") {
-        // user aborted regenerate -> just clear abort and return
         console.log("[rejectAction] aborted by user");
       } else {
         console.error("[rejectAction] regenerate error:", err);
@@ -364,14 +378,60 @@ I can help you with:
       }
       setPendingAction(null);
     } finally {
-      // clear abort controller
       if (abortRef.current) {
         abortRef.current = null;
       }
     }
   }, [pendingAction, callMcp, setMessages, setPendingAction, setCurrentResponse, createAbort, withAbort]);
 
-  // ---- send / retry / stop ----
+  const searchSimilar = useCallback(async (k: number, min_sim = 0.5) => {
+    if (!uploadedImageFile) {
+      setError("No image uploaded to search with.");
+      return null;
+    }
+    try {
+      createAbort();
+      setIsGenerating(true);
+      setStatus("sending");
+      setError("");
+      const { base64, dataUrl } = await fileToBase64(uploadedImageFile);
+      const args = {
+        image_b64: base64,
+        k: Number(k) || 1,
+        min_sim: Number(min_sim),
+        order: "recent",
+        require_audio: false,
+      };
+
+      const mcpResult = await withAbort(callMcp("search", args));
+      const payload = {
+        createdAt: Date.now(),
+        k: args.k,
+        min_sim: args.min_sim,
+        queryPreview: dataUrl,
+        results: mcpResult.results ?? [],
+      };
+      try {
+        sessionStorage.setItem("mcp_last_search", JSON.stringify(payload));
+      } catch (err) {
+        console.warn("sessionStorage set failed", err);
+      }
+      return payload;
+    } catch (err: any) {
+      if ((err as any)?.name === "AbortError") {
+        console.log("[searchSimilar] aborted");
+      } else {
+        console.error("[searchSimilar] error:", err);
+        setError(err?.message || "Search failed");
+      }
+      return null;
+    } finally {
+      setIsGenerating(false);
+      setStatus("idle");
+      if (abortRef.current) abortRef.current = null;
+    }
+  }, [uploadedImageFile, fileToBase64, callMcp, withAbort, createAbort]);
+
   const send = useCallback(async () => {
     const text = input.trim();
     if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
@@ -387,25 +447,64 @@ I can help you with:
     setInput("");
 
     try {
-      const wantsAnalysis = /(?:\banalyz(?:e|ing|ed)\b|\banalyse\b|\binspect\b|\binspect(?:ion)?\b|\bscan\b)/i.test(text);
+
+      const searchIntentMatch = text.match(/^\s*search\s+similar\s+images\b/i);
+      if (searchIntentMatch) {
+        const kMatch = text.match(/k\s*[:=]?\s*(\d+)/i) || text.match(/\(\s*k\s*=\s*(\d+)\s*\)/i);
+        const k = kMatch ? Math.max(1, Math.min(300, Number(kMatch[1]))) : 3;
+
+        console.log("[send] Detected search intent. calling searchSimilar with k=", k);
+
+        // run the search logic (stores payload in sessionStorage)
+        const payload = await searchSimilar(k);
+
+        if (payload) {
+          console.log("[send] searchSimilar completed, navigating to /search");
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: "Thanks — preparing your search and redirecting to results now…" },
+          ]);
+          setStatus("idle");
+          setIsGenerating(false);
+          if (abortRef.current) {
+            abortRef.current = null;
+          }
+          window.setTimeout(() => {
+            window.location.href = "/search";
+          }, 2000);
+          return;
+        } else {
+          console.warn("[send] searchSimilar returned null/failed");
+          setStatus("idle");
+          setIsGenerating(false);
+          if (abortRef.current) {
+            abortRef.current = null;
+          }
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: "Search did not start (see console). Please try again." },
+          ]);
+          return;
+        }
+      }
 
       if (uploadedImageFile || uploadedAudioFile) {
         const form = new FormData();
         if (uploadedImageFile) form.append("image", uploadedImageFile);
         if (uploadedAudioFile) form.append("audio", uploadedAudioFile);
 
-        // --- debug-enabled upload + MCP block (replace the existing block after upResp/json)
         const filenameFromText = extractFilenameFromText(text);
-        if (filenameFromText) form.append("filename", filenameFromText);
-        setFileName(filenameFromText || "");
+        if (filenameFromText) {
+          form.append("filename", filenameFromText);
+          setFileName(filenameFromText);
+        }
 
-        // Build a plain object copy to inspect what's being sent
+        // debug: show what we're sending
         try {
           const formDebug: Record<string, any> = {};
           for (const pair of (Array.from(form.entries()) as [string, any][])) {
             const k = pair[0];
             const v = pair[1];
-            // For files, show name + type
             if (v && typeof v === "object" && typeof v.name === "string") {
               formDebug[k] = { filename: v.name, type: v.type || "unknown", size: v.size ?? "?" };
             } else {
@@ -417,7 +516,7 @@ I can help you with:
           console.warn("[DEBUG] Could not enumerate FormData for debug:", ex);
         }
 
-        // Upload temporarily
+        // Upload to temp endpoint
         console.log("[DEBUG] uploading to /uploads/tmp_media (filenameFromText):", filenameFromText);
         const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
         if (!upResp.ok) {
@@ -430,11 +529,11 @@ I can help you with:
         const finalBasename = (filenameFromText && filenameFromText.trim().length > 0)
           ? filenameFromText.trim()
           : (upJson && (upJson.basename ?? upJson.filename) ? (upJson.basename ?? upJson.filename) : null);
-        console.log("[DEBUG] filenameFromText:", filenameFromText, "finalBasename (used for MCP):", finalBasename);
 
         const hasAudio = Boolean(upJson.audio_url) || Boolean(uploadedAudioFile);
         const imageUrl = upJson.image_url;
         const audioUrl = upJson.audio_url;
+        console.log("Image uploaded, imageUrl:", imageUrl, "audioUrl:", audioUrl)
 
         if (hasAudio) {
           const toolArgs: any = { image_url: imageUrl, audio_url: audioUrl };
@@ -447,8 +546,14 @@ I can help you with:
             bot_messages: mcpResult.bot_messages || [],
             action: mcpResult.action,
           } as any);
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: "Thanks — your media has been uploaded. Redirecting you to the view page…" },
+          ]);
           scheduleNavigateToList();
         } else {
+          // no audio: can be plain analysis or queued media depending on wantsAnalysis check
+          const wantsAnalysis = /(?:\banalyz(?:e|ing|ed)\b|\banalyse\b|\binspect\b|\binspect(?:ion)?\b|\bscan\b)/i.test(text);
           if (wantsAnalysis && imageUrl) {
             const mode = getModeFromText(text);
             console.log("[DEBUG] calling MCP redirect_to_analysis with image_url and mode:", { imageUrl, mode });
@@ -475,7 +580,6 @@ I can help you with:
           }
         }
 
-
         clearImage();
         clearAudio();
         setStatus("idle");
@@ -484,8 +588,9 @@ I can help you with:
         }
         return;
       }
-      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }]));
+      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }] as any));
       handleResponse(chatRes);
+      setStatus("idle");
       if (abortRef.current) abortRef.current = null;
     } catch (e: any) {
       if ((e as any)?.name === "AbortError" || e?.message === "Aborted") {
@@ -497,10 +602,13 @@ I can help you with:
       }
     }
     finally {
-      setIsGenerating(false);     // ✅ move here
+      setIsGenerating(false);
       if (abortRef.current) abortRef.current = null;
     }
-  }, [input, messages, uploadedImageFile, uploadedAudioFile, status, callMcp, handleResponse, clearImage, clearAudio, createAbort, withAbort]);
+  }, [input, messages, uploadedImageFile, uploadedAudioFile, status, callMcp, handleResponse, clearImage, clearAudio, createAbort, withAbort, chatOnce, extractFilenameFromText, scheduleNavigateToList, getModeFromText, searchSimilar]);
+
+
+
 
   const retryLast = useCallback(async () => {
     if (status === "sending" || messages.length === 0) return;
@@ -524,22 +632,6 @@ I can help you with:
       if (abortRef.current) abortRef.current = null;
     }
   }, [messages, status, handleResponse, createAbort, withAbort]);
-
-  const abort = useCallback(() => {
-    if (abortRef.current) {
-      try {
-        abortRef.current.abort();
-      } catch { }
-      abortRef.current = null;
-    }
-
-    setStatus("idle");
-    setIsGenerating(false);
-    setPendingAction(null);
-    setCurrentResponse(null);
-
-    setMessages((m) => [...m, { role: "assistant", content: "Generation aborted." }]);
-  }, []);
 
   const newChat = useCallback(() => {
     if (abortRef.current) {
@@ -580,10 +672,8 @@ I can help you with:
     acceptAction,
     rejectAction,
     currentResponse,
-    abort,
-    stop,
     fileName, setFileName,
-    isGenerating,
     shouldNavigateToList, setShouldNavigateToList,
+    searchSimilar,
   };
 }

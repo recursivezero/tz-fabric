@@ -6,7 +6,8 @@ import traceback
 import requests
 from io import BytesIO
 from PIL import Image
-
+from tools.media_tools import redirect_to_media_analysis as _media_tool   
+from tools.search_tool import search_tool as _search_tool
 from services.threaded import analyse_all_variations
 from utils.cache import get_response
 
@@ -103,22 +104,25 @@ def redirect_to_analysis(
     print("  image_url =", image_url, "mode =", mode)
 
     params = {"image_url": image_url, "mode": mode}
-    bot_messages = ["Debugging redirect_to_analysis..."]
 
     try:
         if not image_url:
-            print("❌ No image_url provided")
             return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["No image url"]}
 
-        # Download image
-        r = requests.get(image_url, timeout=20)
-        print("  HTTP GET status =", r.status_code, "bytes =", len(r.content))
-        r.raise_for_status()
+        # Instead of fetching via HTTP, resolve local file path
+        from pathlib import Path
+        from constants import IMAGE_DIR
+        from urllib.parse import urlparse
 
-        # Open with PIL
+        parsed = urlparse(image_url)
+        filename = Path(parsed.path).name  # e.g. "86d2d7d928e849d5bb5bcbe0f076276d.jfif"
+        img_path = IMAGE_DIR / filename
+
+        if not img_path.exists():
+            return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["Image not found on server"]}
+
         from PIL import Image
-        from io import BytesIO
-        img = Image.open(BytesIO(r.content))
+        img = Image.open(img_path)
         print("  Opened image format =", img.format, "size =", img.size)
 
         # Call analyzer
@@ -126,20 +130,16 @@ def redirect_to_analysis(
         print("  analyse_all_variations returned:", raw)
 
         cache_key = raw.get("cache_key")
-        print("  extracted cache_key =", cache_key)
         first = raw.get("first")
-        print("  cache_key =", cache_key, "first =", first)
 
         if not first:
-            print("❌ No first response received")
             return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["No response from analyzer"]}
 
         response_text = first.get("response")
-        print("✅ First response:", response_text[:100] if response_text else None)
 
         return {
             "action": {"type": "redirect_to_analysis", "params": {**params, "cache_key": cache_key}},
-            "bot_messages": ["Here is the first result:", response_text, "Do you prefer this response? (Yes / No)"],
+            "bot_messages": ["Here is the first result:", response_text],
             "analysis_responses": [{"id": first["id"], "text": response_text}],
         }
 
@@ -148,8 +148,6 @@ def redirect_to_analysis(
         print("💥 Exception in redirect_to_analysis:", e)
         print(traceback.format_exc())
         return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": [f"Error: {e}"]}
-
-
 
 @mcp.tool()
 def regenerate(
@@ -232,31 +230,20 @@ def regenerate(
     except Exception as e:
         return {"error": f"regenerate fallback failed: {str(e)}", "trace": traceback.format_exc()}
     
-
-from tools.media_tools import redirect_to_media_analysis as _media_tool   # import your separated media tool
-
-
 @mcp.tool()
 def redirect_to_media_analysis(
     image_url: Optional[str] = None,
     audio_url: Optional[str] = None,
     filename: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """
-    Media tool wrapper:
-    - If only image_url is given -> just call normal analysis (same as redirect_to_analysis).
-    - If image_url + audio_url -> call media analysis tool (_media_tool).
-    """
+    
     try:
-        # Case 1: only image uploaded, treat as analysis
         if image_url and not audio_url:
             return redirect_to_analysis(image_url=image_url, mode="short")
 
-        # Case 2: image + audio uploaded, treat as submission -> call full media tool
         if image_url and audio_url:
             return _media_tool(image_url=image_url, audio_url=audio_url, filename=filename)
 
-        # Case 3: neither provided
         return {
             "action": {"type": "redirect_to_media_analysis", "params": {"image_url": image_url, "audio_url": audio_url}},
             "bot_messages": ["❌ No image_url provided."],
@@ -268,6 +255,15 @@ def redirect_to_media_analysis(
             "action": {"type": "redirect_to_media_analysis", "params": {"image_url": image_url, "audio_url": audio_url}},
             "bot_messages": [f"💥 Error in redirect_to_media_analysis: {e}", traceback.format_exc()],
         }
+
+@mcp.tool()
+def search(**kwargs) -> Dict[str, Any]:
+    return _search_tool(**kwargs)
+
+
+@mcp.tool()
+def search_base64(**kwargs) -> Dict[str, Any]:
+    return _search_tool(**kwargs)
 
 def sse_app():
     return mcp.sse_app()

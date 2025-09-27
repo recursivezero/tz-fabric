@@ -32,7 +32,8 @@ export default function Chat() {
     rejectAction,
     fileName,
     setFileName,
-    shouldNavigateToList, setShouldNavigateToList
+    shouldNavigateToList, setShouldNavigateToList,
+    searchSimilar,
   } = useChat();
 
   const navigate = useNavigate();
@@ -196,6 +197,7 @@ export default function Chat() {
               onClearAudio={clearAudio}
               fileName={fileName}
               setFileName={setFileName}
+              onSearchSimilar={searchSimilar}
             />
           </div>
         </div>

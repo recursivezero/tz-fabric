@@ -16,6 +16,60 @@ export default function Search() {
   const pageSize = 4;
   const [page, setPage] = useState(1);
 
+  // Helper: convert dataURL -> File
+  const dataUrlToFile = async (dataUrl: string, filename = "query.png"): Promise<File> => {
+    // dataUrl looks like "data:image/jpeg;base64,...." or "data:image/png;base64,..."
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    // Preserve MIME type from blob
+    return new File([blob], filename, { type: blob.type || "image/png" });
+  };
+
+  // On mount, auto-load any pending search payload from sessionStorage
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("mcp_last_search");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      // shape expected: { createdAt, k, min_sim, queryPreview: dataUrl, results: [...] }
+      const maybeDataUrl = parsed?.queryPreview;
+      const maybeK = parsed?.k ?? parsed?.K ?? parsed?.params?.k ?? 0;
+
+      // Only auto-run if there's a preview and no file already selected by user
+      if (maybeDataUrl && !file) {
+        // convert dataUrl to File and run search
+        (async () => {
+          try {
+            const guessName = `query-${Date.now()}.png`;
+            const f = await dataUrlToFile(maybeDataUrl, guessName);
+            setFile(f);
+            // If parsed.k is a valid number > 0, set it
+            if (Number.isFinite(maybeK) && Number(maybeK) > 0) {
+              setK(Number(maybeK));
+            } else {
+              // sensible default
+              setK((prev) => (prev > 0 ? prev : 3));
+            }
+
+            await runSearch(f, Number(maybeK) || 3);
+          } catch (err) {
+            console.error("Auto-run search from mcp_last_search failed:", err);
+            setNotification({ message: "Could not auto-run search payload.", type: "error" });
+          } finally {
+            try {
+              sessionStorage.removeItem("mcp_last_search");
+            } catch (err) {
+            }
+            setPage(1);
+          }
+        })();
+      } else {
+      }
+    } catch (err) {
+      console.warn("Failed to parse mcp_last_search", err);
+    }
+  }, []); 
+
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);

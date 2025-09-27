@@ -29,6 +29,7 @@ export default function SuggestionChips({
       return [
         { id: "image:analyze_short", label: "Analyze this image (short analysis).", primary: true },
         { id: "image:analyze_long", label: "Analyze this image (long analysis)." },
+        { id: "image:search_similar", label: "Search similar images" },
       ];
     }
 

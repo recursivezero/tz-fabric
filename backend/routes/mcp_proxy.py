@@ -22,12 +22,7 @@ class MCPCallResp(BaseModel):
 
 
 def _call_sync_or_async(fn, /, **kwargs):
-    """
-    Helper: call a function whether it's sync or async.
-    Runs sync functions directly, runs async functions using asyncio.run if not already in event loop.
-    NOTE: Using asyncio.run inside an already-running loop will raise — but FastAPI runs this sync endpoint in a thread,
-    so this is safe. If you convert this to async endpoint run directly `await fn(**kwargs)`.
-    """
+    
     if inspect.iscoroutinefunction(fn):
         # run coroutine in a new loop (safe for sync endpoint)
         return asyncio.run(fn(**kwargs))
@@ -57,8 +52,6 @@ def call_tool(req: MCPCallReq):
                 method = getattr(mcp_obj, method_name)
                 if callable(method):
                     try:
-                        # Some implementations expect (tool_name, args) or (tool_name, **args)
-                        # try the common signatures
                         try:
                             result = _call_sync_or_async(method, tool_name, args)
                         except TypeError:

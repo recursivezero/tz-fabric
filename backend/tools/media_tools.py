@@ -8,20 +8,15 @@ from dotenv import load_dotenv
 from core.embedder import embed_image_bytes
 from core.store import get_index
 from utils.filename import sanitize_filename
+from constants import IMAGE_DIR, AUDIO_DIR
 
 load_dotenv()
 
-# Directories
-ASSETS = Path(os.getenv("ASSETS", "assets"))
-IMAGE_DIR = ASSETS / "images"
-AUDIO_DIR = ASSETS / "audio"
+
 IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# --------------------
-# Helpers
-# --------------------
 def _safe_download(url: str, timeout: int = 20) -> bytes:
     r = requests.get(url, timeout=timeout)
     r.raise_for_status()

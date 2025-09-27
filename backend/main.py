@@ -63,7 +63,7 @@ os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_images")
-app.mount("/assets/audio", StaticFiles(directory=AUDIO_DIR), name="assets_audio")
+app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audios")
 
 templates = Jinja2Templates(directory="templates")
 

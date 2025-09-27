@@ -1,3 +1,4 @@
+// src/components/Composer.tsx
 import React, { useRef, useState, useEffect } from "react";
 import SuggestionChips from "./SuggestionChips";
 import "../styles/Composer.css";
@@ -16,6 +17,9 @@ type Props = {
   onChipAction?: (actionId: string, opts?: { name?: string }) => void;
   fileName?: string;
   setFileName?: (name: string) => void;
+
+  // composer-level search handler (provided by useChat hook)
+  onSearchSimilar?: (k: number) => Promise<any>;
 };
 
 const MAX_SECONDS = 60;
@@ -32,6 +36,7 @@ export default function Composer({
   onClearUpload,
   onClearAudio,
   onChipAction,
+  onSearchSimilar,
 }: Props) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -89,13 +94,17 @@ export default function Composer({
   };
 
   const handleChipActionDefault = (actionId: string, opts?: { name?: string }) => {
-    // IMAGE-only analysis chips: set input and immediately send
     if (actionId === "image:analyze_short") {
       onChange("Analyze this image (short analysis).");
       return;
     }
     if (actionId === "image:analyze_long") {
       onChange("Analyze this image (long analysis).");
+      return;
+    }
+    if (actionId === "image:search_similar") {
+      const DEFAULT_K = 3;
+      onChange(`Search similar images (k=${DEFAULT_K}).`);
       return;
     }
     if (actionId === "submit:both") {
@@ -411,16 +420,13 @@ export default function Composer({
                 ? "Image + audio uploaded — quick submission options:"
                 : undefined
           }
-          // Pass current textarea value (the user's typed filename or prompt).
-          // SuggestionChips will show this in the label for submit-with-name.
           name={value ? value.trim() : null}
           onAction={(actionId, opts) => {
-            // Prefer parent-provided chip handler if present
+            // prefer parent handler if given, otherwise use internal default that now includes search handling
             if (typeof onChipAction === "function") {
               onChipAction(actionId, opts);
               return;
             }
-            // Otherwise use the default behavior (uses textarea value and calls onSend)
             handleChipActionDefault(actionId, opts);
           }}
         />
