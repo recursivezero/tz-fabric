@@ -66,6 +66,7 @@ const UploadPage = () => {
   };
 
   const navigate = useNavigate();
+  console.log("notification :", notification)
 
   return (
     <div className="upload-page">

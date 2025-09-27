@@ -141,9 +141,7 @@ export default function ContentGrid() {
                   {new Date(item.createdAt).toLocaleString()}
                 </time>
               )}
-              {/*{"score" in item && item.score !== undefined ? (
-                <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>score: {item.score}</span>
-              ) : null}*/}
+              {}
             </div>
           </article>
         ))}

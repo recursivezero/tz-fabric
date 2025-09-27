@@ -27,7 +27,7 @@ export const useUploadAndRecord = () => {
     type: "success" | "error";
   } | null>(null);
 
-  const successNotification = (type: "success", message: string) => {
+  const successNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
     setTimeout(() => {
       setNotification(null);
@@ -232,8 +232,6 @@ export const useUploadAndRecord = () => {
       setAudioFile(null);
       setImageUrl(null);
       setAudioUrl(null);
-      setNotification(null);
-      setAudioNotification(null);
     } catch (error) {
       setNotification({ message: "Error submitting files", type: "error" });
       console.error("Submission error:", error);
