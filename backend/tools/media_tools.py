@@ -35,9 +35,6 @@ def _atomic_write(path: Path, data: bytes):
             except Exception: pass
 
 
-# --------------------
-# Background job
-# --------------------
 def _background_index_job(db, image_path: Path, basename: str, image_filename: str,
                           audio_filename: Optional[str], created_on: str):
     try:
@@ -81,10 +78,6 @@ def _background_index_job(db, image_path: Path, basename: str, image_filename: s
                 pass
         print("Indexing job failed:", e)
 
-
-# --------------------
-# Main tool
-# --------------------
 def redirect_to_media_analysis(image_url: Optional[str] = None,
                                audio_url: Optional[str] = None,
                                filename: Optional[str] = None) -> Dict[str, Any]:

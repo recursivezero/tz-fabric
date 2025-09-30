@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { type Message } from "../services/chat_api";
+import type { Message } from "../services/chat_api";
 import useTypingEffect from "../utils/typingEffect";
 import { normalizeMarkdown } from "../utils/normalizeMarkdown";
 

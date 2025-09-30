@@ -202,25 +202,6 @@ export default function useChat() {
     return String(id);
   }, []);
 
-  // ---- MCP helper (now supports optional signal) ----
-  const callMcp = useCallback(async (tool: string, args: Record<string, any> = {}) => {
-    const signal = abortRef.current ? abortRef.current.signal : undefined;
-    const resp = await fetch(`${FULL_API_URL}/mcp/call`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tool, args }),
-      signal,
-    });
-    if (!resp.ok) {
-      const txt = await resp.text().catch(() => "");
-      throw new Error(`HTTP ${resp.status} ${txt}`);
-    }
-    const data = await resp.json();
-    if (!data.ok) throw new Error(data.error || "MCP call failed");
-    return data.result;
-  }, []);
-
-  // ---- Convert File -> base64 (no prefix) ----
   const fileToBase64 = useCallback((file: File): Promise<{ base64: string; dataUrl: string }> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -242,44 +223,51 @@ export default function useChat() {
     });
   }, []);
 
-  // ---- Response handling (unchanged) ----
-  const handleResponse = useCallback(
-    (res: ChatResponse) => {
-      if (res.bot_messages && res.bot_messages.length > 0) {
-        setMessages((prev) => [
-          ...prev,
-          ...res.bot_messages.map((txt) => ({ role: "assistant", content: txt })),
-        ]);
-      } else {
-        setMessages((prev) => [...prev, res.reply]);
-      }
+  const handleResponse = useCallback((res: ChatResponse) => {
+    setMessages(prev => {
+      let next = [...prev];
 
-      if ((res as any).action?.type === "redirect_to_analysis" || (res as any).action?.type === "redirect_to_media_analysis") {
-        const action = (res as any).action;
-        const rawResponses = (res as any).analysis_responses || [];
+      const bots = Array.isArray(res.bot_messages) ? res.bot_messages : [];
+      if (bots.length) next.push(...bots.map(txt => ({ role: "assistant", content: txt })));
+      else if (res.reply) next.push(res.reply);
 
-        const normalizedResponses = rawResponses.map((r: any, i: number) => ({
-          id: normalizeId(r.id ?? `r${i}`),
-          text: r.text ?? r.content ?? String(r),
-        }));
+      const action = (res as any).action;
+      const actionType = action?.type;
+      const raw = (res as any).analysis_responses || [];
+      const hasCache = Boolean(action?.params?.cache_key);
 
-        if (normalizedResponses.length > 0) {
-          const firstText = normalizedResponses[0].text;
-          setMessages((prev) => [...prev, { role: "assistant", content: firstText }]);
-          setCurrentResponse(firstText);
-        }
+      const normalized = raw.map((r: any, i: number) => ({
+        // If coming from cache, force ids to "1","2",... to match backend
+        id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
+        text: r.text ?? r.content ?? String(r),
+      }));
 
+      if (
+        (actionType === "redirect_to_analysis" || actionType === "redirect_to_media_analysis") &&
+        normalized.length > 0
+      ) {
+        const firstText = normalized[0].text;
+
+        const lastAssistant = next.slice().reverse().find(m => m.role === "assistant");
+        const alreadyIncluded =
+          bots.includes(firstText) ||
+          (lastAssistant && lastAssistant.content === firstText);
+
+        if (!alreadyIncluded) next.push({ role: "assistant", content: firstText });
+
+        setCurrentResponse(firstText);
         setPendingAction({
           action,
-          analysis_responses: normalizedResponses,
-          used_ids: normalizedResponses.length > 0 ? [normalizedResponses[0].id] : [],
+          analysis_responses: normalized,
+          used_ids: [normalized[0].id],
         });
-        return;
+      } else {
+        setPendingAction(null);
       }
-      setPendingAction(null);
-    },
-    [normalizeId]
-  );
+      return next;
+    });
+  }, []);
+
 
   const acceptAction = useCallback(() => {
     if (!pendingAction) return;
@@ -292,46 +280,91 @@ export default function useChat() {
 
   const rejectAction = useCallback(async () => {
     if (!pendingAction) return;
-
     const { analysis_responses = [], used_ids = [], action } = pendingAction;
 
-    // 1) Try local unused response first
-    const nextLocal = (analysis_responses || []).find((r) => !used_ids?.includes(r.id));
+    // 1) local unused
+    const nextLocal = analysis_responses.find(r => !used_ids.includes(r.id));
     if (nextLocal) {
-      setMessages((prev) => [...prev, { role: "assistant", content: nextLocal.text }]);
+      setMessages(prev => [...prev, { role: "assistant", content: nextLocal.text }]);
       setCurrentResponse(nextLocal.text);
-      setPendingAction((prev) =>
-        prev ? { ...prev, used_ids: [...(prev.used_ids || []), nextLocal.id] } : prev
-      );
+      setPendingAction(prev => prev ? { ...prev, used_ids: [...(prev.used_ids || []), nextLocal.id] } : prev);
       return;
     }
 
-    // 2) No local left → call regenerate
     try {
-      const regenArgs: any = { used_ids };
       const cacheKey = action?.params?.cache_key;
+
+      // 🔧 normalize used_ids for backend: "r0" -> "1", "r1"->"2", keep numbers as-is
+      const normalizeForBackend = (arr: string[] = []) =>
+        arr.map(x => {
+          const m = String(x).match(/\d+/);             // take numeric part
+          if (!m) return x;
+          const n = parseInt(m[0], 10);
+          // if it looked like r0/r1 style, bump to 1-based
+          return /r\d+/.test(String(x)) ? String(n + 1) : String(n);
+        });
+
+      const regenArgs: any = {
+        used_ids: normalizeForBackend(used_ids),
+      };
       if (cacheKey) regenArgs.cache_key = cacheKey;
       if (action?.params?.image_url) regenArgs.image_url = action.params.image_url;
       if (action?.params?.mode) regenArgs.mode = action.params.mode;
 
+      const buildInstr = (extra: Partial<typeof regenArgs> = {}) => {
+        const a = { ...regenArgs, ...extra };
+        const parts: string[] = [];
+        if (a.cache_key) parts.push(`cache_key=${a.cache_key}`);
+        if (typeof a.index !== "undefined") parts.push(`index=${a.index}`);
+        if (Array.isArray(a.used_ids) && a.used_ids.length) parts.push(`used_ids=[${a.used_ids.join(",")}]`);
+        if (a.image_url) parts.push(`image_url=${a.image_url}`);
+        if (a.mode) parts.push(`mode=${a.mode}`);
+        if ((a as any).fresh === true) parts.push(`fresh=true`);
+        return `Regenerate: ${parts.join(" ")}`;
+      };
+
       createAbort();
-      const regenResult = await withAbort(callMcp("regenerate", regenArgs));
+      // First try cached path
+      let regenChatRes = await withAbort(chatOnce([...messages, { role: "user", content: buildInstr() }] as any));
+
+      // If backend says exhausted, ask it to generate a new set
+      if ((regenChatRes as any)?.error === "exhausted") {
+        regenChatRes = await withAbort(
+          chatOnce([...messages, { role: "user", content: buildInstr({ fresh: true }) }] as any)
+        );
+      }
+
+      // --- normalize result (unchanged from your code, with tiny tweak) ---
+      let regenResult: any = null;
+      if (regenChatRes.analysis_responses && Array.isArray(regenChatRes.analysis_responses)) {
+        regenResult = { responses: regenChatRes.analysis_responses };
+      } else if (regenChatRes.bot_messages && regenChatRes.bot_messages.length) {
+        regenResult = { response: { text: regenChatRes.bot_messages[0] } };
+      } else if (regenChatRes.reply && regenChatRes.reply.content) {
+        regenResult = { response: { text: regenChatRes.reply.content } };
+      } else {
+        regenResult = { response: { text: String(regenChatRes) } };
+      }
 
       let newResponses: { id: string; text: string }[] = [];
+      const fromCache = Boolean(cacheKey);
+
       if (regenResult?.response) {
-        newResponses = [
-          {
-            id: String(regenResult.response.id ?? regenResult.selected_index ?? `r${Date.now()}`),
-            text:
-              regenResult.response.response ??
-              regenResult.response.text ??
-              regenResult.response.message ??
-              String(regenResult.response),
-          },
-        ];
+        const idx =
+          (regenChatRes as any)?.selected_index ??
+          (regenResult.response.index ?? regenResult.response.id);
+
+        newResponses = [{
+          id: fromCache ? String(idx ?? "") : String(regenResult.response.id ?? `r${Date.now()}`),
+          text:
+            regenResult.response.response ??
+            regenResult.response.text ??
+            regenResult.response.message ??
+            String(regenResult.response),
+        }];
       } else if (Array.isArray(regenResult?.responses)) {
         newResponses = regenResult.responses.map((x: any, i: number) => ({
-          id: String(x.id ?? x.response_id ?? x.rid ?? `r${i}`),
+          id: fromCache ? String((x.index ?? x.id ?? i) as number) : String(x.id ?? x.response_id ?? x.rid ?? `r${i}`),
           text: x.response ?? x.text ?? x.content ?? String(x),
         }));
       }
@@ -344,20 +377,16 @@ export default function useChat() {
       );
 
       if (filtered.length === 0) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "No new cached alternatives available." },
-        ]);
+        setMessages(prev => [...prev, { role: "assistant", content: "No new cached alternatives available." }]);
         setPendingAction(null);
         return;
       }
 
       const sel = filtered[0];
 
-      setMessages((prev) => [...prev, { role: "assistant", content: sel.text }]);
+      setMessages(prev => [...prev, { role: "assistant", content: sel.text }]);
       setCurrentResponse(sel.text);
-
-      setPendingAction((prev) =>
+      setPendingAction(prev =>
         prev
           ? {
             ...prev,
@@ -367,22 +396,16 @@ export default function useChat() {
           : prev
       );
     } catch (err: any) {
-      if ((err as any)?.name === "AbortError") {
-        console.log("[rejectAction] aborted by user");
-      } else {
+      if ((err as any)?.name === "AbortError") console.log("[rejectAction] aborted by user");
+      else {
         console.error("[rejectAction] regenerate error:", err);
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "Failed to fetch another alternative. Please try again." },
-        ]);
+        setMessages(prev => [...prev, { role: "assistant", content: "Failed to fetch another alternative. Please try again." }]);
       }
       setPendingAction(null);
     } finally {
-      if (abortRef.current) {
-        abortRef.current = null;
-      }
+      if (abortRef.current) abortRef.current = null;
     }
-  }, [pendingAction, callMcp, setMessages, setPendingAction, setCurrentResponse, createAbort, withAbort]);
+  }, [pendingAction, messages, createAbort, withAbort]);
 
   const searchSimilar = useCallback(async (k: number, min_sim = 0.5) => {
     if (!uploadedImageFile) {
@@ -395,22 +418,63 @@ export default function useChat() {
       setStatus("sending");
       setError("");
       const { base64, dataUrl } = await fileToBase64(uploadedImageFile);
-      const args = {
-        image_b64: base64,
-        k: Number(k) || 1,
-        min_sim: Number(min_sim),
-        order: "recent",
-        require_audio: false,
-      };
 
-      const mcpResult = await withAbort(callMcp("search", args));
+      // Try uploading to get an image_url first (avoids sending huge base64 via chat)
+      const form = new FormData();
+      form.append("image", uploadedImageFile);
+      const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
+      if (!upResp.ok) {
+        const t = await upResp.text().catch(() => "");
+        throw new Error(`Upload failed: ${upResp.status} ${t}`);
+      }
+      const upJson = await upResp.json();
+      const imageUrl = upJson.image_url;
+      console.log("[searchSimilar] uploaded image, imageUrl:", imageUrl);
+
+      if (!imageUrl) {
+        console.warn("[searchSimilar] no image_url returned from upload - falling back to base64 search via /search endpoint");
+        const args = {
+          image_b64: base64,
+          k: Number(k) || 1,
+          min_sim: Number(min_sim),
+          order: "recent",
+          require_audio: false,
+        };
+        const searchResp = await withAbort(fetch(`${FULL_API_URL}/search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(args),
+        }));
+        if (!searchResp.ok) throw new Error(`Search failed: ${searchResp.status}`);
+        const mcpResult = await searchResp.json();
+        const payload = {
+          createdAt: Date.now(),
+          k: args.k,
+          min_sim: args.min_sim,
+          queryPreview: dataUrl,
+          results: mcpResult.results ?? [],
+        };
+        try {
+          sessionStorage.setItem("mcp_last_search", JSON.stringify(payload));
+        } catch (err) {
+          console.warn("sessionStorage set failed", err);
+        }
+        return payload;
+      }
+
+      const searchInstruction = `Search similar images: image_url=${imageUrl} k=${k} min_sim=${min_sim} order=recent require_audio=false`;
+      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: searchInstruction }] as any));
+      console.log("[searchSimilar] chatRes:", chatRes);
+
+      const results = chatRes.analysis_responses ?? (chatRes as any).results ?? chatRes.bot_messages ?? [];
       const payload = {
         createdAt: Date.now(),
-        k: args.k,
-        min_sim: args.min_sim,
+        k: Number(k) || 1,
+        min_sim: Number(min_sim),
         queryPreview: dataUrl,
-        results: mcpResult.results ?? [],
+        results: Array.isArray(results) ? results : [],
       };
+
       try {
         sessionStorage.setItem("mcp_last_search", JSON.stringify(payload));
       } catch (err) {
@@ -430,13 +494,12 @@ export default function useChat() {
       setStatus("idle");
       if (abortRef.current) abortRef.current = null;
     }
-  }, [uploadedImageFile, fileToBase64, callMcp, withAbort, createAbort]);
+  }, [uploadedImageFile, fileToBase64, withAbort, createAbort, chatOnce, messages]);
 
   const send = useCallback(async () => {
     const text = input.trim();
     if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
 
-    // create new abort controller for this send operation
     createAbort();
 
     setStatus("sending");
@@ -455,7 +518,6 @@ export default function useChat() {
 
         console.log("[send] Detected search intent. calling searchSimilar with k=", k);
 
-        // run the search logic (stores payload in sessionStorage)
         const payload = await searchSimilar(k);
 
         if (payload) {
@@ -494,6 +556,7 @@ export default function useChat() {
         if (uploadedAudioFile) form.append("audio", uploadedAudioFile);
 
         const filenameFromText = extractFilenameFromText(text);
+        console.log("[DEBUG] extracted filename from text:", filenameFromText);
         if (filenameFromText) {
           form.append("filename", filenameFromText);
           setFileName(filenameFromText);
@@ -515,8 +578,6 @@ export default function useChat() {
         } catch (ex) {
           console.warn("[DEBUG] Could not enumerate FormData for debug:", ex);
         }
-
-        // Upload to temp endpoint
         console.log("[DEBUG] uploading to /uploads/tmp_media (filenameFromText):", filenameFromText);
         const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
         if (!upResp.ok) {
@@ -529,7 +590,7 @@ export default function useChat() {
         const finalBasename = (filenameFromText && filenameFromText.trim().length > 0)
           ? filenameFromText.trim()
           : (upJson && (upJson.basename ?? upJson.filename) ? (upJson.basename ?? upJson.filename) : null);
-
+        console.log("[DEBUG] finalBasename to use:", finalBasename);
         const hasAudio = Boolean(upJson.audio_url) || Boolean(uploadedAudioFile);
         const imageUrl = upJson.image_url;
         const audioUrl = upJson.audio_url;
@@ -538,14 +599,25 @@ export default function useChat() {
         if (hasAudio) {
           const toolArgs: any = { image_url: imageUrl, audio_url: audioUrl };
           if (finalBasename) toolArgs.filename = finalBasename;
-          console.log("[DEBUG] calling MCP redirect_to_media_analysis with args:", toolArgs);
-          const mcpResult = await withAbort(callMcp("redirect_to_media_analysis", toolArgs));
-          console.log("[DEBUG] mcpResult:", mcpResult);
+          console.log("[DEBUG] routing media analysis via /chat with args:", toolArgs);
+
+          // Build a concise chat instruction so server router picks media analysis
+          const mediaMsgParts = [];
+          if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url}`);
+          if (toolArgs.audio_url) mediaMsgParts.push(`audio_url=${toolArgs.audio_url}`);
+          if (toolArgs.filename) mediaMsgParts.push(`filename=${toolArgs.filename}`);
+          const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`;
+
+          const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }] as any));
+          console.log("[DEBUG] chatRes (media analysis):", chatRes);
+
           handleResponse({
             reply: { role: "assistant", content: "Media uploaded and queued." },
-            bot_messages: mcpResult.bot_messages || [],
-            action: mcpResult.action,
+            bot_messages: chatRes.bot_messages || [],
+            action: chatRes.action,
+            analysis_responses: chatRes.analysis_responses,
           } as any);
+
           setMessages((prev) => [
             ...prev,
             { role: "assistant", content: "Thanks — your media has been uploaded. Redirecting you to the view page…" },
@@ -556,26 +628,36 @@ export default function useChat() {
           const wantsAnalysis = /(?:\banalyz(?:e|ing|ed)\b|\banalyse\b|\binspect\b|\binspect(?:ion)?\b|\bscan\b)/i.test(text);
           if (wantsAnalysis && imageUrl) {
             const mode = getModeFromText(text);
-            console.log("[DEBUG] calling MCP redirect_to_analysis with image_url and mode:", { imageUrl, mode });
-            const mcpResult = await withAbort(
-              callMcp("redirect_to_analysis", { image_url: imageUrl, mode })
-            );
-            console.log("[DEBUG] mcpResult (analysis):", mcpResult);
+            console.log("[DEBUG] routing analysis via /chat with image_url and mode:", { imageUrl, mode });
+
+            const analysisInstruction = `Analyze image: image_url=${imageUrl} mode=${mode}`;
+            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: analysisInstruction }] as any));
+            console.log("[DEBUG] chatRes (analysis):", chatRes);
+
             handleResponse({
               reply: { role: "assistant", content: `Image uploaded and ${mode} analysis started.` },
-              bot_messages: mcpResult.bot_messages || [],
-              action: mcpResult.action,
+              bot_messages: chatRes.bot_messages || [],
+              action: chatRes.action,
+              analysis_responses: chatRes.analysis_responses,
             } as any);
           } else {
             const toolArgs: any = { image_url: imageUrl, audio_url: null };
             if (finalBasename) toolArgs.filename = finalBasename;
-            console.log("[DEBUG] calling MCP redirect_to_media_analysis (no-audio) with args:", toolArgs);
-            const mcpResult = await withAbort(callMcp("redirect_to_media_analysis", toolArgs));
-            console.log("[DEBUG] mcpResult (no-audio):", mcpResult);
+            console.log("[DEBUG] routing no-audio media via /chat with args:", toolArgs);
+
+            const mediaMsgParts = [];
+            if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url}`);
+            if (toolArgs.filename) mediaMsgParts.push(`filename=${toolArgs.filename}`);
+            const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`; // router will treat image-only as redirect_to_analysis or media queue as appropriate
+
+            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }] as any));
+            console.log("[DEBUG] chatRes (no-audio):", chatRes);
+
             handleResponse({
               reply: { role: "assistant", content: "Image uploaded and queued for processing." },
-              bot_messages: mcpResult.bot_messages || [],
-              action: mcpResult.action,
+              bot_messages: chatRes.bot_messages || [],
+              action: chatRes.action,
+              analysis_responses: chatRes.analysis_responses,
             } as any);
           }
         }
@@ -605,10 +687,7 @@ export default function useChat() {
       setIsGenerating(false);
       if (abortRef.current) abortRef.current = null;
     }
-  }, [input, messages, uploadedImageFile, uploadedAudioFile, status, callMcp, handleResponse, clearImage, clearAudio, createAbort, withAbort, chatOnce, extractFilenameFromText, scheduleNavigateToList, getModeFromText, searchSimilar]);
-
-
-
+  }, [input, messages, uploadedImageFile, uploadedAudioFile, status, handleResponse, clearImage, clearAudio, createAbort, withAbort, chatOnce, extractFilenameFromText, scheduleNavigateToList, getModeFromText, searchSimilar]);
 
   const retryLast = useCallback(async () => {
     if (status === "sending" || messages.length === 0) return;

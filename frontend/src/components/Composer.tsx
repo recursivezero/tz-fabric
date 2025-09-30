@@ -1,5 +1,6 @@
 // src/components/Composer.tsx
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
+import type React from "react";
 import SuggestionChips from "./SuggestionChips";
 import "../styles/Composer.css";
 
@@ -17,9 +18,6 @@ type Props = {
   onChipAction?: (actionId: string, opts?: { name?: string }) => void;
   fileName?: string;
   setFileName?: (name: string) => void;
-
-  // composer-level search handler (provided by useChat hook)
-  onSearchSimilar?: (k: number) => Promise<any>;
 };
 
 const MAX_SECONDS = 60;
@@ -36,7 +34,6 @@ export default function Composer({
   onClearUpload,
   onClearAudio,
   onChipAction,
-  onSearchSimilar,
 }: Props) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -93,7 +90,7 @@ export default function Composer({
     setShowAttachMenu(false);
   };
 
-  const handleChipActionDefault = (actionId: string, opts?: { name?: string }) => {
+  const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
     if (actionId === "image:analyze_short") {
       onChange("Analyze this image (short analysis).");
       return;
@@ -412,7 +409,7 @@ export default function Composer({
         <SuggestionChips
           hasImage={!!previewUrl}
           hasAudio={!!audioUrl}
-          resetKey={(previewUrl ?? "") + "|" + (audioUrl ?? "")}
+          resetKey={`${previewUrl ?? ""}|${audioUrl ?? ""}`}
           hint={
             previewUrl && !audioUrl
               ? "Image uploaded — choose an analysis:"

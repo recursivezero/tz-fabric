@@ -11,8 +11,6 @@ type Props = {
 
 export default function HandleRedirectAction({ pendingAction, onAccept, onReject }: Props) {
   if (!pendingAction) return null;
-  const { analysis_responses } = pendingAction;
-  const firstText = analysis_responses && analysis_responses.length ? analysis_responses[0].text : null;
 
   return (
     <div style={{ border: "1px solid #e2e8f0", padding: 10, borderRadius: 6, marginTop: 8, background: "#fff" }}>
