@@ -14,15 +14,15 @@ export default function SuggestionChips({
   hasImage,
   hasAudio,
   onAction,
-  resetKey = null,
   hint,
   name = null,
 }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
 
+  
   useEffect(() => {
     setSelected(null);
-  }, [resetKey, hasImage, hasAudio, name]);
+  });
 
   const chips = useMemo(() => {
     if (hasImage && !hasAudio) {
@@ -38,14 +38,13 @@ export default function SuggestionChips({
         { id: "submit:both", label: "Submit files", primary: true },
         {
           id: "submit:both_with_names",
-          label: `Please submit the attached image and audio with [name]`,
+          label: "Please submit the attached image and audio with [name]",
         },
       ];
     }
 
-    // audio only -> no chips
     return [];
-  }, [hasImage, hasAudio, name]);
+  }, [hasImage, hasAudio]);
 
   if (!chips.length) return null;
 
@@ -53,7 +52,6 @@ export default function SuggestionChips({
     if (selected) return;
     setSelected(id);
 
-    // extract name to send back in opts when available (so parent handlers can use it)
     const opts = id === "submit:both_with_names" && name ? { name } : undefined;
     onAction(id, opts);
   };
@@ -65,22 +63,22 @@ export default function SuggestionChips({
       <div className="chips-row">
         {selected
           ? chips
-            .filter((c) => c.id === selected)
-            .map((c) => (
-              <button key={c.id} className="chip selected" disabled>
+              .filter((c) => c.id === selected)
+              .map((c) => (
+                <button key={c.id} className="chip selected" disabled>
+                  {c.label}
+                </button>
+              ))
+          : chips.map((c) => (
+              <button
+                key={c.id}
+                className={`chip ${c.primary ? "primary" : ""}`}
+                type="button"
+                onClick={() => onClick(c.id)}
+              >
                 {c.label}
               </button>
-            ))
-          : chips.map((c) => (
-            <button
-              key={c.id}
-              className={`chip ${c.primary ? "primary" : ""}`}
-              type="button"
-              onClick={() => onClick(c.id)}
-            >
-              {c.label}
-            </button>
-          ))}
+            ))}
       </div>
     </div>
   );

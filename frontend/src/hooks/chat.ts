@@ -4,7 +4,62 @@ import { chatOnce, type Message, type ChatResponse } from "../services/chat_api"
 import { FULL_API_URL } from "../constants";
 import { extractFilenameFromText } from "../utils/extractFilenameFromText";
 
-type Status = "idle" | "sending" | "error";
+// replace your normalizeLLMText with this
+const normalizeLLMText = (t: any): string => {
+  if (t == null) return "";
+
+  // If backend accidentally passed an object, unwrap the obvious places.
+  if (typeof t === "object") {
+    const inner =
+      t?.response?.response ??
+      t?.response?.text ??
+      t?.response?.message ??
+      t?.response ??
+      t?.text ??
+      t?.message ??
+      null;
+    if (inner != null) return normalizeLLMText(inner);
+    // fallback to a string for anything else
+    t = JSON.stringify(t);
+  }
+
+  let s = String(t).trim();
+
+  // Normalize escaped newlines, remove CRs, trim trailing spaces before newlines
+  s = s.replace(/\\n/g, "\n").replace(/\r/g, "").replace(/[ \t]+\n/g, "\n");
+
+  // If it looks like a Python-ish dict containing a nested response,
+  // pull out the deepest `response` string without trying to fully JSON-parse.
+  // 1) {'response': {'id': '2', 'response': "The fabric ..."}, 'selected_index': 2}
+  let m =
+    s.match(/['"]response['"]\s*:\s*\{[\s\S]*?['"]response['"]\s*:\s*(['"])([\s\S]*?)\1/) ||
+    s.match(/['"]response['"]\s*:\s*(['"])([\s\S]*?)\1/);
+  if (m && m[2]) {
+    const inner = m[2];
+    return inner.replace(/\\n/g, "\n").trim();
+  }
+
+  // If it looks like JSON already, try a careful parse (without wrecking inner quotes)
+  if (/^\s*\{/.test(s) && /"response"/.test(s)) {
+    try {
+      const obj = JSON.parse(s);
+      const inner =
+        obj?.response?.response ??
+        obj?.response?.text ??
+        obj?.response?.message ??
+        obj?.response ??
+        null;
+      if (inner) return normalizeLLMText(inner);
+    } catch { /* ignore */ }
+  }
+
+  // strip accidental outer quotes
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1);
+  }
+
+  return s.trim();
+};
 
 export default function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -44,11 +99,10 @@ export default function useChat() {
       navigateTimeoutRef.current = null;
     }, delay);
   }, []);
+
   const createAbort = useCallback(() => {
     if (abortRef.current) {
-      try {
-        abortRef.current.abort();
-      } catch { }
+      try { abortRef.current.abort(); } catch { }
     }
     const ac = new AbortController();
     abortRef.current = ac;
@@ -91,11 +145,11 @@ export default function useChat() {
         {
           id: "welcome",
           role: "assistant",
-          content: `👋 Hi, I’m FabricAI! I can help you with:
+          content: normalizeLLMText(`👋 Hi, I’m FabricAI! I can help you with:
 - 📤 Uploading fabric images and audio
 - 📝 Giving short or long analysis
 - 🔍 Searching for similar images
-- 🔁 Regenerating and comparing results`,
+- 🔁 Regenerating and comparing results`),
         },
       ]);
     }
@@ -110,10 +164,7 @@ export default function useChat() {
     try {
       const form = new FormData();
       form.append("image", file);
-      const resp = await fetch(`${FULL_API_URL}/validate-image`, {
-        method: "POST",
-        body: form,
-      });
+      const resp = await fetch(`${FULL_API_URL}/validate-image`, { method: "POST", body: form });
 
       if (!resp.ok) {
         const txt = await resp.text().catch(() => "");
@@ -172,17 +223,13 @@ export default function useChat() {
     [uploadedAudioUrl]
   );
 
-  const getModeFromText = (text: string | undefined | null): "short" | "long" => {
+  const getModeFromText = useCallback((text: string | undefined | null): "short" | "long" => {
     if (!text) return "short";
     const s = String(text).toLowerCase();
-    if (/\blong\b|\bdetailed\b|\bfull\b|\bin-depth\b|\bextended\b|\bcomprehensive\b/.test(s)) {
-      return "long";
-    }
-    if (/\bshort\b|\bbrief\b|\bsummary\b|\bconcise\b|\bquick\b/.test(s)) {
-      return "short";
-    }
+    if (/\blong\b|\bdetailed\b|\bfull\b|\bin-depth\b|\bextended\b|\bcomprehensive\b/.test(s)) return "long";
+    if (/\bshort\b|\bbrief\b|\bsummary\b|\bconcise\b|\bquick\b/.test(s)) return "short";
     return "short";
-  };
+  }, []);
 
   const clearImage = useCallback(() => {
     setUploadedImageFile(null);
@@ -196,22 +243,14 @@ export default function useChat() {
     setUploadedAudioUrl(null);
   }, [uploadedAudioUrl]);
 
-  // ---- Helpers ----
-  const normalizeId = useCallback((id: any) => {
-    if (id === undefined || id === null) return "";
-    return String(id);
-  }, []);
-
   const fileToBase64 = useCallback((file: File): Promise<{ base64: string; dataUrl: string }> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onerror = () => reject(new Error("Failed to read file"));
       reader.onload = () => {
         const result = String(reader.result || "");
-        // data:[mime];base64,xxxxx
         const comma = result.indexOf(",");
         if (comma === -1) {
-          // not a data url (unlikely) — assume raw base64
           resolve({ base64: result, dataUrl: result });
           return;
         }
@@ -228,8 +267,8 @@ export default function useChat() {
       let next = [...prev];
 
       const bots = Array.isArray(res.bot_messages) ? res.bot_messages : [];
-      if (bots.length) next.push(...bots.map(txt => ({ role: "assistant", content: txt })));
-      else if (res.reply) next.push(res.reply);
+      if (bots.length) next.push(...bots.map(txt => ({ role: "assistant", content: normalizeLLMText(txt) })));
+      else if (res.reply) next.push({ role: "assistant", content: normalizeLLMText(res.reply.content) });
 
       const action = (res as any).action;
       const actionType = action?.type;
@@ -237,7 +276,6 @@ export default function useChat() {
       const hasCache = Boolean(action?.params?.cache_key);
 
       const normalized = raw.map((r: any, i: number) => ({
-        // If coming from cache, force ids to "1","2",... to match backend
         id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
         text: r.text ?? r.content ?? String(r),
       }));
@@ -246,7 +284,7 @@ export default function useChat() {
         (actionType === "redirect_to_analysis" || actionType === "redirect_to_media_analysis") &&
         normalized.length > 0
       ) {
-        const firstText = normalized[0].text;
+        const firstText = normalizeLLMText(normalized[0].text);
 
         const lastAssistant = next.slice().reverse().find(m => m.role === "assistant");
         const alreadyIncluded =
@@ -258,7 +296,7 @@ export default function useChat() {
         setCurrentResponse(firstText);
         setPendingAction({
           action,
-          analysis_responses: normalized,
+          analysis_responses: normalized.map(r => ({ ...r, text: normalizeLLMText(r.text) })),
           used_ids: [normalized[0].id],
         });
       } else {
@@ -268,140 +306,71 @@ export default function useChat() {
     });
   }, []);
 
-
   const acceptAction = useCallback(() => {
     if (!pendingAction) return;
-    setMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: "Great — glad that helped!" },
-    ]);
+    setMessages(prev => [...prev, { role: "assistant", content: "Great — glad that helped!" }]);
     setPendingAction(null);
   }, [pendingAction]);
 
   const rejectAction = useCallback(async () => {
     if (!pendingAction) return;
-    const { analysis_responses = [], used_ids = [], action } = pendingAction;
 
-    // 1) local unused
-    const nextLocal = analysis_responses.find(r => !used_ids.includes(r.id));
-    if (nextLocal) {
-      setMessages(prev => [...prev, { role: "assistant", content: nextLocal.text }]);
-      setCurrentResponse(nextLocal.text);
-      setPendingAction(prev => prev ? { ...prev, used_ids: [...(prev.used_ids || []), nextLocal.id] } : prev);
+    const { action } = pendingAction;
+    const cacheKey = action?.params?.cache_key;
+    const imageUrl = action?.params?.image_url;
+    const mode = action?.params?.mode || "short";
+
+    if (!cacheKey) {
+      setMessages(prev => [...prev, { role: "assistant", content: "No cache_key found." }]);
       return;
     }
+    const instr = `Regenerate: cache_key=${cacheKey} image_url=${imageUrl} mode=${mode}`;
 
     try {
-      const cacheKey = action?.params?.cache_key;
-
-      // 🔧 normalize used_ids for backend: "r0" -> "1", "r1"->"2", keep numbers as-is
-      const normalizeForBackend = (arr: string[] = []) =>
-        arr.map(x => {
-          const m = String(x).match(/\d+/);             // take numeric part
-          if (!m) return x;
-          const n = parseInt(m[0], 10);
-          // if it looked like r0/r1 style, bump to 1-based
-          return /r\d+/.test(String(x)) ? String(n + 1) : String(n);
-        });
-
-      const regenArgs: any = {
-        used_ids: normalizeForBackend(used_ids),
-      };
-      if (cacheKey) regenArgs.cache_key = cacheKey;
-      if (action?.params?.image_url) regenArgs.image_url = action.params.image_url;
-      if (action?.params?.mode) regenArgs.mode = action.params.mode;
-
-      const buildInstr = (extra: Partial<typeof regenArgs> = {}) => {
-        const a = { ...regenArgs, ...extra };
-        const parts: string[] = [];
-        if (a.cache_key) parts.push(`cache_key=${a.cache_key}`);
-        if (typeof a.index !== "undefined") parts.push(`index=${a.index}`);
-        if (Array.isArray(a.used_ids) && a.used_ids.length) parts.push(`used_ids=[${a.used_ids.join(",")}]`);
-        if (a.image_url) parts.push(`image_url=${a.image_url}`);
-        if (a.mode) parts.push(`mode=${a.mode}`);
-        if ((a as any).fresh === true) parts.push(`fresh=true`);
-        return `Regenerate: ${parts.join(" ")}`;
-      };
-
       createAbort();
-      // First try cached path
-      let regenChatRes = await withAbort(chatOnce([...messages, { role: "user", content: buildInstr() }] as any));
-
-      // If backend says exhausted, ask it to generate a new set
-      if ((regenChatRes as any)?.error === "exhausted") {
-        regenChatRes = await withAbort(
-          chatOnce([...messages, { role: "user", content: buildInstr({ fresh: true }) }] as any)
-        );
-      }
-
-      // --- normalize result (unchanged from your code, with tiny tweak) ---
-      let regenResult: any = null;
-      if (regenChatRes.analysis_responses && Array.isArray(regenChatRes.analysis_responses)) {
-        regenResult = { responses: regenChatRes.analysis_responses };
-      } else if (regenChatRes.bot_messages && regenChatRes.bot_messages.length) {
-        regenResult = { response: { text: regenChatRes.bot_messages[0] } };
-      } else if (regenChatRes.reply && regenChatRes.reply.content) {
-        regenResult = { response: { text: regenChatRes.reply.content } };
-      } else {
-        regenResult = { response: { text: String(regenChatRes) } };
-      }
-
-      let newResponses: { id: string; text: string }[] = [];
-      const fromCache = Boolean(cacheKey);
-
-      if (regenResult?.response) {
-        const idx =
-          (regenChatRes as any)?.selected_index ??
-          (regenResult.response.index ?? regenResult.response.id);
-
-        newResponses = [{
-          id: fromCache ? String(idx ?? "") : String(regenResult.response.id ?? `r${Date.now()}`),
-          text:
-            regenResult.response.response ??
-            regenResult.response.text ??
-            regenResult.response.message ??
-            String(regenResult.response),
-        }];
-      } else if (Array.isArray(regenResult?.responses)) {
-        newResponses = regenResult.responses.map((x: any, i: number) => ({
-          id: fromCache ? String((x.index ?? x.id ?? i) as number) : String(x.id ?? x.response_id ?? x.rid ?? `r${i}`),
-          text: x.response ?? x.text ?? x.content ?? String(x),
-        }));
-      }
-
-      const prevIds = new Set([...(used_ids || []), ...(analysis_responses || []).map((r) => r.id)]);
-      const prevTexts = new Set((analysis_responses || []).map((r) => r.text));
-
-      const filtered = newResponses.filter(
-        (r) => !prevIds.has(r.id) && !prevTexts.has(r.text)
+      const regenChatRes = await withAbort(
+        chatOnce([...messages, { role: "user", content: instr }] as any)
       );
 
-      if (filtered.length === 0) {
-        setMessages(prev => [...prev, { role: "assistant", content: "No new cached alternatives available." }]);
+      let responseText: string | null = null;
+
+      if ((regenChatRes as any)?.response) {
+        responseText =
+          (regenChatRes as any).response.response ??
+          (regenChatRes as any).response.text ??
+          (regenChatRes as any).response.message ??
+          String((regenChatRes as any).response);
+      } else if ((regenChatRes as any)?.analysis_responses?.[0]) {
+        responseText = (regenChatRes as any).analysis_responses[0].text;
+      } else if ((regenChatRes as any)?.bot_messages?.[0]) {
+        responseText = (regenChatRes as any).bot_messages[0];
+      } else if ((regenChatRes as any)?.reply?.content) {
+        responseText = (regenChatRes as any).reply.content;
+      } else {
+        responseText = String(regenChatRes);
+      }
+
+      const clean = normalizeLLMText(responseText);
+
+      if (!clean) {
+        setMessages(prev => [...prev, { role: "assistant", content: "No new alternative available." }]);
         setPendingAction(null);
         return;
       }
 
-      const sel = filtered[0];
-
-      setMessages(prev => [...prev, { role: "assistant", content: sel.text }]);
-      setCurrentResponse(sel.text);
-      setPendingAction(prev =>
-        prev
-          ? {
-            ...prev,
-            analysis_responses: [...(prev.analysis_responses || []), ...filtered],
-            used_ids: [...(prev.used_ids || []), sel.id],
-          }
-          : prev
-      );
-    } catch (err: any) {
-      if ((err as any)?.name === "AbortError") console.log("[rejectAction] aborted by user");
-      else {
-        console.error("[rejectAction] regenerate error:", err);
-        setMessages(prev => [...prev, { role: "assistant", content: "Failed to fetch another alternative. Please try again." }]);
+      if (clean.toLowerCase().includes("all cached alternatives") ||
+        clean.toLowerCase().includes("no more") ||
+        clean.toLowerCase().includes("finished")) {
+        setMessages(prev => [...prev, { role: "assistant", content: clean }]);
+        setPendingAction(null);
+        return;
       }
-      setPendingAction(null);
+
+      setMessages(prev => [...prev, { role: "assistant", content: clean }]);
+      setCurrentResponse(clean);
+    } catch (err: any) {
+      console.error("[rejectAction error]", err);
+      setMessages(prev => [...prev, { role: "assistant", content: "Failed to get a new alternative." }]);
     } finally {
       if (abortRef.current) abortRef.current = null;
     }
@@ -419,7 +388,6 @@ export default function useChat() {
       setError("");
       const { base64, dataUrl } = await fileToBase64(uploadedImageFile);
 
-      // Try uploading to get an image_url first (avoids sending huge base64 via chat)
       const form = new FormData();
       form.append("image", uploadedImageFile);
       const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
@@ -454,11 +422,7 @@ export default function useChat() {
           queryPreview: dataUrl,
           results: mcpResult.results ?? [],
         };
-        try {
-          sessionStorage.setItem("mcp_last_search", JSON.stringify(payload));
-        } catch (err) {
-          console.warn("sessionStorage set failed", err);
-        }
+        try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
         return payload;
       }
 
@@ -466,7 +430,7 @@ export default function useChat() {
       const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: searchInstruction }] as any));
       console.log("[searchSimilar] chatRes:", chatRes);
 
-      const results = chatRes.analysis_responses ?? (chatRes as any).results ?? chatRes.bot_messages ?? [];
+      const results = (chatRes as any).analysis_responses ?? (chatRes as any).results ?? (chatRes as any).bot_messages ?? [];
       const payload = {
         createdAt: Date.now(),
         k: Number(k) || 1,
@@ -475,11 +439,7 @@ export default function useChat() {
         results: Array.isArray(results) ? results : [],
       };
 
-      try {
-        sessionStorage.setItem("mcp_last_search", JSON.stringify(payload));
-      } catch (err) {
-        console.warn("sessionStorage set failed", err);
-      }
+      try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
       return payload;
     } catch (err: any) {
       if ((err as any)?.name === "AbortError") {
@@ -506,11 +466,10 @@ export default function useChat() {
     setIsGenerating(true);
     setError("");
 
-    if (text) setMessages((prev) => [...prev, { role: "user", content: text }]);
+    if (text) setMessages(prev => [...prev, { role: "user", content: text }]);
     setInput("");
 
     try {
-
       const searchIntentMatch = text.match(/^\s*search\s+similar\s+images\b/i);
       if (searchIntentMatch) {
         const kMatch = text.match(/k\s*[:=]?\s*(\d+)/i) || text.match(/\(\s*k\s*=\s*(\d+)\s*\)/i);
@@ -522,30 +481,18 @@ export default function useChat() {
 
         if (payload) {
           console.log("[send] searchSimilar completed, navigating to /search");
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: "Thanks — preparing your search and redirecting to results now…" },
-          ]);
+          setMessages(prev => [...prev, { role: "assistant", content: "Thanks — preparing your search and redirecting to results now…" }]);
           setStatus("idle");
           setIsGenerating(false);
-          if (abortRef.current) {
-            abortRef.current = null;
-          }
-          window.setTimeout(() => {
-            window.location.href = "/search";
-          }, 2000);
+          if (abortRef.current) abortRef.current = null;
+          window.setTimeout(() => { window.location.href = "/search"; }, 2000);
           return;
         } else {
           console.warn("[send] searchSimilar returned null/failed");
           setStatus("idle");
           setIsGenerating(false);
-          if (abortRef.current) {
-            abortRef.current = null;
-          }
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: "Search did not start (see console). Please try again." },
-          ]);
+          if (abortRef.current) abortRef.current = null;
+          setMessages(prev => [...prev, { role: "assistant", content: "Search did not start (see console). Please try again." }]);
           return;
         }
       }
@@ -562,7 +509,6 @@ export default function useChat() {
           setFileName(filenameFromText);
         }
 
-        // debug: show what we're sending
         try {
           const formDebug: Record<string, any> = {};
           for (const pair of (Array.from(form.entries()) as [string, any][])) {
@@ -578,6 +524,7 @@ export default function useChat() {
         } catch (ex) {
           console.warn("[DEBUG] Could not enumerate FormData for debug:", ex);
         }
+
         console.log("[DEBUG] uploading to /uploads/tmp_media (filenameFromText):", filenameFromText);
         const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
         if (!upResp.ok) {
@@ -594,14 +541,13 @@ export default function useChat() {
         const hasAudio = Boolean(upJson.audio_url) || Boolean(uploadedAudioFile);
         const imageUrl = upJson.image_url;
         const audioUrl = upJson.audio_url;
-        console.log("Image uploaded, imageUrl:", imageUrl, "audioUrl:", audioUrl)
+        console.log("Image uploaded, imageUrl:", imageUrl, "audioUrl:", audioUrl);
 
         if (hasAudio) {
           const toolArgs: any = { image_url: imageUrl, audio_url: audioUrl };
           if (finalBasename) toolArgs.filename = finalBasename;
           console.log("[DEBUG] routing media analysis via /chat with args:", toolArgs);
 
-          // Build a concise chat instruction so server router picks media analysis
           const mediaMsgParts = [];
           if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url}`);
           if (toolArgs.audio_url) mediaMsgParts.push(`audio_url=${toolArgs.audio_url}`);
@@ -613,18 +559,14 @@ export default function useChat() {
 
           handleResponse({
             reply: { role: "assistant", content: "Media uploaded and queued." },
-            bot_messages: chatRes.bot_messages || [],
-            action: chatRes.action,
-            analysis_responses: chatRes.analysis_responses,
+            bot_messages: (chatRes as any).bot_messages || [],
+            action: (chatRes as any).action,
+            analysis_responses: (chatRes as any).analysis_responses,
           } as any);
 
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: "Thanks — your media has been uploaded. Redirecting you to the view page…" },
-          ]);
+          setMessages(prev => [...prev, { role: "assistant", content: "Thanks — your media has been uploaded. Redirecting you to the view page…" }]);
           scheduleNavigateToList();
         } else {
-          // no audio: can be plain analysis or queued media depending on wantsAnalysis check
           const wantsAnalysis = /(?:\banalyz(?:e|ing|ed)\b|\banalyse\b|\binspect\b|\binspect(?:ion)?\b|\bscan\b)/i.test(text);
           if (wantsAnalysis && imageUrl) {
             const mode = getModeFromText(text);
@@ -636,9 +578,9 @@ export default function useChat() {
 
             handleResponse({
               reply: { role: "assistant", content: `Image uploaded and ${mode} analysis started.` },
-              bot_messages: chatRes.bot_messages || [],
-              action: chatRes.action,
-              analysis_responses: chatRes.analysis_responses,
+              bot_messages: (chatRes as any).bot_messages || [],
+              action: (chatRes as any).action,
+              analysis_responses: (chatRes as any).analysis_responses,
             } as any);
           } else {
             const toolArgs: any = { image_url: imageUrl, audio_url: null };
@@ -648,16 +590,16 @@ export default function useChat() {
             const mediaMsgParts = [];
             if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url}`);
             if (toolArgs.filename) mediaMsgParts.push(`filename=${toolArgs.filename}`);
-            const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`; // router will treat image-only as redirect_to_analysis or media queue as appropriate
+            const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`;
 
             const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }] as any));
             console.log("[DEBUG] chatRes (no-audio):", chatRes);
 
             handleResponse({
               reply: { role: "assistant", content: "Image uploaded and queued for processing." },
-              bot_messages: chatRes.bot_messages || [],
-              action: chatRes.action,
-              analysis_responses: chatRes.analysis_responses,
+              bot_messages: (chatRes as any).bot_messages || [],
+              action: (chatRes as any).action,
+              analysis_responses: (chatRes as any).analysis_responses,
             } as any);
           }
         }
@@ -670,6 +612,7 @@ export default function useChat() {
         }
         return;
       }
+
       const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }] as any));
       handleResponse(chatRes);
       setStatus("idle");
@@ -682,12 +625,15 @@ export default function useChat() {
         setStatus("error");
         setError(e?.message || "Something went wrong.");
       }
-    }
-    finally {
+    } finally {
       setIsGenerating(false);
       if (abortRef.current) abortRef.current = null;
     }
-  }, [input, messages, uploadedImageFile, uploadedAudioFile, status, handleResponse, clearImage, clearAudio, createAbort, withAbort, chatOnce, extractFilenameFromText, scheduleNavigateToList, getModeFromText, searchSimilar]);
+  }, [
+    input, messages, uploadedImageFile, uploadedAudioFile, status,
+    handleResponse, clearImage, clearAudio, createAbort, withAbort,
+    chatOnce, extractFilenameFromText, scheduleNavigateToList, getModeFromText, searchSimilar
+  ]);
 
   const retryLast = useCallback(async () => {
     if (status === "sending" || messages.length === 0) return;
@@ -714,9 +660,7 @@ export default function useChat() {
 
   const newChat = useCallback(() => {
     if (abortRef.current) {
-      try {
-        abortRef.current.abort();
-      } catch { }
+      try { abortRef.current.abort(); } catch { }
       abortRef.current = null;
     }
 

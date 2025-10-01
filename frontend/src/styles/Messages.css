@@ -1,20 +1,20 @@
-/* messages.css - improved chat message styles */
-
-/* Row wrapper for each message */
 .msg-row {
   display: flex;
   gap: 12px;
-  margin: 6px 0;           /* reduced vertical spacing */
-  align-items: flex-start; /* align to top so avatars & bubbles align nicely */
+  margin: 6px 0;
+  align-items: flex-start;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* align rows left or right */
-.msg-row.left  { justify-content: flex-start; }
-.msg-row.right { justify-content: flex-end; }
+.msg-row.left {
+  justify-content: flex-start;
+}
 
-/* container for entire message list (if you have a wrapper) */
+.msg-row.right {
+  justify-content: flex-end;
+}
+
 .messages-list {
   padding: 12px 20px;
   display: flex;
@@ -22,7 +22,6 @@
   gap: 6px;
 }
 
-/* assistant avatar */
 .assistant-avatar {
   width: 36px;
   height: 36px;
@@ -32,29 +31,25 @@
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  margin-top: 4px; /* smaller offset to better align with bubble top */
-  flex: 0 0 36px;  /* fix size in flex layout */
+  margin-top: 4px;
+  flex: 0 0 36px;
 }
 
-/* assistant message block (markdown rendered inside) */
 .assistant-block {
-  /* keep your existing props, but force left alignment */
-  text-align: left !important;
-  /* keep previous values */
+  text-align: left;
   background: #ffffff;
   color: #0f172a;
   border: 1px solid #eef2f6;
   border-radius: 12px;
   padding: 10px 14px;
   line-height: 1.45;
-  box-shadow: 0 2px 8px rgba(2,6,23,0.03);
+  box-shadow: 0 2px 8px rgba(2, 6, 23, 0.03);
   max-width: min(78ch, 74%);
   word-break: break-word;
   overflow-wrap: anywhere;
   display: block;
 }
 
-/* tweak markdown content inside assistant block */
 .assistant-block p,
 .assistant-block ul,
 .assistant-block ol,
@@ -65,18 +60,18 @@
 
 .assistant-block ul,
 .assistant-block ol {
-  margin: 8px 0 12px 1.1rem;    /* left indent for bullets */
-  padding-left: 0;              /* leave browser default padding off */
-  list-style-position: outside; /* normal bullet placement */
+  margin: 8px 0 12px 1.1rem;
+  padding-left: 0;
+  list-style-position: outside;
   line-height: 1.5;
 }
 
-/* List items — normal flow */
 .assistant-block li {
   margin: 6px 0;
   padding-left: 0;
   font-size: 15px;
 }
+
 .assistant-block ul.tags-list {
   list-style: none;
   margin: 6px 0;
@@ -85,23 +80,27 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .assistant-block ul.tags-list li {
-  background: rgba(37,99,235,0.08);
+  background: rgba(37, 99, 235, 0.08);
   color: #0f172a;
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 14px;
   margin: 0;
-  box-shadow: 0 1px 2px rgba(2,6,23,0.03);
+  box-shadow: 0 1px 2px rgba(2, 6, 23, 0.03);
 }
+
 .assistant-block a {
   color: #2563eb;
   text-decoration: none;
-  border-bottom: 1px dashed rgba(37,99,235,0.12);
+  border-bottom: 1px dashed rgba(37, 99, 235, 0.12);
 }
-.assistant-block a:hover { text-decoration: underline; }
 
-/* code / pre blocks */
+.assistant-block a:hover {
+  text-decoration: underline;
+}
+
 .assistant-block pre {
   background: #0f172a;
   color: #f8fafc;
@@ -111,41 +110,44 @@
   font-size: 13px;
   margin: 8px 0;
 }
+
 .assistant-block code {
-  background: rgba(2,6,23,0.06);
+  background: rgba(2, 6, 23, 0.06);
   padding: 2px 6px;
   border-radius: 6px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
   font-size: 13px;
 }
 
-/* user bubble */
 .bubble.user {
-  background: linear-gradient(180deg,#2563eb,#1e40af);
+  background: linear-gradient(180deg, #2563eb, #1e40af);
   color: #fff;
   padding: 10px 14px;
   border-radius: 12px;
   border-top-right-radius: 6px;
-  max-width: min(70ch, 70%); /* keep user messages reasonably sized */
+  max-width: min(70ch, 70%);
+  /* keep user messages reasonably sized */
   line-height: 1.35;
   word-break: break-word;
   overflow-wrap: anywhere;
-  box-shadow: 0 2px 6px rgba(2,6,23,0.06);
+  box-shadow: 0 2px 6px rgba(2, 6, 23, 0.06);
 }
 
-/* media bubble base */
 .media-bubble {
   background: #fff;
   padding: 6px;
   border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-/* image and audio specific tweaks */
-.image-bubble { padding: 4px; }
-.audio-bubble { padding: 6px 8px; }
+.image-bubble {
+  padding: 4px;
+}
 
-/* images inside message bubbles */
+.audio-bubble {
+  padding: 6px 8px;
+}
+
 .chat-image {
   max-width: 100%;
   width: auto;
@@ -154,20 +156,28 @@
   border-radius: 8px;
   display: block;
   object-fit: cover;
-  border: 1px solid rgba(2,6,23,0.04);
+  border: 1px solid rgba(2, 6, 23, 0.04);
 }
 
-/* small UI labels */
-.media-filename { margin-top: 6px; font-size: 13px; color: #475569; }
-.image-caption { margin-top: 6px; font-size: 13px; color: #475569; }
+.media-filename {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #475569;
+}
 
-/* typing / status / error */
+.image-caption {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #475569;
+}
+
 .typing {
   padding: 8px 12px;
   color: #64748b;
   font-style: italic;
   background: transparent;
 }
+
 .error {
   padding: 10px 16px;
   color: #7f1d1d;
@@ -177,19 +187,27 @@
   border-radius: 8px;
 }
 
-/* small screen responsiveness */
 @media (max-width: 720px) {
-  .assistant-block, .bubble.user {
+
+  .assistant-block,
+  .bubble.user {
     max-width: 92%;
     font-size: 15px;
   }
-  .assistant-avatar { width: 32px; height: 32px; flex: 0 0 32px; }
-  .chat-image { max-height: 240px; }
+
+  .assistant-avatar {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+  }
+
+  .chat-image {
+    max-height: 240px;
+  }
 }
 
-/* accessibility: focus styles for any interactive bits inside messages */
 .assistant-block :focus,
 .bubble.user :focus {
-  outline: 3px solid rgba(37,99,235,0.12);
+  outline: 3px solid rgba(37, 99, 235, 0.12);
   outline-offset: 2px;
 }

@@ -28,8 +28,8 @@ def _normalize_used_ids(uids) -> list[int]:
         out.append(int(m.group(0)))
     return out
 
+
 def call_redirect_to_analysis(params: Dict[str, Any]) -> Dict[str, Any]:
-    
     try:
         return mcp.redirect_to_analysis(
             image_url=params.get("image_url"),
@@ -41,8 +41,8 @@ def call_redirect_to_analysis(params: Dict[str, Any]) -> Dict[str, Any]:
             "bot_messages": [f"Error: {e}", traceback.format_exc()],
         }
 
+
 def call_regenerate(params: Dict[str, Any]) -> Dict[str, Any]:
-    
     try:
         cache_key = params.get("cache_key")
         index = params.get("index")
@@ -68,9 +68,9 @@ def call_regenerate(params: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(out, dict) and out.get("error") == "exhausted" and fresh_if_exhausted:
             out = mcp.regenerate(
                 cache_key=cache_key,
-                index=None,            
-                used_ids=None,        
-                image_url=image_url,  
+                index=None,            # pick next available
+                used_ids=None,         # reset filter
+                image_url=image_url,   # retain context
                 mode=mode,
                 fresh=True,
             )
@@ -84,7 +84,8 @@ def call_regenerate(params: Dict[str, Any]) -> Dict[str, Any]:
             "bot_messages": [f"Error: {e}", traceback.format_exc()],
         }
 
-def call_redirect_to_media_analysis(params: Dict[str, Any]) -> Dict[str, Any]:
+
+def call_redirect_to_media_analysis(params: Dict[str, Any]):
     try:
         return mcp.redirect_to_media_analysis(
             image_url=params.get("image_url"),
@@ -97,13 +98,14 @@ def call_redirect_to_media_analysis(params: Dict[str, Any]) -> Dict[str, Any]:
             "bot_messages": [f"Error: {e}", traceback.format_exc()],
         }
 
+
 def call_search(params: Dict[str, Any]) -> Dict[str, Any]:
     try:
         return mcp.search(**params)
     except Exception as e:
         return {"type": "search", "params": params, "bot_messages": [f"Error: {e}", traceback.format_exc()]}
 
-# ---- tool dispatch map (unchanged keys so router_fn stays as-is)
+
 _TOOL_DISPATCH = {
     "redirect_to_analysis": call_redirect_to_analysis,
     "regenerate": call_regenerate,
@@ -113,6 +115,14 @@ _TOOL_DISPATCH = {
 
 IMAGE_URL_RE = re.compile(r"https?://\S+\.(?:jpg|jpeg|png|jfif|webp|gif|bmp|tiff)", re.I)
 AUDIO_URL_RE = re.compile(r"https?://\S+\.(?:mp3|wav|m4a|ogg|flac)", re.I)
+
+SEARCH_INTENT_RE = re.compile(
+    r"\b(search|find|similar|lookup|match|reverse\s*image|examples|history|past\s*results|show\s*previous)\b",
+    re.I,
+)
+
+ANALYZE_INTENT_RE = re.compile(r"\b(analy[sz]e|analysis|describe|inspect|classify|label|tag)\b", re.I)
+
 
 def router_fn(user_text: str) -> Dict[str, Any]:
     if not user_text:
@@ -124,19 +134,9 @@ def router_fn(user_text: str) -> Dict[str, Any]:
     img_match = IMAGE_URL_RE.search(t_raw)
     aud_match = AUDIO_URL_RE.search(t_raw)
 
-    # Rule 1: image + audio → media analysis
-    if img_match and aud_match:
-        return {
-            "tool": "redirect_to_media_analysis",
-            "params": {"image_url": img_match.group(0), "audio_url": aud_match.group(0)},
-        }
-
-    if img_match:
-        mode = "long" if re.search(r"\b(long|detailed|full|deep|comprehensive|in-depth)\b", t, re.I) else "short"
-        return {"tool": "redirect_to_analysis", "params": {"image_url": img_match.group(0), "mode": mode}}
-
+    # --- 1) REGENERATE gets priority (before any image-based routing) ---
     if re.search(r"\b(regen|regenerate|regeneration|variant|alternative|another|next alternative|more variants)\b", t, re.I):
-  
+        # existing: cache_key + index
         m_cache = re.search(r"cache[_\- ]?key[:= ]?([A-Za-z0-9_\-]+)", t_raw)
         m_index = re.search(r"\bindex[:= ]?(\d+)\b", t_raw)
         params: Dict[str, Any] = {}
@@ -147,16 +147,57 @@ def router_fn(user_text: str) -> Dict[str, Any]:
                 params["index"] = int(m_index.group(1))
             except Exception:
                 pass
+
+        # NEW: parse used_ids=[...] image_url=... mode=... fresh=true
+        # used_ids: accept any digits inside the brackets and convert to ints
+        m_used = re.search(r"used_ids\s*=\s*\[([^\]]*)\]", t_raw)
+        if m_used:
+            params["used_ids"] = [int(x) for x in re.findall(r"\d+", m_used.group(1))]
+
+        # image_url: keep full URL (avoid being routed to analysis)
+        m_img = re.search(r"image_url\s*=\s*(https?://\S+)", t_raw)
+        if m_img:
+            params["image_url"] = m_img.group(1)
+
+        # mode: short|long
+        m_mode = re.search(r"\bmode[:= ](short|long)\b", t, re.I)
+        if m_mode:
+            params["mode"] = m_mode.group(1).lower()
+
+        # fresh=true
+        if re.search(r"\bfresh\s*=\s*true\b", t, re.I):
+            params["fresh"] = True
+
+        # done
         params["user_text"] = user_text
         return {"tool": "regenerate", "params": params}
 
-    if re.search(r"\b(search|find|show previous|history|past results|examples|similar|lookup)\b", t, re.I):
-        return {"tool": "search", "params": {"q": user_text}}
+    # --- 2) image + audio → media analysis ---
+    if img_match and aud_match:
+        return {
+            "tool": "redirect_to_media_analysis",
+            "params": {"image_url": img_match.group(0), "audio_url": aud_match.group(0)},
+        }
+
+    # --- 3) image present → prefer search if explicitly requested; else analysis ---
+    if img_match:
+        if SEARCH_INTENT_RE.search(t):
+            return {
+                "tool": "search",
+                "params": {
+                    "image_url": img_match.group(0),
+                    "k": 5,
+                    "order": "recent",
+                    "require_audio": True,
+                    "min_sim": 0.5,
+                },
+            }
+        mode = "long" if re.search(r"\b(long|detailed|full|deep|comprehensive|in-depth)\b", t, re.I) else "short"
+        return {"tool": "redirect_to_analysis", "params": {"image_url": img_match.group(0), "mode": mode}}
 
     return {"tool": "agent", "params": {"text": user_text}}
 
 def llm_router(user_text: str, confidence_threshold: float = 0.6) -> Optional[Dict[str, Any]]:
-    
     prompt = (
         "You are a router. Decide which single tool to call for the following user text.\n"
         "Tools: redirect_to_analysis, redirect_to_media_analysis, regenerate, search, none.\n"
@@ -191,6 +232,7 @@ def llm_router(user_text: str, confidence_threshold: float = 0.6) -> Optional[Di
     except Exception:
         return None
 
+
 SYSTEM_PROMPT = (
     "You are a Fabric Assistant.\n"
     "- Answer questions about fabrics, textiles, and how to use this app.\n"
@@ -198,8 +240,8 @@ SYSTEM_PROMPT = (
     "- Never invent tool names. Only reply conversationally here.\n"
 )
 
+
 def agent_fallback(params: Dict[str, Any]) -> str:
-    
     user_text = params.get("text", "")
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -214,6 +256,7 @@ def agent_fallback(params: Dict[str, Any]) -> str:
         return str(resp)
     except Exception as e:
         return f"Error calling LLM: {e}"
+
 
 def _agent_graph_callable(user_text: str) -> Any:
     try:
@@ -235,6 +278,7 @@ def _agent_graph_callable(user_text: str) -> Any:
 
     except Exception as e:
         return {"error": f"agent_graph_error: {e}", "trace": traceback.format_exc()}
+
 
 agent_graph = RunnableLambda(_agent_graph_callable)
 

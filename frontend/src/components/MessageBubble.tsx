@@ -9,13 +9,11 @@ import { normalizeMarkdown } from "../utils/normalizeMarkdown";
 type Props = {
   role: Message["role"];
   content: Message["content"];
-  // keep open to accept extended message fields if you pass them later
   type?: "text" | "image" | "audio";
   url?: string;
   filename?: string;
 };
 
-// helper: simple URL test
 const looksLikeUrl = (s?: string) => {
   if (!s) return false;
   try {
@@ -42,41 +40,45 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
   const explicitType = type;
   const explicitUrl = url;
 
-  const possibleUrl = explicitUrl ?? (looksLikeUrl(content) ? content : undefined);
+  const possibleUrl = explicitUrl ?? (looksLikeUrl(content) ? String(content) : undefined);
 
-  // Decide rendering type
   let renderType: "image" | "audio" | "text" = "text";
   if (explicitType === "image" || (possibleUrl && isImageUrl(possibleUrl))) renderType = "image";
   else if (explicitType === "audio" || (possibleUrl && isAudioUrl(possibleUrl))) renderType = "audio";
 
-  // TEXT PATH: use markdown + typing effect for assistant, plain for user
+  // --- Hooks must be called unconditionally (always) ---
+  const normalized = useMemo(
+    () => normalizeMarkdown(String(content ?? "")),
+    [content]
+  );
+
+  const shouldType = renderType === "text" && role !== "user";
+  const typed = useTypingEffect(shouldType ? normalized : "", 25);
+  // -----------------------------------------------------
+
   if (renderType === "text") {
     if (role === "user") {
-      // show user text bubble (no typing effect)
       return (
         <div className="msg-row right">
           <div className="bubble user">{content}</div>
         </div>
       );
     }
-
-    const normalized = useMemo(() => normalizeMarkdown(String(content ?? "")), [content]);
-    const typed = useTypingEffect(normalized, 25);
-
+    // assistant text
     return (
       <div className="msg-row left">
         <div className="assistant-avatar">🤖</div>
         <div className="assistant-block">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{typed ?? ""}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {shouldType ? (typed ?? "") : normalized}
+          </ReactMarkdown>
         </div>
       </div>
     );
   }
 
-  // IMAGE PATH
   if (renderType === "image") {
     const src = String(possibleUrl ?? content);
-    // show image for both user and assistant
     return (
       <div className={`msg-row ${role === "user" ? "right" : "left"}`}>
         {role === "assistant" && <div className="assistant-avatar">🤖</div>}
@@ -92,7 +94,7 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
     );
   }
 
-  // AUDIO PATH
+  // audio
   const src = String(possibleUrl ?? content);
   return (
     <div className={`msg-row ${role === "user" ? "right" : "left"}`}>

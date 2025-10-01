@@ -32,15 +32,16 @@ export default function Chat() {
     rejectAction,
     fileName,
     setFileName,
-    shouldNavigateToList, setShouldNavigateToList,
-    searchSimilar,
+    shouldNavigateToList,
+    setShouldNavigateToList,
   } = useChat();
 
   const navigate = useNavigate();
 
   const pickSample = useCallback((text: string) => setInput(text), [setInput]);
 
-  async function fileToDataUrl(url: string): Promise<string | null> {
+  // ✅ Memoize helper so it's a stable dependency
+  const fileToDataUrl = useCallback(async (url: string): Promise<string | null> => {
     try {
       const resp = await fetch(url);
       if (!resp.ok) return null;
@@ -55,7 +56,7 @@ export default function Chat() {
       console.error("fileToDataUrl failed", err);
       return null;
     }
-  }
+  }, []);
 
   const downloadChat = useCallback(async () => {
     try {
@@ -75,12 +76,13 @@ export default function Chat() {
       if (uploadedPreviewUrl) {
         const imgData = await fileToDataUrl(uploadedPreviewUrl);
         if (imgData) {
+          // Try JPEG; jsPDF also supports PNG data URLs if needed
           doc.addImage(imgData, "JPEG", 10, y, 60, 60);
           y += 70;
         }
       }
 
-      // If audio is attached, mention it (cannot embed in PDF)
+      // If audio is attached, mention it (cannot embed audio in PDF)
       if (uploadedAudioUrl) {
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
@@ -132,13 +134,14 @@ export default function Chat() {
     } catch (err) {
       console.error("downloadChat (PDF) failed:", err);
     }
-  }, [messages, uploadedPreviewUrl, uploadedAudioUrl]);
+  }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]); // ✅ include fileToDataUrl
 
   useEffect(() => {
     if (!shouldNavigateToList) return;
     navigate("/view");
     setShouldNavigateToList(false);
   }, [shouldNavigateToList, navigate, setShouldNavigateToList]);
+
   return (
     <div className="page-root">
       <header className="page-hero">
@@ -197,7 +200,6 @@ export default function Chat() {
               onClearAudio={clearAudio}
               fileName={fileName}
               setFileName={setFileName}
-              onSearchSimilar={searchSimilar}
             />
           </div>
         </div>

@@ -6,7 +6,8 @@
   gap: 8px;
   width: 100%;
   box-sizing: border-box;
-  padding-left: 6px; /* align with composer */
+  padding-left: 6px;
+  /* align with composer */
 }
 
 .suggestion-hint {
@@ -39,7 +40,7 @@
   background: white;
   color: #000000;
   border: none;
-  box-shadow: 0 6px 18px rgba(37,99,235,0.12);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
 }
 
 /* selected/disabled look */
@@ -47,15 +48,11 @@
 .chip:disabled {
   background: #e6eefc;
   color: #0f172a;
-  border: 1px solid rgba(37,99,235,0.18);
+  border: 1px solid rgba(37, 99, 235, 0.18);
   box-shadow: none;
   cursor: default;
 }
 
-/* hover */
-.chip.primary:hover {
-
-}
 .chip:hover {
   transform: translateY(-1px);
   filter: brightness(1.02);

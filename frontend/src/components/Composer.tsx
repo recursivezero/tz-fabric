@@ -162,7 +162,9 @@ export default function Composer({
           setError("Failed to process recording.");
         } finally {
           if (streamRef.current) {
-            streamRef.current.getTracks().forEach((t) => t.stop());
+            streamRef.current.getTracks().forEach((t) => {
+              t.stop();
+            });
             streamRef.current = null;
           }
         }
@@ -227,10 +229,12 @@ export default function Composer({
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         try {
           mediaRecorderRef.current.stop();
-        } catch { }
+        } catch {}
       }
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current.getTracks().forEach((t) => {
+          t.stop();
+        });
         streamRef.current = null;
       }
     };
@@ -270,7 +274,6 @@ export default function Composer({
       )}
 
       <div className="composer" style={{ paddingTop: isRecording ? 48 : undefined }}>
-        {/* PREVIEWS WRAPPER (image + audio) */}
         {(previewUrl || audioUrl) && (
           <div className="upload-previews" role="region" aria-label="Upload previews">
             {previewUrl && (
@@ -419,7 +422,6 @@ export default function Composer({
           }
           name={value ? value.trim() : null}
           onAction={(actionId, opts) => {
-            // prefer parent handler if given, otherwise use internal default that now includes search handling
             if (typeof onChipAction === "function") {
               onChipAction(actionId, opts);
               return;

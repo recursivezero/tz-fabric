@@ -27,21 +27,24 @@ export const useUploadAndRecord = () => {
     type: "success" | "error";
   } | null>(null);
 
-  const successNotification = (type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => {
-      setNotification(null);
-    }, 2000);
-  };
+  const successNotification = useCallback(
+    (type: "success" | "error", message: string) => {
+      setNotification({ type, message });
+      setTimeout(() => {
+        setNotification(null);
+      }, 2000);
+    },
+    []
+  );
 
-  const errorNotification = (type: "error", message: string) => {
+  const errorNotification = useCallback((type: "error", message: string) => {
     setAudioNotification({ type, message });
     setError(message);
 
     setTimeout(() => {
       setAudioNotification(null);
     }, 2000);
-  };
+  }, []);
 
   const handleImageUpload = (file: File) => {
     setImageFile(null);
@@ -62,7 +65,6 @@ export const useUploadAndRecord = () => {
       ]);
 
       if (!file.type.startsWith("audio/") && !allowedMimeTypes.has(file.type)) {
-        // Use errorNotification consistently for audio errors
         errorNotification("error", "Please upload a valid audio file (mp3, wav, webm, or mp4).");
         return;
       }
@@ -85,7 +87,6 @@ export const useUploadAndRecord = () => {
             throw new Error("Duration not finite, fallback to <audio>.");
           }
           if (duration > 61) {
-            // fixed incorrect call shape — use errorNotification properly
             errorNotification("error", "Audio is longer than 1 minute.");
             return;
           }
@@ -112,7 +113,6 @@ export const useUploadAndRecord = () => {
             setAudioUrl(tempUrl);
           } else {
             URL.revokeObjectURL(tempUrl);
-            // Use errorNotification for these audio errors too
             errorNotification(
               "error",
               Number.isFinite(dur)
@@ -132,7 +132,8 @@ export const useUploadAndRecord = () => {
         probe.src = tempUrl;
       });
     },
-    [audioUrl],
+    // ⬇️ include errorNotification as a dependency (and audioUrl which you already had)
+    [audioUrl, errorNotification]
   );
 
   const startRecording = async () => {
@@ -181,7 +182,6 @@ export const useUploadAndRecord = () => {
         });
       }, 1000);
     } catch (error) {
-      // Use errorNotification consistently
       errorNotification("error", "Microphone access denied or error occurred.");
       console.error("Error accessing microphone:", error);
       setIsRecording(false);
