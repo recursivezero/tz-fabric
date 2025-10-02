@@ -10,6 +10,17 @@ import useChat from "../hooks/chat";
 import "../styles/Chat.css";
 import { jsPDF } from "jspdf";
 
+type ChatDisplayMessage = { role?: string; content: unknown };
+
+const contentToString = (value: unknown): string => {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+};
+
 export default function Chat() {
   const {
     messages,
@@ -40,7 +51,6 @@ export default function Chat() {
 
   const pickSample = useCallback((text: string) => setInput(text), [setInput]);
 
-  // ✅ Memoize helper so it's a stable dependency
   const fileToDataUrl = useCallback(async (url: string): Promise<string | null> => {
     try {
       const resp = await fetch(url);
@@ -76,13 +86,11 @@ export default function Chat() {
       if (uploadedPreviewUrl) {
         const imgData = await fileToDataUrl(uploadedPreviewUrl);
         if (imgData) {
-          // Try JPEG; jsPDF also supports PNG data URLs if needed
           doc.addImage(imgData, "JPEG", 10, y, 60, 60);
           y += 70;
         }
       }
 
-      // If audio is attached, mention it (cannot embed audio in PDF)
       if (uploadedAudioUrl) {
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
@@ -93,25 +101,18 @@ export default function Chat() {
         y += 10;
       }
 
-      // Separator
       doc.setFontSize(12);
       doc.text("----------------------------", 10, y);
       y += 10;
 
-      // Messages
-      messages.forEach((m) => {
-        const role = (m.role ?? "unknown").toString().toUpperCase();
-        const content =
-          typeof (m as any).content === "string"
-            ? (m as any).content
-            : JSON.stringify((m as any).content, null, 2);
+      (messages as ChatDisplayMessage[]).forEach((m) => {
+        const role = String(m.role ?? "unknown").toUpperCase();
+        const content = contentToString(m.content);
 
-        // Role
         doc.setFont("helvetica", "bold");
         doc.text(`${role}:`, 10, y);
         y += 6;
 
-        // Content (wrapped text)
         doc.setFont("helvetica", "normal");
         const cleanContent = content.replace(
           /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\u2011|\uFFFD)/g,
@@ -121,20 +122,18 @@ export default function Chat() {
         doc.text(splitText, 10, y);
         y += splitText.length * 6 + 8;
 
-        // Page break if needed
         if (y > 270) {
           doc.addPage();
           y = 10;
         }
       });
 
-      // Save as PDF
       const filename = `chat-${new Date().toISOString().replace(/[:.]/g, "-")}.pdf`;
       doc.save(filename);
     } catch (err) {
       console.error("downloadChat (PDF) failed:", err);
     }
-  }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]); // ✅ include fileToDataUrl
+  }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]); 
 
   useEffect(() => {
     if (!shouldNavigateToList) return;

@@ -20,13 +20,13 @@ export const extractFilenameFromText = (
 
   {
     const v = cap1(
-      /(?:as|named|with)\s+([A-Za-z0-9 _\-\.\(\)]{1,200}?)(?:[.,!?;:]|$)/i
+      /(?:as|named|with)\s+([A-Za-z0-9 _\-.()]{1,200}?)(?:[.,!?;:]|$)/i
     );
     if (v) return clean(v);
   }
 
   {
-    const v = cap1(/with\s+([A-Za-z0-9 _\-\.\(\)]+)\s*$/i);
+    const v = cap1(/with\s+([A-Za-z0-9 _\-.()]+)\s*$/i);
     if (v) return clean(v);
   }
 

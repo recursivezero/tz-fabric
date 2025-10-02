@@ -4,60 +4,65 @@ import { chatOnce, type Message, type ChatResponse } from "../services/chat_api"
 import { FULL_API_URL } from "../constants";
 import { extractFilenameFromText } from "../utils/extractFilenameFromText";
 
-// replace your normalizeLLMText with this
-const normalizeLLMText = (t: any): string => {
+type Status = "idle" | "sending" | "error";
+
+type AnalysisItem = { id?: string; text?: string; content?: string };
+type ToolActionParams = {
+  cache_key?: string;
+  image_url?: string;
+  audio_url?: string | null;
+  filename?: string;
+  mode?: "short" | "long" | string;
+  [k: string]: unknown;
+};
+type ToolAction = { type: string; params?: ToolActionParams };
+
+type RichChatResponse = ChatResponse & Partial<{
+  bot_messages: string[];
+  action: ToolAction;
+  analysis_responses: AnalysisItem[];
+  results: unknown[];
+}>;
+
+const normalizeLLMText = (t: unknown): string => {
   if (t == null) return "";
 
-  // If backend accidentally passed an object, unwrap the obvious places.
   if (typeof t === "object") {
+    const o = t as Record<string, unknown>;
     const inner =
-      t?.response?.response ??
-      t?.response?.text ??
-      t?.response?.message ??
-      t?.response ??
-      t?.text ??
-      t?.message ??
+      (o.response as Record<string, unknown> | undefined)?.response ??
+      (o.response as Record<string, unknown> | undefined)?.text ??
+      (o.response as Record<string, unknown> | undefined)?.message ??
+      o.response ??
+      o.text ??
+      o.message ??
       null;
+
     if (inner != null) return normalizeLLMText(inner);
-    // fallback to a string for anything else
-    t = JSON.stringify(t);
+    try { return JSON.stringify(t); } catch { return String(t); }
   }
 
   let s = String(t).trim();
 
-  // Normalize escaped newlines, remove CRs, trim trailing spaces before newlines
   s = s.replace(/\\n/g, "\n").replace(/\r/g, "").replace(/[ \t]+\n/g, "\n");
 
-  // If it looks like a Python-ish dict containing a nested response,
-  // pull out the deepest `response` string without trying to fully JSON-parse.
-  // 1) {'response': {'id': '2', 'response': "The fabric ..."}, 'selected_index': 2}
-  let m =
+  const m =
     s.match(/['"]response['"]\s*:\s*\{[\s\S]*?['"]response['"]\s*:\s*(['"])([\s\S]*?)\1/) ||
     s.match(/['"]response['"]\s*:\s*(['"])([\s\S]*?)\1/);
-  if (m && m[2]) {
-    const inner = m[2];
-    return inner.replace(/\\n/g, "\n").trim();
-  }
+  if (m?.[2]) return m[2].replace(/\\n/g, "\n").trim();
 
-  // If it looks like JSON already, try a careful parse (without wrecking inner quotes)
   if (/^\s*\{/.test(s) && /"response"/.test(s)) {
     try {
-      const obj = JSON.parse(s);
-      const inner =
-        obj?.response?.response ??
-        obj?.response?.text ??
-        obj?.response?.message ??
-        obj?.response ??
-        null;
+      const obj = JSON.parse(s) as Record<string, unknown>;
+      const r = obj.response as Record<string, unknown> | undefined;
+      const inner = r?.response ?? r?.text ?? r?.message ?? r ?? null;
       if (inner) return normalizeLLMText(inner);
-    } catch { /* ignore */ }
+    } catch { }
   }
 
-  // strip accidental outer quotes
   if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
     s = s.slice(1, -1);
   }
-
   return s.trim();
 };
 
@@ -66,12 +71,10 @@ export default function useChat() {
   const [input, setInput] = useState<string>("");
   const [fileName, setFileName] = useState<string>("");
 
-  // Media uploads
   const [uploadedImageFile, setUploadedImageFile] = useState<File | null>(null);
   const [uploadedAudioFile, setUploadedAudioFile] = useState<File | null>(null);
   const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
   const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [shouldNavigateToList, setShouldNavigateToList] = useState<boolean>(false);
 
   const [status, setStatus] = useState<Status>("idle");
@@ -81,13 +84,15 @@ export default function useChat() {
 
   const [currentResponse, setCurrentResponse] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<{
-    action: { type: string; params: any };
+    action: ToolAction;
     analysis_responses?: { id: string; text: string }[];
     used_ids?: string[];
   } | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const navigateTimeoutRef = useRef<number | null>(null);
+
+  const lastMsgCountRef = useRef<number>(0);
 
   const scheduleNavigateToList = useCallback((delay = 3000) => {
     if (navigateTimeoutRef.current) {
@@ -102,7 +107,7 @@ export default function useChat() {
 
   const createAbort = useCallback(() => {
     if (abortRef.current) {
-      try { abortRef.current.abort(); } catch { }
+      try { abortRef.current.abort(); } catch { /* ignore */ }
     }
     const ac = new AbortController();
     abortRef.current = ac;
@@ -114,11 +119,7 @@ export default function useChat() {
       const ac = abortRef.current;
       if (!ac) return p;
       return new Promise<T>((resolve, reject) => {
-        const onAbort = () => {
-          const err = new Error("Aborted");
-          (err as any).name = "AbortError";
-          reject(err);
-        };
+        const onAbort = () => reject(new DOMException("Aborted", "AbortError"));
 
         if (ac.signal.aborted) {
           onAbort();
@@ -139,6 +140,7 @@ export default function useChat() {
     []
   );
 
+  // seed welcome once
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([
@@ -156,9 +158,20 @@ export default function useChat() {
   }, [messages.length]);
 
   useEffect(() => {
-    const el = scrollerRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, pendingAction, currentResponse]);
+    const prev = lastMsgCountRef.current;
+    const curr = messages.length;
+    if (curr !== prev) {
+      const el = scrollerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+      lastMsgCountRef.current = curr;
+    }
+  });
+
+  const errorMsg = useCallback(
+    (err: unknown, fallback = "Something went wrong.") =>
+      err instanceof Error ? err.message : (typeof err === "string" ? err : fallback),
+    []
+  );
 
   const validateImageFile = useCallback(async (file: File) => {
     try {
@@ -168,23 +181,25 @@ export default function useChat() {
 
       if (!resp.ok) {
         const txt = await resp.text().catch(() => "");
-        return { ok: false, reason: `Validation service error: ${resp.status} ${txt}` };
+        return { ok: false as const, reason: `Validation service error: ${resp.status} ${txt}` };
       }
 
-      const json = await resp.json().catch(() => ({}));
-      if (json && json.valid) return { ok: true };
-      if (json && typeof json.reason === "string") return { ok: false, reason: json.reason };
-      return { ok: false, reason: "Image did not pass fabric validation." };
-    } catch (err: any) {
+      const json: unknown = await resp.json().catch(() => ({}));
+      const valid = typeof json === "object" && json !== null && (json as { valid?: boolean }).valid === true;
+      if (valid) return { ok: true as const };
+      const reason = (json as { reason?: string }).reason;
+      if (typeof reason === "string") return { ok: false as const, reason };
+      return { ok: false as const, reason: "Image did not pass fabric validation." };
+    } catch (err: unknown) {
       console.error("validateImageFile error:", err);
-      return { ok: false, reason: err?.message || "Validation request failed" };
+      return { ok: false as const, reason: errorMsg(err, "Validation request failed") };
     }
-  }, []);
+  }, [errorMsg]);
 
   const handleImageUpload = useCallback(
     async (file: File) => {
       if (uploadedPreviewUrl) {
-        try { URL.revokeObjectURL(uploadedPreviewUrl); } catch { }
+        try { URL.revokeObjectURL(uploadedPreviewUrl); } catch { /* ignore */ }
       }
 
       setStatus("sending");
@@ -205,13 +220,13 @@ export default function useChat() {
         setUploadedPreviewUrl(url);
         setStatus("idle");
         setError("");
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("handleImageUpload error:", err);
         setStatus("idle");
-        setError(err?.message || "Failed to upload image for validation.");
+        setError(errorMsg(err, "Failed to upload image for validation."));
       }
     },
-    [uploadedPreviewUrl, validateImageFile]
+    [uploadedPreviewUrl, validateImageFile, errorMsg]
   );
 
   const handleAudioUpload = useCallback(
@@ -262,26 +277,42 @@ export default function useChat() {
     });
   }, []);
 
+  const getAction = useCallback((r: RichChatResponse): ToolAction | undefined => r.action, []);
+  const getAnalysis = useCallback(
+    (r: RichChatResponse): AnalysisItem[] => Array.isArray(r.analysis_responses) ? r.analysis_responses : [],
+    []
+  );
+  const getBots = useCallback(
+    (r: RichChatResponse): string[] => Array.isArray(r.bot_messages) ? r.bot_messages : [],
+    []
+  );
+
   const handleResponse = useCallback((res: ChatResponse) => {
+    const rc = res as RichChatResponse;
+
     setMessages(prev => {
-      let next = [...prev];
+      const next = [...prev];
 
-      const bots = Array.isArray(res.bot_messages) ? res.bot_messages : [];
-      if (bots.length) next.push(...bots.map(txt => ({ role: "assistant", content: normalizeLLMText(txt) })));
-      else if (res.reply) next.push({ role: "assistant", content: normalizeLLMText(res.reply.content) });
+      const bots = getBots(rc);
+      if (bots.length) {
+        next.push(...bots.map(txt => ({ role: "assistant", content: normalizeLLMText(txt) })));
+      } else if (rc.reply) {
+        next.push({ role: "assistant", content: normalizeLLMText(rc.reply.content) });
+      }
 
-      const action = (res as any).action;
-      const actionType = action?.type;
-      const raw = (res as any).analysis_responses || [];
+      const action = getAction(rc);
+      const raw = getAnalysis(rc);
       const hasCache = Boolean(action?.params?.cache_key);
 
-      const normalized = raw.map((r: any, i: number) => ({
+      const normalized = raw.map((r, i) => ({
         id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
-        text: r.text ?? r.content ?? String(r),
+        text: r.text ?? r.content ?? String(r ?? ""),
       }));
 
+      // Only proceed if we truly have an action and it’s one of the redirect types
       if (
-        (actionType === "redirect_to_analysis" || actionType === "redirect_to_media_analysis") &&
+        action &&
+        (action.type === "redirect_to_analysis" || action.type === "redirect_to_media_analysis") &&
         normalized.length > 0
       ) {
         const firstText = normalizeLLMText(normalized[0].text);
@@ -291,11 +322,13 @@ export default function useChat() {
           bots.includes(firstText) ||
           (lastAssistant && lastAssistant.content === firstText);
 
-        if (!alreadyIncluded) next.push({ role: "assistant", content: firstText });
+        if (!alreadyIncluded) {
+          next.push({ role: "assistant", content: firstText });
+        }
 
         setCurrentResponse(firstText);
         setPendingAction({
-          action,
+          action, // <-- no non-null assertion
           analysis_responses: normalized.map(r => ({ ...r, text: normalizeLLMText(r.text) })),
           used_ids: [normalized[0].id],
         });
@@ -304,7 +337,8 @@ export default function useChat() {
       }
       return next;
     });
-  }, []);
+  }, [getBots, getAction, getAnalysis]);
+
 
   const acceptAction = useCallback(() => {
     if (!pendingAction) return;
@@ -318,7 +352,7 @@ export default function useChat() {
     const { action } = pendingAction;
     const cacheKey = action?.params?.cache_key;
     const imageUrl = action?.params?.image_url;
-    const mode = action?.params?.mode || "short";
+    const mode = (action?.params?.mode as ("short" | "long" | undefined)) || "short";
 
     if (!cacheKey) {
       setMessages(prev => [...prev, { role: "assistant", content: "No cache_key found." }]);
@@ -329,23 +363,25 @@ export default function useChat() {
     try {
       createAbort();
       const regenChatRes = await withAbort(
-        chatOnce([...messages, { role: "user", content: instr }] as any)
+        chatOnce([...messages, { role: "user", content: instr }])
       );
+      const rc = regenChatRes as RichChatResponse;
 
       let responseText: string | null = null;
 
-      if ((regenChatRes as any)?.response) {
+      if (rc.response) {
+        const r = rc.response as unknown as Record<string, unknown>;
         responseText =
-          (regenChatRes as any).response.response ??
-          (regenChatRes as any).response.text ??
-          (regenChatRes as any).response.message ??
-          String((regenChatRes as any).response);
-      } else if ((regenChatRes as any)?.analysis_responses?.[0]) {
-        responseText = (regenChatRes as any).analysis_responses[0].text;
-      } else if ((regenChatRes as any)?.bot_messages?.[0]) {
-        responseText = (regenChatRes as any).bot_messages[0];
-      } else if ((regenChatRes as any)?.reply?.content) {
-        responseText = (regenChatRes as any).reply.content;
+          (r.response as string | undefined) ??
+          (r.text as string | undefined) ??
+          (r.message as string | undefined) ??
+          String(rc.response);
+      } else if (rc.analysis_responses?.[0]) {
+        responseText = rc.analysis_responses[0]?.text ?? "";
+      } else if (rc.bot_messages?.[0]) {
+        responseText = rc.bot_messages[0] ?? "";
+      } else if (rc.reply?.content) {
+        responseText = rc.reply.content ?? "";
       } else {
         responseText = String(regenChatRes);
       }
@@ -358,9 +394,8 @@ export default function useChat() {
         return;
       }
 
-      if (clean.toLowerCase().includes("all cached alternatives") ||
-        clean.toLowerCase().includes("no more") ||
-        clean.toLowerCase().includes("finished")) {
+      const lower = clean.toLowerCase();
+      if (lower.includes("all cached alternatives") || lower.includes("no more") || lower.includes("finished")) {
         setMessages(prev => [...prev, { role: "assistant", content: clean }]);
         setPendingAction(null);
         return;
@@ -368,7 +403,7 @@ export default function useChat() {
 
       setMessages(prev => [...prev, { role: "assistant", content: clean }]);
       setCurrentResponse(clean);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[rejectAction error]", err);
       setMessages(prev => [...prev, { role: "assistant", content: "Failed to get a new alternative." }]);
     } finally {
@@ -383,20 +418,19 @@ export default function useChat() {
     }
     try {
       createAbort();
-      setIsGenerating(true);
       setStatus("sending");
       setError("");
       const { base64, dataUrl } = await fileToBase64(uploadedImageFile);
 
       const form = new FormData();
       form.append("image", uploadedImageFile);
-      const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
+      const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }));
       if (!upResp.ok) {
         const t = await upResp.text().catch(() => "");
         throw new Error(`Upload failed: ${upResp.status} ${t}`);
       }
-      const upJson = await upResp.json();
-      const imageUrl = upJson.image_url;
+      const upJson = (await upResp.json()) as Record<string, unknown>;
+      const imageUrl = upJson.image_url as string | undefined;
       console.log("[searchSimilar] uploaded image, imageUrl:", imageUrl);
 
       if (!imageUrl) {
@@ -405,7 +439,7 @@ export default function useChat() {
           image_b64: base64,
           k: Number(k) || 1,
           min_sim: Number(min_sim),
-          order: "recent",
+          order: "recent" as const,
           require_audio: false,
         };
         const searchResp = await withAbort(fetch(`${FULL_API_URL}/search`, {
@@ -414,7 +448,7 @@ export default function useChat() {
           body: JSON.stringify(args),
         }));
         if (!searchResp.ok) throw new Error(`Search failed: ${searchResp.status}`);
-        const mcpResult = await searchResp.json();
+        const mcpResult = (await searchResp.json()) as { results?: unknown[] };
         const payload = {
           createdAt: Date.now(),
           k: args.k,
@@ -427,10 +461,11 @@ export default function useChat() {
       }
 
       const searchInstruction = `Search similar images: image_url=${imageUrl} k=${k} min_sim=${min_sim} order=recent require_audio=false`;
-      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: searchInstruction }] as any));
+      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: searchInstruction }]));
       console.log("[searchSimilar] chatRes:", chatRes);
 
-      const results = (chatRes as any).analysis_responses ?? (chatRes as any).results ?? (chatRes as any).bot_messages ?? [];
+      const rc = chatRes as RichChatResponse;
+      const results = rc.analysis_responses ?? (rc as unknown as { results?: unknown[] }).results ?? rc.bot_messages ?? [];
       const payload = {
         createdAt: Date.now(),
         k: Number(k) || 1,
@@ -441,20 +476,19 @@ export default function useChat() {
 
       try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
       return payload;
-    } catch (err: any) {
-      if ((err as any)?.name === "AbortError") {
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === "AbortError") {
         console.log("[searchSimilar] aborted");
       } else {
         console.error("[searchSimilar] error:", err);
-        setError(err?.message || "Search failed");
+        setError(errorMsg(err, "Search failed"));
       }
       return null;
     } finally {
-      setIsGenerating(false);
       setStatus("idle");
       if (abortRef.current) abortRef.current = null;
     }
-  }, [uploadedImageFile, fileToBase64, withAbort, createAbort, chatOnce, messages]);
+  }, [uploadedImageFile, fileToBase64, withAbort, createAbort, messages, errorMsg]);
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -463,7 +497,6 @@ export default function useChat() {
     createAbort();
 
     setStatus("sending");
-    setIsGenerating(true);
     setError("");
 
     if (text) setMessages(prev => [...prev, { role: "user", content: text }]);
@@ -483,14 +516,12 @@ export default function useChat() {
           console.log("[send] searchSimilar completed, navigating to /search");
           setMessages(prev => [...prev, { role: "assistant", content: "Thanks — preparing your search and redirecting to results now…" }]);
           setStatus("idle");
-          setIsGenerating(false);
           if (abortRef.current) abortRef.current = null;
           window.setTimeout(() => { window.location.href = "/search"; }, 2000);
           return;
         } else {
           console.warn("[send] searchSimilar returned null/failed");
           setStatus("idle");
-          setIsGenerating(false);
           if (abortRef.current) abortRef.current = null;
           setMessages(prev => [...prev, { role: "assistant", content: "Search did not start (see console). Please try again." }]);
           return;
@@ -510,12 +541,13 @@ export default function useChat() {
         }
 
         try {
-          const formDebug: Record<string, any> = {};
-          for (const pair of (Array.from(form.entries()) as [string, any][])) {
+          const formDebug: Record<string, unknown> = {};
+          for (const pair of (Array.from(form.entries()) as [string, FormDataEntryValue][])) {
             const k = pair[0];
             const v = pair[1];
-            if (v && typeof v === "object" && typeof v.name === "string") {
-              formDebug[k] = { filename: v.name, type: v.type || "unknown", size: v.size ?? "?" };
+            if (typeof v === "object" && "name" in v && typeof (v as File).name === "string") {
+              const f = v as File;
+              formDebug[k] = { filename: f.name, type: f.type || "unknown", size: typeof f.size === "number" ? f.size : "?" };
             } else {
               formDebug[k] = String(v);
             }
@@ -526,43 +558,46 @@ export default function useChat() {
         }
 
         console.log("[DEBUG] uploading to /uploads/tmp_media (filenameFromText):", filenameFromText);
-        const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }),);
+        const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }));
         if (!upResp.ok) {
           const t = await upResp.text().catch(() => "");
           throw new Error(`Upload failed: ${upResp.status} ${t}`);
         }
-        const upJson = await upResp.json();
-        console.log("[DEBUG] upload response upJson:", upJson);
+        const upJson = (await upResp.json()) as Record<string, unknown>;
+        console.log("[DEBUG] upload response upJson]:", upJson);
 
-        const finalBasename = (filenameFromText && filenameFromText.trim().length > 0)
-          ? filenameFromText.trim()
-          : (upJson && (upJson.basename ?? upJson.filename) ? (upJson.basename ?? upJson.filename) : null);
+        const finalBasename =
+          (filenameFromText && filenameFromText.trim().length > 0)
+            ? filenameFromText.trim()
+            : (upJson && (upJson.basename ?? upJson.filename) ? String(upJson.basename ?? upJson.filename) : null);
+
         console.log("[DEBUG] finalBasename to use:", finalBasename);
         const hasAudio = Boolean(upJson.audio_url) || Boolean(uploadedAudioFile);
-        const imageUrl = upJson.image_url;
-        const audioUrl = upJson.audio_url;
+        const imageUrl = upJson.image_url as string | undefined;
+        const audioUrl = upJson.audio_url as string | undefined;
         console.log("Image uploaded, imageUrl:", imageUrl, "audioUrl:", audioUrl);
 
         if (hasAudio) {
-          const toolArgs: any = { image_url: imageUrl, audio_url: audioUrl };
+          const toolArgs: Record<string, unknown> = { image_url: imageUrl, audio_url: audioUrl };
           if (finalBasename) toolArgs.filename = finalBasename;
           console.log("[DEBUG] routing media analysis via /chat with args:", toolArgs);
 
-          const mediaMsgParts = [];
-          if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url}`);
-          if (toolArgs.audio_url) mediaMsgParts.push(`audio_url=${toolArgs.audio_url}`);
-          if (toolArgs.filename) mediaMsgParts.push(`filename=${toolArgs.filename}`);
+          const mediaMsgParts: string[] = [];
+          if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url as string}`);
+          if (toolArgs.audio_url) mediaMsgParts.push(`audio_url=${toolArgs.audio_url as string}`);
+          if (toolArgs.filename) mediaMsgParts.push(`filename=${String(toolArgs.filename)}`);
           const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`;
 
-          const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }] as any));
+          const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }]));
           console.log("[DEBUG] chatRes (media analysis):", chatRes);
 
+          const rc = chatRes as RichChatResponse;
           handleResponse({
             reply: { role: "assistant", content: "Media uploaded and queued." },
-            bot_messages: (chatRes as any).bot_messages || [],
-            action: (chatRes as any).action,
-            analysis_responses: (chatRes as any).analysis_responses,
-          } as any);
+            bot_messages: rc.bot_messages || [],
+            action: rc.action,
+            analysis_responses: rc.analysis_responses,
+          } as ChatResponse);
 
           setMessages(prev => [...prev, { role: "assistant", content: "Thanks — your media has been uploaded. Redirecting you to the view page…" }]);
           scheduleNavigateToList();
@@ -570,37 +605,39 @@ export default function useChat() {
           const wantsAnalysis = /(?:\banalyz(?:e|ing|ed)\b|\banalyse\b|\binspect\b|\binspect(?:ion)?\b|\bscan\b)/i.test(text);
           if (wantsAnalysis && imageUrl) {
             const mode = getModeFromText(text);
-            console.log("[DEBUG] routing analysis via /chat with image_url and mode:", { imageUrl, mode });
+            console.log("[DEBUG] routing analysis via /chat with image_url and mode]:", { imageUrl, mode });
 
             const analysisInstruction = `Analyze image: image_url=${imageUrl} mode=${mode}`;
-            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: analysisInstruction }] as any));
+            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: analysisInstruction }]));
             console.log("[DEBUG] chatRes (analysis):", chatRes);
 
+            const rc = chatRes as RichChatResponse;
             handleResponse({
               reply: { role: "assistant", content: `Image uploaded and ${mode} analysis started.` },
-              bot_messages: (chatRes as any).bot_messages || [],
-              action: (chatRes as any).action,
-              analysis_responses: (chatRes as any).analysis_responses,
-            } as any);
+              bot_messages: rc.bot_messages || [],
+              action: rc.action,
+              analysis_responses: rc.analysis_responses,
+            } as ChatResponse);
           } else {
-            const toolArgs: any = { image_url: imageUrl, audio_url: null };
+            const toolArgs: Record<string, unknown> = { image_url: imageUrl, audio_url: null };
             if (finalBasename) toolArgs.filename = finalBasename;
             console.log("[DEBUG] routing no-audio media via /chat with args:", toolArgs);
 
-            const mediaMsgParts = [];
-            if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url}`);
-            if (toolArgs.filename) mediaMsgParts.push(`filename=${toolArgs.filename}`);
+            const mediaMsgParts: string[] = [];
+            if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url as string}`);
+            if (toolArgs.filename) mediaMsgParts.push(`filename=${String(toolArgs.filename)}`);
             const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`;
 
-            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }] as any));
+            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }]));
             console.log("[DEBUG] chatRes (no-audio):", chatRes);
 
+            const rc = chatRes as RichChatResponse;
             handleResponse({
               reply: { role: "assistant", content: "Image uploaded and queued for processing." },
-              bot_messages: (chatRes as any).bot_messages || [],
-              action: (chatRes as any).action,
-              analysis_responses: (chatRes as any).analysis_responses,
-            } as any);
+              bot_messages: rc.bot_messages || [],
+              action: rc.action,
+              analysis_responses: rc.analysis_responses,
+            } as ChatResponse);
           }
         }
 
@@ -613,26 +650,25 @@ export default function useChat() {
         return;
       }
 
-      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }] as any));
+      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }]));
       handleResponse(chatRes);
       setStatus("idle");
       if (abortRef.current) abortRef.current = null;
-    } catch (e: any) {
-      if ((e as any)?.name === "AbortError" || e?.message === "Aborted") {
+    } catch (e: unknown) {
+      if (e instanceof DOMException && e.name === "AbortError") {
         setStatus("idle");
         setError("");
       } else {
         setStatus("error");
-        setError(e?.message || "Something went wrong.");
+        setError(errorMsg(e, "Something went wrong."));
       }
     } finally {
-      setIsGenerating(false);
       if (abortRef.current) abortRef.current = null;
     }
   }, [
     input, messages, uploadedImageFile, uploadedAudioFile, status,
     handleResponse, clearImage, clearAudio, createAbort, withAbort,
-    chatOnce, extractFilenameFromText, scheduleNavigateToList, getModeFromText, searchSimilar
+    scheduleNavigateToList, getModeFromText, searchSimilar, errorMsg
   ]);
 
   const retryLast = useCallback(async () => {
@@ -645,22 +681,22 @@ export default function useChat() {
       const res = await withAbort(chatOnce(messages));
       handleResponse(res);
       setStatus("idle");
-    } catch (e: any) {
-      if ((e as any)?.name === "AbortError") {
+    } catch (e: unknown) {
+      if (e instanceof DOMException && e.name === "AbortError") {
         setStatus("idle");
         setError("");
       } else {
         setStatus("error");
-        setError(e?.message || "Something went wrong.");
+        setError(errorMsg(e, "Something went wrong."));
       }
     } finally {
       if (abortRef.current) abortRef.current = null;
     }
-  }, [messages, status, handleResponse, createAbort, withAbort]);
+  }, [messages, status, handleResponse, createAbort, withAbort, errorMsg]);
 
   const newChat = useCallback(() => {
     if (abortRef.current) {
-      try { abortRef.current.abort(); } catch { }
+      try { abortRef.current.abort(); } catch { /* ignore */ }
       abortRef.current = null;
     }
 

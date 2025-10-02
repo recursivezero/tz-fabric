@@ -127,6 +127,9 @@ export default function Composer({
     return `${mm}:${ss}`;
   };
 
+  const errorMessage = (e: unknown, fallback: string) =>
+    e instanceof Error ? e.message : (typeof e === "string" ? e : fallback);
+
   const startRecording = async () => {
     setError(null);
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -184,9 +187,9 @@ export default function Composer({
           return s + 1;
         });
       }, 1000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("startRecording err", err);
-      setError(err?.message || "Could not access microphone.");
+      setError(errorMessage(err, "Could not access microphone."));
     }
   };
 
@@ -222,14 +225,13 @@ export default function Composer({
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         try {
           mediaRecorderRef.current.stop();
-        } catch {}
+        } catch { }
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => {
