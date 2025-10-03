@@ -99,7 +99,7 @@ target/
 
 # Notebook Checkpoints
 .ipynb_checkpoints/
-
+assets/
 vector_store/
 .env
 /backend/assets/
