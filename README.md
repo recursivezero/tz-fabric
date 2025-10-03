@@ -1,7 +1,8 @@
 # 🧵 Fabric Analyzer
 
 ```text
-**Fabric Analyzer** is an AI-powered web application that analyzes fabric images to provide insightful textual descriptions.
+Fabric Analyzer is an AI-powered web application that analyzes fabric 
+images to provide insightful textual descriptions.
 ```
 
 🚀 Features
@@ -13,12 +14,16 @@
 🧠 Response caching for fast navigation (Prev/Next)
 ✅ Validates whether uploaded image is a proper fabric image
 🧭 Drawer and navigation UI for enhanced experience
+Upload and record of fabric images and related audios
+Search Similar images through a query
+A agentic chatbot for fabric queries and task
 ```
 
 🛠️ Tech Stack of Frontend
 
 ```text
 React
+Typescript
 css
 
 Prerequisites to use react
@@ -31,6 +36,9 @@ Prerequisites to use react
 ```text
 Fastapi
 google-generative(gemini-api)
+Langchain agents
+MCP
+Groq
 Pillow
 base64
 ```
@@ -50,43 +58,16 @@ frontend/
 │
 ├── src/
 │   │── components/
-│   │    │──descriptionBox.jsx        # Fabric sample images
-│   │    │──drawerToggle.jsx
-│   │    │──Header.jsx
-│   │    │──imagePreviewPanel.jsx
-│   │    │──Loader.jsx
-│   │    │──SampleImageGalleryCard.jsx
-│   │    │──SearchBar.jsx
-│
 │   ├── hooks/
-│   │    ├── useImageAnalysis.js
-│
 │   │── Pages/
-│   │    ├── Home.jsx
-│
 │   ├── Services/
-│   │    ├── analyze_Api.js
+│   ├── utils/                       
+│   ├── services/                    
 │
-│   │── components/
-│   │    │──DescriptionBox.css        # Fabric sample images
-│   │    │──DrawerToggle.css
-│   │    │──Header.css
-│   │    │──ImagePreviewPanel.css
-│   │    │──Loader.css
-│   │    │──SampleImageGalleryCard.css
-│   │    │──SearchBar.css
-│
-│
-│   ├── utils/                       # Page-level logic
-│   │   └── imageUtils.js
-│
-│   ├── services/                    # API interaction logic
-│   │   └── analyze_Api.js
-│
-├── App.css                       # Custom hooks
+├── App.css                     
 ├── App.js
 ├── App.test.js
-├── index.css                    # Utility functions
+├── index.css                    
 ├── index.js
 ├── logo.svg
 ├── reportWebVitals.js
@@ -101,21 +82,9 @@ backend/
 ├── main.py
 ├── .env
 ├── routes/
-│   ├── analysis.py
-│   ├── regenerate.py
-│   ├── validate_image.py
-│
 ├── services/
-│   ├── generate_response.py
-│   ├── threaded.py
-│
 ├── utils/
-│   ├── cache.py
-│   ├── gemini_ap_initialize.py
-│   └── gemini_client.py
-│   ├── image_utils.py
-│   ├── prompt_generator.py
-│   └── validate_image_base64.py
+
 ```
 
 🔄 API Flow
@@ -124,6 +93,7 @@ backend/
 POST /api/validate-image — Validates if uploaded image is a fabric
 POST /api/analyze-image — Runs Gemini analysis (short or long)
 POST /api/regenerate — Regenerates response set for same image + mode
+POST /api/
 ```
 
 ## How to start
@@ -135,7 +105,7 @@ git clone https://github.com/recursivezero/tz-fabric.git
 cd backend
 curl -sSL https://install.python-poetry.org | python3 -
 poetry install - to install all the dependencies
-uvicorn main:app --reload --port 8000 or you can choose another ports also
+poetry run dev
 ```
 
 🛋️ Frontend
@@ -146,7 +116,7 @@ cd frontend_image_Search
 npm install  -> to download the node modules
 npm install axios -> for backend integration
 npm install react-icons // if react-icons is not installed
-npm start -> if you find errors then remove the node modules and again run the insatll command
+npm run dev
 ```
 
 📡 API Endpoints
@@ -165,26 +135,34 @@ Endpoint              Method     Description
 Homepage
 ```
 
-![Homepage](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(219).png>)
+![Homepage](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(364).png>)
 
 ```text
-SampleImageResult
+Image Analysis Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(228).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(365).png>)
 
 ```text
-UploadImage - When the image is not a valid fabric
+Upload Media Page
 ```
 
-![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(230).png>)
+![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(366).png>)
 
 ```text
-UploadedImageResults
+List Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(229).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(367).png>)
 
 ```text
-Note : you might see this that after clicking analysis the page got disappeared/blanked then this can be a issue of gemini free quota completed
+Search Page
 ```
+
+![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(369).png>)
+
+```text
+Chat Page
+```
+
+![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(370).png>)
