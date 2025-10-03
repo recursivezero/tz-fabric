@@ -135,34 +135,34 @@ Endpoint              Method     Description
 Homepage
 ```
 
-![Homepage](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(364).png>)
+![Homepage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(364).png>)
 
 ```text
 Image Analysis Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(365).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(365).png>)
 
 ```text
 Upload Media Page
 ```
 
-![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(366).png>)
+![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(366).png>)
 
 ```text
 List Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(367).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(367).png>)
 
 ```text
 Search Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(369).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(369).png>)
 
 ```text
 Chat Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/develop/frontend/src/assests/screenshots/Screenshot%20(370).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(370).png>)
