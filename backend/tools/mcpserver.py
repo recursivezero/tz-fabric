@@ -78,13 +78,6 @@ def _normalize_responses(raw) -> List[Dict[str, str]]:
         return out
     return [{"id": "r0", "text": str(raw)}]
 
-
-def _rotate_next(responses: List[Dict[str, str]], used_ids: List[str]) -> Optional[Dict[str, str]]:
-    for r in responses:
-        if r["id"] not in (used_ids or []):
-            return r
-    return None
-
 def _resolve_image_path_from_url(image_url: Optional[str]) -> Optional[str]:
     if not image_url:
         return None
@@ -201,7 +194,7 @@ def regenerate(
     # ✅ If all are served
     return {
         "error": "exhausted",
-        "message": "All cached alternatives have been shown."
+        "message": "All cached alternatives have been shown. Upload the image to analyze again."
     }
 
 @mcp.tool()

@@ -48,11 +48,10 @@ export default function Composer({
   const attachBtnRef = useRef<HTMLButtonElement | null>(null);
   const attachMenuRef = useRef<HTMLDivElement | null>(null);
 
-  // file input refs
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
-  // Input file handlers
   const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f && onUpload) onUpload(f);
@@ -137,6 +136,12 @@ export default function Composer({
       return;
     }
     try {
+      // clear any existing timer to avoid duplicates
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
@@ -170,6 +175,13 @@ export default function Composer({
             });
             streamRef.current = null;
           }
+          // ensure timer is cleared and state is reset
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          startTimeRef.current = null;
+          setIsRecording(false);
         }
       };
 
@@ -178,20 +190,24 @@ export default function Composer({
       setIsRecording(true);
       setSeconds(0);
 
+      // record precise start time
+      startTimeRef.current = performance.now();
+
       timerRef.current = window.setInterval(() => {
-        setSeconds((s) => {
-          if (s + 1 >= MAX_SECONDS) {
-            stopRecording();
-            return MAX_SECONDS;
-          }
-          return s + 1;
-        });
-      }, 1000);
+        if (startTimeRef.current == null) return;
+        const elapsedMs = performance.now() - startTimeRef.current;
+        const sec = Math.floor(elapsedMs / 1000);
+        setSeconds(sec);
+        if (sec >= MAX_SECONDS) {
+          stopRecording();
+        }
+      }, 250);
     } catch (err: unknown) {
       console.error("startRecording err", err);
       setError(errorMessage(err, "Could not access microphone."));
     }
   };
+
 
   const stopRecording = () => {
     try {
@@ -206,10 +222,27 @@ export default function Composer({
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+      startTimeRef.current = null;
       mediaRecorderRef.current = null;
     }
   };
-
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch { }
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => {
+          t.stop();
+        });
+        streamRef.current = null;
+      }
+      startTimeRef.current = null;
+    };
+  }, []);
   useEffect(() => {
     const onDoc = (ev: MouseEvent) => {
       if (!attachMenuRef.current || !attachBtnRef.current) return;
@@ -319,6 +352,7 @@ export default function Composer({
                 aria-expanded={showAttachMenu}
                 onClick={() => setShowAttachMenu((s) => !s)}
                 title="Attachments"
+                disabled={disabled}
               >
                 +
               </button>
@@ -329,6 +363,7 @@ export default function Composer({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 rows={1}
+                disabled={disabled}
               />
 
               {showAttachMenu && (

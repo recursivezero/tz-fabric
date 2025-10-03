@@ -191,6 +191,7 @@ export default function Chat() {
               value={input}
               onChange={setInput}
               onSend={send}
+              disabled={status === "sending"}
               onUpload={handleImageUpload}
               onAudioUpload={handleAudioUpload}
               previewUrl={uploadedPreviewUrl}
