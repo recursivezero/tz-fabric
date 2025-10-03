@@ -14,9 +14,9 @@ images to provide insightful textual descriptions.
 🧠 Response caching for fast navigation (Prev/Next)
 ✅ Validates whether uploaded image is a proper fabric image
 🧭 Drawer and navigation UI for enhanced experience
-Upload and record of fabric images and related audios
-Search Similar images through a query
-A agentic chatbot for fabric queries and task
+📤 Upload and record of fabric images and related audios
+🔎 Search Similar images through a query
+🤖 An agentic chatbot for fabric queries and task
 ```
 
 🛠️ Tech Stack of Frontend
@@ -43,6 +43,12 @@ Pillow
 base64
 ```
 
+🛠️ Tech Stack of Databases
+
+```text
+-> MongoDB
+```
+
 📁 Folder Structure of Frontend
 
 ```text
@@ -57,9 +63,10 @@ frontend/
 │   ├── robots.txt
 │
 ├── src/
-│   │── components/
+│   ├── assets/
+│   ├── components/
 │   ├── hooks/
-│   │── Pages/
+│   ├── Pages/
 │   ├── Services/
 │   ├── utils/                       
 │   ├── services/                    
@@ -80,11 +87,19 @@ frontend/
 ```text
 backend/
 ├── main.py
+├── cli.py
+├── LICENSE-PYTHON
 ├── .env
+├── agent/
+├── core/
 ├── routes/
 ├── services/
+├── static/
+├── templates/
+├── tools/
 ├── utils/
-
+├── pyproject.toml/
+├── README.md/
 ```
 
 🔄 API Flow
@@ -93,7 +108,13 @@ backend/
 POST /api/validate-image — Validates if uploaded image is a fabric
 POST /api/analyze-image — Runs Gemini analysis (short or long)
 POST /api/regenerate — Regenerates response set for same image + mode
-POST /api/
+POST /api/chat - chatbot
+GET  /api/assets/images/{filename} - for getting the images
+GET  /api/assets/audios/{filename} - for getting the audios
+GET  /api/media/content - for listing the uploaded media
+POST /api/search - for searching the similar images
+POST /api/submit - for uploading the media
+POST /api/uploads/tmp_media - for storing the media in chat 
 ```
 
 ## How to start
@@ -117,16 +138,6 @@ npm install  -> to download the node modules
 npm install axios -> for backend integration
 npm install react-icons // if react-icons is not installed
 npm run dev
-```
-
-📡 API Endpoints
-
-```text
-Endpoint              Method     Description
-
-/api/analysis          POST      Runs Gemini analysis (short or long)
-/api/regenerate        POST      Regenerates response (cache)
-/api/validate_image    POST      Validates if uploaded image is a fabric
 ```
 
 🖼️ Screenshots
