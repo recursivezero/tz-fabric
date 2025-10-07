@@ -11,7 +11,7 @@ from constants import API_PREFIX, IMAGE_DIR,AUDIO_DIR, ASSETS
 import os
 from utils.emoji_logger import get_logger
 
-from routes import analysis, regenerate, validate_image, search, submit, media, chat, mcp_proxy, uploads
+from routes import analysis, regenerate, validate_image, search, submit, media, chat, uploads
 from tools.mcpserver import sse_app
 
 app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
@@ -101,7 +101,6 @@ app.include_router(search.router, prefix=API_PREFIX)
 app.include_router(submit.router, prefix=API_PREFIX)
 app.include_router(media.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix=API_PREFIX)
-app.include_router(mcp_proxy.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 
 app.mount("/mcp", sse_app())

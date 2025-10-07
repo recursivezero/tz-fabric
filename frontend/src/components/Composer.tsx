@@ -22,6 +22,16 @@ type Props = {
 
 const MAX_SECONDS = 60;
 
+// ---- NEW: locking modes ----
+type Mode = "free" | "analysis" | "submitName" | "searchK";
+
+const textForAnalysisShort = "Analyze this image (short analysis).";
+const textForAnalysisLong = "Analyze this image (long analysis).";
+const textForSubmitName = (nm: string) =>
+  nm.trim() ? `Submit files — Name: ${nm}` : `Submit files — Name: [name]`;
+const textForSearchK = (k: number) =>
+  `Search similar images (k=${Math.max(1, Math.floor(k || 1))}).`;
+
 export default function Composer({
   value,
   onChange,
@@ -52,12 +62,18 @@ export default function Composer({
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
+  // ---- NEW: mode + tiny inputs state ----
+  const [mode, setMode] = useState<Mode>("free");
+  const [nameOnly, setNameOnly] = useState<string>("");
+  const [kOnly, setKOnly] = useState<number>(3);
+
   const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f && onUpload) onUpload(f);
     (e.target as HTMLInputElement).value = "";
     setShowAttachMenu(false);
   };
+
   const onAudioFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -89,29 +105,34 @@ export default function Composer({
     setShowAttachMenu(false);
   };
 
+  // ---- UPDATED: chips set mode + controlled message ----
   const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
     if (actionId === "image:analyze_short") {
-      onChange("Analyze this image (short analysis).");
+      setMode("analysis");
+      onChange(textForAnalysisShort);
       return;
     }
     if (actionId === "image:analyze_long") {
-      onChange("Analyze this image (long analysis).");
+      setMode("analysis");
+      onChange(textForAnalysisLong);
       return;
     }
     if (actionId === "image:search_similar") {
       const DEFAULT_K = 3;
-      onChange(`Search similar images (k=${DEFAULT_K}).`);
+      setMode("searchK");
+      setKOnly(DEFAULT_K);
+      onChange(textForSearchK(DEFAULT_K));
       return;
     }
     if (actionId === "submit:both") {
+      setMode("submitName");
       onChange("Submit files");
       return;
     }
     if (actionId === "submit:both_with_names") {
-      const trimmed = value ? value.trim() : "";
-      if (!trimmed) {
-        onChange("Please submit the attached image and audio with [name].");
-      }
+      setMode("submitName");
+      setNameOnly("");
+      onChange(textForSubmitName(""));
       return;
     }
   };
@@ -136,7 +157,6 @@ export default function Composer({
       return;
     }
     try {
-      // clear any existing timer to avoid duplicates
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -175,7 +195,6 @@ export default function Composer({
             });
             streamRef.current = null;
           }
-          // ensure timer is cleared and state is reset
           if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
@@ -190,7 +209,6 @@ export default function Composer({
       setIsRecording(true);
       setSeconds(0);
 
-      // record precise start time
       startTimeRef.current = performance.now();
 
       timerRef.current = window.setInterval(() => {
@@ -207,7 +225,6 @@ export default function Composer({
       setError(errorMessage(err, "Could not access microphone."));
     }
   };
-
 
   const stopRecording = () => {
     try {
@@ -226,6 +243,7 @@ export default function Composer({
       mediaRecorderRef.current = null;
     }
   };
+
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -243,6 +261,7 @@ export default function Composer({
       startTimeRef.current = null;
     };
   }, []);
+
   useEffect(() => {
     const onDoc = (ev: MouseEvent) => {
       if (!attachMenuRef.current || !attachBtnRef.current) return;
@@ -256,23 +275,6 @@ export default function Composer({
     };
     document.addEventListener("click", onDoc);
     return () => document.removeEventListener("click", onDoc);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch { }
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => {
-          t.stop();
-        });
-        streamRef.current = null;
-      }
-    };
   }, []);
 
   return (
@@ -298,7 +300,9 @@ export default function Composer({
           }}
         >
           <span style={{ fontWeight: 600, color: "#c72525" }}>● Recording</span>
-          <span style={{ color: "black", opacity: 0.85 }}>{fmt(seconds)} / {fmt(MAX_SECONDS)}</span>
+          <span style={{ color: "black", opacity: 0.85 }}>
+            {fmt(seconds)} / {fmt(MAX_SECONDS)}
+          </span>
         </div>
       )}
 
@@ -361,9 +365,16 @@ export default function Composer({
                 className={`composer-input`}
                 placeholder="Ask about your fabric analysis..."
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={(e) => {
+                  if (mode === "free") {
+                    onChange(e.target.value);
+                  } else {
+                    e.preventDefault();
+                  }
+                }}
                 rows={1}
                 disabled={disabled}
+                readOnly={mode !== "free"}
               />
 
               {showAttachMenu && (
@@ -445,7 +456,55 @@ export default function Composer({
             </div>
           </div>
         </div>
+        {mode === "analysis" && (
+          <div
+            className="locked-controls"
+            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
+          >
+          </div>
+        )}
 
+        {mode === "submitName" && (
+          <div
+            className="locked-controls"
+            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
+          >
+            <label style={{ fontSize: 18, color: "black" }}>Name:</label>
+            <input
+              type="text"
+              value={nameOnly}
+              onChange={(e) => {
+                const nm = e.target.value;
+                setNameOnly(nm);
+                onChange(textForSubmitName(nm));
+              }}
+              placeholder="Your name"
+              style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #000000ff" }}
+            />
+
+          </div>
+        )}
+
+        {mode === "searchK" && (
+          <div
+            className="locked-controls"
+            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
+          >
+            <label style={{ fontSize: 20, color: "black" }}>k:</label>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={kOnly}
+              onChange={(e) => {
+                const nextK = Math.max(1, Math.floor(Number(e.target.value) || 1));
+                setKOnly(nextK);
+                onChange(textForSearchK(nextK));
+              }}
+              style={{ width: 80, padding: "6px 8px", borderRadius: 6, border: "1px solid #000000ff" }}
+            />
+          </div>
+        )}
         <SuggestionChips
           hasImage={!!previewUrl}
           hasAudio={!!audioUrl}
