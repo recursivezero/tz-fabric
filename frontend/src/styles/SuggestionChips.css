@@ -37,7 +37,7 @@
 
 /* primary accent */
 .chip.primary {
-  background: white;
+  background: #f1f5f9;
   color: #000000;
   border: none;
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);

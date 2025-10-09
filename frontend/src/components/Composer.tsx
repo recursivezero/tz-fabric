@@ -36,6 +36,12 @@ const textForSearchK = (k: number) =>
 const randInt = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
+// ---- NEW: size formatter ----
+const formatSize = (bytes: number) =>
+  bytes < 1024 * 1024
+    ? `${(bytes / 1024).toFixed(1)} KB`
+    : `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+
 export default function Composer({
   value,
   onChange,
@@ -71,9 +77,16 @@ export default function Composer({
   const [nameOnly, setNameOnly] = useState<string>("");
   const [kOnly, setKOnly] = useState<number>(3); // still keep internal state to display chosen k if needed
 
+  // ---- NEW: file meta states ----
+  const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
+  const [audioMeta, setAudioMeta] = useState<{ name: string; size: string } | null>(null);
+
   const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f && onUpload) onUpload(f);
+    if (f && onUpload) {
+      onUpload(f);
+      setImageMeta({ name: f.name, size: formatSize(f.size) });
+    }
     (e.target as HTMLInputElement).value = "";
     setShowAttachMenu(false);
   };
@@ -93,11 +106,12 @@ export default function Composer({
 
       if (duration > MAX_SECONDS) {
         setError("Audio file too long. Please upload a clip of 1 minute or less.");
-        if (onClearAudio) onClearAudio();
+        onClearAudio?.();
         return;
       }
 
-      if (onAudioUpload) onAudioUpload(f);
+      onAudioUpload?.(f);
+      setAudioMeta({ name: f.name, size: formatSize(f.size) });
       setError(null);
     };
 
@@ -186,7 +200,8 @@ export default function Composer({
           const filename = `recording-${timestamp}.${ext}`;
           const file = new File([blob], filename, { type: mime });
 
-          if (onAudioUpload) onAudioUpload(file);
+          onAudioUpload?.(file);
+          setAudioMeta({ name: file.name, size: formatSize(file.size) });
         } catch (ex) {
           console.error("onstop processing error", ex);
           setError("Failed to process recording.");
@@ -252,7 +267,7 @@ export default function Composer({
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         try {
           mediaRecorderRef.current.stop();
-        } catch { }
+        } catch {}
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => {
@@ -320,9 +335,17 @@ export default function Composer({
             {previewUrl && (
               <div className="upload-preview image-preview">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
+                {imageMeta && (
+                  <div style={{ color: "black", fontSize: 13, marginTop: 4 }}>
+                    {imageMeta.name} ({imageMeta.size})
+                  </div>
+                )}
                 <button
                   className="upload-remove"
-                  onClick={onClearUpload}
+                  onClick={() => {
+                    onClearUpload?.();
+                    setImageMeta(null);
+                  }}
                   type="button"
                   aria-label="Remove image"
                 >
@@ -334,9 +357,17 @@ export default function Composer({
             {audioUrl && (
               <div className="upload-preview audio-preview">
                 <audio controls src={audioUrl} />
+                {audioMeta && (
+                  <div style={{ color: "black", fontSize: 13, marginTop: 4 }}>
+                    {audioMeta.name} ({audioMeta.size})
+                  </div>
+                )}
                 <button
                   className="upload-remove"
-                  onClick={onClearAudio}
+                  onClick={() => {
+                    onClearAudio?.();
+                    setAudioMeta(null);
+                  }}
                   type="button"
                   aria-label="Remove audio"
                 >
@@ -374,6 +405,7 @@ export default function Composer({
                     e.preventDefault();
                   }
                 }}
+                style={{ color: "black" }}
                 rows={1}
                 disabled={disabled}
                 readOnly={mode !== "free"}
@@ -421,9 +453,9 @@ export default function Composer({
           </div>
 
           <div className="composer-right">
-            <div style={{ display: "flex", gap: 6, alignItems: "center"}}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <button
-                style={{ color: "black"}}
+                style={{ color: "black" }}
                 type="button"
                 onClick={startRecording}
                 disabled={isRecording}
@@ -435,7 +467,7 @@ export default function Composer({
               </button>
 
               <button
-                style={{ color: "black"}}
+                style={{ color: "black" }}
                 type="button"
                 onClick={stopRecording}
                 disabled={!isRecording}
@@ -465,8 +497,7 @@ export default function Composer({
           <div
             className="locked-controls"
             style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
-          >
-          </div>
+          ></div>
         )}
 
         {mode === "submitName" && (
@@ -539,8 +570,8 @@ export default function Composer({
             previewUrl && !audioUrl
               ? "Image uploaded — choose an analysis:"
               : previewUrl && audioUrl
-                ? "Image + audio uploaded — quick submission options:"
-                : undefined
+              ? "Image + audio uploaded — quick submission options:"
+              : undefined
           }
           name={value ? value.trim() : null}
           onAction={(actionId, opts) => {
