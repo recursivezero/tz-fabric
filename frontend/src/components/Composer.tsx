@@ -32,6 +32,10 @@ const textForSubmitName = (nm: string) =>
 const textForSearchK = (k: number) =>
   `Search similar images (k=${Math.max(1, Math.floor(k || 1))}).`;
 
+// helper: random int inclusive
+const randInt = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
 export default function Composer({
   value,
   onChange,
@@ -65,7 +69,7 @@ export default function Composer({
   // ---- NEW: mode + tiny inputs state ----
   const [mode, setMode] = useState<Mode>("free");
   const [nameOnly, setNameOnly] = useState<string>("");
-  const [kOnly, setKOnly] = useState<number>(3);
+  const [kOnly, setKOnly] = useState<number>(3); // still keep internal state to display chosen k if needed
 
   const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -118,10 +122,8 @@ export default function Composer({
       return;
     }
     if (actionId === "image:search_similar") {
-      const DEFAULT_K = 3;
       setMode("searchK");
-      setKOnly(DEFAULT_K);
-      onChange(textForSearchK(DEFAULT_K));
+      onChange("Search similar images — choose a number: <10 or >10.");
       return;
     }
     if (actionId === "submit:both") {
@@ -419,8 +421,9 @@ export default function Composer({
           </div>
 
           <div className="composer-right">
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center"}}>
               <button
+                style={{ color: "black"}}
                 type="button"
                 onClick={startRecording}
                 disabled={isRecording}
@@ -432,6 +435,7 @@ export default function Composer({
               </button>
 
               <button
+                style={{ color: "black"}}
                 type="button"
                 onClick={stopRecording}
                 disabled={!isRecording}
@@ -456,6 +460,7 @@ export default function Composer({
             </div>
           </div>
         </div>
+
         {mode === "analysis" && (
           <div
             className="locked-controls"
@@ -481,7 +486,6 @@ export default function Composer({
               placeholder="Your name"
               style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #000000ff" }}
             />
-
           </div>
         )}
 
@@ -490,21 +494,43 @@ export default function Composer({
             className="locked-controls"
             style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
           >
-            <label style={{ fontSize: 20, color: "black" }}>k:</label>
-            <input
-              type="number"
-              min={1}
-              step={1}
-              value={kOnly}
-              onChange={(e) => {
-                const nextK = Math.max(1, Math.floor(Number(e.target.value) || 1));
-                setKOnly(nextK);
-                onChange(textForSearchK(nextK));
+            <span style={{ fontSize: 16, color: "black" }}>Choose a number:</span>
+
+            <button
+              type="button"
+              className="attach-menu-item"
+              onClick={() => {
+                const k = randInt(1, 10);
+                setKOnly(k);
+                onChange(textForSearchK(k));
               }}
-              style={{ width: 80, padding: "6px 8px", borderRadius: 6, border: "1px solid #000000ff" }}
-            />
+              disabled={disabled}
+              aria-label="Pick k less than 10"
+              title="Pick k in 1–10"
+            >
+              &lt; 10
+            </button>
+
+            <button
+              type="button"
+              className="attach-menu-item"
+              onClick={() => {
+                const k = randInt(11, 100);
+                setKOnly(k);
+                onChange(textForSearchK(k));
+              }}
+              disabled={disabled}
+              aria-label="Pick k greater than 10"
+              title="Pick k in 11–100"
+            >
+              &gt; 10
+            </button>
+            <span aria-live="polite" style={{ marginLeft: 6, opacity: 0.8 }}>
+              {Number.isFinite(kOnly) ? `Selected k: ${kOnly}` : ""}
+            </span>
           </div>
         )}
+
         <SuggestionChips
           hasImage={!!previewUrl}
           hasAudio={!!audioUrl}

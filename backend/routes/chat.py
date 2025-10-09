@@ -2,7 +2,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
-import json
 import re
 import logging
 
@@ -72,13 +71,6 @@ MAX_MESSAGES = 30
 MAX_TOTAL_CHARS = 20000
 
 def _extract_text_from_message_item(item: Any) -> Optional[str]:
-    """
-    Try multiple strategies to get readable text from an item that may be:
-      - a dict with 'content'
-      - an object with .content attribute (LangChain AIMessage)
-      - a string representation like "AIMessage(content='...')"
-    Returns None if no readable content found.
-    """
     if item is None:
         return None
     # dict-like
@@ -154,8 +146,6 @@ def chat_endpoint(body: ChatRequest):
         logger.exception("Agent graph invocation failed")
         raise HTTPException(status_code=502, detail=f"Agent error: {str(e)}")
 
-    # ---------- Normalize/parse result ----------
-    # If it's a dict-like (tool response), attempt to extract action / bot_messages / analysis_responses
     if isinstance(result, dict):
         out = result
         bot_messages = out.get("bot_messages") or []
