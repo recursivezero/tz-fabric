@@ -4,7 +4,7 @@ import { chatOnce, type Message, type ChatResponse } from "../services/chat_api"
 import { FULL_API_URL } from "../constants";
 import { extractFilenameFromText } from "../utils/extractFilenameFromText";
 
-type Status = "idle" | "sending" | "error";
+type Status = "idle" | "sending" | "error" | "validating";
 
 type AnalysisItem = { id?: string; text?: string; content?: string };
 type ToolActionParams = {
@@ -142,7 +142,9 @@ export default function useChat() {
 
   // seed welcome once
   useEffect(() => {
-    if (messages.length === 0) {
+    const seen = sessionStorage.getItem("fabricAI_welcome_seen");
+
+    if (messages.length === 0 && !seen) {
       setMessages([
         {
           id: "welcome",
@@ -154,6 +156,8 @@ export default function useChat() {
 - 🔁 Regenerating and comparing results`),
         },
       ]);
+
+      sessionStorage.setItem("fabricAI_welcome_seen", "1");
     }
   }, [messages.length]);
 
@@ -174,19 +178,37 @@ export default function useChat() {
   );
 
   const validateImageFile = useCallback(async (file: File) => {
+    const t0 = performance.now();
     try {
       const form = new FormData();
       form.append("image", file);
-      const resp = await fetch(`${FULL_API_URL}/validate-image`, { method: "POST", body: form });
+      const tForm = performance.now();
+
+      const ac = new AbortController();
+      const timeout = setTimeout(() => ac.abort(), 30000);
+
+      const resp = await fetch(`${FULL_API_URL}/validate-image`, {
+        method: "POST",
+        body: form,
+        signal: ac.signal,
+      });
+      clearTimeout(timeout);
+      const tResp = performance.now();
 
       if (!resp.ok) {
         const txt = await resp.text().catch(() => "");
+        console.log("[timing] form:", (tForm - t0).toFixed(0), "ms | request:", (tResp - tForm).toFixed(0), "ms");
         return { ok: false as const, reason: `Validation service error: ${resp.status} ${txt}` };
       }
 
       const json: unknown = await resp.json().catch(() => ({}));
+      const tJson = performance.now();
+
+      console.log("[timing] form:", (tForm - t0).toFixed(0), "ms | request:", (tResp - tForm).toFixed(0), "ms | json:", (tJson - tResp).toFixed(0), "ms");
+
       const valid = typeof json === "object" && json !== null && (json as { valid?: boolean }).valid === true;
       if (valid) return { ok: true as const };
+
       const reason = (json as { reason?: string }).reason;
       if (typeof reason === "string") return { ok: false as const, reason };
       return { ok: false as const, reason: "Image did not pass fabric validation." };
@@ -196,17 +218,19 @@ export default function useChat() {
     }
   }, [errorMsg]);
 
+
   const handleImageUpload = useCallback(
     async (file: File) => {
       if (uploadedPreviewUrl) {
-        try { URL.revokeObjectURL(uploadedPreviewUrl); } catch { /* ignore */ }
+        try { URL.revokeObjectURL(uploadedPreviewUrl); } catch { }
       }
 
-      setStatus("sending");
+      setStatus("validating");
       setError("");
 
       try {
         const res = await validateImageFile(file);
+
         if (!res.ok) {
           setStatus("idle");
           setError(res.reason || "Image validation failed. Please try another close-up fabric photo.");
@@ -228,6 +252,7 @@ export default function useChat() {
     },
     [uploadedPreviewUrl, validateImageFile, errorMsg]
   );
+
 
   const handleAudioUpload = useCallback(
     (file: File) => {
@@ -490,8 +515,9 @@ export default function useChat() {
     }
   }, [uploadedImageFile, fileToBase64, withAbort, createAbort, messages, errorMsg]);
 
-  const send = useCallback(async () => {
-    const text = input.trim();
+  const send = useCallback(async (overrideText?: string) => {
+    const raw = typeof overrideText === "string" ? overrideText : input;
+    const text = raw.trim();
     if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
 
     createAbort();
@@ -500,8 +526,7 @@ export default function useChat() {
     setError("");
 
     if (text) setMessages(prev => [...prev, { role: "user", content: text }]);
-    setInput("");
-
+    if (!overrideText) setInput("");
     try {
       const searchIntentMatch = text.match(/^\s*search\s+similar\s+images\b/i);
       if (searchIntentMatch) {

@@ -1,3 +1,4 @@
-export default function TypingIndicator() {
-  return <div className="typing">Bot is thinking…</div>;
+type Props = { text?: string };
+export default function TypingIndicator({ text }: Props) {
+  return <div className="typing">{text ?? "Bot is thinking…"}</div>;
 }

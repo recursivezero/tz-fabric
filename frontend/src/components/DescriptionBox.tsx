@@ -18,7 +18,6 @@ const DescriptionBox = ({
   const [copied, setCopied] = useState(false);
   const isError = isValidImage === false && validationMessage;
 
-  // Determine the text currently shown to the user
   const displayedText = isError
     ? validationMessage
     : loading
@@ -29,7 +28,6 @@ const DescriptionBox = ({
 
   const handleCopy = async () => {
     const textToCopy =
-      // if it's an error or loading or placeholder, don't copy
       isError || loading ? "" : currentIndex === 0 ? typedText : description;
 
     if (!textToCopy) return;

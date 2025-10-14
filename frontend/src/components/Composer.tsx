@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import type React from "react";
 import SuggestionChips from "./SuggestionChips";
 import "../styles/Composer.css";
+import Loader from "./Loader";
 
 type Props = {
   value: string;
@@ -18,11 +19,11 @@ type Props = {
   onChipAction?: (actionId: string, opts?: { name?: string }) => void;
   fileName?: string;
   setFileName?: (name: string) => void;
+  status?: string;
 };
 
 const MAX_SECONDS = 60;
 
-// ---- NEW: locking modes ----
 type Mode = "free" | "analysis" | "submitName" | "searchK";
 
 const textForAnalysisShort = "Analyze this image (short analysis).";
@@ -32,11 +33,9 @@ const textForSubmitName = (nm: string) =>
 const textForSearchK = (k: number) =>
   `Search similar images (k=${Math.max(1, Math.floor(k || 1))}).`;
 
-// helper: random int inclusive
 const randInt = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
-// ---- NEW: size formatter ----
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024
     ? `${(bytes / 1024).toFixed(1)} KB`
@@ -54,6 +53,7 @@ export default function Composer({
   onClearUpload,
   onClearAudio,
   onChipAction,
+  status,
 }: Props) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -63,7 +63,6 @@ export default function Composer({
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
 
-  // attach menu state
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const attachBtnRef = useRef<HTMLButtonElement | null>(null);
   const attachMenuRef = useRef<HTMLDivElement | null>(null);
@@ -128,11 +127,13 @@ export default function Composer({
     if (actionId === "image:analyze_short") {
       setMode("analysis");
       onChange(textForAnalysisShort);
+      onSend();
       return;
     }
     if (actionId === "image:analyze_long") {
       setMode("analysis");
       onChange(textForAnalysisLong);
+      onSend();
       return;
     }
     if (actionId === "image:search_similar") {
@@ -143,6 +144,7 @@ export default function Composer({
     if (actionId === "submit:both") {
       setMode("submitName");
       onChange("Submit files");
+      onSend();
       return;
     }
     if (actionId === "submit:both_with_names") {
@@ -267,7 +269,7 @@ export default function Composer({
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         try {
           mediaRecorderRef.current.stop();
-        } catch {}
+        } catch { }
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => {
@@ -330,13 +332,19 @@ export default function Composer({
       )}
 
       <div className="composer" style={{ paddingTop: isRecording ? 48 : undefined }}>
+        {status === "validating" && !previewUrl && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Loader />
+          </div>
+        )}
         {(previewUrl || audioUrl) && (
+
           <div className="upload-previews" role="region" aria-label="Upload previews">
             {previewUrl && (
               <div className="upload-preview image-preview">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
-                  <div style={{ color: "black", fontSize: 13, marginTop: 4 }}>
+                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }}>
                     {imageMeta.name} ({imageMeta.size})
                   </div>
                 )}
@@ -358,7 +366,7 @@ export default function Composer({
               <div className="upload-preview audio-preview">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
-                  <div style={{ color: "black", fontSize: 13, marginTop: 4 }}>
+                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }}>
                     {audioMeta.name} ({audioMeta.size})
                   </div>
                 )}
@@ -570,8 +578,8 @@ export default function Composer({
             previewUrl && !audioUrl
               ? "Image uploaded — choose an analysis:"
               : previewUrl && audioUrl
-              ? "Image + audio uploaded — quick submission options:"
-              : undefined
+                ? "Image + audio uploaded — quick submission options:"
+                : undefined
           }
           name={value ? value.trim() : null}
           onAction={(actionId, opts) => {

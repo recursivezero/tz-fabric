@@ -10,7 +10,7 @@ import useChat from "../hooks/chat";
 import "../styles/Chat.css";
 import { jsPDF } from "jspdf";
 
-type ChatDisplayMessage = { role?: string; content: unknown };
+type ChatDisplayMessage = { id?: string; role?: string; content?: unknown };
 
 const contentToString = (value: unknown): string => {
   if (typeof value === "string") return value;
@@ -30,7 +30,6 @@ export default function Chat() {
     error,
     send,
     newChat,
-    retryLast,
     scrollerRef,
     uploadedPreviewUrl,
     uploadedAudioUrl,
@@ -49,7 +48,6 @@ export default function Chat() {
 
   const navigate = useNavigate();
 
-  const pickSample = useCallback((text: string) => setInput(text), [setInput]);
 
   const fileToDataUrl = useCallback(async (url: string): Promise<string | null> => {
     try {
@@ -68,8 +66,16 @@ export default function Chat() {
     }
   }, []);
 
+
   const downloadChat = useCallback(async () => {
     try {
+      const exportables = (messages as ChatDisplayMessage[]).filter(m => m.id !== "welcome");
+
+      if (exportables.length === 0) {
+        console.warn("No conversation to export yet.");
+        return;
+      }
+
       const doc = new jsPDF();
       let y = 10;
 
@@ -105,7 +111,7 @@ export default function Chat() {
       doc.text("----------------------------", 10, y);
       y += 10;
 
-      (messages as ChatDisplayMessage[]).forEach((m) => {
+      exportables.forEach((m) => {
         const role = String(m.role ?? "unknown").toUpperCase();
         const content = contentToString(m.content);
 
@@ -133,7 +139,8 @@ export default function Chat() {
     } catch (err) {
       console.error("downloadChat (PDF) failed:", err);
     }
-  }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]); 
+  }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]);
+
 
   useEffect(() => {
     if (!shouldNavigateToList) return;
@@ -160,13 +167,35 @@ export default function Chat() {
             </div>
             <button onClick={newChat}>New Chat</button>
             <div className="chat-card-actions">
-              <button className="download-link" onClick={downloadChat}>Download Chat</button>
+              <button
+                className="download-link"
+                onClick={downloadChat}
+                disabled={
+                  // nothing OR only welcome
+                  messages.length === 0 ||
+                  (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
+                }
+                style={{
+                  opacity:
+                    messages.length === 0 ||
+                      (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
+                      ? 0.5
+                      : 1,
+                  cursor:
+                    messages.length === 0 ||
+                      (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
+                      ? "not-allowed"
+                      : "pointer",
+                }}
+              >
+                Download Chat
+              </button>
             </div>
           </div>
 
           <div className="chat-body">
             <div className="chat-scroll-area">
-              <EmptyState onPick={pickSample} />
+              <EmptyState onSend={send} disabled={!!(uploadedPreviewUrl || uploadedAudioUrl)} />
 
               <MessageList messages={messages} scrollerRef={scrollerRef} />
 
@@ -178,11 +207,15 @@ export default function Chat() {
                 />
               )}
 
-              {status === "sending" && <TypingIndicator />}
+              {(status === "sending" || status === "validating") && (
+                <TypingIndicator
+                  text={status === "validating" ? "Validating image… please wait" : "Bot is thinking…"}
+                />
+              )}
 
               {error && (
                 <div className="error">
-                  {error} <button onClick={retryLast}>Retry</button>
+                  {error} "Please try again"
                 </div>
               )}
             </div>
@@ -200,6 +233,7 @@ export default function Chat() {
               onClearAudio={clearAudio}
               fileName={fileName}
               setFileName={setFileName}
+              status={status}
             />
           </div>
         </div>

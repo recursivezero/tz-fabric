@@ -1,4 +1,6 @@
+// src/components/EmptyState.tsx
 import "../styles/EmptyState.css";
+
 const samples = [
   "Explain knit vs woven (simple).",
   "How do I use the image analysis feature?",
@@ -6,18 +8,32 @@ const samples = [
   "What is GSM in fabrics?",
 ];
 
-interface Props {
-  onPick: (text: string) => void;
-}
+type Props = {
+  onSend: (text: string) => void;
+  disabled?: boolean;
+};
 
-export default function EmptyState({ onPick }: Props) {
+export default function EmptyState({ onSend, disabled }: Props) {
+  const handleClick = (text: string) => {
+    if (disabled) return;
+    onSend(text);
+  };
+
   return (
     <div className="empty-state-large">
       <h3>Ask questions about fabrics</h3>
       <p>Try one of the sample prompts below to get started.</p>
-      <div className="chips">
+      <div className="chips" role="list">
         {samples.map((s, i) => (
-          <button key={i} className="chip" onClick={() => onPick(s)}>
+          <button
+            key={i}
+            className="chip"
+            onClick={() => handleClick(s)}
+            role="listitem"
+            aria-label={`Use sample prompt: ${s}`}
+            disabled={disabled}
+            style={disabled ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+          >
             {s}
           </button>
         ))}
