@@ -108,7 +108,6 @@ def redirect_to_media_analysis(image_url: Optional[str] = None,
     try:
         b = _safe_download(image_url)
         _atomic_write(image_path, b)
-        bot_messages.append(f"Saved image as {image_filename}")
     except Exception as e:
         return {"action": {"type":"redirect_to_media_analysis", "params": params},
                 "bot_messages": [f"Failed to download/save image: {e}"]}
@@ -118,7 +117,6 @@ def redirect_to_media_analysis(image_url: Optional[str] = None,
         try:
             b = _safe_download(audio_url)
             _atomic_write(audio_path, b)
-            bot_messages.append(f"Saved audio as {audio_filename}")
         except Exception as e:
             bot_messages.append(f"Warning: failed to download/save audio: {e}")
             audio_filename = None
@@ -151,7 +149,6 @@ def redirect_to_media_analysis(image_url: Optional[str] = None,
                 "indexedAt": None,
                 "errorMessage": None,
             })
-            bot_messages.append("Inserted image metadata into DB (status=queued).")
         except Exception as e:
             bot_messages.append(f"DB warning: failed to insert image metadata: {e}")
         if audio_filename:
@@ -162,7 +159,6 @@ def redirect_to_media_analysis(image_url: Optional[str] = None,
                     "created_on": created_on,
                     "file_type": "audio"
                 })
-                bot_messages.append("Inserted audio metadata into DB.")
             except Exception as e:
                 bot_messages.append(f"DB warning: failed to insert audio metadata: {e}")
     else:
@@ -176,7 +172,6 @@ def redirect_to_media_analysis(image_url: Optional[str] = None,
             daemon=True
         )
         t.start()
-        bot_messages.append("Indexing scheduled in background.")
     except Exception as e:
         bot_messages.append(f"Failed to schedule indexing job: {e}")
 

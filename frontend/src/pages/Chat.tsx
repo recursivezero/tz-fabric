@@ -44,6 +44,7 @@ export default function Chat() {
     setFileName,
     shouldNavigateToList,
     setShouldNavigateToList,
+    morePrompt, confirmMoreYes, confirmMoreNo,
   } = useChat();
 
   const navigate = useNavigate();
@@ -198,6 +199,45 @@ export default function Chat() {
               <EmptyState onSend={send} disabled={!!(uploadedPreviewUrl || uploadedAudioUrl)} />
 
               <MessageList messages={messages} scrollerRef={scrollerRef} />
+
+              {morePrompt && (
+                <div
+                  className="quick-replies"
+                  style={{
+                    margin: "8px 0 4px",
+                    padding: "10px 12px",
+                    border: "1px solid #e5e5e5",
+                    borderRadius: 10,
+                    background: "#fafafa",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span style={{ color: "#111", fontSize: 14 }}>
+                    Would you like to know more about this?
+                  </span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={confirmMoreYes}
+                      className="chip"
+                      style={{ padding: "6px 10px", borderRadius: 8 }}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmMoreNo}
+                      className="chip"
+                      style={{ padding: "6px 10px", borderRadius: 8 }}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {pendingAction?.action?.type === "redirect_to_analysis" && (
                 <HandleRedirectAction

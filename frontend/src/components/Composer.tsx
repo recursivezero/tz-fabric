@@ -142,7 +142,6 @@ export default function Composer({
       return;
     }
     if (actionId === "submit:both") {
-      setMode("submitName");
       onChange("Submit files");
       onSend();
       return;
