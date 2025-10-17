@@ -80,7 +80,6 @@ export default function useChat() {
   const [uploadedAudioFile, setUploadedAudioFile] = useState<File | null>(null);
   const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
   const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
-  const [shouldNavigateToList, setShouldNavigateToList] = useState<boolean>(false);
 
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string>("");
@@ -95,24 +94,12 @@ export default function useChat() {
   } | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
-  const navigateTimeoutRef = useRef<number | null>(null);
   const lastMsgCountRef = useRef<number>(0);
 
   // Preset follow-up control
   const pendingPresetRef = useRef<string | null>(null);
   const [morePrompt, setMorePrompt] = useState<{ question: string } | null>(null);
   const lastFollowedUpRef = useRef<string | null>(null); // prevents early/dup follow-ups
-
-  const scheduleNavigateToList = useCallback((delay = 3000) => {
-    if (navigateTimeoutRef.current) {
-      window.clearTimeout(navigateTimeoutRef.current);
-      navigateTimeoutRef.current = null;
-    }
-    navigateTimeoutRef.current = window.setTimeout(() => {
-      setShouldNavigateToList(true);
-      navigateTimeoutRef.current = null;
-    }, delay);
-  }, []);
 
   const createAbort = useCallback(() => {
     if (abortRef.current) {
@@ -437,6 +424,14 @@ export default function useChat() {
           createdAt: Date.now(), k: args.k, min_sim: args.min_sim, queryPreview: dataUrl, results: mcpResult.results ?? [],
         };
         try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
+        // Ask user to navigate instead of auto-redirect
+        setMessages(prev => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Your search is ready. Would you like to open the results page? [Open Search Results](/search)"
+          }
+        ]);
         return payload;
       }
       const searchInstruction = `Search similar images: image_url=${imageUrl} k=${k} min_sim=${min_sim} order=recent require_audio=false`;
@@ -446,6 +441,14 @@ export default function useChat() {
       const results = rc.analysis_responses ?? (rc as unknown as { results?: unknown[] }).results ?? rc.bot_messages ?? [];
       const payload = { createdAt: Date.now(), k: Number(k) || 1, min_sim: Number(min_sim), queryPreview: dataUrl, results: Array.isArray(results) ? results : [] };
       try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
+      // Ask user to navigate instead of auto-redirect
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Your search is ready. Would you like to open the results page? [Open Search Results](/search)"
+        }
+      ]);
       return payload;
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -511,10 +514,9 @@ export default function useChat() {
         const k = kMatch ? Math.max(1, Math.min(300, Number(kMatch[1]))) : 3;
         const payload = await searchSimilar(k);
         if (payload) {
-          setMessages(prev => [...prev, { role: "assistant", content: "Thanks — preparing your search and redirecting to results now…" }]);
+          // no auto-redirect; message already added in searchSimilar
           setStatus("idle");
           if (abortRef.current) abortRef.current = null;
-          window.setTimeout(() => { window.location.href = "/search"; }, 2000);
           return;
         } else {
           setStatus("idle");
@@ -583,8 +585,11 @@ export default function useChat() {
             analysis_responses: rc.analysis_responses,
           } as ChatResponse);
 
-          setMessages(prev => [...prev, { role: "assistant", content: "Thanks — your media has been uploaded. Redirecting you to the view page…" }]);
-          scheduleNavigateToList();
+          // Ask to visit the page instead of auto-redirecting
+          setMessages(prev => [
+            ...prev,
+            { role: "assistant", content: "Thanks — your media has been uploaded. Do you want to open the view page? [Open View](/view)" }
+          ]);
         } else {
           const wantsAnalysis = /(?:\banalyz(?:e|ing|ed)\b|\banalyse\b|\binspect\b|\binspect(?:ion)?\b|\bscan\b)/i.test(text);
           if (wantsAnalysis && imageUrl) {
@@ -615,6 +620,12 @@ export default function useChat() {
               analysis_responses: rc.analysis_responses,
             } as ChatResponse);
           }
+
+          // Ask to visit the page instead of auto-redirecting
+          setMessages(prev => [
+            ...prev,
+            { role: "assistant", content: "Your image is ready. Would you like to open the view page? [Open View](/view)" }
+          ]);
         }
 
         clearImage();
@@ -642,29 +653,28 @@ export default function useChat() {
   }, [
     input, messages, uploadedImageFile, uploadedAudioFile, status,
     handleResponse, clearImage, clearAudio, createAbort, withAbort,
-    scheduleNavigateToList, getModeFromText, searchSimilar, errorMsg
+    getModeFromText, searchSimilar, errorMsg, setFileName
   ]);
+
   const onAssistantRendered = useCallback((lastAssistant: Message) => {
-  const q = pendingPresetRef.current;
-  if (!q || morePrompt) return;
+    const q = pendingPresetRef.current;
+    if (!q || morePrompt) return;
 
-  const expectedAnswer = PRESET_QA[norm(q)];
-  if (!expectedAnswer) return;
+    const expectedAnswer = PRESET_QA[norm(q)];
+    if (!expectedAnswer) return;
 
-  const rendered = String(lastAssistant.content ?? "").trim();
-  const expected = expectedAnswer.trim();
+    const rendered = String(lastAssistant.content ?? "").trim();
+    const expected = expectedAnswer.trim();
 
-  if (rendered === expected && lastFollowedUpRef.current !== expected) {
-    lastFollowedUpRef.current = expected; // guard
-    setMessages(prev => [
-      ...prev,
-      { role: "assistant", content: "Would you like to know more about this?" }
-    ]);
-    setMorePrompt({ question: q });
-  }
-}, [morePrompt]);
-
-
+    if (rendered === expected && lastFollowedUpRef.current !== expected) {
+      lastFollowedUpRef.current = expected; // guard
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: "Would you like to know more about this?" }
+      ]);
+      setMorePrompt({ question: q });
+    }
+  }, [morePrompt]);
 
   const confirmMoreYes = useCallback(async () => {
     const q = pendingPresetRef.current;
@@ -733,9 +743,8 @@ export default function useChat() {
     pendingAction, acceptAction, rejectAction,
     currentResponse,
     fileName, setFileName,
-    shouldNavigateToList, setShouldNavigateToList,
     searchSimilar,
     morePrompt, confirmMoreYes, confirmMoreNo,
-    onAssistantRendered, 
+    onAssistantRendered,
   };
 }

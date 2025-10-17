@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import "../styles/Composer.css";
 import Loader from "./Loader";
 import SuggestionChips from "./SuggestionChips";
+import { formatFileName } from "../utils/formatFilename";
 
 type Props = {
   value: string;
@@ -71,12 +72,10 @@ export default function Composer({
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
-  // ---- NEW: mode + tiny inputs state ----
   const [mode, setMode] = useState<Mode>("free");
   const [nameOnly, setNameOnly] = useState<string>("");
   const [kOnly, setKOnly] = useState<number>(3); // still keep internal state to display chosen k if needed
 
-  // ---- NEW: file meta states ----
   const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string } | null>(null);
 
@@ -122,7 +121,6 @@ export default function Composer({
     setShowAttachMenu(false);
   };
 
-  // ---- UPDATED: chips set mode + controlled message ----
   const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
     if (actionId === "image:analyze_short") {
       setMode("analysis");
@@ -295,6 +293,8 @@ export default function Composer({
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
+  const NAME_MAX = 26;
+
   return (
     <>
       {isRecording && (
@@ -343,8 +343,11 @@ export default function Composer({
               <div className="upload-preview image-preview">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }}>
-                    {imageMeta.name} ({imageMeta.size})
+                  <div
+                    style={{ color: "black", fontSize: 18, marginTop: 4 }}
+                    title={imageMeta.name} // show full name on hover
+                  >
+                    {formatFileName(imageMeta.name, NAME_MAX)} ({imageMeta.size})
                   </div>
                 )}
                 <button
@@ -365,8 +368,11 @@ export default function Composer({
               <div className="upload-preview audio-preview">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }}>
-                    {audioMeta.name} ({audioMeta.size})
+                  <div
+                    style={{ color: "black", fontSize: 18, marginTop: 4 }}
+                    title={audioMeta.name} // show full name on hover
+                  >
+                    {formatFileName(audioMeta.name, NAME_MAX)} ({audioMeta.size})
                   </div>
                 )}
                 <button
