@@ -1,0 +1,55 @@
+.empty-state-large h3 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: black;
+}
+
+.empty-state-large p {
+  margin: 0 0 22px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.empty-state-large .chips {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 12px;
+}
+
+.empty-state-large .chip {
+  border: 1px solid #000000;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  color: #0f172a;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.04);
+  transition: transform 120ms cubic-bezier(.2, .9, .2, 1), box-shadow 140ms ease, background 120ms ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.empty-state-large .chip:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.08);
+  background: #fbfdff;
+}
+
+.chip:active {
+  transform: translateY(-2px) scale(.998);
+}
+
+.chip:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+
+.chips .chip {
+  margin-bottom: 6px;
+}

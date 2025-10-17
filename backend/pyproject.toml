@@ -43,6 +43,15 @@ jinja2 = "^3.1.6"
 pymongo = "^4.13.2"
 numpy = "^2.3.2"
 chromadb = "^1.0.17"
+pydantic = "^2.11.7"
+pydantic-settings = "^2.10.1"
+modelcontextprotocol = "^0.1.0"
+langgraph = "^0.6.6"
+langchain = "^0.3.27"
+langchain-core = "^0.3.75"
+langchain-xai = "^0.2.5"
+langchain-groq = "^0.3.7"
+mcp = "^1.13.1"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = "^1.9"
@@ -58,13 +67,9 @@ uvicorn = { extras = ["standard"], version = "^0.35.0" }
 black = "^24.10.0"
 flake8 = "^7.1.1"
 mypy = "^1.14.1"
-ruff = "^0.2.1"
 pip-audit = "^2.9.0"
 pipreqs = "0.5.0"
-
-[tool.poetry.scripts]
-fabric = "cli:app"
-
+ruff = "^0.13.1"
 
 [tool.flake8]
 max_line_length = 190

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
+import { BASE_URL } from "../constants";
 
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 export default function ContentGrid() {
   const [items, setItems] = useState<MediaItem[]>([]);

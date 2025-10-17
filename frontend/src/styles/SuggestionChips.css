@@ -1,0 +1,59 @@
+/* src/styles/SuggestionChips.css */
+.suggestion-chips {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 6px;
+  /* align with composer */
+}
+
+.suggestion-hint {
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 2px;
+}
+
+.chips-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* base chip */
+.chip {
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 20px;
+  color: #0f172a;
+  transition: transform 0.08s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* primary accent */
+.chip.primary {
+  background: #f1f5f9;
+  color: #000000;
+  border: none;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+}
+
+/* selected/disabled look */
+.chip.selected,
+.chip:disabled {
+  background: #e6eefc;
+  color: #0f172a;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  box-shadow: none;
+  cursor: default;
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}

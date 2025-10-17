@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -6,14 +7,16 @@ from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
-from constants import API_PREFIX, ASSETS
+from constants import API_PREFIX, IMAGE_DIR,AUDIO_DIR, ASSETS
 import os
-from routes import analysis, regenerate, validate_image, search, submit, media
 from utils.emoji_logger import get_logger
 
+from routes import analysis, regenerate, validate_image, search, submit, media, chat, uploads
+from tools.mcpserver import sse_app
+
+app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
 load_dotenv()
 
-app = FastAPI()
 logger = get_logger(__name__)
 
 origins = [
@@ -59,6 +62,9 @@ app.database = db
 os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_images")
+app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audios")
+
 templates = Jinja2Templates(directory="templates")
 
 
@@ -88,14 +94,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Error while closing MongoDB client: {e}")
 
-
 app.include_router(analysis.router, prefix=API_PREFIX)
 app.include_router(regenerate.router, prefix=API_PREFIX)
 app.include_router(validate_image.router, prefix=API_PREFIX)
 app.include_router(search.router, prefix=API_PREFIX)
 app.include_router(submit.router, prefix=API_PREFIX)
 app.include_router(media.router, prefix=API_PREFIX)
+app.include_router(chat.router, prefix=API_PREFIX)
+app.include_router(uploads.router, prefix=API_PREFIX)
 
+app.mount("/mcp", sse_app())
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
