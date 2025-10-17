@@ -1,4 +1,3 @@
-// src/pages/Chat.tsx
 import { useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Composer from "../components/Composer";
@@ -45,10 +44,10 @@ export default function Chat() {
     shouldNavigateToList,
     setShouldNavigateToList,
     morePrompt, confirmMoreYes, confirmMoreNo,
+    onAssistantRendered, // stable callback from hook
   } = useChat();
 
   const navigate = useNavigate();
-
 
   const fileToDataUrl = useCallback(async (url: string): Promise<string | null> => {
     try {
@@ -67,21 +66,17 @@ export default function Chat() {
     }
   }, []);
 
-
   const downloadChat = useCallback(async () => {
     try {
       const exportables = (messages as ChatDisplayMessage[]).filter(m => m.id !== "welcome");
-
       if (exportables.length === 0) {
         console.warn("No conversation to export yet.");
         return;
       }
-
       const doc = new jsPDF();
       let y = 10;
 
       doc.setFont("helvetica", "normal");
-
       doc.setFontSize(16);
       doc.text("Chat Export", 10, y);
       y += 10;
@@ -142,7 +137,6 @@ export default function Chat() {
     }
   }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]);
 
-
   useEffect(() => {
     if (!shouldNavigateToList) return;
     navigate("/view");
@@ -172,21 +166,18 @@ export default function Chat() {
                 className="download-link"
                 onClick={downloadChat}
                 disabled={
-                  // nothing OR only welcome
                   messages.length === 0 ||
                   (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
                 }
                 style={{
                   opacity:
                     messages.length === 0 ||
-                      (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
-                      ? 0.5
-                      : 1,
+                    (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
+                      ? 0.5 : 1,
                   cursor:
                     messages.length === 0 ||
-                      (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
-                      ? "not-allowed"
-                      : "pointer",
+                    (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
+                      ? "not-allowed" : "pointer",
                 }}
               >
                 Download Chat
@@ -198,7 +189,11 @@ export default function Chat() {
             <div className="chat-scroll-area">
               <EmptyState onSend={send} disabled={!!(uploadedPreviewUrl || uploadedAudioUrl)} />
 
-              <MessageList messages={messages} scrollerRef={scrollerRef} />
+              <MessageList
+                messages={messages}
+                scrollerRef={scrollerRef}
+                onLastAssistantRendered={onAssistantRendered} // stable callback (fires after the assistant bubble is done)
+              />
 
               {morePrompt && (
                 <div
@@ -215,9 +210,6 @@ export default function Chat() {
                     flexWrap: "wrap",
                   }}
                 >
-                  <span style={{ color: "#111", fontSize: 14 }}>
-                    Would you like to know more about this?
-                  </span>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       type="button"

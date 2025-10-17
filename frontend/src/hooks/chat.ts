@@ -1,4 +1,3 @@
-// src/hooks/chat.ts
 import { useCallback, useEffect, useRef, useState } from "react";
 import { chatOnce, type Message, type ChatResponse } from "../services/chat_api";
 import { FULL_API_URL } from "../constants";
@@ -38,21 +37,6 @@ const normalizeLLMText = (t: unknown): string => {
   }
   let s = String(t).trim();
   s = s.replace(/\\n/g, "\n").replace(/\r/g, "").replace(/[ \t]+\n/g, "\n");
-  const m =
-    s.match(/['"]response['"]\s*:\s*\{[\s\S]*?['"]response['"]\s*:\s*(['"])([\s\S]*?)\1/) ||
-    s.match(/['"]response['"]\s*:\s*(['"])([\s\S]*?)\1/);
-  if (m?.[2]) return m[2].replace(/\\n/g, "\n").trim();
-  if (/^\s*\{/.test(s) && /"response"/.test(s)) {
-    try {
-      const obj = JSON.parse(s) as Record<string, unknown>;
-      const r = obj.response as Record<string, unknown> | undefined;
-      const inner = r?.response ?? r?.text ?? r?.message ?? r ?? null;
-      if (inner) return normalizeLLMText(inner);
-    } catch { }
-  }
-  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-    s = s.slice(1, -1);
-  }
   return s.trim();
 };
 
@@ -114,9 +98,10 @@ export default function useChat() {
   const navigateTimeoutRef = useRef<number | null>(null);
   const lastMsgCountRef = useRef<number>(0);
 
+  // Preset follow-up control
   const pendingPresetRef = useRef<string | null>(null);
-
   const [morePrompt, setMorePrompt] = useState<{ question: string } | null>(null);
+  const lastFollowedUpRef = useRef<string | null>(null); // prevents early/dup follow-ups
 
   const scheduleNavigateToList = useCallback((delay = 3000) => {
     if (navigateTimeoutRef.current) {
@@ -131,7 +116,7 @@ export default function useChat() {
 
   const createAbort = useCallback(() => {
     if (abortRef.current) {
-      try { abortRef.current.abort(); } catch { }
+      try { abortRef.current.abort(); } catch { /* ignore */ }
     }
     const ac = new AbortController();
     abortRef.current = ac;
@@ -157,45 +142,24 @@ export default function useChat() {
     });
   }, []);
 
+  // Show welcome only once per tab
   useEffect(() => {
     const seen = sessionStorage.getItem("fabricAI_welcome_seen");
     if (messages.length === 0 && !seen) {
-      setMessages([
-        {
-          id: "welcome",
-          role: "assistant",
-          content: normalizeLLMText(`👋 Hi, I’m FabricAI! I can help you with:
+      setMessages([{
+        id: "welcome",
+        role: "assistant",
+        content: normalizeLLMText(`👋 Hi, I’m FabricAI! I can help you with:
 - 📤 Uploading fabric images and audio
 - 📝 Giving short or long analysis
 - 🔍 Searching for similar images
 - 🔁 Regenerating and comparing results`),
-        },
-      ]);
+      }]);
       sessionStorage.setItem("fabricAI_welcome_seen", "1");
     }
   }, [messages.length]);
 
-  useEffect(() => {
-    if (!pendingPresetRef.current || morePrompt) return;
-
-    const q = pendingPresetRef.current;
-    const expectedAnswer = PRESET_QA[norm(q)];
-    if (!expectedAnswer) return;
-
-    const last = messages[messages.length - 1];
-    if (last?.role === "assistant" && last.content === expectedAnswer) {
-      const id = setTimeout(() => {
-        setMessages(prev => [
-          ...prev,
-          { role: "assistant", content: "Would you like to know more about this?" },
-        ]);
-        setMorePrompt({ question: q });
-      }, 11000);
-
-      return () => clearTimeout(id);
-    }
-  }, [messages, morePrompt]);
-
+  // Auto-scroll
   useEffect(() => {
     const prev = lastMsgCountRef.current;
     const curr = messages.length;
@@ -504,6 +468,7 @@ export default function useChat() {
 
     if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
 
+    // If we're in preset mode and user typed "yes" (but not forced API), escalate to API
     if (!forceApi && pendingPresetRef.current && text) {
       const yesRegex = /\b(yes|yeah|yep|ya|sure|ok|okay|more|tell me more|details|go ahead)\b/i;
       if (yesRegex.test(text)) {
@@ -516,6 +481,7 @@ export default function useChat() {
       }
     }
 
+    // PRESET canned answer branch (no API)
     const presetAnswer = !forceApi ? PRESET_QA[norm(text)] : undefined;
     if (presetAnswer && !uploadedImageFile && !uploadedAudioFile) {
       setMessages(prev => [
@@ -523,13 +489,14 @@ export default function useChat() {
         { role: "user", content: text },
         { role: "assistant", content: presetAnswer },
       ]);
-
-      pendingPresetRef.current = text;
+      pendingPresetRef.current = text;  // Remember which preset we answered
       setInput("");
-      setMorePrompt(null);
+      setMorePrompt(null);               // Hide previous quick replies
+      lastFollowedUpRef.current = null;  // reset follow-up guard for this preset
       return;
     }
 
+    // Regular API path
     createAbort();
     setStatus("sending");
     setError("");
@@ -639,7 +606,7 @@ export default function useChat() {
             if (toolArgs.filename) mediaMsgParts.push(`filename=${String(toolArgs.filename)}`);
             const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`;
 
-            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }]));
+            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaMsgParts.length ? mediaInstruction : "Analyze media" }]));
             const rc = chatRes as RichChatResponse;
             handleResponse({
               reply: { role: "assistant", content: "Image uploaded and queued for processing." },
@@ -677,18 +644,41 @@ export default function useChat() {
     handleResponse, clearImage, clearAudio, createAbort, withAbort,
     scheduleNavigateToList, getModeFromText, searchSimilar, errorMsg
   ]);
+  const onAssistantRendered = useCallback((lastAssistant: Message) => {
+  const q = pendingPresetRef.current;
+  if (!q || morePrompt) return;
+
+  const expectedAnswer = PRESET_QA[norm(q)];
+  if (!expectedAnswer) return;
+
+  const rendered = String(lastAssistant.content ?? "").trim();
+  const expected = expectedAnswer.trim();
+
+  if (rendered === expected && lastFollowedUpRef.current !== expected) {
+    lastFollowedUpRef.current = expected; // guard
+    setMessages(prev => [
+      ...prev,
+      { role: "assistant", content: "Would you like to know more about this?" }
+    ]);
+    setMorePrompt({ question: q });
+  }
+}, [morePrompt]);
+
+
 
   const confirmMoreYes = useCallback(async () => {
     const q = pendingPresetRef.current;
     setMorePrompt(null);
     if (!q) return;
     pendingPresetRef.current = null;
+    lastFollowedUpRef.current = null;
     setMessages(prev => [...prev, { role: "assistant", content: "Great — fetching more details…" }]);
     await send(q, { forceApi: true });
   }, [send]);
 
   const confirmMoreNo = useCallback(() => {
     pendingPresetRef.current = null;
+    lastFollowedUpRef.current = null;
     setMorePrompt(null);
     setMessages(prev => [...prev, { role: "assistant", content: "Okay! Ask me anything else or upload an image when ready." }]);
   }, []);
@@ -728,6 +718,7 @@ export default function useChat() {
     setCurrentResponse(null);
     setMorePrompt(null);
     pendingPresetRef.current = null;
+    lastFollowedUpRef.current = null;
   }, [clearImage, clearAudio]);
 
   return {
@@ -745,5 +736,6 @@ export default function useChat() {
     shouldNavigateToList, setShouldNavigateToList,
     searchSimilar,
     morePrompt, confirmMoreYes, confirmMoreNo,
+    onAssistantRendered, 
   };
 }

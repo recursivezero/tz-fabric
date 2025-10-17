@@ -54,19 +54,19 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
 
   const shouldType = renderType === "text" && role !== "user";
   const typed = useTypingEffect(shouldType ? normalized : "", 25);
-  // -----------------------------------------------------
+  const isTyping = shouldType && typed !== normalized; 
 
   if (renderType === "text") {
     if (role === "user") {
       return (
-        <div className="msg-row right">
+        <div className="msg-row right" data-typing="false">
           <div className="bubble user">{content}</div>
         </div>
       );
     }
     // assistant text
     return (
-      <div className="msg-row left">
+      <div className="msg-row left" data-typing={isTyping ? "true" : "false"}>
         <div className="assistant-avatar">🤖</div>
         <div className="assistant-block">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -80,7 +80,7 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
   if (renderType === "image") {
     const src = String(possibleUrl ?? content);
     return (
-      <div className={`msg-row ${role === "user" ? "right" : "left"}`}>
+      <div className={`msg-row ${role === "user" ? "right" : "left"}`} data-typing="false">
         {role === "assistant" && <div className="assistant-avatar">🤖</div>}
         <div className={`assistant-block ${role === "user" ? "user-block" : ""}`}>
           <div className="media-bubble image-bubble">
@@ -97,7 +97,7 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
   // audio
   const src = String(possibleUrl ?? content);
   return (
-    <div className={`msg-row ${role === "user" ? "right" : "left"}`}>
+    <div className={`msg-row ${role === "user" ? "right" : "left"}`} data-typing="false">
       {role === "assistant" && <div className="assistant-avatar">🤖</div>}
       <div className="assistant-block">
         <div className="media-bubble audio-bubble">
