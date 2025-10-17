@@ -69,13 +69,10 @@
 
 .searchbar-container .shimmer-text {
   background-size: 200% 100%;
-  font-size: 19px;
-  color: #00ffff;
+  color: #142d2d;
   font-weight: 500;
 }
 
 .searchbar-container .sample-text {
-  font-size: 19px;
-  color: #00ffff;
-  font-weight: 500;
+  color: #137f7f;
 }

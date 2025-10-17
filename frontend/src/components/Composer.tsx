@@ -1,9 +1,9 @@
 // src/components/Composer.tsx
-import { useRef, useState, useEffect } from "react";
 import type React from "react";
-import SuggestionChips from "./SuggestionChips";
+import { useEffect, useRef, useState } from "react";
 import "../styles/Composer.css";
 import Loader from "./Loader";
+import SuggestionChips from "./SuggestionChips";
 
 type Props = {
   value: string;
@@ -430,14 +430,14 @@ export default function Composer({
                     type="button"
                     onClick={() => imageInputRef.current?.click()}
                   >
-                    Upload image
+                  🖼️ Upload image
                   </button>
                   <button
                     className="attach-menu-item"
                     type="button"
                     onClick={() => audioInputRef.current?.click()}
                   >
-                    Upload audio
+                  🎙️ Upload audio
                   </button>
                 </div>
               )}

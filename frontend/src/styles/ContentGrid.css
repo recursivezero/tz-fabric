@@ -65,13 +65,26 @@
   display: flex;
 }
 
+figure {
+  display: flex;
+  flex-flow: column;
+  max-width: 220px;
+}
+
+figcaption {
+  background-color: #222222;
+  color: white;
+  font: italic smaller sans-serif;
+  padding: 3px;
+  text-align: center;
+}
+
 .grid-page .media-thumb {
   background: rgba(27, 34, 48, 0.85);
-  padding: 10px;
 }
 .grid-page .media-thumb img {
   width: 100%;
-  height: 220px;
+  height: 260px;
   object-fit: cover;
   border-radius: 8px;
 }
@@ -80,9 +93,7 @@
 }
 .grid-page .media-audio audio {
   width: 100%;
-  background: #0e1116;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .grid-page .media-meta {

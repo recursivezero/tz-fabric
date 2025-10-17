@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { BASE_URL } from "../constants";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
-import { BASE_URL } from "../constants";
 
 
 export default function ContentGrid() {
@@ -103,7 +103,7 @@ export default function ContentGrid() {
       <div className="media-grid">
         {items.map((item) => (
           <article className="media-card" key={item._id ?? item.imageUrl}>
-            <div className="media-thumb">
+            <figure className="media-thumb">
               <img
                 src={
                   item.imageUrl?.startsWith("http")
@@ -116,10 +116,11 @@ export default function ContentGrid() {
                   (e.currentTarget as HTMLImageElement).style.opacity = "0.3";
                 }}
               />
-            </div>
-            <div className="media-name" title={pickDisplayName(item)}>
-              {cleanName(pickDisplayName(item))}
-            </div>
+              <figcaption className="media-name" title={pickDisplayName(item)}>
+                {cleanName(pickDisplayName(item))}
+              </figcaption>
+            </figure>
+        
 
             <div className="media-audio">
               {item.audioUrl && (
