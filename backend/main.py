@@ -61,7 +61,7 @@ app.database = db
 
 os.makedirs(ASSETS, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
+app.mount("/mcp/", sse_app())
 app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_images")
 app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audios")
 
@@ -103,7 +103,9 @@ app.include_router(media.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 
-app.mount("/mcp", sse_app())
+@app.get("/__routes")
+def _routes():
+    return [getattr(r, "path", str(r)) for r in app.routes]
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):

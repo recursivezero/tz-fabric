@@ -106,9 +106,8 @@ def redirect_to_analysis(
         if not image_url:
             return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["No image url"]}
 
-        # Instead of fetching via HTTP, resolve local file path
         parsed = urlparse(image_url)
-        filename = Path(parsed.path).name  # e.g. "86d2d7d928e849d5bb5bcbe0f076276d.jfif"
+        filename = Path(parsed.path).name
         img_path = IMAGE_DIR / filename
 
         if not img_path.exists():
@@ -226,7 +225,6 @@ def redirect_to_media_analysis(
 def search(**kwargs) -> Dict[str, Any]:
     print("🔍 MCP search called")
 
-    # Allow passing image_url from router → resolve to local image_path for search_tool
     image_url = kwargs.pop("image_url", None)
     image_path = kwargs.get("image_path")
     image_b64 = kwargs.get("image_b64")

@@ -52,6 +52,7 @@ langchain-core = "^0.3.75"
 langchain-xai = "^0.2.5"
 langchain-groq = "^0.3.7"
 mcp = "^1.13.1"
+fastmcp = "^2.12.5"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = "^1.9"

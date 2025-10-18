@@ -140,6 +140,23 @@ npm install react-icons // if react-icons is not installed
 npm run dev
 ```
 
+## Sample .env
+
+backend/.env
+
+```text
+PORT=8000
+GEMINI_API_KEY=""
+GRQ_API_KEY=""
+MONGODB_URI="mongodb://localhost:27017"
+```
+
+frontend/.env
+
+```text
+VITE_API_URL="http://localhost:8000"
+```
+
 🖼️ Screenshots
 
 ```text
@@ -177,3 +194,11 @@ Chat Page
 ```
 
 ![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(370).png>)
+
+## 📄 License
+
+This project is licensed under the terms of the [MIT License](<https://github.com/recursivezero/tz-fabric/blob/main/LICENSE>).
+
+```text
+You are free to use, modify, and distribute this software, provided that proper attribution is given and the license terms are followed.
+```

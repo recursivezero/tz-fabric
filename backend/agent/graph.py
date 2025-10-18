@@ -6,15 +6,21 @@ from langchain_core.runnables import RunnableLambda
 from langchain_groq import ChatGroq
 
 from core.config import settings
-from tools import mcpserver as mcp
+# ⬇️ NEW: use the MCP client wrapper instead of importing tool functions directly
+from tools.mcp_client import invoke_tool_sync
 
+# -----------------------------
+# LLM setup
+# -----------------------------
 llm = ChatGroq(
     api_key=settings.GROQ_API_KEY,
     model=settings.GROQ_MODEL,
     temperature=0,
 )
 
-
+# -----------------------------
+# Helpers
+# -----------------------------
 def _normalize_used_ids(uids) -> list[int]:
     """Accept ['1','2','r3', 4] and normalize to [1,2,3,4]."""
     if not uids:
@@ -29,83 +35,46 @@ def _normalize_used_ids(uids) -> list[int]:
     return out
 
 
+# -----------------------------
+# MCP tool call adapters
+# -----------------------------
 def call_redirect_to_analysis(params: Dict[str, Any]) -> Dict[str, Any]:
     try:
-        return mcp.redirect_to_analysis(
-            image_url=params.get("image_url"),
-            mode=params.get("mode", "short"),
-        )
+        return invoke_tool_sync("redirect_to_analysis", params)
     except Exception as e:
         return {
             "action": {"type": "redirect_to_analysis", "params": params},
-            "bot_messages": [f"Error: {e}", traceback.format_exc()],
+            "bot_messages": [f"Error calling MCP tool redirect_to_analysis: {e}", traceback.format_exc()],
         }
-
 
 def call_regenerate(params: Dict[str, Any]) -> Dict[str, Any]:
+    # normalize optional fields that your tools expect
     try:
-        cache_key = params.get("cache_key")
-        index = params.get("index")
-        image_url = params.get("image_url")
-        mode = params.get("mode", "short")
-
-        # normalize used_ids (UI may send strings)
-        used_ids = _normalize_used_ids(params.get("used_ids"))
-
-        # policy: allow fresh if exhausted unless explicitly disabled
-        fresh_if_exhausted = params.get("fresh_if_exhausted", True)
-
-        # 1) cached path (token-safe; no new generation)
-        out = mcp.regenerate(
-            cache_key=cache_key,
-            index=index,
-            used_ids=used_ids,
-            image_url=image_url,
-            mode=mode,
-            fresh=False,
-        )
-
-        if isinstance(out, dict) and out.get("error") == "exhausted" and fresh_if_exhausted:
-            out = mcp.regenerate(
-                cache_key=cache_key,
-                index=None,            # pick next available
-                used_ids=None,         # reset filter
-                image_url=image_url,   # retain context
-                mode=mode,
-                fresh=True,
-            )
-
-        return out
-
+        if "used_ids" in params:
+            params["used_ids"] = _normalize_used_ids(params["used_ids"])
+        return invoke_tool_sync("regenerate", params)
     except Exception as e:
-        return {
-            "type": "regenerate",
-            "params": params,
-            "bot_messages": [f"Error: {e}", traceback.format_exc()],
-        }
-
+        return {"type": "regenerate", "params": params, "bot_messages": [f"Error calling MCP tool regenerate: {e}", traceback.format_exc()]}
 
 def call_redirect_to_media_analysis(params: Dict[str, Any]):
     try:
-        return mcp.redirect_to_media_analysis(
-            image_url=params.get("image_url"),
-            audio_url=params.get("audio_url"),
-            filename=params.get("filename"),
-        )
+        return invoke_tool_sync("redirect_to_media_analysis", params)
     except Exception as e:
         return {
             "action": {"type": "redirect_to_media_analysis", "params": params},
-            "bot_messages": [f"Error: {e}", traceback.format_exc()],
+            "bot_messages": [f"Error calling MCP tool redirect_to_media_analysis: {e}", traceback.format_exc()],
         }
-
 
 def call_search(params: Dict[str, Any]) -> Dict[str, Any]:
     try:
-        return mcp.search(**params)
+        return invoke_tool_sync("search", params)
     except Exception as e:
-        return {"type": "search", "params": params, "bot_messages": [f"Error: {e}", traceback.format_exc()]}
+        return {"type": "search", "params": params, "bot_messages": [f"Error calling MCP tool search: {e}", traceback.format_exc()]}
 
 
+# -----------------------------
+# Router + dispatch
+# -----------------------------
 _TOOL_DISPATCH = {
     "redirect_to_analysis": call_redirect_to_analysis,
     "regenerate": call_regenerate,
@@ -134,9 +103,8 @@ def router_fn(user_text: str) -> Dict[str, Any]:
     img_match = IMAGE_URL_RE.search(t_raw)
     aud_match = AUDIO_URL_RE.search(t_raw)
 
-    # --- 1) REGENERATE gets priority (before any image-based routing) ---
+    # --- 1) REGENERATE has priority ---
     if re.search(r"\b(regen|regenerate|regeneration|variant|alternative|another|next alternative|more variants)\b", t, re.I):
-        # existing: cache_key + index
         m_cache = re.search(r"cache[_\- ]?key[:= ]?([A-Za-z0-9_\-]+)", t_raw)
         m_index = re.search(r"\bindex[:= ]?(\d+)\b", t_raw)
         params: Dict[str, Any] = {}
@@ -149,26 +117,21 @@ def router_fn(user_text: str) -> Dict[str, Any]:
                 pass
 
         # NEW: parse used_ids=[...] image_url=... mode=... fresh=true
-        # used_ids: accept any digits inside the brackets and convert to ints
         m_used = re.search(r"used_ids\s*=\s*\[([^\]]*)\]", t_raw)
         if m_used:
             params["used_ids"] = [int(x) for x in re.findall(r"\d+", m_used.group(1))]
 
-        # image_url: keep full URL (avoid being routed to analysis)
         m_img = re.search(r"image_url\s*=\s*(https?://\S+)", t_raw)
         if m_img:
             params["image_url"] = m_img.group(1)
 
-        # mode: short|long
         m_mode = re.search(r"\bmode[:= ](short|long)\b", t, re.I)
         if m_mode:
             params["mode"] = m_mode.group(1).lower()
 
-        # fresh=true
         if re.search(r"\bfresh\s*=\s*true\b", t, re.I):
             params["fresh"] = True
 
-        # done
         params["user_text"] = user_text
         return {"tool": "regenerate", "params": params}
 
@@ -196,6 +159,7 @@ def router_fn(user_text: str) -> Dict[str, Any]:
         return {"tool": "redirect_to_analysis", "params": {"image_url": img_match.group(0), "mode": mode}}
 
     return {"tool": "agent", "params": {"text": user_text}}
+
 
 def llm_router(user_text: str, confidence_threshold: float = 0.6) -> Optional[Dict[str, Any]]:
     prompt = (
