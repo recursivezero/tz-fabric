@@ -200,5 +200,7 @@ Chat Page
 This project is licensed under the terms of the [MIT License](<https://github.com/recursivezero/tz-fabric/blob/main/LICENSE>).
 
 ```text
-You are free to use, modify, and distribute this software, provided that proper attribution is given and the license terms are followed.
+You are free to use, modify, and distribute this software, 
+provided that proper attribution is
+given and the license terms are followed.
 ```

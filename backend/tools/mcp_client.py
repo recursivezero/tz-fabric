@@ -2,11 +2,9 @@
 import asyncio
 import contextlib
 from typing import Any, Dict, Optional
-import os
-
+from constants import MCP_URL
 from fastmcp import Client
 
-MCP_URL = os.getenv("MCP_URL", "http://localhost:8000/mcp/sse?transport=sse")
 
 class _MCPInvoker:
     def __init__(self, url: str, timeout: float = 60.0):

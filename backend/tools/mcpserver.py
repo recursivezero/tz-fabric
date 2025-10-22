@@ -247,4 +247,5 @@ def search_base64(**kwargs) -> Dict[str, Any]:
 
 
 def sse_app():
+    print("✅ Connecting MCP Server")
     return mcp.sse_app()
