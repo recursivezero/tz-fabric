@@ -335,57 +335,104 @@ export default function useChat() {
 
   const rejectAction = useCallback(async () => {
     if (!pendingAction) return;
+
     const { action } = pendingAction;
     const cacheKey = action?.params?.cache_key;
     const imageUrl = action?.params?.image_url;
     const mode = (action?.params?.mode as ("short" | "long" | undefined)) || "short";
+
     if (!cacheKey) {
       setMessages(prev => [...prev, { role: "assistant", content: "No cache_key found." }]);
       return;
     }
+
     const instr = `Regenerate: cache_key=${cacheKey} image_url=${imageUrl} mode=${mode}`;
+
+    // ✅ Extract text='...' from TextContent(...) without regex
+    const extractTextField = (val: any): string => {
+      if (!val) return "";
+
+      const s = String(
+        (typeof val === "object" && ("text" in val || "response" in val)) ? JSON.stringify(val) : val
+      );
+
+      const key = "text=";
+      const idx = s.indexOf(key);
+      if (idx === -1) return s;
+
+      let i = idx + key.length;
+      while (i < s.length && s[i] === " ") i++;
+
+      const quote = s[i];
+      if (quote !== "'" && quote !== `"`) return s;
+
+      let out = "", j = i + 1;
+      while (j < s.length) {
+        const ch = s[j];
+        if (ch === "\\" && j + 1 < s.length) {
+          out += s[j + 1];
+          j += 2;
+          continue;
+        }
+        if (ch === quote) break;
+        out += ch;
+        j++;
+      }
+      return out;
+    };
+
+    // ✅ Extract final displayable text from JSON if present
+    const extractDisplay = (raw: string): string => {
+      const trimmed = raw.trim();
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+          const obj = JSON.parse(trimmed);
+          if (typeof obj.display_text === "string") return obj.display_text;
+          if (obj.response && typeof obj.response.response === "string") return obj.response.response;
+          if (typeof obj.text === "string") return obj.text;
+          if (typeof obj.message === "string") return obj.message;
+        } catch { }
+      }
+      return raw;
+    };
+
     try {
       createAbort();
       const regenChatRes = await withAbort(
         chatOnce([...messages, { role: "user", content: instr }])
       );
-      const rc = regenChatRes as RichChatResponse;
-      let responseText: string | null = null;
-      if (rc.response) {
-        const r = rc.response as unknown as Record<string, unknown>;
-        responseText =
-          (r.response as string | undefined) ??
-          (r.text as string | undefined) ??
-          (r.message as string | undefined) ??
-          String(rc.response);
-      } else if (rc.analysis_responses?.[0]) {
-        responseText = rc.analysis_responses[0]?.text ?? "";
-      } else if (rc.bot_messages?.[0]) {
-        responseText = rc.bot_messages[0] ?? "";
-      } else if (rc.reply?.content) {
-        responseText = rc.reply.content ?? "";
-      } else {
-        responseText = String(regenChatRes);
-      }
-      const clean = normalizeLLMText(responseText);
+      const rc = regenChatRes as any;
+
+      const raw = extractTextField(
+        rc?.analysis_responses?.[0] ||
+        rc?.response ||
+        rc?.reply?.content ||
+        rc?.bot_messages?.[0] ||
+        regenChatRes
+      );
+
+      const clean = normalizeLLMText(extractDisplay(raw));
+
       if (!clean) {
         setMessages(prev => [...prev, { role: "assistant", content: "No new alternative available." }]);
         setPendingAction(null);
         return;
       }
-      const lower = clean.toLowerCase();
-      if (lower.includes("all cached alternatives") || lower.includes("no more") || lower.includes("finished")) {
+
+      if (clean.toLowerCase().includes("cached")) {
         setMessages(prev => [...prev, { role: "assistant", content: clean }]);
         setPendingAction(null);
         return;
       }
+
       setMessages(prev => [...prev, { role: "assistant", content: clean }]);
       setCurrentResponse(clean);
-    } catch (err: unknown) {
+
+    } catch (err) {
       console.error("[rejectAction error]", err);
       setMessages(prev => [...prev, { role: "assistant", content: "Failed to get a new alternative." }]);
     } finally {
-      if (abortRef.current) abortRef.current = null;
+      abortRef.current = null;
     }
   }, [pendingAction, messages, createAbort, withAbort]);
 
@@ -424,7 +471,6 @@ export default function useChat() {
           createdAt: Date.now(), k: args.k, min_sim: args.min_sim, queryPreview: dataUrl, results: mcpResult.results ?? [],
         };
         try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
-        // Ask user to navigate instead of auto-redirect
         setMessages(prev => [
           ...prev,
           {
@@ -441,7 +487,6 @@ export default function useChat() {
       const results = rc.analysis_responses ?? (rc as unknown as { results?: unknown[] }).results ?? rc.bot_messages ?? [];
       const payload = { createdAt: Date.now(), k: Number(k) || 1, min_sim: Number(min_sim), queryPreview: dataUrl, results: Array.isArray(results) ? results : [] };
       try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
-      // Ask user to navigate instead of auto-redirect
       setMessages(prev => [
         ...prev,
         {
@@ -471,7 +516,6 @@ export default function useChat() {
 
     if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
 
-    // If we're in preset mode and user typed "yes" (but not forced API), escalate to API
     if (!forceApi && pendingPresetRef.current && text) {
       const yesRegex = /\b(yes|yeah|yep|ya|sure|ok|okay|more|tell me more|details|go ahead)\b/i;
       if (yesRegex.test(text)) {
@@ -484,7 +528,6 @@ export default function useChat() {
       }
     }
 
-    // PRESET canned answer branch (no API)
     const presetAnswer = !forceApi ? PRESET_QA[norm(text)] : undefined;
     if (presetAnswer && !uploadedImageFile && !uploadedAudioFile) {
       setMessages(prev => [
@@ -492,14 +535,13 @@ export default function useChat() {
         { role: "user", content: text },
         { role: "assistant", content: presetAnswer },
       ]);
-      pendingPresetRef.current = text;  // Remember which preset we answered
+      pendingPresetRef.current = text;  
       setInput("");
-      setMorePrompt(null);               // Hide previous quick replies
-      lastFollowedUpRef.current = null;  // reset follow-up guard for this preset
+      setMorePrompt(null);               
+      lastFollowedUpRef.current = null;  
       return;
     }
 
-    // Regular API path
     createAbort();
     setStatus("sending");
     setError("");
@@ -514,7 +556,6 @@ export default function useChat() {
         const k = kMatch ? Math.max(1, Math.min(300, Number(kMatch[1]))) : 3;
         const payload = await searchSimilar(k);
         if (payload) {
-          // no auto-redirect; message already added in searchSimilar
           setStatus("idle");
           if (abortRef.current) abortRef.current = null;
           return;
@@ -538,103 +579,92 @@ export default function useChat() {
         }
 
         try {
-          const formDebug: Record<string, unknown> = {};
-          for (const pair of (Array.from(form.entries()) as [string, FormDataEntryValue][])) {
-            const k = pair[0];
-            const v = pair[1];
-            if (typeof v === "object" && "name" in v && typeof (v as File).name === "string") {
-              const f = v as File;
-              formDebug[k] = { filename: f.name, type: f.type || "unknown", size: typeof f.size === "number" ? f.size : "?" };
-            } else {
-              formDebug[k] = String(v);
+          try {
+            const debug: Record<string, unknown> = {};
+            for (const [k, v] of form.entries()) {
+              if (v instanceof File) debug[k] = { name: v.name, type: v.type, size: v.size };
+              else debug[k] = String(v);
             }
+            console.log("[UPLOAD DEBUG]", debug);
+          } catch { }
+
+          const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, {
+            method: "POST",
+            body: form
+          }));
+          if (!upResp.ok) {
+            const t = await upResp.text().catch(() => "");
+            throw new Error(`Upload failed: ${upResp.status} ${t}`);
           }
-          console.log("[DEBUG] Upload FormData prepared:", formDebug);
-        } catch { }
 
-        const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }));
-        if (!upResp.ok) {
-          const t = await upResp.text().catch(() => "");
-          throw new Error(`Upload failed: ${upResp.status} ${t}`);
-        }
-        const upJson = (await upResp.json()) as Record<string, unknown>;
-        const finalBasename =
-          (filenameFromText && filenameFromText.trim().length > 0)
-            ? filenameFromText.trim()
-            : (upJson && (upJson.basename ?? upJson.filename) ? String(upJson.basename ?? upJson.filename) : null);
+          const upJson = (await upResp.json()) as Record<string, unknown>;
 
-        const hasAudio = Boolean(upJson.audio_url) || Boolean(uploadedAudioFile);
-        const imageUrl = upJson.image_url as string | undefined;
-        const audioUrl = upJson.audio_url as string | undefined;
+          const imagePath = (upJson.image_path as string) || null;
+          const audioPath = (upJson.audio_path as string) || null;
 
-        if (hasAudio) {
-          const toolArgs: Record<string, unknown> = { image_url: imageUrl, audio_url: audioUrl };
-          if (finalBasename) toolArgs.filename = finalBasename;
-          const mediaMsgParts: string[] = [];
-          if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url as string}`);
-          if (toolArgs.audio_url) mediaMsgParts.push(`audio_url=${toolArgs.audio_url as string}`);
-          if (toolArgs.filename) mediaMsgParts.push(`filename=${String(toolArgs.filename)}`);
-          const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`;
+          const imageUrl = !imagePath ? (upJson.image_url as string | undefined) : undefined;
+          const audioUrl = !audioPath ? (upJson.audio_url as string | undefined) : undefined;
 
-          const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaInstruction }]));
+          const finalBasename =
+            (filenameFromText?.trim()?.length ? filenameFromText.trim() : null) ||
+            (upJson.basename as string) ||
+            (upJson.filename as string) ||
+            "upload";
+
+          const mode = getModeFromText(text); 
+
+          let mediaInstruction = "";
+          if (imagePath) {
+            if (!uploadedAudioFile && !upJson.audio_path && !upJson.audio_url) {
+              mediaInstruction = `Analyze Image: image_path=${imagePath} filename=${finalBasename} mode=${mode}`;
+            } else {
+              mediaInstruction = `Analyze media: image_path=${imagePath} ${audioPath ? `audio_path=${audioPath}` : ""} filename=${finalBasename}`;
+            }
+          } else if (imageUrl) {
+            if (!uploadedAudioFile && !upJson.audio_url) {
+              mediaInstruction = `Analyze Image: image_url=${imageUrl} filename=${finalBasename} mode=${mode}`;
+            } else {
+              mediaInstruction = `Analyze media: image_url=${imageUrl} ${audioUrl ? `audio_url=${audioUrl}` : ""} filename=${finalBasename} `;
+            }
+          } else {
+            throw new Error("Upload did not return a usable image.");
+          }
+
+          const chatRes = await withAbort(
+            chatOnce([...messages, { role: "user", content: mediaInstruction }])
+          );
+
           const rc = chatRes as RichChatResponse;
           handleResponse({
-            reply: { role: "assistant", content: "Media uploaded and queued." },
+            reply: {
+              role: "assistant", content: audioPath || audioUrl
+                ? "Media uploaded and queued."
+                : "Image uploaded and queued for processing."
+            },
             bot_messages: rc.bot_messages || [],
             action: rc.action,
             analysis_responses: rc.analysis_responses,
           } as ChatResponse);
 
-          // Ask to visit the page instead of auto-redirecting
-          setMessages(prev => [
-            ...prev,
-            { role: "assistant", content: "Thanks — your media has been uploaded. Do you want to open the view page? [Open View](/view)" }
-          ]);
-        } else {
-          const wantsAnalysis = /(?:\banalyz(?:e|ing|ed)\b|\banalyse\b|\binspect\b|\binspect(?:ion)?\b|\bscan\b)/i.test(text);
-          if (wantsAnalysis && imageUrl) {
-            const mode = getModeFromText(text);
-            const analysisInstruction = `Analyze image: image_url=${imageUrl} mode=${mode}`;
-            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: analysisInstruction }]));
-            const rc = chatRes as RichChatResponse;
-            handleResponse({
-              reply: { role: "assistant", content: `Image uploaded and ${mode} analysis started.` },
-              bot_messages: rc.bot_messages || [],
-              action: rc.action,
-              analysis_responses: rc.analysis_responses,
-            } as ChatResponse);
-          } else {
-            const toolArgs: Record<string, unknown> = { image_url: imageUrl, audio_url: null };
-            if (finalBasename) toolArgs.filename = finalBasename;
-            const mediaMsgParts: string[] = [];
-            if (toolArgs.image_url) mediaMsgParts.push(`image_url=${toolArgs.image_url as string}`);
-            if (toolArgs.filename) mediaMsgParts.push(`filename=${String(toolArgs.filename)}`);
-            const mediaInstruction = `Analyze media: ${mediaMsgParts.join(" ")}`;
-
-            const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: mediaMsgParts.length ? mediaInstruction : "Analyze media" }]));
-            const rc = chatRes as RichChatResponse;
-            handleResponse({
-              reply: { role: "assistant", content: "Image uploaded and queued for processing." },
-              bot_messages: rc.bot_messages || [],
-              action: rc.action,
-              analysis_responses: rc.analysis_responses,
-            } as ChatResponse);
+          if (audioPath || audioUrl) {
+            setMessages(prev => [
+              ...prev,
+              { role: "assistant", content: "Files saved. Want to open the list page? [Open View](/view)" }
+            ]);
           }
 
-          // Ask to visit the page instead of auto-redirecting
-          setMessages(prev => [
-            ...prev,
-            { role: "assistant", content: "Your image is ready. Would you like to open the view page? [Open View](/view)" }
-          ]);
+          clearImage();
+          clearAudio();
+          setStatus("idle");
+          if (abortRef.current) abortRef.current = null;
+          return;
+        } catch (err: unknown) {
+          console.error("[upload→agent] error:", err);
+          setStatus("error");
+          setError(errorMsg(err, "Failed to upload/process media."));
+        } finally {
+          if (abortRef.current) abortRef.current = null;
         }
-
-        clearImage();
-        clearAudio();
-        setStatus("idle");
-        if (abortRef.current) {
-          abortRef.current = null;
-        }
-        return;
       }
 
       const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }]));

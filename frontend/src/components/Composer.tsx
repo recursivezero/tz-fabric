@@ -9,7 +9,7 @@ import { formatFileName } from "../utils/formatFilename";
 type Props = {
   value: string;
   onChange: (v: string) => void;
-  onSend: () => void;
+  onSend: (overrideText?: string) => void;
   disabled?: boolean;
   onUpload?: (f: File) => void;
   onAudioUpload?: (f: File) => void;
@@ -125,13 +125,13 @@ export default function Composer({
     if (actionId === "image:analyze_short") {
       setMode("analysis");
       onChange(textForAnalysisShort);
-      onSend();
+      onSend(textForAnalysisShort);
       return;
     }
     if (actionId === "image:analyze_long") {
       setMode("analysis");
       onChange(textForAnalysisLong);
-      onSend();
+      onSend(textForAnalysisLong);
       return;
     }
     if (actionId === "image:search_similar") {

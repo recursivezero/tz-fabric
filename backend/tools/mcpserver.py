@@ -4,7 +4,7 @@ from mcp.server.fastmcp import FastMCP
 import importlib
 import traceback
 from PIL import Image
-from tools.media_tools import redirect_to_media_analysis as _media_tool
+from tools.media_tools import redirect_to_media_analysis as media_tool
 from tools.search_tool import search_tool as _search_tool
 from services.threaded import analyse_all_variations
 from utils.cache import get_response
@@ -14,69 +14,6 @@ from pathlib import Path
 from constants import IMAGE_DIR
 
 mcp = FastMCP("fabric-tools")
-
-_ANALYZE_CANDIDATES = [
-    ("tools.analyze", "analyze"),
-    ("tools.analyze", "analyze_image"),
-    ("tools.analysis", "analyze"),
-    ("tools.analysis_service", "analyze_image"),
-    ("tools.analyser", "analyze_image"),
-    ("tools.analyse", "analyze_image"),
-    ("tools.api.analyze", "analyze"),
-    ("tools.tools", "analyze_image"),
-]
-
-_REGENERATE_CANDIDATES = [
-    ("tools.regenerate", "regenerate"),
-    ("tools.regenerate", "regenerate_responses"),
-    ("tools.analysis", "regenerate"),
-    ("tools.analyze", "regenerate"),
-    ("tools.analysis_service", "regenerate"),
-]
-
-
-def _safe_find(fn_candidates):
-    for mod_name, fn_name in fn_candidates:
-        try:
-            mod = importlib.import_module(mod_name)
-            fn = getattr(mod, fn_name, None)
-            if callable(fn):
-                return fn
-        except Exception:
-            continue
-    return None
-
-
-_analyze_fn = _safe_find(_ANALYZE_CANDIDATES)
-_regenerate_fn = _safe_find(_REGENERATE_CANDIDATES)
-
-
-def _normalize_responses(raw) -> List[Dict[str, str]]:
-    if raw is None:
-        return []
-    if isinstance(raw, dict):
-        for k in ("responses", "results", "data", "analysis_responses"):
-            v = raw.get(k)
-            if isinstance(v, list):
-                raw = v
-                break
-        else:
-            if "text" in raw or "message" in raw:
-                return [{"id": raw.get("id", "r0"), "text": raw.get("text") or raw.get("message") or str(raw)}]
-            return []
-    if isinstance(raw, list):
-        out = []
-        for i, item in enumerate(raw):
-            if isinstance(item, str):
-                out.append({"id": f"r{i}", "text": item})
-            elif isinstance(item, dict):
-                rid = item.get("id") or item.get("response_id") or item.get("rid") or f"r{i}"
-                text = item.get("text") or item.get("content") or item.get("message") or str(item)
-                out.append({"id": rid, "text": text})
-            else:
-                out.append({"id": f"r{i}", "text": str(item)})
-        return out
-    return [{"id": "r0", "text": str(raw)}]
 
 def _resolve_image_path_from_url(image_url: Optional[str]) -> Optional[str]:
     if not image_url:
@@ -95,71 +32,66 @@ def _resolve_image_path_from_url(image_url: Optional[str]) -> Optional[str]:
 @mcp.tool()
 def redirect_to_analysis(
     image_url: Optional[str] = None,
+    image_path: Optional[str] = None,                 
     mode: Literal["short", "long"] = "short",
 ) -> Dict[str, Any]:
-    print("🔍 MCP redirect_to_analysis called")
-    print("  image_url =", image_url, "mode =", mode)
+    print("🔍 MCP redirect_to_analysis called", {"image_url": image_url, "image_path": image_path, "mode": mode})
 
-    params = {"image_url": image_url, "mode": mode}
+    path = None
+    if image_path:
+        p = Path(image_path)
+        if not p.exists():
+            return {"ok": False, "error": {"code": "image_missing", "message": f"image_path not found: {image_path}"}}
+        path = str(p)
+    else:
+        path = _resolve_image_path_from_url(image_url)
+        if not path:
+            return {"ok": False, "error": {"code": "image_not_found", "message": "Image not found on server."}}
 
     try:
-        if not image_url:
-            return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["No image url"]}
-
-        parsed = urlparse(image_url)
-        filename = Path(parsed.path).name
-        img_path = IMAGE_DIR / filename
-
-        if not img_path.exists():
-            return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["Image not found on server"]}
-
-        img = Image.open(img_path)
-        print("  Opened image format =", img.format, "size =", img.size)
-
-        # Call analyzer
+        img = Image.open(path)
         raw = analyse_all_variations(img, mode)
-        print("  analyse_all_variations returned:", raw)
-
         cache_key = raw.get("cache_key")
         first = raw.get("first")
-
         if not first:
-            return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": ["No response from analyzer"]}
+            return {"ok": False, "error": {"code": "no_result", "message": "Analyzer returned no response"}}
 
-        response_text = first.get("response")
-
+        txt = first.get("response", "")
         return {
-            "action": {"type": "redirect_to_analysis", "params": {**params, "cache_key": cache_key}},
-            "bot_messages": ["Here is the first result:", response_text],
-            "analysis_responses": [{"id": first["id"], "text": response_text}],
+            "ok": True,
+            "action": {"type": "redirect_to_analysis", "params": {"cache_key": cache_key, "mode": mode}},
+            "bot_messages": ["Here is the first result:", txt],
+            "analysis_responses": [{"id": first.get("id", "1"), "text": txt}],
+            "_via": "mcp.analysis",
         }
-
     except Exception as e:
-        print("💥 Exception in redirect_to_analysis:", e)
-        print(traceback.format_exc())
-        return {"action": {"type": "redirect_to_analysis", "params": params}, "bot_messages": [f"Error: {e}"]}
-
+        import traceback
+        return {"ok": False, "error": {"code": "analysis_error", "message": str(e)}, "trace": traceback.format_exc()}
+    
 SERVED_RESPONSES = {}
+SERVED_RESPONSES = {}
+
 @mcp.tool()
 def regenerate(
     cache_key: Optional[str] = None,
     image_url: Optional[str] = None,
     mode: Literal["short", "long"] = "short",
-    fresh: bool = False,
-    **kwargs
 ) -> Dict[str, Any]:
-    print("🔄 MCP regenerate called (IMPROVED)")
-    print("  cache_key =", cache_key, "image_url =", image_url, "mode =", mode, "fresh =", fresh)
+
+    print("🔄 MCP regenerate called")
+    print("  cache_key =", cache_key, "image_url =", image_url, "mode =", mode)
 
     if not cache_key:
         return {
-            "error": "no_cache_key",
-            "message": "Regenerate requires a cache_key"
+            "ok": False,
+            "display_text": "Missing cache_key for regeneration.",
+            "error": {"code": "no_cache_key"},
+            "_via": "mcp.regenerate"
         }
 
     served = SERVED_RESPONSES.get(cache_key, [])
 
-    # ✅ Look for next unserved response
+    # cycle 2–6
     for i in range(2, 7):
         if i in served:
             continue
@@ -167,84 +99,196 @@ def regenerate(
         resp = get_response(cache_key, i)
         if resp is None:
             return {
-                "error": "pending",
-                "message": f"No cached response ready yet for index={i}"
+                "ok": False,
+                "display_text": "⏳ Still generating more variations… try again in a moment.",
+                "error": {"code": "pending"},
+                "_via": "mcp.regenerate"
             }
 
-        # ✅ Mark as served
         served.append(i)
         SERVED_RESPONSES[cache_key] = served
 
-        # ✅ Normalize shape
         if isinstance(resp, dict):
-            text = resp.get("response") or resp.get("text") or resp.get("message") or str(resp)
+            txt = resp.get("response") or resp.get("text") or resp.get("message") or str(resp)
             rid = str(resp.get("id", i))
         else:
-            text, rid = str(resp), str(i)
+            txt, rid = str(resp), str(i)
 
         return {
-            "response": {
-                "id": rid,
-                "response": text,
-            },
-            "selected_index": i
+            "ok": True,
+            "display_text": txt,
+            "analysis_responses": [{"id": rid, "text": txt}],
+            "selected_index": i,
+            "_via": "mcp.regenerate"
         }
 
-    # ✅ If all are served
+    # all served
     return {
-        "error": "exhausted",
-        "message": "All cached alternatives have been shown. Upload the image to analyze again."
+        "ok": False,
+        "display_text": "All cached alternatives shown. Upload again for new analysis.",
+        "error": {"code": "exhausted"},
+        "_via": "mcp.regenerate"
     }
 
 @mcp.tool()
 def redirect_to_media_analysis(
+    image_path: Optional[str] = None,
+    audio_path: Optional[str] = None,
+    filename: Optional[str] = None,
     image_url: Optional[str] = None,
     audio_url: Optional[str] = None,
-    filename: Optional[str] = None,
 ) -> Dict[str, Any]:
+    print("🧭 MCP redirect_to_media_analysis called:", {
+        "image_path": image_path, "audio_path": audio_path,
+        "image_url": image_url, "audio_url": audio_url, "filename": filename
+    })
     try:
-        if image_url and not audio_url:
-            return redirect_to_analysis(image_url=image_url, mode="short")
-
-        if image_url and audio_url:
-            return _media_tool(image_url=image_url, audio_url=audio_url, filename=filename)
-
-        return {
-            "action": {"type": "redirect_to_media_analysis", "params": {"image_url": image_url, "audio_url": audio_url}},
-            "bot_messages": ["❌ No image_url provided."],
-        }
-
+        out = media_tool(
+            image_path=image_path,
+            audio_path=audio_path,
+            filename=filename,
+            image_url=image_url,
+            audio_url=audio_url,
+        )
+        if not isinstance(out, dict):
+            return {"ok": False, "error": {"code": "bad_output", "message": "media_tool returned non-dict"}}
+        out.setdefault("ok", True)
+        out["_via"] = "mcp.media"
+        return out
+    except Exception as e:
+        import traceback
+        return {"ok": False, "error": {"code": "media_tool_error", "message": str(e)}, "trace": traceback.format_exc()}
     except Exception as e:
         return {
             "action": {"type": "redirect_to_media_analysis", "params": {"image_url": image_url, "audio_url": audio_url}},
             "bot_messages": [f"💥 Error in redirect_to_media_analysis: {e}", traceback.format_exc()],
         }
 
-
 @mcp.tool()
-def search(**kwargs) -> Dict[str, Any]:
+def search(
+    *,
+    image_url: Optional[str] = None,
+    image_path: Optional[str] = None,
+    image_b64: Optional[str] = None,
+    k: int = 5,
+    order: Literal["recent", "score"] = "recent",
+    debug_ts: bool = False,
+    min_sim: float = 0.5,
+    require_audio: bool = False,  
+) -> Dict[str, Any]:
     print("🔍 MCP search called")
 
-    image_url = kwargs.pop("image_url", None)
-    image_path = kwargs.get("image_path")
-    image_b64 = kwargs.get("image_b64")
-    image_bytes = kwargs.get("image_bytes")
+    try:
+        resolved_path = image_path
+        if image_url and not (image_path or image_b64):
+            resolved = _resolve_image_path_from_url(image_url)
+            if not resolved:
+                return {
+                    "ok": False,
+                    "error": {"code": "not_found", "message": f"Image not found on server for URL: {image_url}"},
+                    "hint": "Ensure you used the upload endpoint and the filename matches files in IMAGE_DIR.",
+                    "_via": "mcp.search",
+                }
+            resolved_path = resolved
 
-    if image_url and not (image_path or image_b64 or image_bytes):
-        resolved = _resolve_image_path_from_url(image_url)
-        if resolved:
-            kwargs["image_path"] = resolved
-        else:
-            return {"error": f"Image not found on server for URL: {image_url}"}
+        if not (resolved_path or image_b64):
+            return {
+                "ok": False,
+                "error": {"code": "no_image", "message": "Provide image_url (resolvable), image_path, or image_b64."},
+                "hint": "If you only have a local file in the browser, upload it first to get an image_url.",
+                "_via": "mcp.search",
+            }
 
-    return _search_tool(**kwargs)
+        out = _search_tool(
+            image_b64=image_b64,
+            image_path=resolved_path,
+            k=int(k),
+            order=order,
+            debug_ts=bool(debug_ts),
+            min_sim=float(min_sim),
+            require_audio=bool(require_audio),
+        )
 
+        if not isinstance(out, dict):
+            return {
+                "ok": False,
+                "error": {"code": "bad_tool_output", "message": "search_tool returned a non-dict result"},
+                "_via": "mcp.search",
+            }
+
+        out.setdefault("count", len(out.get("results", []) if isinstance(out.get("results"), list) else []))
+        out["ok"] = True
+        out["_via"] = "mcp.search"
+        return out
+
+    except Exception as e:
+        import traceback
+        return {
+            "ok": False,
+            "error": {"code": "search_failed", "message": str(e)},
+            "trace": traceback.format_exc(),
+            "_via": "mcp.search",
+        }
 
 @mcp.tool()
-def search_base64(**kwargs) -> Dict[str, Any]:
+def search_base64(
+    *,
+    image_b64: str,
+    k: int = 5,
+    order: Literal["recent", "score"] = "recent",
+    debug_ts: bool = False,
+    min_sim: float = 0.5,
+    require_audio: bool = False,
+) -> Dict[str, Any]:
     print("🔍 MCP search_base64 called")
-    return _search_tool(**kwargs)
+    try:
+        out = _search_tool(
+            image_b64=image_b64,
+            image_path=None,
+            k=int(k),
+            order=order,
+            debug_ts=bool(debug_ts),
+            min_sim=float(min_sim),
+            require_audio=bool(require_audio),
+        )
+        if not isinstance(out, dict):
+            return {
+                "ok": False,
+                "error": {"code": "bad_tool_output", "message": "search_tool returned a non-dict result"},
+                "_via": "mcp.search_base64",
+            }
+        out.setdefault("count", len(out.get("results", []) if isinstance(out.get("results"), list) else []))
+        results = out.get("results", [])
 
+        analysis_responses = []
+        for idx, item in enumerate(results):
+            meta = item.get("metadata", {})
+            img = meta.get("imageUrl")
+            aud = meta.get("audioUrl")
+            score = item.get("score", 0)
+            text = f"Match {idx+1}: score={score:.2f}"
+            if img:
+                text += f"\nImage: {img}"
+            if aud:
+                text += f"\nAudio: {aud}"
+            analysis_responses.append({"id": str(idx+1), "text": text})
+
+        return {
+            "ok": True,
+            "display_text": f"Found {len(analysis_responses)} similar match(es).",
+            "analysis_responses": analysis_responses,
+            "results": results,      
+            "_via": "mcp.search",
+        }
+
+    except Exception as e:
+        import traceback
+        return {
+            "ok": False,
+            "error": {"code": "search_failed", "message": str(e)},
+            "trace": traceback.format_exc(),
+            "_via": "mcp.search_base64",
+        }
 
 def sse_app():
     print("✅ Connecting MCP Server")
