@@ -1,4 +1,3 @@
-# routes/chat.py
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
@@ -13,33 +12,39 @@ from agent.graph import agent_graph, SYSTEM_PROMPT
 
 Role = Literal["user", "assistant", "system"]
 
+
 class Message(BaseModel):
     role: Role
     content: str = Field(min_length=1, max_length=8000)
 
+
 class ChatRequest(BaseModel):
     messages: List[Message]
 
+
 class Action(BaseModel):
-    # allow media action too so it isn't dropped by validation
-    type: Literal["redirect_to_analysis", "redirect_to_media_analysis"]
+    # include 'search' as well
+    type: Literal["redirect_to_analysis", "redirect_to_media_analysis", "search"]
     params: Dict[str, Any]
+
 
 class ChatResponse(BaseModel):
     reply: Message
     action: Optional[Action] = None
     bot_messages: Optional[List[str]] = None
     analysis_responses: Optional[List[Dict[str, Any]]] = None
+    results: Optional[List[Dict[str, Any]]] = None
+
 
 ALLOWED_HINTS = [
-    "fabric","textile","cloth","garment","apparel","yarn","fiber","fibre","cotton","polyester",
-    "silk","wool","linen","denim","viscose","rayon","nylon","spandex","elastane","acrylic",
-    "gsm","weave","warp","weft","fill","knit","woven","nonwoven","loom","twill","satin","plain weave",
-    "dye","dyeing","printing","finishing","bleach","wash","shrink","shrinkage","pilling","drape",
-    "handfeel","tensile","tear","colorfastness","martindale","abrasion","stretch","recovery",
-    "microfiber","blend","weft knit","warp knit","rib","jersey","interlock","felting",
-    "care","wash care","ironing","detergent","stain","test","testing",
-    "analysis","analyser","analyzer","upload","image","model","tagging","feature","chatbot","ui","ux"
+    "fabric", "textile", "cloth", "garment", "apparel", "yarn", "fiber", "fibre", "cotton", "polyester",
+    "silk", "wool", "linen", "denim", "viscose", "rayon", "nylon", "spandex", "elastane", "acrylic",
+    "gsm", "weave", "warp", "weft", "fill", "knit", "woven", "nonwoven", "loom", "twill", "satin", "plain weave",
+    "dye", "dyeing", "printing", "finishing", "bleach", "wash", "shrink", "shrinkage", "pilling", "drape",
+    "handfeel", "tensile", "tear", "colorfastness", "martindale", "abrasion", "stretch", "recovery",
+    "microfiber", "blend", "weft knit", "warp knit", "rib", "jersey", "interlock", "felting",
+    "care", "wash care", "ironing", "detergent", "stain", "test", "testing",
+    "analysis", "analyser", "analyzer", "upload", "image", "model", "tagging", "feature", "chatbot", "ui", "ux"
 ]
 
 CHITCHAT_HINTS = [
@@ -61,6 +66,7 @@ CHITCHAT_RESPONSE = (
     "Ask me about weave, knit, GSM, fibers, or try uploading an image for analysis!"
 )
 
+
 def classify_message(user_text: str) -> str:
     t = (user_text or "").lower()
     if any(h in t for h in ALLOWED_HINTS):
@@ -69,8 +75,10 @@ def classify_message(user_text: str) -> str:
         return "chitchat"
     return "blocked"
 
+
 MAX_MESSAGES = 30
 MAX_TOTAL_CHARS = 20000
+
 
 def _extract_text_from_message_item(item: Any) -> Optional[str]:
     if item is None:
@@ -99,6 +107,7 @@ def _extract_text_from_message_item(item: Any) -> Optional[str]:
     except Exception:
         return None
 
+
 def _to_jsonable(v):
     if v is None or isinstance(v, (str, int, float, bool)):
         return v
@@ -115,6 +124,7 @@ def _to_jsonable(v):
         return str(v)
     except Exception:
         return repr(v)
+
 
 def _extract_embedded_payload(s: str) -> Optional[Dict[str, Any]]:
     if not s:
@@ -141,7 +151,7 @@ def _extract_embedded_payload(s: str) -> Optional[Dict[str, Any]]:
 
     i, j = s.find("{"), s.rfind("}")
     if i >= 0 and j > i:
-        candidate = s[i:j+1].replace(r"\n", "\n").replace(r"\"", "\"").replace(r"\t", "\t")
+        candidate = s[i:j + 1].replace(r"\n", "\n").replace(r"\"", "\"").replace(r"\t", "\t")
         try:
             obj = json.loads(candidate)
             if isinstance(obj, dict):
@@ -151,9 +161,9 @@ def _extract_embedded_payload(s: str) -> Optional[Dict[str, Any]]:
 
     return None
 
+
 @router.post("/chat", response_model=ChatResponse)
 def chat_endpoint(body: ChatRequest):
-  
     if not body.messages:
         raise HTTPException(status_code=400, detail="messages[] cannot be empty.")
 
@@ -186,7 +196,8 @@ def chat_endpoint(body: ChatRequest):
         messages_payload = [{"role": "system", "content": SYSTEM_PROMPT}] + messages_payload
 
     try:
-        result = agent_graph.invoke(last_user)
+        # Pass text + a short history for better fallback grounding
+        result = agent_graph.invoke({"text": last_user, "history": messages_payload[-10:]})
     except Exception as e:
         logger.exception("Agent graph invocation failed")
         raise HTTPException(status_code=502, detail=f"Agent error: {str(e)}")
@@ -227,7 +238,7 @@ def chat_endpoint(body: ChatRequest):
             action=action_obj,
             bot_messages=_to_jsonable(bot_messages) if bot_messages else ([reply_text] if reply_text else None),
             analysis_responses=_to_jsonable(analysis_responses) if analysis_responses else None,
-            results=_to_jsonable(results) if results else None
+            results=_to_jsonable(results) if results else None,
         )
 
     if isinstance(result, list):
@@ -261,7 +272,6 @@ def chat_endpoint(body: ChatRequest):
                 analysis_responses=_to_jsonable(analysis_responses) if isinstance(analysis_responses, list) else None,
             )
 
-        # fallback: conversational only
         reply = Message(role="assistant", content=str(reply_text))
         return ChatResponse(reply=reply)
 

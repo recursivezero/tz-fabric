@@ -547,7 +547,7 @@ export default function useChat() {
     setError("");
 
     if (text) setMessages(prev => [...prev, { role: "user", content: text }]);
-    if (!overrideText) setInput("");
+    setInput("");
 
     try {
       const searchIntentMatch = text.match(/^\s*search\s+similar\s+images\b/i);

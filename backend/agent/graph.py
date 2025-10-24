@@ -1,5 +1,4 @@
-# agent/graph.py
-from typing import Optional, Literal, Dict, Any
+from typing import Optional, Literal, Dict, Any, List, Union
 import re, json, traceback
 
 from langchain_core.runnables import RunnableLambda
@@ -14,6 +13,7 @@ llm = ChatGroq(
     temperature=0,
 )
 
+
 def _normalize_used_ids(uids) -> list[int]:
     """Accept ['1','2','r3', 4] and normalize to [1,2,3,4]."""
     if not uids:
@@ -27,6 +27,7 @@ def _normalize_used_ids(uids) -> list[int]:
         out.append(int(m.group(0)))
     return out
 
+
 def call_redirect_to_analysis(params: Dict[str, Any]) -> Dict[str, Any]:
     try:
         return invoke_tool_sync("redirect_to_analysis", params)
@@ -36,13 +37,19 @@ def call_redirect_to_analysis(params: Dict[str, Any]) -> Dict[str, Any]:
             "bot_messages": [f"Error calling MCP tool redirect_to_analysis: {e}", traceback.format_exc()],
         }
 
+
 def call_regenerate(params: Dict[str, Any]) -> Dict[str, Any]:
     try:
         if "used_ids" in params:
             params["used_ids"] = _normalize_used_ids(params["used_ids"])
         return invoke_tool_sync("regenerate", params)
     except Exception as e:
-        return {"type": "regenerate", "params": params, "bot_messages": [f"Error calling MCP tool regenerate: {e}", traceback.format_exc()]}
+        return {
+            "type": "regenerate",
+            "params": params,
+            "bot_messages": [f"Error calling MCP tool regenerate: {e}", traceback.format_exc()],
+        }
+
 
 def call_redirect_to_media_analysis(params: Dict[str, Any]):
     try:
@@ -50,14 +57,19 @@ def call_redirect_to_media_analysis(params: Dict[str, Any]):
     except Exception as e:
         return {
             "action": {"type": "redirect_to_media_analysis", "params": params},
-            "bot_messages": [f"Error calling MCP tool redirect_to_media_analysis: {e}", traceback.format_exc() ],
+            "bot_messages": [f"Error calling MCP tool redirect_to_media_analysis: {e}", traceback.format_exc()],
         }
+
 
 def call_search(params: Dict[str, Any]) -> Dict[str, Any]:
     try:
         return invoke_tool_sync("search", params)
     except Exception as e:
-        return {"type": "search", "params": params, "bot_messages": [f"Error calling MCP tool search: {e}", traceback.format_exc()]}
+        return {
+            "type": "search",
+            "params": params,
+            "bot_messages": [f"Error calling MCP tool search: {e}", traceback.format_exc()],
+        }
 
 
 _TOOL_DISPATCH = {
@@ -76,6 +88,7 @@ SEARCH_INTENT_RE = re.compile(
 )
 
 ANALYZE_INTENT_RE = re.compile(r"\b(analy[sz]e|analysis|describe|inspect|classify|label|tag)\b", re.I)
+
 
 def router_fn(user_text: str) -> Dict[str, Any]:
     if not user_text:
@@ -99,16 +112,22 @@ def router_fn(user_text: str) -> Dict[str, Any]:
     if re.search(r"\b(regen|regenerate|variant|alternative|another|next alternative|more variants)\b", t, re.I):
         params: Dict[str, Any] = {}
         m_cache = re.search(r"cache[_\- ]?key[:= ]?([A-Za-z0-9_\-]+)", t_raw)
-        if m_cache: params["cache_key"] = m_cache.group(1)
+        if m_cache:
+            params["cache_key"] = m_cache.group(1)
         m_index = re.search(r"\bindex[:= ]?(\d+)\b", t_raw)
         if m_index:
-            try: params["index"] = int(m_index.group(1))
-            except: pass
+            try:
+                params["index"] = int(m_index.group(1))
+            except Exception:
+                pass
         m_img = re.search(r"\bimage_url\s*=\s*(https?://\S+)", t_raw)
-        if m_img: params["image_url"] = m_img.group(1)
+        if m_img:
+            params["image_url"] = m_img.group(1)
         m_mode = re.search(r"\bmode[:= ](short|long)\b", t, re.I)
-        if m_mode: params["mode"] = m_mode.group(1).lower()
-        if re.search(r"\bfresh\s*=\s*true\b", t, re.I): params["fresh"] = True
+        if m_mode:
+            params["mode"] = m_mode.group(1).lower()
+        if re.search(r"\bfresh\s*=\s*true\b", t, re.I):
+            params["fresh"] = True
         params["user_text"] = user_text
         return {"tool": "regenerate", "params": params}
 
@@ -163,11 +182,17 @@ SYSTEM_PROMPT = (
 
 
 def agent_fallback(params: Dict[str, Any]) -> str:
-    user_text = params.get("text", "")
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_text},
-    ]
+    user_text: str = params.get("text", "")
+    history: List[Dict[str, str]] = params.get("history") or []
+    # Keep only last ~6 turns to avoid long prompts
+    clipped = history[-6:] if isinstance(history, list) else []
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for m in clipped:
+        r = m.get("role")
+        c = m.get("content")
+        if r in ("user", "assistant", "system") and isinstance(c, str):
+            messages.append({"role": r, "content": c})
+    messages.append({"role": "user", "content": user_text})
     try:
         resp = llm.invoke(messages)
         if hasattr(resp, "content"):
@@ -179,8 +204,15 @@ def agent_fallback(params: Dict[str, Any]) -> str:
         return f"Error calling LLM: {e}"
 
 
-def _agent_graph_callable(user_text: str) -> Any:
+def _agent_graph_callable(payload: Union[str, Dict[str, Any]]) -> Any:
     try:
+        if isinstance(payload, str):
+            user_text = payload
+            history = None
+        else:
+            user_text = str(payload.get("text", "") or "")
+            history = payload.get("history")
+
         decision = router_fn(user_text)
 
         tool = decision.get("tool")
@@ -194,8 +226,8 @@ def _agent_graph_callable(user_text: str) -> Any:
             except Exception as e:
                 return {"error": f"tool_call_failed: {e}", "trace": traceback.format_exc()}
 
-        # fallback: conversational agent
-        return agent_fallback({"text": user_text})
+        # fallback: conversational agent (with short history if provided)
+        return agent_fallback({"text": user_text, "history": history or []})
 
     except Exception as e:
         return {"error": f"agent_graph_error: {e}", "trace": traceback.format_exc()}

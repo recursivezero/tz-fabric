@@ -141,7 +141,7 @@ export default function Composer({
     }
     if (actionId === "submit:both") {
       onChange("Submit files");
-      onSend();
+      onSend("Submitted files");
       return;
     }
     if (actionId === "submit:both_with_names") {
@@ -436,14 +436,14 @@ export default function Composer({
                     type="button"
                     onClick={() => imageInputRef.current?.click()}
                   >
-                  🖼️ Upload image
+                    🖼️ Upload image
                   </button>
                   <button
                     className="attach-menu-item"
                     type="button"
                     onClick={() => audioInputRef.current?.click()}
                   >
-                  🎙️ Upload audio
+                    🎙️ Upload audio
                   </button>
                 </div>
               )}
@@ -526,6 +526,7 @@ export default function Composer({
                 const nm = e.target.value;
                 setNameOnly(nm);
                 onChange(textForSubmitName(nm));
+                setMode("free");
               }}
               placeholder="Your name"
               style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #000000ff" }}
@@ -546,7 +547,12 @@ export default function Composer({
               onClick={() => {
                 const k = randInt(1, 10);
                 setKOnly(k);
-                onChange(textForSearchK(k));
+                const cmd = textForSearchK(k);
+                onSend(cmd);
+                onChange("");
+                onClearUpload?.();
+                onClearAudio?.();
+                setMode("free");
               }}
               disabled={disabled}
               aria-label="Pick k less than 10"

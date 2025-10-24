@@ -1,7 +1,5 @@
-# tools/mcpserver.py
 from typing import Optional, Literal, Dict, Any, List
 from mcp.server.fastmcp import FastMCP
-import importlib
 import traceback
 from PIL import Image
 from tools.media_tools import redirect_to_media_analysis as media_tool
@@ -14,6 +12,7 @@ from pathlib import Path
 from constants import IMAGE_DIR
 
 mcp = FastMCP("fabric-tools")
+
 
 def _resolve_image_path_from_url(image_url: Optional[str]) -> Optional[str]:
     if not image_url:
@@ -29,28 +28,51 @@ def _resolve_image_path_from_url(image_url: Optional[str]) -> Optional[str]:
         return None
 
 
+def _is_under(base: Path, target: Path) -> bool:
+    """Return True iff target resolves inside base."""
+    try:
+        base = base.resolve()
+        target = Path(target).resolve()
+        return str(target).startswith(str(base))
+    except Exception:
+        return False
+
+
 @mcp.tool()
 def redirect_to_analysis(
     image_url: Optional[str] = None,
-    image_path: Optional[str] = None,                 
+    image_path: Optional[str] = None,
     mode: Literal["short", "long"] = "short",
 ) -> Dict[str, Any]:
-    print("🔍 MCP redirect_to_analysis called", {"image_url": image_url, "image_path": image_path, "mode": mode})
+    print(
+        "🔍 MCP redirect_to_analysis called",
+        {"image_url": image_url, "image_path": image_path, "mode": mode},
+    )
 
-    path = None
+    path: Optional[str] = None
     if image_path:
         p = Path(image_path)
-        if not p.exists():
-            return {"ok": False, "error": {"code": "image_missing", "message": f"image_path not found: {image_path}"}}
+        # Only allow files inside IMAGE_DIR for safety
+        if not p.exists() or not _is_under(IMAGE_DIR, p):
+            return {
+                "ok": False,
+                "error": {
+                    "code": "image_missing",
+                    "message": f"image_path not found or forbidden: {image_path}",
+                },
+            }
         path = str(p)
     else:
         path = _resolve_image_path_from_url(image_url)
         if not path:
-            return {"ok": False, "error": {"code": "image_not_found", "message": "Image not found on server."}}
+            return {
+                "ok": False,
+                "error": {"code": "image_not_found", "message": "Image not found on server."},
+            }
 
     try:
-        img = Image.open(path)
-        raw = analyse_all_variations(img, mode)
+        with Image.open(path) as img:
+            raw = analyse_all_variations(img, mode)
         cache_key = raw.get("cache_key")
         first = raw.get("first")
         if not first:
@@ -65,11 +87,15 @@ def redirect_to_analysis(
             "_via": "mcp.analysis",
         }
     except Exception as e:
-        import traceback
-        return {"ok": False, "error": {"code": "analysis_error", "message": str(e)}, "trace": traceback.format_exc()}
-    
-SERVED_RESPONSES = {}
-SERVED_RESPONSES = {}
+        return {
+            "ok": False,
+            "error": {"code": "analysis_error", "message": str(e)},
+            "trace": traceback.format_exc(),
+        }
+
+
+SERVED_RESPONSES: Dict[str, List[int]] = {}
+
 
 @mcp.tool()
 def regenerate(
@@ -85,8 +111,9 @@ def regenerate(
         return {
             "ok": False,
             "display_text": "Missing cache_key for regeneration.",
+            "bot_messages": ["Missing cache_key for regeneration."],
             "error": {"code": "no_cache_key"},
-            "_via": "mcp.regenerate"
+            "_via": "mcp.regenerate",
         }
 
     served = SERVED_RESPONSES.get(cache_key, [])
@@ -100,9 +127,10 @@ def regenerate(
         if resp is None:
             return {
                 "ok": False,
-                "display_text": "⏳ Still generating more variations… try again in a moment.",
+                "display_text": "⏳ Still generating more variations… try again shortly.",
+                "bot_messages": ["⏳ Still generating more variations… try again shortly."],
                 "error": {"code": "pending"},
-                "_via": "mcp.regenerate"
+                "_via": "mcp.regenerate",
             }
 
         served.append(i)
@@ -117,17 +145,19 @@ def regenerate(
         return {
             "ok": True,
             "display_text": txt,
+            "bot_messages": [txt],
             "analysis_responses": [{"id": rid, "text": txt}],
             "selected_index": i,
-            "_via": "mcp.regenerate"
+            "_via": "mcp.regenerate",
         }
 
     # all served
     return {
         "ok": False,
         "display_text": "All cached alternatives shown. Upload again for new analysis.",
+        "bot_messages": ["All cached alternatives shown. Upload again for new analysis."],
         "error": {"code": "exhausted"},
-        "_via": "mcp.regenerate"
+        "_via": "mcp.regenerate",
     }
 
 @mcp.tool()
@@ -138,10 +168,16 @@ def redirect_to_media_analysis(
     image_url: Optional[str] = None,
     audio_url: Optional[str] = None,
 ) -> Dict[str, Any]:
-    print("🧭 MCP redirect_to_media_analysis called:", {
-        "image_path": image_path, "audio_path": audio_path,
-        "image_url": image_url, "audio_url": audio_url, "filename": filename
-    })
+    print(
+        "🧭 MCP redirect_to_media_analysis called:",
+        {
+            "image_path": image_path,
+            "audio_path": audio_path,
+            "image_url": image_url,
+            "audio_url": audio_url,
+            "filename": filename,
+        },
+    )
     try:
         out = media_tool(
             image_path=image_path,
@@ -156,13 +192,12 @@ def redirect_to_media_analysis(
         out["_via"] = "mcp.media"
         return out
     except Exception as e:
-        import traceback
-        return {"ok": False, "error": {"code": "media_tool_error", "message": str(e)}, "trace": traceback.format_exc()}
-    except Exception as e:
         return {
-            "action": {"type": "redirect_to_media_analysis", "params": {"image_url": image_url, "audio_url": audio_url}},
-            "bot_messages": [f"💥 Error in redirect_to_media_analysis: {e}", traceback.format_exc()],
+            "ok": False,
+            "error": {"code": "media_tool_error", "message": str(e)},
+            "trace": traceback.format_exc(),
         }
+
 
 @mcp.tool()
 def search(
@@ -174,7 +209,7 @@ def search(
     order: Literal["recent", "score"] = "recent",
     debug_ts: bool = False,
     min_sim: float = 0.5,
-    require_audio: bool = False,  
+    require_audio: bool = False,
 ) -> Dict[str, Any]:
     print("🔍 MCP search called")
 
@@ -222,13 +257,13 @@ def search(
         return out
 
     except Exception as e:
-        import traceback
         return {
             "ok": False,
             "error": {"code": "search_failed", "message": str(e)},
             "trace": traceback.format_exc(),
             "_via": "mcp.search",
         }
+
 
 @mcp.tool()
 def search_base64(
@@ -271,24 +306,24 @@ def search_base64(
                 text += f"\nImage: {img}"
             if aud:
                 text += f"\nAudio: {aud}"
-            analysis_responses.append({"id": str(idx+1), "text": text})
+            analysis_responses.append({"id": str(idx + 1), "text": text})
 
         return {
             "ok": True,
             "display_text": f"Found {len(analysis_responses)} similar match(es).",
             "analysis_responses": analysis_responses,
-            "results": results,      
-            "_via": "mcp.search",
+            "results": results,
+            "_via": "mcp.search_base64",
         }
 
     except Exception as e:
-        import traceback
         return {
             "ok": False,
             "error": {"code": "search_failed", "message": str(e)},
             "trace": traceback.format_exc(),
             "_via": "mcp.search_base64",
         }
+
 
 def sse_app():
     print("✅ Connecting MCP Server")
