@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import Composer from "../components/Composer";
 import EmptyState from "../components/EmptyState";
 import HandleRedirectAction from "../components/HandleRedirectAction";
@@ -41,13 +40,9 @@ export default function Chat() {
     rejectAction,
     fileName,
     setFileName,
-    shouldNavigateToList,
-    setShouldNavigateToList,
     morePrompt, confirmMoreYes, confirmMoreNo,
     onAssistantRendered, // stable callback from hook
   } = useChat();
-
-  const navigate = useNavigate();
 
   const fileToDataUrl = useCallback(async (url: string): Promise<string | null> => {
     try {
@@ -137,11 +132,12 @@ export default function Chat() {
     }
   }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]);
 
+  // NOTE: Removed the auto-navigation effect. We now rely on the assistant's message
+  // with a clickable Markdown link like [Open View](/view) or [Open Search Results](/search).
+
   useEffect(() => {
-    if (!shouldNavigateToList) return;
-    navigate("/view");
-    setShouldNavigateToList(false);
-  }, [shouldNavigateToList, navigate, setShouldNavigateToList]);
+    // no-op; kept to illustrate we intentionally removed navigation side-effects
+  }, []);
 
   return (
     <div className="page-root">
@@ -192,7 +188,7 @@ export default function Chat() {
               <MessageList
                 messages={messages}
                 scrollerRef={scrollerRef}
-                onLastAssistantRendered={onAssistantRendered} // stable callback (fires after the assistant bubble is done)
+                onLastAssistantRendered={onAssistantRendered}
               />
 
               {morePrompt && (

@@ -10,6 +10,8 @@ router = APIRouter()
 IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
+
+
 @router.post("/uploads/tmp_media")
 async def upload_tmp_media(
     image: UploadFile = File(None),
@@ -36,7 +38,9 @@ async def upload_tmp_media(
     saved_image_url = saved_audio_url = None
     saved_image_name = saved_audio_name = None
 
-    # 2) Save image (keep readable base)
+    saved_image_path: str | None = None
+    saved_audio_path: str | None = None
+
     if image and image.filename:
         img_ext = Path(image.filename).suffix or ".jpg"
         img_name = f"{base}-{uniq}{img_ext}"
@@ -45,6 +49,7 @@ async def upload_tmp_media(
             with img_path.open("wb") as out:
                 shutil.copyfileobj(image.file, out)
             saved_image_url = f"http://127.0.0.1:8000/assets/images/{img_name}"
+            saved_image_path = str(img_path.resolve())
             saved_image_name = img_name
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to save image: {e}")
@@ -59,10 +64,10 @@ async def upload_tmp_media(
                 shutil.copyfileobj(audio.file, out)
             saved_audio_url = f"http://127.0.0.1:8000/assets/audios/{aud_name}"
             saved_audio_name = aud_name
+            saved_audio_path = str(aud_path.resolve())
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to save audio: {e}")
 
-    # 4) Return the human-readable base (frontend uses this as finalBasename)
     return {
         "image_url": saved_image_url,
         "audio_url": saved_audio_url,
@@ -70,4 +75,6 @@ async def upload_tmp_media(
         "filename": base,          
         "image_filename": saved_image_name,
         "audio_filename": saved_audio_name,
+        "image_path": saved_image_path,      
+        "audio_path": saved_audio_path, 
     }

@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import "../styles/Composer.css";
 import Loader from "./Loader";
 import SuggestionChips from "./SuggestionChips";
+import { formatFileName } from "../utils/formatFilename";
 
 type Props = {
   value: string;
   onChange: (v: string) => void;
-  onSend: () => void;
+  onSend: (overrideText?: string) => void;
   disabled?: boolean;
   onUpload?: (f: File) => void;
   onAudioUpload?: (f: File) => void;
@@ -71,12 +72,10 @@ export default function Composer({
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
-  // ---- NEW: mode + tiny inputs state ----
   const [mode, setMode] = useState<Mode>("free");
   const [nameOnly, setNameOnly] = useState<string>("");
   const [kOnly, setKOnly] = useState<number>(3); // still keep internal state to display chosen k if needed
 
-  // ---- NEW: file meta states ----
   const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string } | null>(null);
 
@@ -122,18 +121,17 @@ export default function Composer({
     setShowAttachMenu(false);
   };
 
-  // ---- UPDATED: chips set mode + controlled message ----
   const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
     if (actionId === "image:analyze_short") {
       setMode("analysis");
       onChange(textForAnalysisShort);
-      onSend();
+      onSend(textForAnalysisShort);
       return;
     }
     if (actionId === "image:analyze_long") {
       setMode("analysis");
       onChange(textForAnalysisLong);
-      onSend();
+      onSend(textForAnalysisLong);
       return;
     }
     if (actionId === "image:search_similar") {
@@ -143,7 +141,7 @@ export default function Composer({
     }
     if (actionId === "submit:both") {
       onChange("Submit files");
-      onSend();
+      onSend("Submitted files");
       return;
     }
     if (actionId === "submit:both_with_names") {
@@ -295,6 +293,8 @@ export default function Composer({
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
+  const NAME_MAX = 26;
+
   return (
     <>
       {isRecording && (
@@ -343,8 +343,11 @@ export default function Composer({
               <div className="upload-preview image-preview">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }}>
-                    {imageMeta.name} ({imageMeta.size})
+                  <div
+                    style={{ color: "black", fontSize: 18, marginTop: 4 }}
+                    title={imageMeta.name} // show full name on hover
+                  >
+                    {formatFileName(imageMeta.name, NAME_MAX)} ({imageMeta.size})
                   </div>
                 )}
                 <button
@@ -365,8 +368,11 @@ export default function Composer({
               <div className="upload-preview audio-preview">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }}>
-                    {audioMeta.name} ({audioMeta.size})
+                  <div
+                    style={{ color: "black", fontSize: 18, marginTop: 4 }}
+                    title={audioMeta.name} // show full name on hover
+                  >
+                    {formatFileName(audioMeta.name, NAME_MAX)} ({audioMeta.size})
                   </div>
                 )}
                 <button
@@ -430,14 +436,14 @@ export default function Composer({
                     type="button"
                     onClick={() => imageInputRef.current?.click()}
                   >
-                  🖼️ Upload image
+                    🖼️ Upload image
                   </button>
                   <button
                     className="attach-menu-item"
                     type="button"
                     onClick={() => audioInputRef.current?.click()}
                   >
-                  🎙️ Upload audio
+                    🎙️ Upload audio
                   </button>
                 </div>
               )}
@@ -520,6 +526,7 @@ export default function Composer({
                 const nm = e.target.value;
                 setNameOnly(nm);
                 onChange(textForSubmitName(nm));
+                setMode("free");
               }}
               placeholder="Your name"
               style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #000000ff" }}
@@ -540,7 +547,12 @@ export default function Composer({
               onClick={() => {
                 const k = randInt(1, 10);
                 setKOnly(k);
-                onChange(textForSearchK(k));
+                const cmd = textForSearchK(k);
+                onSend(cmd);
+                onChange("");
+                onClearUpload?.();
+                onClearAudio?.();
+                setMode("free");
               }}
               disabled={disabled}
               aria-label="Pick k less than 10"
