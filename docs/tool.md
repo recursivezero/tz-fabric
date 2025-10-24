@@ -1,6 +1,7 @@
 # Documentation
-
+```text
 This guide explains **how to add a MCP Tool** into the Fabric Chat system that supports:
+```
 ✅ Image analysis  
 ✅ Media upload  
 ✅ Vector search  
@@ -136,8 +137,3 @@ class Action(BaseModel):
 
 ---
 
-## Example Tool Trigger Phrases
-
-- “run mytool hello world”
-- “do magic with denim data”
-- UI button → formatted command
