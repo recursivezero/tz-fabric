@@ -69,9 +69,10 @@
 .home__sub {
   margin: 0 auto;
   width: auto;
-
+  color: #550756;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
+  font-style: italic;
 }
 
 .home__grid {
