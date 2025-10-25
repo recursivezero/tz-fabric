@@ -2,15 +2,24 @@
 :root {
   --text-color: #0f1724;
   --muted: #596b7a;
-  --border: rgba(15,23,36,0.08);
+  --border: rgba(0, 0, 0, 0.904);
   --accent: #2f6bff;
   --container-max: 1200px;
 }
 
-* { box-sizing: border-box; }
-html,body,#root { height: 100%; margin: 0; font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif; color: var(--text-color); }
+* {
+  box-sizing: border-box;
+}
 
-/* central page container */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif;
+  color: var(--text-color);
+}
+
 .app-wrapper {
   min-height: 100vh;
   display: flex;
@@ -18,26 +27,53 @@ html,body,#root { height: 100%; margin: 0; font-family: Inter, "Segoe UI", Robot
   align-items: center;
 }
 
-/* header */
+.app-wrapper.upload-bg {
+  background-image: url('/fabric_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
 .site-header {
   width: 100%;
   max-width: var(--container-max);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
+  padding: 4px 20px;
   margin-top: 18px;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
   border: 1px solid var(--border);
-  box-shadow: 0 6px 24px rgba(18,30,60,0.03);
+  box-shadow: 0 6px 24px rgba(66, 66, 67, 0.767);
 }
 
-/* left group: logo + text */
+.site-header.header-width {
+  width: 65%;
+}
+
 .header-left {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.header-nav ul {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+}
+
+.header-nav ul li {
+  font-size: 14px;
+  margin: 0 10px;
+}
+
+.header-nav ul li a {
+  text-decoration: none;
+  color: var(--text-color);
+  font-weight: 500;
 }
 
 .logo-mark {
@@ -49,7 +85,6 @@ html,body,#root { height: 100%; margin: 0; font-family: Inter, "Segoe UI", Robot
   flex-shrink: 0;
 }
 
-/* brand */
 .brand-name {
   font-size: 16px;
   font-weight: 700;
@@ -57,7 +92,6 @@ html,body,#root { height: 100%; margin: 0; font-family: Inter, "Segoe UI", Robot
   letter-spacing: 0.1px;
 }
 
-/* nav: right aligned */
 .site-nav {
   display: flex;
   gap: 22px;
@@ -75,19 +109,18 @@ html,body,#root { height: 100%; margin: 0; font-family: Inter, "Segoe UI", Robot
 }
 
 .site-nav a:hover {
-  background: rgba(47,107,255,0.08);
+  background: rgba(47, 107, 255, 0.08);
   transform: translateY(-1px);
 }
 
-/* main content area */
 .main-content {
   width: 100%;
   max-width: var(--container-max);
   padding: 20px;
+  flex: 1;
   margin-top: 18px;
 }
 
-/* small screens: stack header neatly */
 @media (max-width: 720px) {
   .site-header {
     padding: 12px 14px;

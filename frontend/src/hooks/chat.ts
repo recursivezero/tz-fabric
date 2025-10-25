@@ -649,7 +649,7 @@ export default function useChat() {
           if (audioPath || audioUrl) {
             setMessages(prev => [
               ...prev,
-              { role: "assistant", content: "Files saved. Want to open the list page? [Open View](/view)" }
+              { role: "assistant", content: "Files saved. Want to open the list page? [See your upload](/view)" }
             ]);
           }
 

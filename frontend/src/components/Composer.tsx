@@ -1,6 +1,6 @@
 // src/components/Composer.tsx
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import "../styles/Composer.css";
 import Loader from "./Loader";
 import SuggestionChips from "./SuggestionChips";
@@ -74,7 +74,7 @@ export default function Composer({
 
   const [mode, setMode] = useState<Mode>("free");
   const [nameOnly, setNameOnly] = useState<string>("");
-  const [kOnly, setKOnly] = useState<number>(3); // still keep internal state to display chosen k if needed
+  const [kOnly, setKOnly] = useState<number>(3);
 
   const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string } | null>(null);
@@ -153,12 +153,8 @@ export default function Composer({
   };
 
   const fmt = (s: number) => {
-    const mm = Math.floor(s / 60)
-      .toString()
-      .padStart(2, "0");
-    const ss = Math.floor(s % 60)
-      .toString()
-      .padStart(2, "0");
+    const mm = Math.floor(s / 60).toString().padStart(2, "0");
+    const ss = Math.floor(s % 60).toString().padStart(2, "0");
     return `${mm}:${ss}`;
   };
 
@@ -206,9 +202,7 @@ export default function Composer({
           setError("Failed to process recording.");
         } finally {
           if (streamRef.current) {
-            streamRef.current.getTracks().forEach((t) => {
-              t.stop();
-            });
+            streamRef.current.getTracks().forEach((t) => t.stop());
             streamRef.current = null;
           }
           if (timerRef.current) {
@@ -264,14 +258,10 @@ export default function Composer({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch { }
+        try { mediaRecorderRef.current.stop(); } catch {}
       }
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => {
-          t.stop();
-        });
+        streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
       startTimeRef.current = null;
@@ -284,9 +274,7 @@ export default function Composer({
       if (
         attachMenuRef.current.contains(ev.target as Node) ||
         attachBtnRef.current.contains(ev.target as Node)
-      ) {
-        return;
-      }
+      ) return;
       setShowAttachMenu(false);
     };
     document.addEventListener("click", onDoc);
@@ -336,17 +324,14 @@ export default function Composer({
             <Loader />
           </div>
         )}
-        {(previewUrl || audioUrl) && (
 
+        {(previewUrl || audioUrl) && (
           <div className="upload-previews" role="region" aria-label="Upload previews">
             {previewUrl && (
               <div className="upload-preview image-preview">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
-                  <div
-                    style={{ color: "black", fontSize: 18, marginTop: 4 }}
-                    title={imageMeta.name} // show full name on hover
-                  >
+                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={imageMeta.name}>
                     {formatFileName(imageMeta.name, NAME_MAX)} ({imageMeta.size})
                   </div>
                 )}
@@ -368,10 +353,7 @@ export default function Composer({
               <div className="upload-preview audio-preview">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
-                  <div
-                    style={{ color: "black", fontSize: 18, marginTop: 4 }}
-                    title={audioMeta.name} // show full name on hover
-                  >
+                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={audioMeta.name}>
                     {formatFileName(audioMeta.name, NAME_MAX)} ({audioMeta.size})
                   </div>
                 )}
@@ -391,6 +373,7 @@ export default function Composer({
           </div>
         )}
 
+        {/* Line 1: [+] textarea [▶] */}
         <div className="composer-row">
           <div className="composer-middle">
             <div className="composer-input-wrapper">
@@ -408,15 +391,12 @@ export default function Composer({
               </button>
 
               <textarea
-                className={`composer-input`}
+                className="composer-input"
                 placeholder="Ask about your fabric analysis..."
                 value={value}
                 onChange={(e) => {
-                  if (mode === "free") {
-                    onChange(e.target.value);
-                  } else {
-                    e.preventDefault();
-                  }
+                  if (mode === "free") onChange(e.target.value);
+                  else e.preventDefault();
                 }}
                 style={{ color: "black" }}
                 rows={1}
@@ -424,13 +404,21 @@ export default function Composer({
                 readOnly={mode !== "free"}
               />
 
+              {/* ▶ Send (inside input, right) */}
+              <button
+                className="send-btn inside"
+                onClick={() => onSend()}
+                disabled={disabled || (!value.trim() && !previewUrl && !audioUrl)}
+                title="Send"
+                aria-label="Send message"
+              >
+                <svg className="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor" />
+                </svg>
+              </button>
+
               {showAttachMenu && (
-                <div
-                  className="attach-menu"
-                  ref={attachMenuRef}
-                  role="menu"
-                  aria-label="Attachment options"
-                >
+                <div className="attach-menu" ref={attachMenuRef} role="menu" aria-label="Attachment options">
                   <button
                     className="attach-menu-item"
                     type="button"
@@ -464,60 +452,43 @@ export default function Composer({
               />
             </div>
           </div>
+        </div>
 
-          <div className="composer-right">
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <button
-                style={{ color: "black" }}
-                type="button"
-                onClick={startRecording}
-                disabled={isRecording}
-                aria-pressed={isRecording}
-                title="Start recording (max 1 minute)"
-                className="record-btn start-btn"
-              >
-                ⏺ Start
-              </button>
+        {/* Line 2: label + Start/Stop (new row) */}
+        <div className="composer-audio-row">
+          <span className="audio-label">record your audio</span>
 
-              <button
-                style={{ color: "black" }}
-                type="button"
-                onClick={stopRecording}
-                disabled={!isRecording}
-                aria-pressed={!isRecording}
-                title="Stop recording"
-                className="record-btn stop-btn"
-              >
-                ⏹ Stop
-              </button>
+          <button
+            style={{ color: "black" }}
+            type="button"
+            onClick={startRecording}
+            disabled={isRecording}
+            aria-pressed={isRecording}
+            title="Start recording (max 1 minute)"
+            className="record-btn start-btn"
+          >
+            ⏺ Start
+          </button>
 
-              <button
-                className="send-btn"
-                onClick={onSend}
-                disabled={disabled || (!value.trim() && !previewUrl && !audioUrl)}
-                title="Send"
-                aria-label="Send message"
-              >
-                <svg className="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor" />
-                </svg>
-              </button>
-            </div>
-          </div>
+          <button
+            style={{ color: "black" }}
+            type="button"
+            onClick={stopRecording}
+            disabled={!isRecording}
+            aria-pressed={!isRecording}
+            title="Stop recording"
+            className="record-btn stop-btn"
+          >
+            ⏹ Stop
+          </button>
         </div>
 
         {mode === "analysis" && (
-          <div
-            className="locked-controls"
-            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
-          ></div>
+          <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }} />
         )}
 
         {mode === "submitName" && (
-          <div
-            className="locked-controls"
-            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
-          >
+          <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}>
             <label style={{ fontSize: 18, color: "black" }}>Name:</label>
             <input
               type="text"
@@ -535,10 +506,7 @@ export default function Composer({
         )}
 
         {mode === "searchK" && (
-          <div
-            className="locked-controls"
-            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
-          >
+          <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}>
             <span style={{ fontSize: 16, color: "black" }}>Choose a number:</span>
 
             <button
@@ -589,8 +557,8 @@ export default function Composer({
             previewUrl && !audioUrl
               ? "Image uploaded — choose an analysis:"
               : previewUrl && audioUrl
-                ? "Image + audio uploaded — quick submission options:"
-                : undefined
+              ? "Image + audio uploaded — quick submission options:"
+              : undefined
           }
           name={value ? value.trim() : null}
           onAction={(actionId, opts) => {

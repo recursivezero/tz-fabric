@@ -1,0 +1,126 @@
+/* ---------- Footer ---------- */
+.site-footer {
+  width: 100%;
+  background: #0c1220;
+  /* deep navy like screenshot */
+  color: #d2d8e3;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+  margin-top: 24px;
+}
+
+.footer__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 26px 20px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 900px) {
+  .footer__inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.footer__brand {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+}
+
+.footer__logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(47, 107, 255, 0.12);
+}
+
+.footer__title {
+  font-weight: 800;
+  font-size: 16px;
+  color: #f1f5ff;
+  margin-bottom: 6px;
+}
+
+.footer__desc {
+  margin: 0;
+  color: #b7c1d6;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.footer__github {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #c7d3ea;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.footer__github:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.footer__cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.footer__col h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #e6ecff;
+}
+
+.footer__col ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer__col li+li {
+  margin-top: 8px;
+}
+
+.footer__col a {
+  color: #c0cade;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.footer__col a:hover {
+  color: #ffffff;
+}
+
+.footer__rule {
+  max-width: var(--container-max);
+  margin: 6px auto 0;
+  border: none;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.footer__copyright {
+  max-width: var(--container-max);
+  margin: 10px auto 18px;
+  text-align: center;
+  color: #a8b4cc;
+  font-size: 13px;
+}

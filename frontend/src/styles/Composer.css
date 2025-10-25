@@ -237,10 +237,40 @@
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
 }
 
-/* keep overflow visible so the menu can float above other containers */
 .composer,
 .composer-row,
 .chat-scroll-area,
 .chat-card {
   overflow: visible;
+}
+
+.send-btn.inside {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+/* Give the input some space for that send button */
+.composer-input {
+  padding-right: 64px;
+}
+
+/* New second row for audio controls under the input */
+.composer-audio-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.audio-label {
+  color: #64748b;
+  font-weight: 600;
+  margin-right: 6px;
+  white-space: nowrap;
+  font-size: 20px;
 }

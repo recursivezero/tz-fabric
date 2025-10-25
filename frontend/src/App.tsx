@@ -1,6 +1,7 @@
 import React from "react";
 import "./App.css";
 import { Routing } from "./Routing";
+import Footer from "./components/Footer";
 
 const App: React.FC = () => {
   return (
@@ -8,7 +9,6 @@ const App: React.FC = () => {
       <header className="site-header">
         <div className="header-left">
           <div className="logo-mark" aria-hidden>
-            {/* Inline SVG logo: small rounded blue square with a white stitch icon */}
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FabricAI logo">
               <rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#2F6BFF" />
               <path d="M7 12c2 2 6 2 8 0" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -22,7 +22,7 @@ const App: React.FC = () => {
             <div className="brand-name">FabricAI</div>
           </div>
         </div>
-        <nav>
+        <nav className="header-nav">
           <ul>
             <li><a href="/">Home</a></li>
             <li><a href="/describe">Describe</a></li>
@@ -37,6 +37,8 @@ const App: React.FC = () => {
       <main className="main-content">
         <Routing />
       </main>
+
+      <Footer />
     </div>
   );
 };

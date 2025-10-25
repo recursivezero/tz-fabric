@@ -1,21 +1,28 @@
+.empty-state-large {
+  max-width: 920px;
+  margin: 0 auto;
+  text-align: center;
+}
+
 .empty-state-large h3 {
   margin: 0 0 8px 0;
   font-size: 22px;
   font-weight: 700;
   line-height: 1.15;
   color: black;
+  text-align: center;
 }
 
 .empty-state-large p {
   margin: 0 0 22px 0;
   color: #6b7280;
   font-size: 14px;
+  text-align: center;
 }
 
 .empty-state-large .chips {
   display: flex;
   gap: 12px;
-  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   padding: 6px 12px;

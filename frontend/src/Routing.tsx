@@ -4,7 +4,7 @@ import UploadPage from "./pages/AudioForm";
 import ContentGrid from "./pages/FabricList";
 import Home from "./pages/Home";
 import ImageDescription from "./pages/ImageDescriptor";
-import Chat from "./pages/Chat";
+import Chat from "./pages/FabricChat";
 
 export const Routing = () => {
   return (

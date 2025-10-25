@@ -5,7 +5,7 @@ import HandleRedirectAction from "../components/HandleRedirectAction";
 import MessageList from "../components/MessageList";
 import TypingIndicator from "../components/TypingIndicator";
 import useChat from "../hooks/chat";
-import "../styles/Chat.css";
+import "../styles/FabricChat.css";
 import { jsPDF } from "jspdf";
 
 type ChatDisplayMessage = { id?: string; role?: string; content?: unknown };
@@ -41,7 +41,7 @@ export default function Chat() {
     fileName,
     setFileName,
     morePrompt, confirmMoreYes, confirmMoreNo,
-    onAssistantRendered, // stable callback from hook
+    onAssistantRendered, 
   } = useChat();
 
   const fileToDataUrl = useCallback(async (url: string): Promise<string | null> => {
@@ -132,11 +132,7 @@ export default function Chat() {
     }
   }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]);
 
-  // NOTE: Removed the auto-navigation effect. We now rely on the assistant's message
-  // with a clickable Markdown link like [Open View](/view) or [Open Search Results](/search).
-
   useEffect(() => {
-    // no-op; kept to illustrate we intentionally removed navigation side-effects
   }, []);
 
   return (

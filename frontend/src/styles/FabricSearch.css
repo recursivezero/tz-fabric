@@ -39,7 +39,8 @@
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: #1c76cb; /* primary */
+  background: #1c76cb;
+  /* primary */
   color: #fff;
   font-size: 13px;
   cursor: pointer;
@@ -48,9 +49,11 @@
     box-shadow 0.15s ease,
     filter 0.2s ease;
 }
+
 .search-container .secondary-btn {
   background: #234055;
 }
+
 .search-container .file-button:hover,
 .search-container .primary-btn:hover:not(:disabled),
 .search-container .secondary-btn:hover:not(:disabled) {
@@ -58,6 +61,7 @@
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
   filter: brightness(1.05);
 }
+
 .search-container .primary-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -79,6 +83,7 @@
   font-size: 16px;
   color: #230101;
 }
+
 .search-container .k-input input {
   width: 72px;
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -86,6 +91,7 @@
   background: rgba(14, 17, 22, 0.9);
   color: #f2f6fa;
 }
+
 .search-container .k-input input:focus {
   outline: none;
   border-color: #19a2e2;
@@ -95,6 +101,7 @@
 .search-container .search-error {
   color: #ff0000;
 }
+
 .search-container .empty-hint {
   color: #000811;
   margin-top: 5px;
@@ -111,12 +118,14 @@
 .search-container .preview-box {
   max-width: 340px;
 }
+
 .search-container .section-title {
   text-align: start;
   margin: 0 0 3px;
   font-weight: 700;
   color: #070707;
 }
+
 .search-container .preview-img {
   height: 120px;
   width: auto;
@@ -133,6 +142,7 @@
   align-items: center;
   margin: 3px 0 0;
 }
+
 .pagination-controls button {
   padding: 6px 10px;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -141,10 +151,12 @@
   border-radius: 8px;
   cursor: pointer;
 }
+
 .pagination-controls button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
 .search-container .page-indicator {
   font-size: 12px;
   color: #d8e0ea;
@@ -160,9 +172,11 @@
   overflow: auto;
   padding-right: 4px;
 }
+
 .result-grid::-webkit-scrollbar {
   width: 8px;
 }
+
 .result-grid::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.18);
   border-radius: 8px;
@@ -177,9 +191,11 @@
   display: flex;
   flex-direction: column;
 }
+
 .result-thumb {
   padding: 10px;
 }
+
 .result-thumb img {
   width: 100%;
   height: 180px;
@@ -191,6 +207,7 @@
 .result-audio {
   padding: 8px 10px 12px;
 }
+
 .result-audio audio {
   width: 100%;
   background: #0e1116;
@@ -201,6 +218,7 @@
 .search-container .grid {
   display: contents;
 }
+
 .search-container .card,
 .search-container .card-body,
 .search-container .card-img,
@@ -217,4 +235,83 @@ input[type="number"]::-webkit-outer-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+.lb-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 16, 0.76);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lb-stage {
+  position: relative;
+  width: min(92vw, 1200px);
+  height: min(86vh, 820px);
+  background: #0f1116;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+
+.lb-stage:active {
+  cursor: grabbing;
+}
+
+.lb-img {
+  max-width: none;
+  user-select: none;
+  will-change: transform;
+  transition: transform 80ms linear;
+}
+
+.lb-caption {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  color: #e5e7eb;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 20px;
+  pointer-events: none;
+}
+
+.lb-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.lb-controls button {
+  min-width: 42px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgb(255, 255, 255);
+  background: rgba(0, 0, 0, 0.995);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.lb-controls .lb-close {
+  min-width: 42px;
+  background: rgba(239, 68, 68, 0.9);
+  border-color: rgba(239, 68, 68, 0.95);
+}
+
+.lb-controls button:hover {
+  filter: brightness(1.05);
 }
