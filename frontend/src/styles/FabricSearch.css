@@ -315,3 +315,11 @@ input[type="number"] {
 .lb-controls button:hover {
   filter: brightness(1.05);
 }
+
+.typing-indicator {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}

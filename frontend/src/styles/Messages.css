@@ -178,6 +178,15 @@
   background: transparent;
 }
 
+.typing,
+.typing-indicator {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
 .error {
   padding: 10px 16px;
   color: #7f1d1d;

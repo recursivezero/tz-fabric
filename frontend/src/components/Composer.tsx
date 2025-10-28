@@ -147,7 +147,6 @@ export default function Composer({
     if (actionId === "submit:both_with_names") {
       setMode("submitName");
       setNameOnly("");
-      onChange(textForSubmitName(""));
       return;
     }
   };
@@ -373,7 +372,6 @@ export default function Composer({
           </div>
         )}
 
-        {/* Line 1: [+] textarea [▶] */}
         <div className="composer-row">
           <div className="composer-middle">
             <div className="composer-input-wrapper">
@@ -404,7 +402,6 @@ export default function Composer({
                 readOnly={mode !== "free"}
               />
 
-              {/* ▶ Send (inside input, right) */}
               <button
                 className="send-btn inside"
                 onClick={() => onSend()}
@@ -454,7 +451,6 @@ export default function Composer({
           </div>
         </div>
 
-        {/* Line 2: label + Start/Stop (new row) */}
         <div className="composer-audio-row">
           <span className="audio-label">record your audio</span>
 
@@ -488,22 +484,69 @@ export default function Composer({
         )}
 
         {mode === "submitName" && (
-          <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}>
-            <label style={{ fontSize: 18, color: "black" }}>Name:</label>
-            <input
-              type="text"
-              value={nameOnly}
-              onChange={(e) => {
-                const nm = e.target.value;
-                setNameOnly(nm);
-                onChange(textForSubmitName(nm));
-                setMode("free");
-              }}
-              placeholder="Your name"
-              style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #000000ff" }}
-            />
-          </div>
-        )}
+  <div
+    className="locked-controls"
+    style={{
+      marginTop: 6,
+      display: "flex",
+      gap: 8,
+      alignItems: "center",
+      flexWrap: "wrap",
+    }}
+  >
+    <label style={{ fontSize: 16, color: "black" }}>Write Fabric name:</label>
+    <input
+      type="text"
+      value={nameOnly}
+      onChange={(e) => setNameOnly(e.target.value)}
+      placeholder="Type a name"
+      style={{
+        padding: "6px 8px",
+        borderRadius: 6,
+        border: "1px solid #000000ff",
+        minWidth: 200,
+      }}
+    />
+    <button
+      type="button"
+      onClick={() => {
+        const nm = nameOnly.trim();
+        onSend(textForSubmitName(nm));
+        setMode("free");          
+      }}
+      style={{
+        padding: "6px 12px",
+        borderRadius: 8,
+        border: "1px solid #0f172a",
+        background: "#0f172a",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: 700,
+      }}
+      aria-label="Confirm name"
+      title="Confirm name"
+    >
+      OK
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setMode("free")}
+      style={{
+        padding: "6px 10px",
+        borderRadius: 8,
+        border: "1px solid #e5e7eb",
+        background: "#fff",
+        color: "#111827",
+        cursor: "pointer",
+      }}
+      aria-label="Cancel"
+      title="Cancel"
+    >
+      Cancel
+    </button>
+  </div>
+)}
 
         {mode === "searchK" && (
           <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}>
@@ -533,9 +576,14 @@ export default function Composer({
               type="button"
               className="attach-menu-item"
               onClick={() => {
-                const k = randInt(11, 100);
+                const k = randInt(1, 10);
                 setKOnly(k);
-                onChange(textForSearchK(k));
+                const cmd = textForSearchK(k);
+                onSend(cmd);
+                onChange("");
+                onClearUpload?.();
+                onClearAudio?.();
+                setMode("free");
               }}
               disabled={disabled}
               aria-label="Pick k greater than 10"

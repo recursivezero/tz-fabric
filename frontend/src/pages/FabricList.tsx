@@ -161,7 +161,7 @@ export default function ContentGrid() {
       </div>
 
       <div className="grid-title">
-        {mode === "all" ? "All Uploads" : "Similar Results"}
+        {mode === "all" ? `All Uploads (${total})` : `Similar Results (${total})`}
       </div>
 
       {mode === "all" && (
