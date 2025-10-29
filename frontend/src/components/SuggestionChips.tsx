@@ -38,7 +38,7 @@ export default function SuggestionChips({
         { id: "submit:both", label: "Submit files", primary: true },
         {
           id: "submit:both_with_names",
-          label: "submit files with [name]",
+          label: "Submit files with [name]",
         },
       ];
     }

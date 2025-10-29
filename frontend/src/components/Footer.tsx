@@ -64,7 +64,7 @@ export default function Footer() {
 
       <hr className="footer__rule" />
       <div className="footer__copyright">
-        © {year} FabricAI. All rights reserved.
+        © {new Date().getFullYear()} Recursive Zero · Fabric Analyzer
       </div>
     </footer>
   );

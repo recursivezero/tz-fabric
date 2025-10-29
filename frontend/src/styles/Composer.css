@@ -168,7 +168,7 @@
   background: white;
   padding: 6px;
   border-radius: 8px;
-  border: 1px solid rgba(2, 6, 23, 0.04);
+  border: 1px solid rgb(2 6 23);
 }
 
 .upload-thumb {
@@ -180,9 +180,9 @@
 }
 
 .upload-remove {
-  background: transparent;
+  background: #0000001f;
   border: none;
-  color: #ef4444;
+  color: #000000;
   cursor: pointer;
   font-weight: 600;
 }
@@ -254,7 +254,6 @@
   border-radius: 10px;
 }
 
-/* Give the input some space for that send button */
 .composer-input {
   padding-right: 64px;
 }
@@ -265,6 +264,7 @@
   align-items: center;
   gap: 10px;
   margin-top: 8px;
+  flex-direction: row-reverse;
 }
 
 .audio-label {

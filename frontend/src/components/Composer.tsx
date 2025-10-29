@@ -1,6 +1,6 @@
 // src/components/Composer.tsx
 import type React from "react";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState} from "react";
 import "../styles/Composer.css";
 import Loader from "./Loader";
 import SuggestionChips from "./SuggestionChips";
@@ -62,6 +62,7 @@ export default function Composer({
   const [isRecording, setIsRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
 
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -79,6 +80,104 @@ export default function Composer({
   const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string } | null>(null);
 
+  // --- Helpers for trimming audio to MAX_SECONDS ---
+  const encodeWAV = (audioBuffer: AudioBuffer) => {
+    const numChannels = audioBuffer.numberOfChannels;
+    const sampleRate = audioBuffer.sampleRate;
+    const length = audioBuffer.length * numChannels * 2 + 44;
+    const buffer = new ArrayBuffer(length);
+    const view = new DataView(buffer);
+
+    let offset = 0;
+
+    const writeString = (s: string) => {
+      for (let i = 0; i < s.length; i++) {
+        view.setUint8(offset + i, s.charCodeAt(i));
+      }
+      offset += s.length;
+    };
+
+    const floatTo16BitPCM = (output: DataView, offsetOut: number, input: Float32Array) => {
+      for (let i = 0; i < input.length; i++, offsetOut += 2) {
+        let s = Math.max(-1, Math.min(1, input[i]));
+        s = s < 0 ? s * 0x8000 : s * 0x7fff;
+        output.setInt16(offsetOut, s, true);
+      }
+    };
+
+    writeString("RIFF"); // RIFF chunk descriptor
+    view.setUint32(offset, 36 + audioBuffer.length * numChannels * 2, true);
+    offset += 4;
+    writeString("WAVE"); // format
+    writeString("fmt "); // sub-chunk 1 id
+    view.setUint32(offset, 16, true); // sub-chunk size (16 for PCM)
+    offset += 4;
+    view.setUint16(offset, 1, true); // audio format (1 = PCM)
+    offset += 2;
+    view.setUint16(offset, numChannels, true);
+    offset += 2;
+    view.setUint32(offset, sampleRate, true);
+    offset += 4;
+    view.setUint32(offset, sampleRate * numChannels * 2, true);
+    offset += 4;
+    view.setUint16(offset, numChannels * 2, true);
+    offset += 2;
+    view.setUint16(offset, 16, true);
+    offset += 2;
+    writeString("data");
+    view.setUint32(offset, audioBuffer.length * numChannels * 2, true);
+    offset += 4;
+
+    const interleaved = new Float32Array(audioBuffer.length * numChannels);
+    for (let ch = 0; ch < numChannels; ch++) {
+      audioBuffer.copyFromChannel(interleaved.subarray(ch, interleaved.length), ch, 0); // not correct to subarray like this
+    }
+    const channelData: Float32Array[] = [];
+    for (let ch = 0; ch < numChannels; ch++) {
+      channelData.push(new Float32Array(audioBuffer.getChannelData(ch)));
+    }
+    let interleavedIdx = 0;
+    for (let i = 0; i < audioBuffer.length; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        interleaved[interleavedIdx++] = channelData[ch][i];
+      }
+    }
+
+    floatTo16BitPCM(view, offset, interleaved);
+
+    return new Blob([view], { type: "audio/wav" });
+  };
+
+  const trimAudioFile = async (file: File): Promise<File> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+    try {
+      const decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
+      const duration = decoded.duration;
+      if (duration <= MAX_SECONDS) {
+        ac.close().catch(() => {});
+        return file;
+      }
+      const sampleRate = decoded.sampleRate;
+      const targetLength = Math.floor(MAX_SECONDS * sampleRate);
+      const trimmedBuffer = ac.createBuffer(decoded.numberOfChannels, targetLength, sampleRate);
+
+      for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+        const channelData = decoded.getChannelData(ch).subarray(0, targetLength);
+        trimmedBuffer.copyToChannel(channelData, ch, 0);
+      }
+
+      const wavBlob = encodeWAV(trimmedBuffer);
+      const newName = file.name.replace(/\.\w+$/, "") + "-trimmed.wav";
+      const trimmedFile = new File([wavBlob], newName, { type: "audio/wav" });
+      ac.close().catch(() => {});
+      return trimmedFile;
+    } catch (err) {
+      try { ac.close().catch(() => {}); } catch {}
+      throw err;
+    }
+  };
+
   const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f && onUpload) {
@@ -94,17 +193,30 @@ export default function Composer({
     if (!f) return;
     (e.target as HTMLInputElement).value = "";
 
+    setShowAttachMenu(false);
+    setError(null);
+    setInfo(null);
+
     const url = URL.createObjectURL(f);
     const audio = document.createElement("audio");
     audio.src = url;
 
-    audio.onloadedmetadata = () => {
-      const duration = audio.duration;
+    audio.onloadedmetadata = async () => {
       URL.revokeObjectURL(url);
+      const duration = audio.duration;
 
-      if (duration > MAX_SECONDS) {
-        setError("Audio file too long. Please upload a clip of 1 minute or less.");
-        onClearAudio?.();
+      if (duration > MAX_SECONDS + 0.1) {
+        try {
+          const trimmedFile = await trimAudioFile(f);
+          onAudioUpload?.(trimmedFile);
+          setAudioMeta({ name: trimmedFile.name, size: formatSize(trimmedFile.size) });
+          setInfo(`Audio was longer than ${fmt(MAX_SECONDS)} — trimmed to ${fmt(MAX_SECONDS)}.`);
+          window.setTimeout(() => setInfo(null), 6000);
+        } catch (err) {
+          console.error("trimAudioFile error", err);
+          setError("Audio is too long and could not be trimmed. Try a shorter clip.");
+          onClearAudio?.();
+        }
         return;
       }
 
@@ -117,8 +229,6 @@ export default function Composer({
       URL.revokeObjectURL(url);
       setError("Could not read audio file. Try again with a supported format.");
     };
-
-    setShowAttachMenu(false);
   };
 
   const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
@@ -162,6 +272,7 @@ export default function Composer({
 
   const startRecording = async () => {
     setError(null);
+    setInfo(null);
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setError("Microphone not supported in this browser.");
       return;
@@ -194,6 +305,7 @@ export default function Composer({
           const filename = `recording-${timestamp}.${ext}`;
           const file = new File([blob], filename, { type: mime });
 
+          // If recording somehow exceeded MAX_SECONDS, we already stop at MAX_SECONDS.
           onAudioUpload?.(file);
           setAudioMeta({ name: file.name, size: formatSize(file.size) });
         } catch (ex) {
@@ -317,6 +429,12 @@ export default function Composer({
         </div>
       )}
 
+      {info && (
+        <div role="status" style={{ color: "seagreen", marginTop: 8 }}>
+          {info}
+        </div>
+      )}
+
       <div className="composer" style={{ paddingTop: isRecording ? 48 : undefined }}>
         {status === "validating" && !previewUrl && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -339,6 +457,7 @@ export default function Composer({
                   onClick={() => {
                     onClearUpload?.();
                     setImageMeta(null);
+                    setMode("free");
                   }}
                   type="button"
                   aria-label="Remove image"
@@ -361,6 +480,9 @@ export default function Composer({
                   onClick={() => {
                     onClearAudio?.();
                     setAudioMeta(null);
+                    setInfo(null);
+                    setError(null);
+                    setMode("analysis");
                   }}
                   type="button"
                   aria-label="Remove audio"
@@ -396,15 +518,20 @@ export default function Composer({
                   if (mode === "free") onChange(e.target.value);
                   else e.preventDefault();
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    onSend(value);
+                  }
+                }}
                 style={{ color: "black" }}
                 rows={1}
-                disabled={disabled}
                 readOnly={mode !== "free"}
               />
 
               <button
                 className="send-btn inside"
-                onClick={() => onSend()}
+                onClick={() => onSend(value)}
                 disabled={disabled || (!value.trim() && !previewUrl && !audioUrl)}
                 title="Send"
                 aria-label="Send message"
@@ -451,33 +578,36 @@ export default function Composer({
           </div>
         </div>
 
-        <div className="composer-audio-row">
-          <span className="audio-label">record your audio</span>
+        {!audioUrl && (
+          <div className="composer-audio-row">
+            <button
+              style={{ color: "black" }}
+              type="button"
+              onClick={stopRecording}
+              disabled={!isRecording}
+              aria-pressed={!isRecording}
+              title="Stop recording"
+              className="record-btn stop-btn"
+            >
+              ⏹ Stop
+            </button>
 
-          <button
-            style={{ color: "black" }}
-            type="button"
-            onClick={startRecording}
-            disabled={isRecording}
-            aria-pressed={isRecording}
-            title="Start recording (max 1 minute)"
-            className="record-btn start-btn"
-          >
-            ⏺ Start
-          </button>
-
-          <button
-            style={{ color: "black" }}
-            type="button"
-            onClick={stopRecording}
-            disabled={!isRecording}
-            aria-pressed={!isRecording}
-            title="Stop recording"
-            className="record-btn stop-btn"
-          >
-            ⏹ Stop
-          </button>
-        </div>
+            <button
+              style={{ color: "black" }}
+              type="button"
+              onClick={startRecording}
+              disabled={isRecording}
+              aria-pressed={isRecording}
+              title="Start recording (max 1 minute)"
+              className="record-btn start-btn"
+            >
+              ⏺ Start
+            </button>
+            
+            <span className="audio-label">Record your audio</span>
+            
+          </div>
+        )}
 
         {mode === "analysis" && (
           <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }} />
@@ -494,12 +624,12 @@ export default function Composer({
       flexWrap: "wrap",
     }}
   >
-    <label style={{ fontSize: 16, color: "black" }}>Write Fabric name:</label>
+    <label style={{ fontSize: 16, color: "black" }}>Type File name:</label>
     <input
       type="text"
       value={nameOnly}
       onChange={(e) => setNameOnly(e.target.value)}
-      placeholder="Type a name"
+      placeholder="NeonFabric"
       style={{
         padding: "6px 8px",
         borderRadius: 6,

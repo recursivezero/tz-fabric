@@ -2,6 +2,7 @@ import React from "react";
 import "./App.css";
 import { Routing } from "./Routing";
 import Footer from "./components/Footer";
+import { NavLink } from "react-router-dom";
 
 const App: React.FC = () => {
   return (
@@ -24,12 +25,24 @@ const App: React.FC = () => {
         </div>
         <nav className="header-nav">
           <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/describe">Describe</a></li>
-            <li><a href="/upload">Upload</a></li>
-            <li><a href="/view">List</a></li>
-            <li><a href="/search">Search</a></li>
-            <li><a href="/chat">Chat</a></li>
+            <li><NavLink to="/" end className={({ isActive }) => isActive ? "active" : ""}>
+            Home
+          </NavLink></li>
+            <li><NavLink to="/describe" end className={({ isActive }) => isActive ? "active" : ""}>
+            Describe
+          </NavLink></li>
+            <li><NavLink to="/upload" end className={({ isActive }) => isActive ? "active" : ""}>
+            Upload
+          </NavLink></li>
+            <li><NavLink to="/view" end className={({ isActive }) => isActive ? "active" : ""}>
+            List
+          </NavLink></li>
+            <li><NavLink to="/search" end className={({ isActive }) => isActive ? "active" : ""}>
+            Search
+          </NavLink></li>
+            <li><NavLink to="/chat" end className={({ isActive }) => isActive ? "active" : ""}>
+            Chat
+          </NavLink></li>
           </ul>
         </nav>
       </header>

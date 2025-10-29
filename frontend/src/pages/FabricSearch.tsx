@@ -195,10 +195,9 @@ export default function Search() {
           className="file-input-hidden"
         />
         <label htmlFor={fileid} className="file-button">Choose Image</label>
-        <span className="file-name">{file ? file.name : "No file chosen"}</span>
 
         <label className="k-input">
-          K (max results):
+          No of Similar images:
           <input
             type="number"
             min={1}
@@ -209,7 +208,7 @@ export default function Search() {
         </label>
 
         <button onClick={handleSearch} disabled={loading || !file} className="primary-btn">
-          {loading ? "Searching..." : "Find Exact"}
+          {loading ? "Searching..." : "Search Similar"}
         </button>
 
         <button onClick={handleClear} className="secondary-btn" disabled={loading}>
@@ -267,7 +266,6 @@ export default function Search() {
         )
       )}
 
-      {/* ---------- Lightbox Overlay ---------- */}
       {lightboxOpen && activeSrc && (
         <div
           className="lb-backdrop"

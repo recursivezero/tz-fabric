@@ -514,6 +514,15 @@ export default function useChat() {
     const text = raw.trim();
     const forceApi = Boolean(opts?.forceApi);
 
+    if (status === "sending") {
+      console.warn("[send] early return: status === 'sending'");
+      return;
+    }
+    if (!text && !uploadedImageFile && !uploadedAudioFile) {
+      console.warn("[send] early return: nothing to send (no text or media). raw:", JSON.stringify(raw));
+      return;
+    }
+
     if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
 
     if (!forceApi && pendingPresetRef.current && text) {

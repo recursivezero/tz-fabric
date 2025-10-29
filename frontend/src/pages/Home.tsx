@@ -92,10 +92,6 @@ export default function Home() {
             </Link>
           </div>
         </section>
-
-        <footer className="homeV2__footer">
-          © {new Date().getFullYear()} Recursive Zero · Fabric Analyzer
-        </footer>
       </main>
     </div>
   );

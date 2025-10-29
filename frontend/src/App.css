@@ -74,6 +74,20 @@ body,
   text-decoration: none;
   color: var(--text-color);
   font-weight: 500;
+  padding: 6px 6px;
+  transition: background-color .15s ease;
+
+}
+
+.header-nav ul li a:hover {
+  background-color: #2f6aff31;
+  border-radius: 10px;
+}
+
+.header-nav ul li a.active {
+  font-weight: 700;
+  background-color: #2f6aff31;
+  border-radius: 10px;
 }
 
 .logo-mark {
