@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import "../styles/Footer.css";
 
 export default function Footer() {
-  const year = new Date().getFullYear();
 
   return (
     <footer className="site-footer" role="contentinfo">
@@ -10,7 +9,6 @@ export default function Footer() {
         {/* Brand + blurb */}
         <div className="footer__brand">
           <div className="footer__logo">
-            {/* same style as your header mark */}
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden>
               <rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#2F6BFF" />
               <path d="M7 12c2 2 6 2 8 0" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -41,7 +39,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Columns */}
         <div className="footer__cols">
           <div className="footer__col">
             <h4>Product</h4>
