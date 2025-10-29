@@ -11,7 +11,7 @@ export const Routing = () => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/describe" element={<ImageDescription />} />
+      <Route path="/analyse" element={<ImageDescription />} />
       <Route path="/upload" element={<UploadPage />} />
       <Route path="/view" element={<ContentGrid />} />
       <Route path="/search" element={<Search />} />

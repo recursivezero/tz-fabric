@@ -28,8 +28,8 @@ const App: React.FC = () => {
             <li><NavLink to="/" end className={({ isActive }) => isActive ? "active" : ""}>
             Home
           </NavLink></li>
-            <li><NavLink to="/describe" end className={({ isActive }) => isActive ? "active" : ""}>
-            Describe
+            <li><NavLink to="/analyse" end className={({ isActive }) => isActive ? "active" : ""}>
+            Analysis
           </NavLink></li>
             <li><NavLink to="/upload" end className={({ isActive }) => isActive ? "active" : ""}>
             Upload

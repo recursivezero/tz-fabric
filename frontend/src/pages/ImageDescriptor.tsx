@@ -1,4 +1,4 @@
-import Header from "../components/Header";
+import Header from "../components/ImageDescriptorHeader";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
 import AnimatedSearchBox from "../components/SearchBar";
 import DescriptionBox from "../components/DescriptionBox";

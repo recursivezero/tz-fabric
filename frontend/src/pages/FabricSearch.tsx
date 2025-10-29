@@ -2,6 +2,7 @@ import { useId, useMemo, useState, useEffect, useRef, useCallback } from "react"
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import useImageSearch from "../hooks/useImageSearch";
+import FabricSearchHeader from "../components/FabricSearchHeader";
 import "../styles/FabricSearch.css";
 
 export default function Search() {
@@ -56,7 +57,7 @@ export default function Search() {
           } finally {
             try {
               sessionStorage.removeItem("mcp_last_search");
-            } catch {}
+            } catch { }
             setPage(1);
           }
         })();
@@ -178,13 +179,13 @@ export default function Search() {
   };
   const onMouseUpOrLeave = () => { draggingRef.current = false; };
 
-  const zoomIn  = () => setScale(s => Math.min(MAX_SCALE, s + ZOOM_STEP));
+  const zoomIn = () => setScale(s => Math.min(MAX_SCALE, s + ZOOM_STEP));
   const zoomOut = () => setScale(s => Math.max(MIN_SCALE, s - ZOOM_STEP));
   const resetView = () => { setScale(1); setOffset({ x: 0, y: 0 }); };
 
   return (
     <div className="search-container">
-      <h2>Similar Images</h2>
+      <FabricSearchHeader />
 
       <div className="uploader-row">
         <input

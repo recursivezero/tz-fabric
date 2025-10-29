@@ -70,7 +70,7 @@ export default function Home() {
               <span className="stepCard__link">Go to Upload →</span>
             </Link>
 
-            <Link to="/describe" className="stepCard stepCard--link">
+            <Link to="/analyse" className="stepCard stepCard--link">
               <div className="stepCard__badge">2</div>
               <h4 className="stepCard__title">Choose Analysis</h4>
               <p className="stepCard__text">Select short or long analysis mode</p>

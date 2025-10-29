@@ -1,6 +1,6 @@
 // src/components/Composer.tsx
 import type React from "react";
-import { useEffect, useRef, useState} from "react";
+import { useEffect, useRef, useState } from "react";
 import "../styles/Composer.css";
 import Loader from "./Loader";
 import SuggestionChips from "./SuggestionChips";
@@ -55,6 +55,7 @@ export default function Composer({
   onClearAudio,
   onChipAction,
   status,
+  setFileName,
 }: Props) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -80,7 +81,8 @@ export default function Composer({
   const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string } | null>(null);
 
-  // --- Helpers for trimming audio to MAX_SECONDS ---
+  const FILE_NAME_MAX = 20;
+
   const encodeWAV = (audioBuffer: AudioBuffer) => {
     const numChannels = audioBuffer.numberOfChannels;
     const sampleRate = audioBuffer.sampleRate;
@@ -105,14 +107,14 @@ export default function Composer({
       }
     };
 
-    writeString("RIFF"); // RIFF chunk descriptor
+    writeString("RIFF");
     view.setUint32(offset, 36 + audioBuffer.length * numChannels * 2, true);
     offset += 4;
-    writeString("WAVE"); // format
-    writeString("fmt "); // sub-chunk 1 id
-    view.setUint32(offset, 16, true); // sub-chunk size (16 for PCM)
+    writeString("WAVE");
+    writeString("fmt ");
+    view.setUint32(offset, 16, true);
     offset += 4;
-    view.setUint16(offset, 1, true); // audio format (1 = PCM)
+    view.setUint16(offset, 1, true);
     offset += 2;
     view.setUint16(offset, numChannels, true);
     offset += 2;
@@ -155,7 +157,7 @@ export default function Composer({
       const decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
       const duration = decoded.duration;
       if (duration <= MAX_SECONDS) {
-        ac.close().catch(() => {});
+        ac.close().catch(() => { });
         return file;
       }
       const sampleRate = decoded.sampleRate;
@@ -170,10 +172,10 @@ export default function Composer({
       const wavBlob = encodeWAV(trimmedBuffer);
       const newName = file.name.replace(/\.\w+$/, "") + "-trimmed.wav";
       const trimmedFile = new File([wavBlob], newName, { type: "audio/wav" });
-      ac.close().catch(() => {});
+      ac.close().catch(() => { });
       return trimmedFile;
     } catch (err) {
-      try { ac.close().catch(() => {}); } catch {}
+      try { ac.close().catch(() => { }); } catch { }
       throw err;
     }
   };
@@ -305,7 +307,6 @@ export default function Composer({
           const filename = `recording-${timestamp}.${ext}`;
           const file = new File([blob], filename, { type: mime });
 
-          // If recording somehow exceeded MAX_SECONDS, we already stop at MAX_SECONDS.
           onAudioUpload?.(file);
           setAudioMeta({ name: file.name, size: formatSize(file.size) });
         } catch (ex) {
@@ -369,7 +370,7 @@ export default function Composer({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        try { mediaRecorderRef.current.stop(); } catch {}
+        try { mediaRecorderRef.current.stop(); } catch { }
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
@@ -603,9 +604,9 @@ export default function Composer({
             >
               ⏺ Start
             </button>
-            
+
             <span className="audio-label">Record your audio</span>
-            
+
           </div>
         )}
 
@@ -614,69 +615,79 @@ export default function Composer({
         )}
 
         {mode === "submitName" && (
-  <div
-    className="locked-controls"
-    style={{
-      marginTop: 6,
-      display: "flex",
-      gap: 8,
-      alignItems: "center",
-      flexWrap: "wrap",
-    }}
-  >
-    <label style={{ fontSize: 16, color: "black" }}>Type File name:</label>
-    <input
-      type="text"
-      value={nameOnly}
-      onChange={(e) => setNameOnly(e.target.value)}
-      placeholder="NeonFabric"
-      style={{
-        padding: "6px 8px",
-        borderRadius: 6,
-        border: "1px solid #000000ff",
-        minWidth: 200,
-      }}
-    />
-    <button
-      type="button"
-      onClick={() => {
-        const nm = nameOnly.trim();
-        onSend(textForSubmitName(nm));
-        setMode("free");          
-      }}
-      style={{
-        padding: "6px 12px",
-        borderRadius: 8,
-        border: "1px solid #0f172a",
-        background: "#0f172a",
-        color: "#fff",
-        cursor: "pointer",
-        fontWeight: 700,
-      }}
-      aria-label="Confirm name"
-      title="Confirm name"
-    >
-      OK
-    </button>
+          <div
+            className="locked-controls"
+            style={{
+              marginTop: 6,
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <label style={{ fontSize: 16, color: "black" }}>Type File name:</label>
+            <input
+              type="text"
+              value={nameOnly}
+              onChange={(e) => {
+                const v = e.target.value.slice(0, FILE_NAME_MAX);
+                setNameOnly(v);
+              }}
+              placeholder="NeonFabric"
+              maxLength={FILE_NAME_MAX}
+              style={{
+                padding: "6px 8px",
+                borderRadius: 6,
+                border: "1px solid #000000ff",
+                minWidth: 200,
+              }}
+              aria-label={`File name (max ${FILE_NAME_MAX} chars)`}
+            />
+            <div style={{ fontSize: 13, color: "rgba(0,0,0,0.6)", marginLeft: 6 }}>
+              {nameOnly.length}/{FILE_NAME_MAX}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const nm = nameOnly.trim().slice(0, FILE_NAME_MAX);
+                setFileName?.(nm);
+                onSend(textForSubmitName(nm));
+                setMode("free");
+              }}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: "1px solid #0f172a",
+                background: "#0f172a",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: 700,
+              }}
+              aria-label="Confirm name"
+              title="Confirm name"
+              disabled={nameOnly.trim().length === 0}
+            >
+              OK
+            </button>
 
-    <button
-      type="button"
-      onClick={() => setMode("free")}
-      style={{
-        padding: "6px 10px",
-        borderRadius: 8,
-        border: "1px solid #e5e7eb",
-        background: "#fff",
-        color: "#111827",
-        cursor: "pointer",
-      }}
-      aria-label="Cancel"
-      title="Cancel"
-    >
-      Cancel
-    </button>
-  </div>
-)}
+            <button
+              type="button"
+              onClick={() => setMode("free")}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 8,
+                border: "1px solid #e5e7eb",
+                background: "#fff",
+                color: "#111827",
+                cursor: "pointer",
+              }}
+              aria-label="Cancel"
+              title="Cancel"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
         {mode === "searchK" && (
           <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}>
@@ -735,8 +746,8 @@ export default function Composer({
             previewUrl && !audioUrl
               ? "Image uploaded — choose an analysis:"
               : previewUrl && audioUrl
-              ? "Image + audio uploaded — quick submission options:"
-              : undefined
+                ? "Image + audio uploaded — quick submission options:"
+                : undefined
           }
           name={value ? value.trim() : null}
           onAction={(actionId, opts) => {

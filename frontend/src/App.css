@@ -11,8 +11,6 @@
   box-sizing: border-box;
 }
 
-html,
-body,
 #root {
   height: 100%;
   margin: 0;
@@ -130,9 +128,7 @@ body,
 .main-content {
   width: 100%;
   max-width: var(--container-max);
-  padding: 20px;
   flex: 1;
-  margin-top: 18px;
 }
 
 @media (max-width: 720px) {
