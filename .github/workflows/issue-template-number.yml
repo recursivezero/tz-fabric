@@ -2,7 +2,7 @@ name: "Auto Replace X in Issue Title"
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [closed]
 permissions:
   issues: write
 

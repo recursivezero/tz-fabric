@@ -1,0 +1,21 @@
+name: "Auto Format Issue Title"
+
+on:
+  issues:
+    types: [opened, labeled]
+permissions:
+  issues: write
+
+jobs:
+  format_title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Format issue title
+        uses: recursivezero/template/.github/actions/format-issue-id@v1
+        with:
+          prefix: TZF
+          placeholder: X
+          dry_run: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
