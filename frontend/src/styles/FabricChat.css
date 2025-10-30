@@ -35,7 +35,6 @@
 
 .chat-card {
   width: 100%;
-  background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 6px 30px rgba(2, 6, 23, 0.06);
   overflow: hidden;
@@ -50,6 +49,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 18px;
+  border: 1px solid #0f172a40;
   border-bottom: 1px solid #eef2f7;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.4));
 }

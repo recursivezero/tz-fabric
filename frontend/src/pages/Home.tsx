@@ -1,7 +1,18 @@
 import { Link } from "react-router-dom";
 import "../styles/Home.css";
+import { useEffect } from "react";
+
+
 
 export default function Home() {
+  useEffect(() => {
+    const wrapper = document.querySelector(".app-wrapper");
+    wrapper?.classList.add("bg-color");
+
+    return () => {
+      wrapper?.classList.remove("bg-color");
+    };
+  }, []);
   return (
     <div className="homeV2">
       <div className="homeV2__bg" />
@@ -23,9 +34,9 @@ export default function Home() {
           <Link to="/upload" className="featureCard featureCard--link">
             <div className="featureCard__icon" aria-hidden>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M12 16V6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                <path d="M8.5 9L12 5.5L15.5 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M4 16.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                <path d="M12 16V6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M8.5 9L12 5.5L15.5 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M4 16.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               </svg>
             </div>
             <h3 className="featureCard__title">Easy Upload</h3>
@@ -49,7 +60,7 @@ export default function Home() {
           <Link to="/chat" className="featureCard featureCard--link">
             <div className="featureCard__icon" aria-hidden>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M7 19l-3 3v-4a8 8 0 1 1 8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M7 19l-3 3v-4a8 8 0 1 1 8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <h3 className="featureCard__title">AI Chat Assistant</h3>

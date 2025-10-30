@@ -32,6 +32,9 @@
   background-repeat: no-repeat;
 }
 
+.app-wrapper.bg-color {
+  background-color: rgba(241, 198, 143, 0.4);
+}
 
 .site-header {
   width: 100%;

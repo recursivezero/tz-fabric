@@ -323,3 +323,111 @@ input[type="number"] {
   align-items: center;
   width: 100%;
 }
+
+.mega-search {
+  position: relative;
+  max-width: 760px;
+  margin: 6px auto 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  padding: 14px 60px;
+  display: flex;
+  align-items: center;
+}
+
+.mega-icon-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.mega-icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.mega-left {
+  left: -3px;
+}
+
+.mega-right {
+  right: -10px;
+}
+
+.mega-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 26px;
+  text-align: center;
+  color: #0c0c0c;
+}
+
+.mega-placeholder {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-weight: 700;
+}
+
+.mega-placeholder .sep {
+  opacity: 0.7;
+}
+
+.mega-placeholder .samples-link {
+  opacity: 0.9;
+}
+
+.mega-k-row {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.query-name {
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  color: #0b0b0b;
+}
+
+.k-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #111;
+}
+
+.k-inline input {
+  width: 86px;
+  height: 30px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: #fff;
+  color: #111;
+}
+
+.k-inline input:focus {
+  outline: none;
+  border-color: #1c76cb;
+  box-shadow: 0 0 0 2px rgba(28, 118, 203, 0.25);
+}
+
+.bar-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}

@@ -7,7 +7,6 @@
   width: 100%;
   box-sizing: border-box;
   padding-left: 6px;
-  /* align with composer */
 }
 
 .suggestion-hint {
@@ -23,7 +22,6 @@
   align-items: center;
 }
 
-/* base chip */
 .chip {
   padding: 8px 12px;
   background: #f1f5f9;
@@ -35,15 +33,13 @@
   transition: transform 0.08s ease, background 0.12s ease, box-shadow 0.12s ease;
 }
 
-/* primary accent */
 .chip.primary {
-  background: #f1f5f9;
+  background: #92c8ff;
   color: #000000;
   border: none;
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
 }
 
-/* selected/disabled look */
 .chip.selected,
 .chip:disabled {
   background: #e6eefc;

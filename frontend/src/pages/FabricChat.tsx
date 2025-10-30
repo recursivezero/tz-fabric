@@ -41,8 +41,24 @@ export default function Chat() {
     fileName,
     setFileName,
     morePrompt, confirmMoreYes, confirmMoreNo,
-    onAssistantRendered, 
+    onAssistantRendered,
   } = useChat();
+
+  const handleLinkClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // respect default behaviors (e.g., middle-click, cmd/ctrl-click)
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+    const target = e.target as HTMLElement | null;
+    const anchor = target?.closest?.("a") as HTMLAnchorElement | null;
+    if (!anchor) return;
+
+    const href = anchor.getAttribute("href");
+    if (!href) return;
+
+    e.preventDefault();
+    const url = href.startsWith("/") ? new URL(href, window.location.origin).toString() : href;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }, []);
 
   const fileToDataUrl = useCallback(async (url: string): Promise<string | null> => {
     try {
@@ -164,11 +180,11 @@ export default function Chat() {
                 style={{
                   opacity:
                     messages.length === 0 ||
-                    (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
+                      (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
                       ? 0.5 : 1,
                   cursor:
                     messages.length === 0 ||
-                    (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
+                      (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome")
                       ? "not-allowed" : "pointer",
                 }}
               >
@@ -178,7 +194,7 @@ export default function Chat() {
           </div>
 
           <div className="chat-body">
-            <div className="chat-scroll-area">
+            <div className="chat-scroll-area" onClick={handleLinkClick}>
               <EmptyState onSend={send} disabled={!!(uploadedPreviewUrl || uploadedAudioUrl)} />
 
               <MessageList

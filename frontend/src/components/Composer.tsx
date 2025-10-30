@@ -78,8 +78,8 @@ export default function Composer({
   const [nameOnly, setNameOnly] = useState<string>("");
   const [kOnly, setKOnly] = useState<number>(3);
 
-  const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
-  const [audioMeta, setAudioMeta] = useState<{ name: string; size: string } | null>(null);
+  const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);// before
+  const [audioMeta, setAudioMeta] = useState<{ name: string; size: string; trimmed?: boolean } | null>(null);
 
   const FILE_NAME_MAX = 20;
 
@@ -170,7 +170,8 @@ export default function Composer({
       }
 
       const wavBlob = encodeWAV(trimmedBuffer);
-      const newName = file.name.replace(/\.\w+$/, "") + "-trimmed.wav";
+      const base = file.name.replace(/\.\w+$/, "");
+      const newName = `${base} (trimto1min).wav`;
       const trimmedFile = new File([wavBlob], newName, { type: "audio/wav" });
       ac.close().catch(() => { });
       return trimmedFile;
@@ -211,9 +212,12 @@ export default function Composer({
         try {
           const trimmedFile = await trimAudioFile(f);
           onAudioUpload?.(trimmedFile);
-          setAudioMeta({ name: trimmedFile.name, size: formatSize(trimmedFile.size) });
-          setInfo(`Audio was longer than ${fmt(MAX_SECONDS)} — trimmed to ${fmt(MAX_SECONDS)}.`);
-          window.setTimeout(() => setInfo(null), 6000);
+          const base = f.name.replace(/\.\w+$/, "");
+          setAudioMeta({
+            name: `${base}.wav`,
+            size: formatSize(trimmedFile.size),
+            trimmed: true,
+          });
         } catch (err) {
           console.error("trimAudioFile error", err);
           setError("Audio is too long and could not be trimmed. Try a shorter clip.");
@@ -222,8 +226,9 @@ export default function Composer({
         return;
       }
 
+
       onAudioUpload?.(f);
-      setAudioMeta({ name: f.name, size: formatSize(f.size) });
+      setAudioMeta({ name: f.name, size: formatSize(f.size), trimmed: false });
       setError(null);
     };
 
@@ -474,6 +479,7 @@ export default function Composer({
                 {audioMeta && (
                   <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={audioMeta.name}>
                     {formatFileName(audioMeta.name, NAME_MAX)} ({audioMeta.size})
+                    {audioMeta.trimmed ? " — trimmed to 1min" : ""}
                   </div>
                 )}
                 <button
@@ -636,7 +642,7 @@ export default function Composer({
               placeholder="NeonFabric"
               maxLength={FILE_NAME_MAX}
               style={{
-                padding: "6px 8px",
+                padding: "8px 8px",
                 borderRadius: 6,
                 border: "1px solid #000000ff",
                 minWidth: 200,
@@ -717,7 +723,7 @@ export default function Composer({
               type="button"
               className="attach-menu-item"
               onClick={() => {
-                const k = randInt(1, 10);
+                const k = randInt(11, 100);
                 setKOnly(k);
                 const cmd = textForSearchK(k);
                 onSend(cmd);

@@ -16,6 +16,18 @@ export default function Search() {
 
   const pageSize = 4;
   const [page, setPage] = useState(1);
+  const kInputRef = useRef<HTMLInputElement | null>(null);
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    setFile(f);
+    setPage(1);
+    if (f) {
+      setTimeout(() => kInputRef.current?.focus(), 0);
+      if (!(Number(k) > 0)) setK(3); // default to 3 if empty
+    }
+  };
+
 
   const dataUrlToFile = useCallback(async (dataUrl: string, filename = "query.png"): Promise<File> => {
     const res = await fetch(dataUrl);
@@ -66,12 +78,6 @@ export default function Search() {
       console.warn("Failed to parse mcp_last_search", err);
     }
   }, [file, runSearch, dataUrlToFile]);
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] ?? null;
-    setFile(f);
-    setPage(1);
-  };
 
   const cleanName = (filename: string) => {
     if (!filename) return "";
@@ -187,7 +193,7 @@ export default function Search() {
     <div className="search-container">
       <FabricSearchHeader />
 
-      <div className="uploader-row">
+      <div className="mega-search">
         <input
           id={fileid}
           type="file"
@@ -195,27 +201,67 @@ export default function Search() {
           onChange={onFileChange}
           className="file-input-hidden"
         />
-        <label htmlFor={fileid} className="file-button">Choose Image</label>
 
-        <label className="k-input">
-          No of Similar images:
-          <input
-            type="number"
-            min={1}
-            max={1000}
-            value={k}
-            onChange={(e) => setK(e.target.valueAsNumber)}
-          />
-        </label>
-
-        <button onClick={handleSearch} disabled={loading || !file} className="primary-btn">
-          {loading ? "Searching..." : "Search Similar"}
+        <button
+          type="button"
+          className="mega-icon-btn mega-left"
+          onClick={() => document.getElementById(fileid)?.click()}
+          title="Upload image"
+          aria-label="Upload image"
+          disabled={loading}
+        >
+          📁
         </button>
 
+        <div className="mega-content">
+          {!file ? (
+            <div className="mega-placeholder">
+              <span>Upload a fabric image and search similar images</span>
+              <span className="sep"></span>
+            </div>
+          ) : (
+            <div className="mega-k-row">
+              <span className="query-name" title={file.name}>
+                {cleanName(file.name)}
+              </span>
+              <label className="k-inline">
+                <span>No. of similar images:</span>
+                <input
+                  ref={kInputRef}
+                  type="number"
+                  min={1}
+                  max={1000}
+                  value={Number.isFinite(k) && k > 0 ? k : ""}
+                  onChange={(e) => setK(e.target.valueAsNumber)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && file && Number(k) > 0 && !loading) handleSearch();
+                  }}
+                  placeholder="e.g. 3"
+                  inputMode="numeric"
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="mega-icon-btn mega-right"
+          onClick={handleSearch}
+          disabled={loading || !file || !(Number(k) > 0)}
+          title="Search similar"
+          aria-label="Search similar"
+        >
+          🔍
+        </button>
+      </div>
+
+      <div className="bar-actions">
         <button onClick={handleClear} className="secondary-btn" disabled={loading}>
           Clear
         </button>
       </div>
+
 
       {file && (
         <div className="preview-box">

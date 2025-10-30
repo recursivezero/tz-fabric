@@ -124,3 +124,8 @@
   color: #a8b4cc;
   font-size: 13px;
 }
+
+.footer__copyright a {
+  color: #a8b4cc;
+  text-decoration: none;
+}
