@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Replace 'X' with issue number
         env:
-          GH_TOKEN: ${{ secrets.ISSUE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ISSUE_NUMBER=${{ github.event.issue.number }}
           OLD_TITLE="${{ github.event.issue.title }}"
