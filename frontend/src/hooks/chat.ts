@@ -514,6 +514,15 @@ export default function useChat() {
     const text = raw.trim();
     const forceApi = Boolean(opts?.forceApi);
 
+    if (status === "sending") {
+      console.warn("[send] early return: status === 'sending'");
+      return;
+    }
+    if (!text && !uploadedImageFile && !uploadedAudioFile) {
+      console.warn("[send] early return: nothing to send (no text or media). raw:", JSON.stringify(raw));
+      return;
+    }
+
     if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
 
     if (!forceApi && pendingPresetRef.current && text) {
@@ -649,7 +658,7 @@ export default function useChat() {
           if (audioPath || audioUrl) {
             setMessages(prev => [
               ...prev,
-              { role: "assistant", content: "Files saved. Want to open the list page? [Open View](/view)" }
+              { role: "assistant", content: "Files saved. Want to open the list page? [See your upload](/view)" }
             ]);
           }
 

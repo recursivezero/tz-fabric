@@ -1,4 +1,4 @@
-import Header from "../components/Header";
+import Header from "../components/ImageDescriptorHeader";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
 import AnimatedSearchBox from "../components/SearchBar";
 import DescriptionBox from "../components/DescriptionBox";
@@ -6,8 +6,22 @@ import DrawerToggle from "../components/DrawerToggle";
 import ImagePreview from "../components/ImagePreviewPanel";
 import useImageAnalysis from "../hooks/useImageAnalysis";
 import "../styles/ImageDescription.css";
+import { useEffect } from "react";
 
 const ImageDescription = () => {
+
+  useEffect(() => {
+    const wrapper = document.querySelector(".app-wrapper");
+    wrapper?.classList.add("upload-bg");
+
+    const header = document.querySelector(".site-header");
+    header?.classList.add("header-width");
+
+    return () => {
+      wrapper?.classList.remove("upload-bg", "header-width");
+      header?.classList.remove("header-width");
+    };
+  }, []);
   const {
     showResults,
     loading,

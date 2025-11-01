@@ -23,11 +23,13 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   gap: 12px;
 }
+
 .searchbar-container .upload-icon {
   cursor: pointer;
   font-size: 24px;
   margin-right: 12px;
 }
+
 .searchbar-container .search-btn {
   background: none;
   border: none;
@@ -74,5 +76,5 @@
 }
 
 .searchbar-container .sample-text {
-  color: #137f7f;
+  color: #000000;
 }

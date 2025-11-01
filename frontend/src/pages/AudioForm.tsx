@@ -33,6 +33,15 @@ const UploadPage = () => {
     clearImage,
   } = useUploadAndRecord();
 
+  useEffect(() => {
+    const wrapper = document.querySelector(".app-wrapper");
+    wrapper?.classList.add("upload-bg");
+
+    return () => {
+      wrapper?.classList.remove("upload-bg");
+    };
+  }, []);
+
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const [audioMode, setAudioMode] = useState<AudioMode>("record");
