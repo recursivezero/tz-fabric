@@ -206,6 +206,7 @@ export default function ContentGrid() {
                   title="Click to zoom"
                   style={{ cursor: "zoom-in" }}
                 />
+                <span className="img-overlay">Click to view image</span>
                 <figcaption className="media-name" title={caption}>
                   {caption}
                 </figcaption>
@@ -243,12 +244,10 @@ export default function ContentGrid() {
 
       {loading && <div className="grid-loading">Loading…</div>}
 
-      {/* ---------- Lightbox Overlay ---------- */}
       {lightboxOpen && activeSrc && (
         <div
           className="lb-backdrop"
           onClick={(e) => {
-            // click on backdrop (not on image area) closes
             if ((e.target as HTMLElement).classList.contains("lb-backdrop")) {
               closeLightbox();
             }

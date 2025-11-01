@@ -1,7 +1,7 @@
 .msg-row {
   display: flex;
   gap: 12px;
-  margin: 6px 0;
+  margin: 8px 0;
   align-items: flex-start;
   width: 100%;
   box-sizing: border-box;
@@ -15,17 +15,10 @@
   justify-content: flex-end;
 }
 
-.messages-list {
-  padding: 12px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .assistant-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #eef2ff;
   display: inline-flex;
   align-items: center;
@@ -33,17 +26,18 @@
   font-size: 16px;
   margin-top: 4px;
   flex: 0 0 36px;
+  border: 1px solid #e5e7eb;
 }
 
 .assistant-block {
   text-align: left;
   background: #ffffff;
   color: #0f172a;
-  border: 1px solid #eef2f6;
-  border-radius: 12px;
-  padding: 10px 14px;
-  line-height: 1.45;
-  box-shadow: 0 2px 8px rgba(2, 6, 23, 0.03);
+  border: 1px solid #e9eef5;
+  border-radius: 14px;
+  padding: 0px 14px;
+  line-height: 1.55;
+  box-shadow: 0 4px 14px rgba(2, 6, 23, 0.04);
   max-width: min(78ch, 74%);
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -54,7 +48,6 @@
 .assistant-block ul,
 .assistant-block ol,
 .assistant-block li {
-  text-align: left;
   color: inherit;
 }
 
@@ -63,38 +56,18 @@
   margin: 8px 0 12px 1.1rem;
   padding-left: 0;
   list-style-position: outside;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .assistant-block li {
   margin: 6px 0;
-  padding-left: 0;
   font-size: 15px;
-}
-
-.assistant-block ul.tags-list {
-  list-style: none;
-  margin: 6px 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.assistant-block ul.tags-list li {
-  background: rgba(37, 99, 235, 0.08);
-  color: #0f172a;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 14px;
-  margin: 0;
-  box-shadow: 0 1px 2px rgba(2, 6, 23, 0.03);
 }
 
 .assistant-block a {
   color: #2563eb;
   text-decoration: none;
-  border-bottom: 1px dashed rgba(37, 99, 235, 0.12);
+  border-bottom: 1px dashed rgba(37, 99, 235, .18);
 }
 
 .assistant-block a:hover {
@@ -104,11 +77,12 @@
 .assistant-block pre {
   background: #0f172a;
   color: #f8fafc;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
   overflow: auto;
   font-size: 13px;
-  margin: 8px 0;
+  margin: 10px 0;
+  border: 1px solid rgba(255, 255, 255, .06);
 }
 
 .assistant-block code {
@@ -119,25 +93,25 @@
   font-size: 13px;
 }
 
+/* User bubble */
 .bubble.user {
   background: linear-gradient(180deg, #2563eb, #1e40af);
   color: #fff;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   border-top-right-radius: 6px;
   max-width: min(70ch, 70%);
-  /* keep user messages reasonably sized */
-  line-height: 1.35;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  box-shadow: 0 2px 6px rgba(2, 6, 23, 0.06);
+  line-height: 1.4;
+  box-shadow: 0 6px 16px rgba(2, 6, 23, .12);
 }
 
+/* Media */
 .media-bubble {
   background: #fff;
   padding: 6px;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
+  border: 1px solid #eef2f6;
 }
 
 .image-bubble {
@@ -150,27 +124,22 @@
 
 .chat-image {
   max-width: 100%;
-  width: auto;
   height: auto;
   max-height: 360px;
-  border-radius: 8px;
+  border-radius: 12px;
   display: block;
   object-fit: cover;
-  border: 1px solid rgba(2, 6, 23, 0.04);
+  border: 1px solid rgba(2, 6, 23, .06);
 }
 
-.media-filename {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #475569;
-}
-
+.media-filename,
 .image-caption {
   margin-top: 6px;
   font-size: 13px;
   color: #475569;
 }
 
+/* Typing + error unchanged except slight centering already present */
 .typing {
   padding: 8px 12px;
   color: #64748b;
@@ -187,15 +156,7 @@
   width: 100%;
 }
 
-.error {
-  padding: 10px 16px;
-  color: #7f1d1d;
-  background: #fff6f6;
-  border-top: 1px solid #fee2e2;
-  border-bottom: 1px solid #fee2e2;
-  border-radius: 8px;
-}
-
+/* Mobile */
 @media (max-width: 720px) {
 
   .assistant-block,
@@ -217,6 +178,6 @@
 
 .assistant-block :focus,
 .bubble.user :focus {
-  outline: 3px solid rgba(37, 99, 235, 0.12);
+  outline: 3px solid rgba(37, 99, 235, .12);
   outline-offset: 2px;
 }

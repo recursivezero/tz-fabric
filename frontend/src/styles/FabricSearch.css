@@ -193,6 +193,7 @@
 }
 
 .result-thumb {
+  position: relative;
   padding: 10px;
 }
 
@@ -430,4 +431,17 @@ input[type="number"] {
   display: flex;
   justify-content: center;
   margin-top: 8px;
+}
+
+.img-overlay {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  user-select: none;
 }

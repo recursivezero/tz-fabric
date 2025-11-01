@@ -82,6 +82,7 @@ figcaption {
 }
 
 .grid-page .media-thumb {
+  position: relative;
   background: rgba(27, 34, 48, 0.85);
 }
 
@@ -194,4 +195,17 @@ figcaption {
 
 .lb-controls button:hover {
   filter: brightness(1.05);
+}
+
+.img-overlay {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  user-select: none;
 }

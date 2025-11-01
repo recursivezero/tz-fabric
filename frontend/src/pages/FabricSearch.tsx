@@ -294,6 +294,7 @@ export default function Search() {
                     title="Click to zoom"
                     style={{ cursor: "zoom-in" }}
                   />
+                  <span className="img-overlay">Click to view image</span>
                 </div>
                 <div className="result-name" title={item.filename}>
                   {cleanName(item.filename)}
