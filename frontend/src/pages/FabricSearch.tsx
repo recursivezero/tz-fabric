@@ -35,49 +35,100 @@ export default function Search() {
     return new File([blob], filename, { type: blob.type || "image/png" });
   }, []);
 
+  const urlToFile = useCallback(async (url: string, filename = "query.jpg"): Promise<File> => {
+    const res = await fetch(url, { credentials: "omit" });
+    if (!res.ok) throw new Error(`Failed to fetch image_url: ${res.status}`);
+    const blob = await res.blob();
+    const ext = (blob.type && blob.type.split("/")[1]) || "jpg";
+    const name = filename.endsWith(`.${ext}`) ? filename : `${filename}.${ext}`;
+    return new File([blob], name, { type: blob.type || "image/jpeg" });
+  }, []);
+
+
   const didAutoRun = useRef(false);
+
   useEffect(() => {
     if (didAutoRun.current) return;
 
+    const params = new URLSearchParams(window.location.search);
+    const urlK = params.get("k");
+    const urlImage = params.get("image_url");
+
+    if (urlK || urlImage) {
+      didAutoRun.current = true;
+      (async () => {
+        try {
+          const kVal = Math.max(1, Number(urlK || 3));
+          let f: File | null = null;
+
+          if (urlImage) {
+            f = await urlToFile(urlImage, `query-${Date.now()}`);
+          } else {
+            const raw = localStorage.getItem("mcp_last_search");
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed?.imageUrl) {
+                f = await urlToFile(parsed.imageUrl, `query-${Date.now()}`);
+              } else if (parsed?.queryPreview) {
+                f = await dataUrlToFile(parsed.queryPreview, `query-${Date.now()}.png`);
+              }
+            }
+          }
+
+          if (!f) {
+            setNotification({ message: "No query image available.", type: "error" });
+            return;
+          }
+
+          setFile(f);
+          setK(kVal);
+          await runSearch(f, kVal);
+        } catch (err) {
+          console.error("Auto-run (URL) failed:", err);
+          setNotification({ message: "Could not auto-run search from URL.", type: "error" });
+        } finally {
+          try { localStorage.removeItem("mcp_last_search"); } catch { }
+          setPage(1);
+        }
+      })();
+      return;
+    }
+
     try {
-      const raw = sessionStorage.getItem("mcp_last_search");
+      const raw = localStorage.getItem("mcp_last_search");
       if (!raw) return;
 
-      const parsed = JSON.parse(raw);
-      const maybeDataUrl = parsed?.queryPreview;
-      const maybeK = parsed?.k ?? parsed?.K ?? parsed?.params?.k ?? 0;
+      didAutoRun.current = true;
+      (async () => {
+        try {
+          const parsed = JSON.parse(raw);
+          const maybeK = parsed?.k ?? parsed?.K ?? parsed?.params?.k ?? 3;
 
-      if (maybeDataUrl && !file) {
-        didAutoRun.current = true;
-
-        (async () => {
-          try {
-            const guessName = `query-${Date.now()}.png`;
-            const f = await dataUrlToFile(maybeDataUrl, guessName);
-            setFile(f);
-
-            if (Number.isFinite(maybeK) && Number(maybeK) > 0) {
-              setK(Number(maybeK));
-            } else {
-              setK(prev => (prev > 0 ? prev : 3));
-            }
-
-            await runSearch(f, Number(maybeK) || 3);
-          } catch (err) {
-            console.error("Auto-run search from mcp_last_search failed:", err);
-            setNotification({ message: "Could not auto-run search payload.", type: "error" });
-          } finally {
-            try {
-              sessionStorage.removeItem("mcp_last_search");
-            } catch { }
-            setPage(1);
+          let f: File | null = null;
+          if (parsed?.imageUrl) {
+            f = await urlToFile(parsed.imageUrl, `query-${Date.now()}`);
+          } else if (parsed?.queryPreview) {
+            f = await dataUrlToFile(parsed.queryPreview, `query-${Date.now()}.png`);
           }
-        })();
-      }
+
+          if (!f) throw new Error("No usable image in payload.");
+
+          setFile(f);
+          setK(Number.isFinite(maybeK) && Number(maybeK) > 0 ? Number(maybeK) : 3);
+          await runSearch(f, Number(maybeK) || 3);
+        } catch (err) {
+          console.error("Auto-run search from mcp_last_search failed:", err);
+          setNotification({ message: "Could not auto-run search payload.", type: "error" });
+        } finally {
+          try { localStorage.removeItem("mcp_last_search"); } catch { }
+          setPage(1);
+        }
+      })();
     } catch (err) {
       console.warn("Failed to parse mcp_last_search", err);
     }
-  }, [file, runSearch, dataUrlToFile]);
+  }, [file, runSearch, dataUrlToFile, urlToFile]);
+
 
   const cleanName = (filename: string) => {
     if (!filename) return "";
