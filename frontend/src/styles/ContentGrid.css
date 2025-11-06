@@ -19,34 +19,62 @@
   width: calc(100% - 80px);
 }
 
-.grid-page .grid-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin-top: 25px;
-  color: #080808;
-}
-
-.grid-page .grid-controls {
+.grid-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  flex-direction: row-reverse;
+  gap: 16px;
+  margin: 25px 0 14px;
 }
 
-.grid-page .grid-controls span {
+.grid-left {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.grid-title-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffcf00;
+}
+
+.grid-count-inline {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  /* WHITE COUNT */
+  opacity: 0.95;
+}
+
+.grid-controls.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.grid-controls.inline span {
   color: #050505;
 }
 
-.grid-page .grid-controls button {
+.grid-controls.inline button {
   padding: 8px 12px;
   border: 1px solid #ddd;
   background: rgba(27, 34, 48, 0.9);
   color: white;
   border-radius: 8px;
   cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
 }
 
-.grid-page .grid-controls button:disabled {
+.grid-controls.inline button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, .28);
+  background: rgba(27, 34, 48, .95);
+}
+
+.grid-controls.inline button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -62,9 +90,9 @@
   border-radius: 14px;
   background: rgba(27, 34, 48, 0.85);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  display: flex;
   flex-direction: column;
   overflow: hidden;
-  display: flex;
 }
 
 figure {
@@ -208,4 +236,25 @@ figcaption {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   pointer-events: none;
   user-select: none;
+}
+
+.media-name {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.zoom-icon {
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.zoom-icon:hover {
+  opacity: 1;
 }

@@ -61,7 +61,7 @@ export default function Footer() {
 
       <hr className="footer__rule" />
       <div className="footer__copyright">
-        © {new Date().getFullYear()} ·  <a href="https://recursivezero.com" target="_blank"> Recursive Zero </a>.  All Rights Reserved.
+        © {new Date().getFullYear()} ·  <a href="https://recursivezero.com" target="_blank"> Recursive Zero Pvt Ltd </a>.  All Rights Reserved.
       </div>
     </footer>
   );

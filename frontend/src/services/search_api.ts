@@ -1,3 +1,4 @@
+// services/search_api.ts
 import { FULL_API_URL } from "../constants";
 
 export interface SearchItem {
@@ -28,22 +29,24 @@ export interface SearchResponse {
 
 export async function searchSimilar(
   file: File,
-  k: number = 50,
   order: "recent" | "score" = "recent",
   debug_ts: boolean = false,
   min_sim: number = 0.5,
-  require_audio: boolean = true,
+  require_audio: boolean = true
 ): Promise<SearchResponse> {
+  const minSimClamped =
+    typeof min_sim === "number"
+      ? Math.max(0, Math.min(1, min_sim))
+      : 0.5;
+
   const form = new FormData();
   form.append("file", file);
 
-  const params = new URLSearchParams({
-    k: String(k),
-    order,
-    debug_ts: String(debug_ts),
-    min_sim: String(min_sim),
-    require_audio: String(require_audio),
-  });
+  const params = new URLSearchParams();
+  params.set("order", order);
+  params.set("debug_ts", debug_ts ? "true" : "false");
+  params.set("min_sim", String(minSimClamped));
+  params.set("require_audio", require_audio ? "true" : "false");
 
   const res = await fetch(`${FULL_API_URL}/search?${params.toString()}`, {
     method: "POST",

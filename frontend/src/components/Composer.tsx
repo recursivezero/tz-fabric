@@ -253,7 +253,7 @@ export default function Composer({
     }
     if (actionId === "image:search_similar") {
       setMode("searchK");
-      onChange("Search similar images — choose a number: <10 or >10.");
+      onSend();
       return;
     }
     if (actionId === "submit:both") {

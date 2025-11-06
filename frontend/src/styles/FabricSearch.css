@@ -1,3 +1,5 @@
+/* ===== FabricSearch.css (full) ===== */
+
 .search-container {
   max-width: 1100px;
   margin: 4px auto;
@@ -40,14 +42,10 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: #1c76cb;
-  /* primary */
   color: #fff;
   font-size: 13px;
   cursor: pointer;
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.15s ease,
-    filter 0.2s ease;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, filter 0.2s ease;
 }
 
 .search-container .secondary-btn {
@@ -135,6 +133,8 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
+/* ---------- Pager ---------- */
+
 .pagination-controls,
 .search-container .pager {
   display: inline-flex;
@@ -162,7 +162,7 @@
   color: #d8e0ea;
 }
 
-
+/* ---------- Results grid ---------- */
 
 .result-grid {
   display: grid;
@@ -216,6 +216,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+/* Reset bootstrap-like defaults for any card classes if present */
 .search-container .grid {
   display: contents;
 }
@@ -228,6 +229,7 @@
   all: unset;
 }
 
+/* Remove arrows */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -237,6 +239,8 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* ---------- Lightbox ---------- */
 
 .lb-backdrop {
   position: fixed;
@@ -325,10 +329,43 @@ input[type="number"] {
   width: 100%;
 }
 
+/* ---------- New: label outside bar + clear on right ---------- */
+
+.mega-area {
+  max-width: 760px;
+  /* keep bar width */
+  margin: 8px auto 10px;
+}
+
+.mega-label {
+  text-align: center;
+  font-weight: 700;
+  color: #0c0c0c;
+  margin-bottom: 8px;
+}
+
+.mega-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  /* center bar + clear as a group */
+}
+
+/* Clear button inline to the right of the bar */
+.clear-inline {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* Search bar (unchanged look, width fixed) */
 .mega-search {
   position: relative;
-  max-width: 760px;
-  margin: 6px auto 10px;
+  width: 700px;
+  flex: 1 1 760px;
+  margin: 0;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
@@ -363,7 +400,6 @@ input[type="number"] {
 }
 
 .mega-content {
-  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -372,19 +408,9 @@ input[type="number"] {
   color: #0c0c0c;
 }
 
+/* When no file, we keep the bar empty (label is outside now) */
 .mega-placeholder {
-  display: flex;
-  gap: 10px;
-  align-items: baseline;
-  font-weight: 700;
-}
-
-.mega-placeholder .sep {
-  opacity: 0.7;
-}
-
-.mega-placeholder .samples-link {
-  opacity: 0.9;
+  display: none;
 }
 
 .mega-k-row {
@@ -427,11 +453,26 @@ input[type="number"] {
   box-shadow: 0 0 0 2px rgba(28, 118, 203, 0.25);
 }
 
+/* Old centered Clear bar removed */
 .bar-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 8px;
+  display: none;
 }
+
+/* Responsive: stack clear under bar on narrow screens */
+@media (max-width: 520px) {
+  .mega-bar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .clear-inline {
+    height: 38px;
+    align-self: center;
+  }
+}
+
+/* ---------- Name + zoom icon below thumbnails ---------- */
 
 .img-overlay {
   position: absolute;
@@ -444,4 +485,31 @@ input[type="number"] {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   pointer-events: none;
   user-select: none;
+}
+
+.result-name {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #eaeef6;
+  padding: 6px 8px 0;
+  background: transparent;
+}
+
+.result-name:hover {
+  opacity: 0.95;
+}
+
+.zoom-icon {
+  font-size: 14px;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.zoom-icon:hover {
+  opacity: 1;
 }

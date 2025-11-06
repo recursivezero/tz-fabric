@@ -28,6 +28,7 @@ function pickDisplayName(md: SearchItem["metadata"] | undefined): string {
     );
   return "result";
 }
+
 function buildImageUrl(md: SearchItem["metadata"]): string | undefined {
   if (md?.imageUrl) return md.imageUrl;
   if (md?.imagePath) return md.imagePath;
@@ -73,26 +74,31 @@ export default function useImageSearch() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<UiItem[]>([]);
 
-  const runSearch = async (file: File, k = 50, minSim = 0.5) => {
+  const runSearch = async (file: File, minSim = 0.5) => {
     setLoading(true);
     setError(null);
     setResults([]);
+
     try {
       const res: SearchResponse = await searchSimilar(
         file,
-        k,
         "recent",
-        true,
+        false,
         minSim,
-        true,
+        true
       );
-      console.log("[search] count", res.count, res.results?.length);
+
       const mapped = (res.results ?? []).map(toUiItem);
-      const filtered = mapped.filter(
-        (it) => it.score >= minSim && !!it.audioSrc,
+
+      // ✅ NEW — drop result if it has no image
+      const withImage = mapped.filter(item => !!item.imageSrc);
+
+      // ✅ Your existing minSim + audio filter
+      const filtered = withImage.filter(
+        (it) => it.score >= minSim && !!it.audioSrc
       );
-      setResults(filtered.slice(0, k));
-      console.log("[search] mapped/filtered", mapped.length, filtered.length);
+
+      setResults(filtered);
     } catch (e: unknown) {
       setError(getErrorMessage(e));
     } finally {

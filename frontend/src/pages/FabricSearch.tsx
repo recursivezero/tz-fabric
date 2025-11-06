@@ -8,26 +8,23 @@ import "../styles/FabricSearch.css";
 export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
   const [file, setFile] = useState<File | null>(null);
-  const [k, setK] = useState(0);
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const pageSize = 4;
   const [page, setPage] = useState(1);
-  const kInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ✅ NEW — track images that fail to load (missing locally)
+  const [badImages, setBadImages] = useState<Set<string>>(new Set());
+  const markBadImage = (src?: string) => {
+    if (!src) return;
+    setBadImages(prev => new Set([...prev, src]));
+  };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
     setPage(1);
-    if (f) {
-      setTimeout(() => kInputRef.current?.focus(), 0);
-      if (!(Number(k) > 0)) setK(3); // default to 3 if empty
-    }
   };
-
 
   const dataUrlToFile = useCallback(async (dataUrl: string, filename = "query.png"): Promise<File> => {
     const res = await fetch(dataUrl);
@@ -44,47 +41,21 @@ export default function Search() {
     return new File([blob], name, { type: blob.type || "image/jpeg" });
   }, []);
 
-
   const didAutoRun = useRef(false);
-
   useEffect(() => {
     if (didAutoRun.current) return;
 
     const params = new URLSearchParams(window.location.search);
-    const urlK = params.get("k");
     const urlImage = params.get("image_url");
 
-    if (urlK || urlImage) {
+    if (urlImage) {
       didAutoRun.current = true;
       (async () => {
         try {
-          const kVal = Math.max(1, Number(urlK || 3));
-          let f: File | null = null;
-
-          if (urlImage) {
-            f = await urlToFile(urlImage, `query-${Date.now()}`);
-          } else {
-            const raw = localStorage.getItem("mcp_last_search");
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              if (parsed?.imageUrl) {
-                f = await urlToFile(parsed.imageUrl, `query-${Date.now()}`);
-              } else if (parsed?.queryPreview) {
-                f = await dataUrlToFile(parsed.queryPreview, `query-${Date.now()}.png`);
-              }
-            }
-          }
-
-          if (!f) {
-            setNotification({ message: "No query image available.", type: "error" });
-            return;
-          }
-
+          const f = await urlToFile(urlImage, `query-${Date.now()}`);
           setFile(f);
-          setK(kVal);
-          await runSearch(f, kVal);
-        } catch (err) {
-          console.error("Auto-run (URL) failed:", err);
+          await runSearch(f);
+        } catch {
           setNotification({ message: "Could not auto-run search from URL.", type: "error" });
         } finally {
           try { localStorage.removeItem("mcp_last_search"); } catch { }
@@ -99,12 +70,12 @@ export default function Search() {
       if (!raw) return;
 
       didAutoRun.current = true;
+
       (async () => {
         try {
           const parsed = JSON.parse(raw);
-          const maybeK = parsed?.k ?? parsed?.K ?? parsed?.params?.k ?? 3;
-
           let f: File | null = null;
+
           if (parsed?.imageUrl) {
             f = await urlToFile(parsed.imageUrl, `query-${Date.now()}`);
           } else if (parsed?.queryPreview) {
@@ -114,31 +85,24 @@ export default function Search() {
           if (!f) throw new Error("No usable image in payload.");
 
           setFile(f);
-          setK(Number.isFinite(maybeK) && Number(maybeK) > 0 ? Number(maybeK) : 3);
-          await runSearch(f, Number(maybeK) || 3);
-        } catch (err) {
-          console.error("Auto-run search from mcp_last_search failed:", err);
+          await runSearch(f);
+        } catch {
           setNotification({ message: "Could not auto-run search payload.", type: "error" });
         } finally {
           try { localStorage.removeItem("mcp_last_search"); } catch { }
           setPage(1);
         }
       })();
-    } catch (err) {
-      console.warn("Failed to parse mcp_last_search", err);
-    }
-  }, [file, runSearch, dataUrlToFile, urlToFile]);
+    } catch { }
+  }, [runSearch, dataUrlToFile, urlToFile]);
 
-
-  const cleanName = (filename: string) => {
-    if (!filename) return "";
-    return filename.split("_")[0].split(".")[0];
-  };
+  const cleanName = (filename: string) =>
+    filename ? filename.split("_")[0].split(".")[0] : "";
 
   const handleSearch = async () => {
     if (!file) return;
     setNotification(null);
-    await runSearch(file, k);
+    await runSearch(file);
     setPage(1);
   };
 
@@ -147,44 +111,39 @@ export default function Search() {
     clear();
     setPage(1);
     setNotification(null);
+    setBadImages(new Set()); // ✅ also reset hidden images
   };
+
+  const visibleResults = useMemo(
+    () => exactMatches.filter(item => !badImages.has(item.imageSrc)),
+    [exactMatches, badImages]
+  );
 
   const paginatedResults = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return exactMatches.slice(start, start + pageSize);
-  }, [page, exactMatches]);
+    return visibleResults.slice(start, start + pageSize);
+  }, [page, visibleResults]);
 
-  const totalPages = Math.ceil(exactMatches.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(visibleResults.length / pageSize));
   const fileid = useId();
-
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
     wrapper?.classList.add("upload-bg");
-    return () => { wrapper?.classList.remove("upload-bg"); };
+    return () => wrapper?.classList.remove("upload-bg");
   }, []);
 
-  // ---------- Lightbox / Zoom state (same behavior as list page) ----------
+  // ✅ Lightbox — unchanged
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [activeCaption, setActiveCaption] = useState<string | null>(null);
-
   const [scale, setScale] = useState(1);
-  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
   const draggingRef = useRef(false);
-  const lastPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  const MIN_SCALE = 0.5;
-  const MAX_SCALE = 6;
-  const ZOOM_STEP = 0.2;
+  const lastPosRef = useRef({ x: 0, y: 0 });
+  const MIN_SCALE = 0.5, MAX_SCALE = 6, ZOOM_STEP = 0.2;
 
   const openLightbox = (src: string, caption?: string) => {
     setActiveSrc(src);
@@ -194,7 +153,6 @@ export default function Search() {
     setLightboxOpen(true);
     document.body.style.overflow = "hidden";
   };
-
   const closeLightbox = () => {
     setLightboxOpen(false);
     setActiveSrc(null);
@@ -202,25 +160,9 @@ export default function Search() {
     document.body.style.overflow = "";
   };
 
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeLightbox();
-      if (e.key === "+" || e.key === "=") setScale(s => Math.min(MAX_SCALE, s + ZOOM_STEP));
-      if (e.key === "-" || e.key === "_") setScale(s => Math.max(MIN_SCALE, s - ZOOM_STEP));
-      if (e.key.toLowerCase() === "r") {
-        setScale(1);
-        setOffset({ x: 0, y: 0 });
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [lightboxOpen]);
-
   const onWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-    setScale(s => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s + delta)));
+    setScale(s => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP))));
   };
 
   const onMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
@@ -236,83 +178,55 @@ export default function Search() {
   };
   const onMouseUpOrLeave = () => { draggingRef.current = false; };
 
-  const zoomIn = () => setScale(s => Math.min(MAX_SCALE, s + ZOOM_STEP));
-  const zoomOut = () => setScale(s => Math.max(MIN_SCALE, s - ZOOM_STEP));
-  const resetView = () => { setScale(1); setOffset({ x: 0, y: 0 }); };
-
   return (
     <div className="search-container">
+
       <FabricSearchHeader />
 
-      <div className="mega-search">
-        <input
-          id={fileid}
-          type="file"
-          accept="image/*"
-          onChange={onFileChange}
-          className="file-input-hidden"
-        />
+      <div className="mega-area">
+        <div className="mega-label">Upload a fabric image and search similar images</div>
 
-        <button
-          type="button"
-          className="mega-icon-btn mega-left"
-          onClick={() => document.getElementById(fileid)?.click()}
-          title="Upload image"
-          aria-label="Upload image"
-          disabled={loading}
-        >
-          📁
-        </button>
+        <div className="mega-bar-row">
+          <div className="mega-search">
+            <input
+              id={fileid}
+              type="file"
+              accept="image/*"
+              onChange={onFileChange}
+              className="file-input-hidden"
+            />
 
-        <div className="mega-content">
-          {!file ? (
-            <div className="mega-placeholder">
-              <span>Upload a fabric image and search similar images</span>
-              <span className="sep"></span>
+            <button
+              type="button"
+              className="mega-icon-btn mega-left"
+              onClick={() => document.getElementById(fileid)?.click()}
+            >
+              📁
+            </button>
+
+            <div className="mega-content">
+              {file ? (
+                <div className="mega-k-row">
+                  <span className="query-name" title={file.name}>
+                    {cleanName(file.name)}
+                  </span>
+                </div>
+              ) : null}
             </div>
-          ) : (
-            <div className="mega-k-row">
-              <span className="query-name" title={file.name}>
-                {cleanName(file.name)}
-              </span>
-              <label className="k-inline">
-                <span>No. of similar images:</span>
-                <input
-                  ref={kInputRef}
-                  type="number"
-                  min={1}
-                  max={1000}
-                  value={Number.isFinite(k) && k > 0 ? k : ""}
-                  onChange={(e) => setK(e.target.valueAsNumber)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && file && Number(k) > 0 && !loading) handleSearch();
-                  }}
-                  placeholder="e.g. 3"
-                  inputMode="numeric"
-                />
-              </label>
-            </div>
-          )}
+
+            <button
+              type="button"
+              className="mega-icon-btn mega-right"
+              disabled={!file}
+              onClick={handleSearch}
+            >
+              🔍
+            </button>
+          </div>
+
+          <button onClick={handleClear} className="secondary-btn clear-inline">Clear</button>
         </div>
-
-        <button
-          type="button"
-          className="mega-icon-btn mega-right"
-          onClick={handleSearch}
-          disabled={loading || !file || !(Number(k) > 0)}
-          title="Search similar"
-          aria-label="Search similar"
-        >
-          🔍
-        </button>
       </div>
-
-      <div className="bar-actions">
-        <button onClick={handleClear} className="secondary-btn" disabled={loading}>
-          Clear
-        </button>
-      </div>
-
 
       {file && (
         <div className="preview-box">
@@ -325,12 +239,12 @@ export default function Search() {
       {loading && <Loader />}
       {error && <p className="search-error">{error}</p>}
 
-      {exactMatches.length > 0 ? (
+      {visibleResults.length > 0 ? (
         <>
           <div className="pagination-controls">
-            <button onClick={() => setPage((p) => p - 1)} disabled={page === 1}>Prev</button>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
             <span>Page {page} / {totalPages}</span>
-            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>Next</button>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
           </div>
 
           <div className="result-grid">
@@ -339,17 +253,27 @@ export default function Search() {
                 <div className="result-thumb">
                   <img
                     src={item.imageSrc}
-                    alt="Uploaded"
+                    alt={item.filename}
                     loading="lazy"
+                    onError={() => markBadImage(item.imageSrc)}  // ✅ HIDE BROKEN IMAGE
                     onClick={() => openLightbox(item.imageSrc, cleanName(item.filename))}
-                    title="Click to zoom"
                     style={{ cursor: "zoom-in" }}
                   />
-                  <span className="img-overlay">Click to view image</span>
                 </div>
-                <div className="result-name" title={item.filename}>
+
+                <div className="result-name" onClick={() => openLightbox(item.imageSrc, cleanName(item.filename))}>
                   {cleanName(item.filename)}
+                  <span
+                    className="zoom-icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openLightbox(item.imageSrc, cleanName(item.filename));
+                    }}
+                  >
+                    🔍
+                  </span>
                 </div>
+
                 <div className="result-audio">
                   {item.audioSrc && <audio controls src={item.audioSrc} preload="metadata" />}
                 </div>
@@ -358,21 +282,13 @@ export default function Search() {
           </div>
         </>
       ) : (
-        !loading && (
-          <p className="empty-hint">
-            {file ? "No matches found for this image." : "Pick an image and search."}
-          </p>
-        )
+        !loading && file && <p className="empty-hint">No matches found.</p>
       )}
 
       {lightboxOpen && activeSrc && (
         <div
           className="lb-backdrop"
-          onClick={(e) => {
-            if ((e.target as HTMLElement).classList.contains("lb-backdrop")) {
-              closeLightbox();
-            }
-          }}
+          onClick={(e) => { if ((e.target as HTMLElement).classList.contains("lb-backdrop")) closeLightbox(); }}
         >
           <div
             className="lb-stage"
@@ -389,18 +305,18 @@ export default function Search() {
               style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }}
               draggable={false}
             />
-
             {activeCaption && <div className="lb-caption">{activeCaption}</div>}
 
             <div className="lb-controls">
-              <button onClick={zoomOut} aria-label="Zoom out">−</button>
-              <button onClick={resetView} aria-label="Reset zoom">Reset</button>
-              <button onClick={zoomIn} aria-label="Zoom in">+</button>
-              <button className="lb-close" onClick={closeLightbox} aria-label="Close">✕</button>
+              <button onClick={() => setScale(s => Math.max(MIN_SCALE, s - ZOOM_STEP))}>−</button>
+              <button onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }}>Reset</button>
+              <button onClick={() => setScale(s => Math.min(MAX_SCALE, s + ZOOM_STEP))}>+</button>
+              <button className="lb-close" onClick={closeLightbox}>✕</button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

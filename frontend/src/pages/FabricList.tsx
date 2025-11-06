@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { BASE_URL } from "../constants";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
@@ -12,16 +12,22 @@ export default function ContentGrid() {
   const [err, setErr] = useState<string | null>(null);
   const [mode, setMode] = useState<"all" | "similar">("all");
 
-  // --- Lightbox/Zoom state ---
+  // ✅ Track broken images
+  const [badImages, setBadImages] = useState<Set<string>>(new Set());
+  const markBad = (src: string) => {
+    setBadImages((prev) => new Set([...prev, src]));
+  };
+
+  // ---------- Lightbox / Zoom ----------
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [activeCaption, setActiveCaption] = useState<string | null>(null);
 
   const [scale, setScale] = useState(1);
-  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
 
   const draggingRef = useRef(false);
-  const lastPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastPosRef = useRef({ x: 0, y: 0 });
 
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 6;
@@ -31,12 +37,13 @@ export default function ContentGrid() {
     if (e instanceof Error) return e.message;
     if (typeof e === "string") return e;
     if (typeof e === "object" && e !== null && "message" in e) {
-      const maybeMsg = (e as { message?: unknown }).message;
+      const maybeMsg = (e as any).message;
       if (typeof maybeMsg === "string") return maybeMsg;
     }
     return "Failed to load";
   }, []);
 
+  // Add page background
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
     wrapper?.classList.add("upload-bg");
@@ -45,8 +52,10 @@ export default function ContentGrid() {
     };
   }, []);
 
+  // Fetch items
   useEffect(() => {
     if (mode !== "all") return;
+
     let ignore = false;
     (async () => {
       setLoading(true);
@@ -57,7 +66,7 @@ export default function ContentGrid() {
           setItems(data.items);
           setTotal(data.total);
         }
-      } catch (err: unknown) {
+      } catch (err) {
         if (!ignore) setErr(getErrorMessage(err));
       } finally {
         if (!ignore) setLoading(false);
@@ -77,24 +86,33 @@ export default function ContentGrid() {
 
   function pickDisplayName(item: MediaItem) {
     if (item.basename) return item.basename;
-    if (item.imageFilename) return item.imageFilename.replace(/\.[^.]+$/, "");
+    if (item.imageFilename)
+      return item.imageFilename.replace(/\.[^.]+$/, "");
     const last = (item.imageUrl || "").split("/").pop() || "";
     return last.replace(/\.[^.]+$/, "");
   }
 
-  const cleanName = (filename: string) => {
-    if (!filename) return "";
-    return filename.split("_")[0].split(".")[0];
-  };
+  const cleanName = (filename: string) =>
+    filename?.split("_")[0].split(".")[0] ?? "";
 
-  // -------- Lightbox handlers --------
+  // ✅ Hide items with missing/broken images
+  const visibleItems = useMemo(() => {
+    return items.filter((item) => {
+      const src = item.imageUrl?.startsWith("http")
+        ? item.imageUrl
+        : `${BASE_URL}${item.imageUrl}`;
+
+      return !badImages.has(src);
+    });
+  }, [items, badImages]);
+
+  // ---------- Lightbox handlers ----------
   const openLightbox = (src: string, caption?: string) => {
     setActiveSrc(src);
     setActiveCaption(caption ?? null);
     setScale(1);
     setOffset({ x: 0, y: 0 });
     setLightboxOpen(true);
-    // Disable background scroll
     document.body.style.overflow = "hidden";
   };
 
@@ -109,8 +127,10 @@ export default function ContentGrid() {
     if (!lightboxOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeLightbox();
-      if (e.key === "+" || e.key === "=") setScale((s) => Math.min(MAX_SCALE, s + ZOOM_STEP));
-      if (e.key === "-" || e.key === "_") setScale((s) => Math.max(MIN_SCALE, s - ZOOM_STEP));
+      if (e.key === "+" || e.key === "=")
+        setScale((s) => Math.min(MAX_SCALE, s + ZOOM_STEP));
+      if (e.key === "-" || e.key === "_")
+        setScale((s) => Math.max(MIN_SCALE, s - ZOOM_STEP));
       if (e.key.toLowerCase() === "r") {
         setScale(1);
         setOffset({ x: 0, y: 0 });
@@ -160,55 +180,65 @@ export default function ContentGrid() {
         </div>
       </div>
 
-      <div className="grid-title">
-        {mode === "all" ? `All Uploads (${total})` : `Similar Results (${total})`}
-      </div>
-
-      {mode === "all" && (
-        <div className="grid-controls">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            ← Prev
-          </button>
-          <span>
-            Page {page} / {totalPages}
+      {/* Header */}
+      <div className="grid-header">
+        <div className="grid-left">
+          <span className="grid-title-text">
+            {mode === "all" ? "All Fabrics" : "Similar Results"}
           </span>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next →
-          </button>
+          <span className="grid-count-inline">({total})</span>
         </div>
-      )}
+
+        {mode === "all" && (
+          <div className="grid-controls inline">
+            <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+              ← Prev
+            </button>
+            <span className="grid-page">
+              Page {page} / {totalPages}
+            </span>
+            <button
+              disabled={page >= totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next →
+            </button>
+          </div>
+        )}
+      </div>
 
       {err && <div className="grid-error">⚠️ {err}</div>}
 
+      {/* ✅ Display only items with valid images */}
       <div className="media-grid">
-        {items.map((item) => {
-          const src = item.imageUrl?.startsWith("http")
-            ? item.imageUrl!
-            : `${BASE_URL}${item.imageUrl}`;
+        {visibleItems.map((item) => {
+          const rawSrc = item.imageUrl;
+          const src =
+            rawSrc?.startsWith("http") ? rawSrc : `${BASE_URL}${rawSrc}`;
           const caption = cleanName(pickDisplayName(item));
+
           return (
-            <article className="media-card" key={item._id ?? item.imageUrl}>
+            <article className="media-card" key={item._id ?? src}>
               <figure className="media-thumb">
                 <img
                   src={src}
-                  alt="Uploaded"
+                  alt={caption}
                   loading="lazy"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.opacity = "0.3";
-                  }}
+                  onError={() => markBad(src)} // ✅ hide broken image
                   onClick={() => openLightbox(src, caption)}
                   title="Click to zoom"
                   style={{ cursor: "zoom-in" }}
                 />
-                <span className="img-overlay">Click to view image</span>
-                <figcaption className="media-name" title={caption}>
+
+                <figcaption
+                  className="media-name"
+                  title={caption}
+                  onClick={() => openLightbox(src, caption)}
+                >
                   {caption}
+                  <span className="zoom-icon" title="Zoom image">
+                    🔍
+                  </span>
                 </figcaption>
               </figure>
 
@@ -217,7 +247,7 @@ export default function ContentGrid() {
                   <audio
                     controls
                     src={
-                      item.audioUrl?.startsWith("http")
+                      item.audioUrl.startsWith("http")
                         ? item.audioUrl
                         : `${BASE_URL}${item.audioUrl}`
                     }
@@ -237,13 +267,14 @@ export default function ContentGrid() {
           );
         })}
 
-        {!loading && items.length === 0 && (
-          <div className="empty-state">No items.</div>
+        {!loading && visibleItems.length === 0 && (
+          <div className="empty-state">No valid images found.</div>
         )}
       </div>
 
       {loading && <div className="grid-loading">Loading…</div>}
 
+      {/* Lightbox */}
       {lightboxOpen && activeSrc && (
         <div
           className="lb-backdrop"
@@ -271,13 +302,17 @@ export default function ContentGrid() {
               draggable={false}
             />
 
-            {activeCaption && <div className="lb-caption">{activeCaption}</div>}
+            {activeCaption && (
+              <div className="lb-caption">{activeCaption}</div>
+            )}
 
             <div className="lb-controls">
-              <button onClick={zoomOut} aria-label="Zoom out">−</button>
-              <button onClick={resetView} aria-label="Reset zoom">Reset</button>
-              <button onClick={zoomIn} aria-label="Zoom in">+</button>
-              <button className="lb-close" onClick={closeLightbox} aria-label="Close">✕</button>
+              <button onClick={zoomOut}>−</button>
+              <button onClick={resetView}>Reset</button>
+              <button onClick={zoomIn}>+</button>
+              <button className="lb-close" onClick={closeLightbox}>
+                ✕
+              </button>
             </div>
           </div>
         </div>
