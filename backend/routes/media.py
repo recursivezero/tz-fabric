@@ -1,3 +1,4 @@
+# routes/media.py
 from fastapi import APIRouter, Request, Query, HTTPException
 from fastapi.responses import FileResponse
 from pathlib import Path
@@ -6,14 +7,12 @@ from utils.paths import build_image_url, build_audio_url
 
 router = APIRouter(tags=["media"])
 
-
 @router.get("/assets/images/{filename}")
 def get_image(filename: str):
     path = IMAGE_DIR / filename
     if not path.exists():
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(path)
-
 
 @router.get("/assets/audios/{filename}")
 def get_audio(filename: str):
@@ -22,56 +21,77 @@ def get_audio(filename: str):
         raise HTTPException(status_code=404, detail="Audio not found")
     return FileResponse(path)
 
+def _image_exists(filename: str | None) -> bool:
+    return bool(filename) and (IMAGE_DIR / filename).exists()
+
+def _audio_exists(filename: str | None) -> bool:
+    return bool(filename) and (AUDIO_DIR / filename).exists()
 
 @router.get("/media/content")
 def list_media_content(
-    request: Request, page: int = Query(1, ge=1), limit: int = Query(4, ge=1)
+    request: Request,
+    page: int = Query(1, ge=1),
+    limit: int = Query(4, ge=1, le=100),
 ):
+    
     db = request.app.database
 
-    total_count = db.images.count_documents({})
-    skip = (page - 1) * limit
+    total_valid = 0
+    for doc in db.images.find({}, {"filename": 1}):
+        if _image_exists(doc.get("filename")):
+            total_valid += 1
 
-    cursor = (
-        db.images.find(
-            {},
-            {
-                "_id": 1,
-                "filename": 1,
-                "created_on": 1,
-                "basename": 1,
-            },
-        )
-        .sort("created_on", -1)
-        .skip(skip)
-        .limit(limit)
-    )
+    want_start = (page - 1) * limit
 
-    items = []
-    for img in cursor:
+    q = db.images.find(
+        {},
+        {"_id": 1, "filename": 1, "created_on": 1, "basename": 1}
+    ).sort("created_on", -1)
+
+    valid_index = 0
+    items: list[dict] = []
+
+    for img in q:
         image_filename = img.get("filename")
-        basename = img.get("basename") or Path(image_filename).stem
-        created_at = img.get("created_on")
+        if not _image_exists(image_filename):
+            continue  
 
-        image_url = build_image_url(image_filename) if image_filename else None
-        print("Image URL:", image_url)
+        if valid_index >= want_start and len(items) < limit:
+            basename = img.get("basename") or Path(image_filename).stem
+            created_at = img.get("created_on")
 
-        # find matching audio by basename
-        audio_doc = db.audios.find_one({"basename": basename}, {"filename": 1})
-        audio_filename = audio_doc["filename"] if audio_doc else None
-        audio_url = build_audio_url(audio_filename) if audio_filename else None
-        print("Audio URL:", audio_url)
+            image_url = build_image_url(image_filename)
 
-        items.append(
-            {
-                "_id": str(img["_id"]),
-                "imageUrl": image_url,
-                "audioUrl": audio_url,
-                "createdAt": created_at,
-                "basename": basename,
-                "imageFilename": image_filename,
-                "audioFilename": audio_filename,
-            }
-        )
+            audio_doc = db.audios.find_one(
+                {"basename": basename}, {"filename": 1}
+            )
+            audio_filename = audio_doc["filename"] if audio_doc else None
+            audio_url = (
+                build_audio_url(audio_filename)
+                if _audio_exists(audio_filename)
+                else None
+            )
 
-    return {"items": items, "page": page, "limit": limit, "total": total_count}
+            items.append(
+                {
+                    "_id": str(img["_id"]),
+                    "imageUrl": image_url,
+                    "audioUrl": audio_url,
+                    "createdAt": created_at,
+                    "basename": basename,
+                    "imageFilename": image_filename,
+                    "audioFilename": audio_filename if audio_url else None,
+                }
+            )
+
+        valid_index += 1
+        if len(items) >= limit:
+            break
+
+    return {
+        "items": items,
+        "page": page,
+        "limit": limit,
+        "total": total_valid,                     
+        "total_pages": (total_valid + limit - 1) // limit,
+    }

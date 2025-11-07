@@ -132,7 +132,6 @@ export const useUploadAndRecord = () => {
         probe.src = tempUrl;
       });
     },
-    // ⬇️ include errorNotification as a dependency (and audioUrl which you already had)
     [audioUrl, errorNotification]
   );
 
