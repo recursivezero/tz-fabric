@@ -222,15 +222,14 @@ export default function Search() {
             >
               🔍
             </button>
+            <button onClick={handleClear} className="secondary-btn clear-inline">Clear</button>
           </div>
-
-          <button onClick={handleClear} className="secondary-btn clear-inline">Clear</button>
         </div>
       </div>
 
       {file && (
         <div className="preview-box">
-          <p className="section-title">Query Image</p>
+          <p className="section-title">Your Image</p>
           <img className="preview-img" src={previewUrl ?? ""} alt="query" />
         </div>
       )}

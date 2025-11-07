@@ -1,14 +1,29 @@
 .composer {
-  width: 1200px;
-  margin: 12px auto 0;
-  position: relative;
-  bottom: 0px;
+  position: sticky;
+  bottom: 0;
+  background: #f7fbfc;
+  width: min(1200px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 8px;
+  border-top: 1px solid rgba(2, 6, 23, 0.08);
 }
 
 .composer-row {
   display: flex;
   gap: 12px;
   align-items: flex-end;
+}
+
+.composer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: #f7fbfc;
+  width: min(1200px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  border-top: 1px solid rgba(2, 6, 23, 0.08);
 }
 
 .composer-middle {

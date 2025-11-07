@@ -16,6 +16,19 @@
   width: 100%;
 }
 
+.chat-body {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 70px);
+  min-height: 0;
+}
+
+.chat-scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto !important;
+}
+
 .chat-card-topbar {
   display: flex;
   justify-content: space-between;
@@ -251,3 +264,24 @@
 .page-root.is-empty .chat-scroll-area {
   background: radial-gradient(600px 280px at 50% 0%, #eef2ff 0%, transparent 70%) !important;
 }
+
+/* Fill the viewport so footer doesn't collide with the chat */
+.page-root {
+  min-height: 100vh;
+  /* was 90vh */
+}
+
+/* Column layout: messages scroll, composer sits at bottom */
+.chat-body {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 68px);
+  /* adjust if your topbar is taller/shorter */
+  min-height: 0;
+}
+
+.chat-scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto !important;
+  padding: 12px 0 140px;

@@ -253,7 +253,8 @@ export default function Composer({
     }
     if (actionId === "image:search_similar") {
       setMode("searchK");
-      onSend();
+      onSend("Search similar images");
+      setMode("free");
       return;
     }
     if (actionId === "submit:both") {
@@ -692,55 +693,6 @@ export default function Composer({
             >
               Cancel
             </button>
-          </div>
-        )}
-
-        {mode === "searchK" && (
-          <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}>
-            <span style={{ fontSize: 16, color: "black" }}>Choose a number:</span>
-
-            <button
-              type="button"
-              className="attach-menu-item"
-              onClick={() => {
-                const k = randInt(1, 10);
-                setKOnly(k);
-                const cmd = textForSearchK(k);
-                onSend(cmd);
-                onChange("");
-                onClearUpload?.();
-                onClearAudio?.();
-                setMode("free");
-              }}
-              disabled={disabled}
-              aria-label="Pick k less than 10"
-              title="Pick k in 1–10"
-            >
-              &lt; 10
-            </button>
-
-            <button
-              type="button"
-              className="attach-menu-item"
-              onClick={() => {
-                const k = randInt(11, 100);
-                setKOnly(k);
-                const cmd = textForSearchK(k);
-                onSend(cmd);
-                onChange("");
-                onClearUpload?.();
-                onClearAudio?.();
-                setMode("free");
-              }}
-              disabled={disabled}
-              aria-label="Pick k greater than 10"
-              title="Pick k in 11–100"
-            >
-              &gt; 10
-            </button>
-            <span aria-live="polite" style={{ marginLeft: 6, opacity: 0.8 }}>
-              {Number.isFinite(kOnly) ? `Selected k: ${kOnly}` : ""}
-            </span>
           </div>
         )}
 

@@ -338,10 +338,10 @@ input[type="number"] {
 }
 
 .mega-label {
-  text-align: center;
   font-weight: 700;
   color: #0c0c0c;
   margin-bottom: 8px;
+  font-size: 18px;
 }
 
 .mega-bar-row {
@@ -352,15 +352,13 @@ input[type="number"] {
   /* center bar + clear as a group */
 }
 
-/* Clear button inline to the right of the bar */
 .clear-inline {
-  height: 42px;
+  height: 40px;
   padding: 0 14px;
   border-radius: 12px;
   white-space: nowrap;
 }
 
-/* Search bar (unchanged look, width fixed) */
 .mega-search {
   position: relative;
   width: 700px;
@@ -369,9 +367,10 @@ input[type="number"] {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
-  padding: 14px 60px;
+  padding: 10px 50px;
   display: flex;
   align-items: center;
+  justify-content: end;
 }
 
 .mega-icon-btn {
