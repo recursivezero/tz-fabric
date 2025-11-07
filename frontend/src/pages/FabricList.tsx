@@ -220,15 +220,22 @@ export default function ContentGrid() {
           return (
             <article className="media-card" key={item._id ?? src}>
               <figure className="media-thumb">
-                <img
-                  src={src}
-                  alt={caption}
-                  loading="lazy"
-                  onError={() => markBad(src)} // ✅ hide broken image
-                  onClick={() => openLightbox(src, caption)}
-                  title="Click to zoom"
-                  style={{ cursor: "zoom-in" }}
-                />
+                <div className="img-wrapper">
+                  <img
+                    src={src}
+                    alt={caption}
+                    loading="lazy"
+                    onError={() => markBad(src)}
+                    onClick={() => openLightbox(src, caption)}
+                  />
+                  <span
+                    className="zoom-icon"
+                    onClick={() => openLightbox(src, caption)}
+                    title="Zoom image"
+                  >
+                    🔍
+                  </span>
+                </div>
 
                 <figcaption
                   className="media-name"
@@ -236,12 +243,8 @@ export default function ContentGrid() {
                   onClick={() => openLightbox(src, caption)}
                 >
                   {caption}
-                  <span className="zoom-icon" title="Zoom image">
-                    🔍
-                  </span>
                 </figcaption>
               </figure>
-
               <div className="media-audio">
                 {item.audioUrl && (
                   <audio

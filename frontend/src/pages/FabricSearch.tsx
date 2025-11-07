@@ -254,29 +254,37 @@ export default function Search() {
                     src={item.imageSrc}
                     alt={item.filename}
                     loading="lazy"
-                    onError={() => markBadImage(item.imageSrc)}  // ✅ HIDE BROKEN IMAGE
+                    onError={() => markBadImage(item.imageSrc)}
                     onClick={() => openLightbox(item.imageSrc, cleanName(item.filename))}
                     style={{ cursor: "zoom-in" }}
                   />
-                </div>
 
-                <div className="result-name" onClick={() => openLightbox(item.imageSrc, cleanName(item.filename))}>
-                  {cleanName(item.filename)}
-                  <span
-                    className="zoom-icon"
+                  <button
+                    type="button"
+                    className="zoom-btn"
+                    aria-label="Zoom image"
+                    title="Zoom"
                     onClick={(e) => {
                       e.stopPropagation();
                       openLightbox(item.imageSrc, cleanName(item.filename));
                     }}
                   >
                     🔍
-                  </span>
+                  </button>
+                </div>
+
+                <div
+                  className="result-name"
+                  onClick={() => openLightbox(item.imageSrc, cleanName(item.filename))}
+                >
+                  {cleanName(item.filename)}
                 </div>
 
                 <div className="result-audio">
                   {item.audioSrc && <audio controls src={item.audioSrc} preload="metadata" />}
                 </div>
               </article>
+
             ))}
           </div>
         </>

@@ -509,6 +509,21 @@ input[type="number"] {
   transition: opacity 0.2s ease;
 }
 
-.zoom-icon:hover {
+.result-thumb {
+  position: relative;
+  overflow: hidden;
+}
+
+.zoom-btn {
+  position: absolute;
+  right: 11px;
+  bottom: 16px;
+  border: 0;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  display: grid;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .22);
   opacity: 1;
+  transition: opacity .18s ease, transform .18s ease, background .12s ease;
 }
