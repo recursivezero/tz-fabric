@@ -1,6 +1,6 @@
 .msg-row {
   display: flex;
-  gap: 12px;
+  gap: 2px;
   margin: 8px 0;
   align-items: flex-start;
   width: 100%;
@@ -93,7 +93,6 @@
   font-size: 13px;
 }
 
-/* User bubble */
 .bubble.user {
   background: linear-gradient(180deg, #2563eb, #1e40af);
   color: #fff;
@@ -139,7 +138,6 @@
   color: #475569;
 }
 
-/* Typing + error unchanged except slight centering already present */
 .typing {
   padding: 8px 12px;
   color: #64748b;
@@ -156,28 +154,17 @@
   width: 100%;
 }
 
-/* Mobile */
-@media (max-width: 720px) {
-
-  .assistant-block,
-  .bubble.user {
-    max-width: 92%;
-    font-size: 15px;
-  }
-
-  .assistant-avatar {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
-  }
-
-  .chat-image {
-    max-height: 240px;
-  }
-}
-
 .assistant-block :focus,
 .bubble.user :focus {
   outline: 3px solid rgba(37, 99, 235, .12);
   outline-offset: 2px;
+}
+
+.msg-row.left {
+  justify-content: flex-start;
+  padding-left: 9px;
+}
+
+.message-wrapper {
+  padding-right: 60px;
 }

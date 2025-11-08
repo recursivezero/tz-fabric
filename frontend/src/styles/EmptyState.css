@@ -55,3 +55,13 @@
   outline: none;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, .08);
 }
+
+.empty-state-large .chip:nth-child(odd) {
+  background: #ffffff;
+  border-color: #e5e7eb;
+}
+
+.empty-state-large .chip:nth-child(even) {
+  background: #aeafb2d3;
+  border-color: #e5e7eb;
+}
