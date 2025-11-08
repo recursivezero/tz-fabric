@@ -3,6 +3,7 @@ import { BASE_URL } from "../constants";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
 import { throttle } from "../utils/throttle";
+import { FiZoomIn } from "react-icons/fi";
 
 export default function ContentGrid() {
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -195,7 +196,7 @@ export default function ContentGrid() {
       <div className="grid-header">
         <div className="grid-left">
           <span className="grid-title-text">
-            {mode === "all" ? "All Fabrics" : "Similar Results"}
+            {mode === "all" ? "Total Fabrics" : "Similar Results"}
           </span>
           <span className="grid-count-inline">({total})</span>
         </div>
@@ -220,7 +221,6 @@ export default function ContentGrid() {
 
       {err && <div className="grid-error">⚠️ {err}</div>}
 
-      {/* ✅ Display only items with valid images */}
       <div className="media-grid">
         {visibleItems.map((item) => {
           const rawSrc = item.imageUrl;
@@ -243,8 +243,10 @@ export default function ContentGrid() {
                     className="zoom-icon"
                     onClick={() => openLightbox(src, caption)}
                     title="Zoom image"
+                    role="button"
+                    aria-label="Zoom image"
                   >
-                    🔍
+                    <FiZoomIn size={25} />
                   </span>
                 </div>
 
@@ -256,19 +258,22 @@ export default function ContentGrid() {
                   {caption}
                 </figcaption>
               </figure>
-              <span className="media-about">About Image</span>
               <div className="media-audio">
-                {item.audioUrl && (
-                  <audio
-                    controls
-                    src={
-                      item.audioUrl.startsWith("http")
-                        ? item.audioUrl
-                        : `${BASE_URL}${item.audioUrl}`
-                    }
-                    preload="metadata"
-                  />
-                )}
+                <div className="audio-box">
+                  <span className="audio-label">Fabric Description :</span>
+
+                  {item.audioUrl && (
+                    <audio
+                      controls
+                      src={
+                        item.audioUrl.startsWith("http")
+                          ? item.audioUrl
+                          : `${BASE_URL}${item.audioUrl}`
+                      }
+                      preload="metadata"
+                    />
+                  )}
+                </div>
               </div>
 
               <div className="media-meta">
@@ -284,7 +289,7 @@ export default function ContentGrid() {
                         minute: "2-digit",
                         hour12: true,
                       });
-                      return dt.replace(",", "").replace(",", " —");
+                      return dt;
                     })()}
                   </time>
                 )}
