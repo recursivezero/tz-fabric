@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { BASE_URL } from "../constants";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "../styles/ContentGrid.css";
+import { throttle } from "../utils/throttle";
 
 export default function ContentGrid() {
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -168,6 +169,16 @@ export default function ContentGrid() {
     setOffset({ x: 0, y: 0 });
   };
 
+  const safePrev = useMemo(
+    () => throttle(() => setPage((p) => Math.max(1, p - 1)), 1000),
+    []
+  );
+
+  const safeNext = useMemo(
+    () => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000),
+    [totalPages]
+  );
+
   return (
     <div className="grid-page">
       <div className="upload-wrapper">
@@ -191,7 +202,7 @@ export default function ContentGrid() {
 
         {mode === "all" && (
           <div className="grid-controls inline">
-            <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+            <button disabled={page === 1} onClick={safePrev}>
               ← Prev
             </button>
             <span className="grid-page">
@@ -199,7 +210,7 @@ export default function ContentGrid() {
             </span>
             <button
               disabled={page >= totalPages}
-              onClick={() => setPage(page + 1)}
+              onClick={safeNext}
             >
               Next →
             </button>

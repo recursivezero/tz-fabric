@@ -4,6 +4,7 @@ import Notification from "../components/Notification";
 import useImageSearch from "../hooks/useImageSearch";
 import FabricSearchHeader from "../components/FabricSearchHeader";
 import "../styles/FabricSearch.css";
+import { throttle } from "../utils/throttle";
 
 export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
@@ -178,6 +179,16 @@ export default function Search() {
   };
   const onMouseUpOrLeave = () => { draggingRef.current = false; };
 
+  const safePrev = useMemo(
+    () => throttle(() => setPage((p) => Math.max(1, p - 1)), 1000),
+    []
+  );
+
+  const safeNext = useMemo(
+    () => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000),
+    [totalPages]
+  );
+
   return (
     <div className="search-container">
 
@@ -241,9 +252,9 @@ export default function Search() {
       {visibleResults.length > 0 ? (
         <>
           <div className="pagination-controls">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
+            <button onClick={safePrev} disabled={page === 1}>Prev</button>
             <span>Page {page} / {totalPages}</span>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
+            <button onClick={safeNext} disabled={page === totalPages}>Next</button>
           </div>
 
           <div className="result-grid">
