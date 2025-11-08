@@ -245,6 +245,7 @@ export default function ContentGrid() {
                   {caption}
                 </figcaption>
               </figure>
+              <span className="media-about">About Image</span>
               <div className="media-audio">
                 {item.audioUrl && (
                   <audio
@@ -262,7 +263,18 @@ export default function ContentGrid() {
               <div className="media-meta">
                 {item.createdAt && (
                   <time dateTime={item.createdAt}>
-                    {new Date(item.createdAt).toLocaleString()}
+                    {(() => {
+                      const dt = new Date(item.createdAt).toLocaleString("en-US", {
+                        weekday: "short",
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      });
+                      return dt.replace(",", "").replace(",", " —");
+                    })()}
                   </time>
                 )}
               </div>

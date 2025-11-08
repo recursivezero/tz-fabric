@@ -272,3 +272,15 @@ figcaption {
   right: 0px;
   transition: opacity 0.2s ease;
 }
+
+.grid-page .media-card {
+  align-items: stretch;
+}
+
+.media-about {
+  display: block;
+  text-align: center;
+  color: #e5e7eb;
+  font-weight: 600;
+  margin: 6px 12px 0;
+}
