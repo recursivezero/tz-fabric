@@ -44,6 +44,7 @@
   overflow: visible;
   z-index: 1;
   background: transparent;
+  margin-inline: 0.5rem;
 }
 
 .attach-btn {
