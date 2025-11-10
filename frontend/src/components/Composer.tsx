@@ -55,6 +55,7 @@ export default function Composer({
   onClearAudio,
   onChipAction,
   status,
+  setFileName,
 }: Props) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -62,6 +63,7 @@ export default function Composer({
   const [isRecording, setIsRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
 
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -74,10 +76,110 @@ export default function Composer({
 
   const [mode, setMode] = useState<Mode>("free");
   const [nameOnly, setNameOnly] = useState<string>("");
-  const [kOnly, setKOnly] = useState<number>(3); // still keep internal state to display chosen k if needed
+  const [kOnly, setKOnly] = useState<number>(3);
 
-  const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
-  const [audioMeta, setAudioMeta] = useState<{ name: string; size: string } | null>(null);
+  const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);// before
+  const [audioMeta, setAudioMeta] = useState<{ name: string; size: string; trimmed?: boolean } | null>(null);
+
+  const FILE_NAME_MAX = 20;
+
+  const encodeWAV = (audioBuffer: AudioBuffer) => {
+    const numChannels = audioBuffer.numberOfChannels;
+    const sampleRate = audioBuffer.sampleRate;
+    const length = audioBuffer.length * numChannels * 2 + 44;
+    const buffer = new ArrayBuffer(length);
+    const view = new DataView(buffer);
+
+    let offset = 0;
+
+    const writeString = (s: string) => {
+      for (let i = 0; i < s.length; i++) {
+        view.setUint8(offset + i, s.charCodeAt(i));
+      }
+      offset += s.length;
+    };
+
+    const floatTo16BitPCM = (output: DataView, offsetOut: number, input: Float32Array) => {
+      for (let i = 0; i < input.length; i++, offsetOut += 2) {
+        let s = Math.max(-1, Math.min(1, input[i]));
+        s = s < 0 ? s * 0x8000 : s * 0x7fff;
+        output.setInt16(offsetOut, s, true);
+      }
+    };
+
+    writeString("RIFF");
+    view.setUint32(offset, 36 + audioBuffer.length * numChannels * 2, true);
+    offset += 4;
+    writeString("WAVE");
+    writeString("fmt ");
+    view.setUint32(offset, 16, true);
+    offset += 4;
+    view.setUint16(offset, 1, true);
+    offset += 2;
+    view.setUint16(offset, numChannels, true);
+    offset += 2;
+    view.setUint32(offset, sampleRate, true);
+    offset += 4;
+    view.setUint32(offset, sampleRate * numChannels * 2, true);
+    offset += 4;
+    view.setUint16(offset, numChannels * 2, true);
+    offset += 2;
+    view.setUint16(offset, 16, true);
+    offset += 2;
+    writeString("data");
+    view.setUint32(offset, audioBuffer.length * numChannels * 2, true);
+    offset += 4;
+
+    const interleaved = new Float32Array(audioBuffer.length * numChannels);
+    for (let ch = 0; ch < numChannels; ch++) {
+      audioBuffer.copyFromChannel(interleaved.subarray(ch, interleaved.length), ch, 0); // not correct to subarray like this
+    }
+    const channelData: Float32Array[] = [];
+    for (let ch = 0; ch < numChannels; ch++) {
+      channelData.push(new Float32Array(audioBuffer.getChannelData(ch)));
+    }
+    let interleavedIdx = 0;
+    for (let i = 0; i < audioBuffer.length; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        interleaved[interleavedIdx++] = channelData[ch][i];
+      }
+    }
+
+    floatTo16BitPCM(view, offset, interleaved);
+
+    return new Blob([view], { type: "audio/wav" });
+  };
+
+  const trimAudioFile = async (file: File): Promise<File> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+    try {
+      const decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
+      const duration = decoded.duration;
+      if (duration <= MAX_SECONDS) {
+        ac.close().catch(() => { });
+        return file;
+      }
+      const sampleRate = decoded.sampleRate;
+      const targetLength = Math.floor(MAX_SECONDS * sampleRate);
+      const trimmedBuffer = ac.createBuffer(decoded.numberOfChannels, targetLength, sampleRate);
+
+      for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+        const channelData = decoded.getChannelData(ch).subarray(0, targetLength);
+        trimmedBuffer.copyToChannel(channelData, ch, 0);
+      }
+
+      const wavBlob = encodeWAV(trimmedBuffer);
+      const base = file.name.replace(/\.\w+$/, "");
+      const newName = `${base} (trimto1min).wav`;
+      const trimmedFile = new File([wavBlob], newName, { type: "audio/wav" });
+      ac.close().catch(() => { });
+      return trimmedFile;
+    } catch (err) {
+      try { ac.close().catch(() => { }); } catch { }
+      throw err;
+    }
+  };
 
   const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -94,22 +196,39 @@ export default function Composer({
     if (!f) return;
     (e.target as HTMLInputElement).value = "";
 
+    setShowAttachMenu(false);
+    setError(null);
+    setInfo(null);
+
     const url = URL.createObjectURL(f);
     const audio = document.createElement("audio");
     audio.src = url;
 
-    audio.onloadedmetadata = () => {
-      const duration = audio.duration;
+    audio.onloadedmetadata = async () => {
       URL.revokeObjectURL(url);
+      const duration = audio.duration;
 
-      if (duration > MAX_SECONDS) {
-        setError("Audio file too long. Please upload a clip of 1 minute or less.");
-        onClearAudio?.();
+      if (duration > MAX_SECONDS + 0.1) {
+        try {
+          const trimmedFile = await trimAudioFile(f);
+          onAudioUpload?.(trimmedFile);
+          const base = f.name.replace(/\.\w+$/, "");
+          setAudioMeta({
+            name: `${base}.wav`,
+            size: formatSize(trimmedFile.size),
+            trimmed: true,
+          });
+        } catch (err) {
+          console.error("trimAudioFile error", err);
+          setError("Audio is too long and could not be trimmed. Try a shorter clip.");
+          onClearAudio?.();
+        }
         return;
       }
 
+
       onAudioUpload?.(f);
-      setAudioMeta({ name: f.name, size: formatSize(f.size) });
+      setAudioMeta({ name: f.name, size: formatSize(f.size), trimmed: false });
       setError(null);
     };
 
@@ -117,8 +236,6 @@ export default function Composer({
       URL.revokeObjectURL(url);
       setError("Could not read audio file. Try again with a supported format.");
     };
-
-    setShowAttachMenu(false);
   };
 
   const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
@@ -136,7 +253,8 @@ export default function Composer({
     }
     if (actionId === "image:search_similar") {
       setMode("searchK");
-      onChange("Search similar images — choose a number: <10 or >10.");
+      onSend("Search similar images");
+      setMode("free");
       return;
     }
     if (actionId === "submit:both") {
@@ -147,18 +265,13 @@ export default function Composer({
     if (actionId === "submit:both_with_names") {
       setMode("submitName");
       setNameOnly("");
-      onChange(textForSubmitName(""));
       return;
     }
   };
 
   const fmt = (s: number) => {
-    const mm = Math.floor(s / 60)
-      .toString()
-      .padStart(2, "0");
-    const ss = Math.floor(s % 60)
-      .toString()
-      .padStart(2, "0");
+    const mm = Math.floor(s / 60).toString().padStart(2, "0");
+    const ss = Math.floor(s % 60).toString().padStart(2, "0");
     return `${mm}:${ss}`;
   };
 
@@ -167,6 +280,7 @@ export default function Composer({
 
   const startRecording = async () => {
     setError(null);
+    setInfo(null);
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setError("Microphone not supported in this browser.");
       return;
@@ -206,9 +320,7 @@ export default function Composer({
           setError("Failed to process recording.");
         } finally {
           if (streamRef.current) {
-            streamRef.current.getTracks().forEach((t) => {
-              t.stop();
-            });
+            streamRef.current.getTracks().forEach((t) => t.stop());
             streamRef.current = null;
           }
           if (timerRef.current) {
@@ -264,14 +376,10 @@ export default function Composer({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch { }
+        try { mediaRecorderRef.current.stop(); } catch { }
       }
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => {
-          t.stop();
-        });
+        streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
       startTimeRef.current = null;
@@ -284,9 +392,7 @@ export default function Composer({
       if (
         attachMenuRef.current.contains(ev.target as Node) ||
         attachBtnRef.current.contains(ev.target as Node)
-      ) {
-        return;
-      }
+      ) return;
       setShowAttachMenu(false);
     };
     document.addEventListener("click", onDoc);
@@ -330,23 +436,26 @@ export default function Composer({
         </div>
       )}
 
+      {info && (
+        <div role="status" style={{ color: "seagreen", marginTop: 8 }}>
+          {info}
+        </div>
+      )}
+
       <div className="composer" style={{ paddingTop: isRecording ? 48 : undefined }}>
         {status === "validating" && !previewUrl && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Loader />
           </div>
         )}
-        {(previewUrl || audioUrl) && (
 
+        {(previewUrl || audioUrl) && (
           <div className="upload-previews" role="region" aria-label="Upload previews">
             {previewUrl && (
               <div className="upload-preview image-preview">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
-                  <div
-                    style={{ color: "black", fontSize: 18, marginTop: 4 }}
-                    title={imageMeta.name} // show full name on hover
-                  >
+                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={imageMeta.name}>
                     {formatFileName(imageMeta.name, NAME_MAX)} ({imageMeta.size})
                   </div>
                 )}
@@ -355,6 +464,7 @@ export default function Composer({
                   onClick={() => {
                     onClearUpload?.();
                     setImageMeta(null);
+                    setMode("free");
                   }}
                   type="button"
                   aria-label="Remove image"
@@ -368,11 +478,9 @@ export default function Composer({
               <div className="upload-preview audio-preview">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
-                  <div
-                    style={{ color: "black", fontSize: 18, marginTop: 4 }}
-                    title={audioMeta.name} // show full name on hover
-                  >
+                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={audioMeta.name}>
                     {formatFileName(audioMeta.name, NAME_MAX)} ({audioMeta.size})
+                    {audioMeta.trimmed ? " — trimmed to 1min" : ""}
                   </div>
                 )}
                 <button
@@ -380,6 +488,9 @@ export default function Composer({
                   onClick={() => {
                     onClearAudio?.();
                     setAudioMeta(null);
+                    setInfo(null);
+                    setError(null);
+                    setMode("analysis");
                   }}
                   type="button"
                   aria-label="Remove audio"
@@ -408,29 +519,38 @@ export default function Composer({
               </button>
 
               <textarea
-                className={`composer-input`}
+                className="composer-input"
                 placeholder="Ask about your fabric analysis..."
                 value={value}
                 onChange={(e) => {
-                  if (mode === "free") {
-                    onChange(e.target.value);
-                  } else {
+                  if (mode === "free") onChange(e.target.value);
+                  else e.preventDefault();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
+                    onSend(value);
                   }
                 }}
                 style={{ color: "black" }}
                 rows={1}
-                disabled={disabled}
                 readOnly={mode !== "free"}
               />
 
+              <button
+                className="send-btn inside"
+                onClick={() => onSend(value)}
+                disabled={disabled || (!value.trim() && !previewUrl && !audioUrl)}
+                title="Send"
+                aria-label="Send message"
+              >
+                <svg className="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor" />
+                </svg>
+              </button>
+
               {showAttachMenu && (
-                <div
-                  className="attach-menu"
-                  ref={attachMenuRef}
-                  role="menu"
-                  aria-label="Attachment options"
-                >
+                <div className="attach-menu" ref={attachMenuRef} role="menu" aria-label="Attachment options">
                   <button
                     className="attach-menu-item"
                     type="button"
@@ -464,120 +584,115 @@ export default function Composer({
               />
             </div>
           </div>
-
-          <div className="composer-right">
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <button
-                style={{ color: "black" }}
-                type="button"
-                onClick={startRecording}
-                disabled={isRecording}
-                aria-pressed={isRecording}
-                title="Start recording (max 1 minute)"
-                className="record-btn start-btn"
-              >
-                ⏺ Start
-              </button>
-
-              <button
-                style={{ color: "black" }}
-                type="button"
-                onClick={stopRecording}
-                disabled={!isRecording}
-                aria-pressed={!isRecording}
-                title="Stop recording"
-                className="record-btn stop-btn"
-              >
-                ⏹ Stop
-              </button>
-
-              <button
-                className="send-btn"
-                onClick={onSend}
-                disabled={disabled || (!value.trim() && !previewUrl && !audioUrl)}
-                title="Send"
-                aria-label="Send message"
-              >
-                <svg className="send-icon" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" fill="currentColor" />
-                </svg>
-              </button>
-            </div>
-          </div>
         </div>
 
+        {!audioUrl && (
+          <div className="composer-audio-row">
+            <button
+              style={{ color: "black" }}
+              type="button"
+              onClick={stopRecording}
+              disabled={!isRecording}
+              aria-pressed={!isRecording}
+              title="Stop recording"
+              className="record-btn stop-btn"
+            >
+              ⏹ Stop
+            </button>
+
+            <button
+              style={{ color: "black" }}
+              type="button"
+              onClick={startRecording}
+              disabled={isRecording}
+              aria-pressed={isRecording}
+              title="Start recording (max 1 minute)"
+              className="record-btn start-btn"
+            >
+              ⏺ Start
+            </button>
+
+            <span className="audio-label">Record your audio</span>
+
+          </div>
+        )}
+
         {mode === "analysis" && (
-          <div
-            className="locked-controls"
-            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
-          ></div>
+          <div className="locked-controls" style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }} />
         )}
 
         {mode === "submitName" && (
           <div
             className="locked-controls"
-            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
+            style={{
+              marginTop: 6,
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
           >
-            <label style={{ fontSize: 18, color: "black" }}>Name:</label>
+            <label style={{ fontSize: 16, color: "black" }}>Type File name:</label>
             <input
               type="text"
               value={nameOnly}
               onChange={(e) => {
-                const nm = e.target.value;
-                setNameOnly(nm);
-                onChange(textForSubmitName(nm));
-                setMode("free");
+                const v = e.target.value.slice(0, FILE_NAME_MAX);
+                setNameOnly(v);
               }}
-              placeholder="Your name"
-              style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #000000ff" }}
+              placeholder="NeonFabric"
+              maxLength={FILE_NAME_MAX}
+              style={{
+                padding: "8px 8px",
+                borderRadius: 6,
+                border: "1px solid #000000ff",
+                minWidth: 200,
+              }}
+              aria-label={`File name (max ${FILE_NAME_MAX} chars)`}
             />
-          </div>
-        )}
-
-        {mode === "searchK" && (
-          <div
-            className="locked-controls"
-            style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}
-          >
-            <span style={{ fontSize: 16, color: "black" }}>Choose a number:</span>
-
+            <div style={{ fontSize: 13, color: "rgba(0,0,0,0.6)", marginLeft: 6 }}>
+              {nameOnly.length}/{FILE_NAME_MAX}
+            </div>
             <button
               type="button"
-              className="attach-menu-item"
               onClick={() => {
-                const k = randInt(1, 10);
-                setKOnly(k);
-                const cmd = textForSearchK(k);
-                onSend(cmd);
-                onChange("");
-                onClearUpload?.();
-                onClearAudio?.();
+                const nm = nameOnly.trim().slice(0, FILE_NAME_MAX);
+                setFileName?.(nm);
+                onSend(textForSubmitName(nm));
                 setMode("free");
               }}
-              disabled={disabled}
-              aria-label="Pick k less than 10"
-              title="Pick k in 1–10"
+              style={{
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: "1px solid #0f172a",
+                background: "#0f172a",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: 700,
+              }}
+              aria-label="Confirm name"
+              title="Confirm name"
+              disabled={nameOnly.trim().length === 0}
             >
-              &lt; 10
+              OK
             </button>
 
             <button
               type="button"
-              className="attach-menu-item"
-              onClick={() => {
-                const k = randInt(11, 100);
-                setKOnly(k);
-                onChange(textForSearchK(k));
+              onClick={() => setMode("free")}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 8,
+                border: "1px solid #e5e7eb",
+                background: "#fff",
+                color: "#111827",
+                cursor: "pointer",
               }}
-              disabled={disabled}
-              aria-label="Pick k greater than 10"
-              title="Pick k in 11–100"
+              aria-label="Cancel"
+              title="Cancel"
             >
-              &gt; 10
+              Cancel
             </button>
-            <span aria-live="polite" style={{ marginLeft: 6, opacity: 0.8 }}>
-              {Number.isFinite(kOnly) ? `Selected k: ${kOnly}` : ""}
-            </span>
           </div>
         )}
 

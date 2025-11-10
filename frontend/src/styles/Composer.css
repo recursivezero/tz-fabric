@@ -1,27 +1,29 @@
-/* src/styles/Composer.css (replace relevant parts) */
-
-.page-root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #f7fbfc;
-  padding: 48px 16px;
-  box-sizing: border-box;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-}
-
-/* composer row layout */
 .composer {
-  padding: 12px;
-  width: 100%;
-  box-sizing: border-box;
+  position: sticky;
+  bottom: 0;
+  background: #f7fbfc;
+  width: min(1200px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 8px;
+  border-top: 1px solid rgba(2, 6, 23, 0.08);
 }
 
 .composer-row {
   display: flex;
   gap: 12px;
   align-items: flex-end;
+}
+
+.composer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: #f7fbfc;
+  width: min(1200px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  border-top: 1px solid rgba(2, 6, 23, 0.08);
 }
 
 .composer-middle {
@@ -34,19 +36,17 @@
   align-items: center;
 }
 
-/* composer input wrapper positions the attach menu relative to it */
 .composer-input-wrapper {
   position: relative;
-  /* IMPORTANT: attach-menu positioned relative to this */
   display: flex;
   align-items: center;
   border-radius: 10px;
   overflow: visible;
   z-index: 1;
   background: transparent;
+  margin-inline: 0.5rem;
 }
 
-/* attach button (small inside button) */
 .attach-btn {
   width: 36px;
   height: 36px;
@@ -60,7 +60,6 @@
   cursor: pointer;
 }
 
-/* when using .inside variant we position absolute to overlay the input */
 .attach-btn.inside {
   position: absolute;
   left: 8px;
@@ -83,11 +82,9 @@
   color: #1f2937;
 }
 
-/* composer input */
 .composer-input {
   width: 100%;
   padding: 12px 12px 12px 48px;
-  /* left padding to accommodate attach button */
   border-radius: 12px;
   font-size: 18px;
   border: 1px solid rgb(0 0 0 / 86%);
@@ -99,11 +96,9 @@
   background: #fff;
 }
 
-/* Attach menu: anchored to composer-input-wrapper; appears above the input */
 .attach-menu {
   position: absolute;
   bottom: calc(100% + 8px);
-  /* pop above the input */
   left: 6px;
   min-width: 160px;
   background: #fff;
@@ -118,7 +113,6 @@
   animation: slideUp 160ms cubic-bezier(.2, .9, .2, 1);
 }
 
-/* slight entrance animation */
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -148,11 +142,9 @@
 
 .attach-menu-item:hover {
   background: #eef4ff;
-  /* subtle blue hover */
   transform: translateX(2px);
 }
 
-/* previews */
 .upload-previews {
   margin-bottom: 8px;
   display: flex;
@@ -168,7 +160,7 @@
   background: white;
   padding: 6px;
   border-radius: 8px;
-  border: 1px solid rgba(2, 6, 23, 0.04);
+  border: 1px solid #0f172a40;
 }
 
 .upload-thumb {
@@ -180,9 +172,9 @@
 }
 
 .upload-remove {
-  background: transparent;
+  background: #0000001f;
   border: none;
-  color: #ef4444;
+  color: #000000;
   cursor: pointer;
   font-weight: 600;
 }
@@ -237,10 +229,39 @@
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
 }
 
-/* keep overflow visible so the menu can float above other containers */
 .composer,
 .composer-row,
 .chat-scroll-area,
 .chat-card {
   overflow: visible;
+}
+
+.send-btn.inside {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.composer-input {
+  padding-right: 64px;
+}
+
+.composer-audio-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-direction: row-reverse;
+}
+
+.audio-label {
+  color: #64748b;
+  font-weight: 600;
+  margin-right: 6px;
+  white-space: nowrap;
+  font-size: 20px;
 }

@@ -2,8 +2,8 @@
 import "../styles/EmptyState.css";
 
 const samples = [
-  "Explain knit vs woven (simple).",
-  "How do I use the image analysis feature?",
+  "Explain knit vs woven.",
+  "How I can use FabricAI",
   "Suggest tags for a denim fabric photo.",
   "What is GSM in fabrics?",
 ];

@@ -445,60 +445,101 @@ export default function useChat() {
       createAbort();
       setStatus("sending");
       setError("");
+
       const { base64, dataUrl } = await fileToBase64(uploadedImageFile);
+
       const form = new FormData();
       form.append("image", uploadedImageFile);
-      const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, { method: "POST", body: form }));
+
+      const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, {
+        method: "POST",
+        body: form
+      }));
+
       if (!upResp.ok) {
         const t = await upResp.text().catch(() => "");
         throw new Error(`Upload failed: ${upResp.status} ${t}`);
       }
-      const upJson = (await upResp.json()) as Record<string, unknown>;
-      const imageUrl = upJson.image_url as string | undefined;
-      console.log("[searchSimilar] uploaded image, imageUrl:", imageUrl);
+
+      const upJson = (await upResp.json()) as Record<string, any>;
+      const imageUrl = upJson.image_url;
       if (!imageUrl) {
-        console.warn("[searchSimilar] no image_url returned from upload - falling back to base64 search via /search endpoint");
         const args = {
-          image_b64: base64, k: Number(k) || 1, min_sim: Number(min_sim),
-          order: "recent" as const, require_audio: false,
+          image_b64: base64,
+          k: Number(k) || 1,
+          min_sim: Number(min_sim),
+          order: "recent" as const,
+          require_audio: false,
         };
+
         const searchResp = await withAbort(fetch(`${FULL_API_URL}/search`, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(args),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(args),
         }));
+
         if (!searchResp.ok) throw new Error(`Search failed: ${searchResp.status}`);
-        const mcpResult = (await searchResp.json()) as { results?: unknown[] };
+
+        const json = await searchResp.json();
         const payload = {
-          createdAt: Date.now(), k: args.k, min_sim: args.min_sim, queryPreview: dataUrl, results: mcpResult.results ?? [],
+          createdAt: Date.now(),
+          k: args.k,
+          min_sim: args.min_sim,
+          imageUrl: null,
+          queryPreview: dataUrl,
+          results: json.results ?? [],
         };
-        try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
+
+        try { localStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch { }
+
+        const qs = new URLSearchParams({ k: String(payload.k) }).toString();
+
         setMessages(prev => [
           ...prev,
           {
             role: "assistant",
-            content: "Your search is ready. Would you like to open the results page? [Open Search Results](/search)"
+            content: `Your search is ready. Would you like to open the results page? [Open Search Results](/search?${qs})`
           }
         ]);
+
         return payload;
       }
+
       const searchInstruction = `Search similar images: image_url=${imageUrl} k=${k} min_sim=${min_sim} order=recent require_audio=false`;
-      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: searchInstruction }]));
-      console.log("[searchSimilar] chatRes:", chatRes);
-      const rc = chatRes as RichChatResponse;
-      const results = rc.analysis_responses ?? (rc as unknown as { results?: unknown[] }).results ?? rc.bot_messages ?? [];
-      const payload = { createdAt: Date.now(), k: Number(k) || 1, min_sim: Number(min_sim), queryPreview: dataUrl, results: Array.isArray(results) ? results : [] };
-      try { sessionStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch (err) { console.warn("sessionStorage set failed", err); }
+      const chatRes = await withAbort(
+        chatOnce([...messages, { role: "user", content: searchInstruction }])
+      );
+      const rc = chatRes as any;
+
+      const results = rc.analysis_responses ?? rc.results ?? rc.bot_messages ?? [];
+
+      const payload = {
+        createdAt: Date.now(),
+        k: Number(k) || 1,
+        min_sim: Number(min_sim),
+        imageUrl,
+        queryPreview: dataUrl,
+        results: Array.isArray(results) ? results : []
+      };
+
+      try { localStorage.setItem("mcp_last_search", JSON.stringify(payload)); } catch { }
+
+      const qs = new URLSearchParams({
+        k: String(payload.k),
+        image_url: payload.imageUrl
+      }).toString();
+
       setMessages(prev => [
         ...prev,
         {
           role: "assistant",
-          content: "Your search is ready. Would you like to open the results page? [Open Search Results](/search)"
+          content: `Your search is ready. Would you like to open the results page? [Open Search Results](/search?${qs})`
         }
       ]);
+
       return payload;
-    } catch (err: unknown) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        console.log("[searchSimilar] aborted");
-      } else {
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
         console.error("[searchSimilar] error:", err);
         setError(errorMsg(err, "Search failed"));
       }
@@ -507,12 +548,22 @@ export default function useChat() {
       setStatus("idle");
       if (abortRef.current) abortRef.current = null;
     }
-  }, [uploadedImageFile, fileToBase64, withAbort, createAbort, messages, errorMsg]);
+  }, [uploadedImageFile, fileToBase64, messages, withAbort, createAbort, errorMsg]);
+
 
   const send = useCallback(async (overrideText?: string, opts?: { forceApi?: boolean }) => {
     const raw = typeof overrideText === "string" ? overrideText : input;
     const text = raw.trim();
     const forceApi = Boolean(opts?.forceApi);
+
+    if (status === "sending") {
+      console.warn("[send] early return: status === 'sending'");
+      return;
+    }
+    if (!text && !uploadedImageFile && !uploadedAudioFile) {
+      console.warn("[send] early return: nothing to send (no text or media). raw:", JSON.stringify(raw));
+      return;
+    }
 
     if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
 
@@ -535,10 +586,10 @@ export default function useChat() {
         { role: "user", content: text },
         { role: "assistant", content: presetAnswer },
       ]);
-      pendingPresetRef.current = text;  
+      pendingPresetRef.current = text;
       setInput("");
-      setMorePrompt(null);               
-      lastFollowedUpRef.current = null;  
+      setMorePrompt(null);
+      lastFollowedUpRef.current = null;
       return;
     }
 
@@ -611,7 +662,7 @@ export default function useChat() {
             (upJson.filename as string) ||
             "upload";
 
-          const mode = getModeFromText(text); 
+          const mode = getModeFromText(text);
 
           let mediaInstruction = "";
           if (imagePath) {
@@ -649,7 +700,7 @@ export default function useChat() {
           if (audioPath || audioUrl) {
             setMessages(prev => [
               ...prev,
-              { role: "assistant", content: "Files saved. Want to open the list page? [Open View](/view)" }
+              { role: "assistant", content: "Files saved. Want to open the list page? [See your upload](/view)" }
             ]);
           }
 
