@@ -91,7 +91,8 @@
       "titleBar.activeForeground": "#15202b",
       "titleBar.inactiveBackground": "#34ea2399",
       "titleBar.inactiveForeground": "#15202b99",
-      "sideBar.border": "#5fee52"
+      "sideBar.border": "#5fee52",
+      "tab.activeBorder": "#5fee52"
     },
     "peacock.color": "#34ea23",
     "cSpell.words": [
@@ -153,8 +154,8 @@
       "**/__pycache__": true
     },
     "mcp": {
-      "inputs": [],
-      "servers": {}
+      "inputs": [ ],
+      "servers": { }
     },
     "chat.mcp.serverSampling": {
       "tz-script.code-workspace: my-mcp-server-c37295de": {
@@ -180,7 +181,7 @@
     "folder-color.pathColors": [
       {
         "folderPath": "tz-fabric/frontend/",
-        "color": "foldercolorizer.color_6666ff"
+        "color": "foldercolorizer.color_ff33cc"
       },
       {
         "folderPath": "tz-fabric/backend/",
@@ -190,7 +191,8 @@
   },
   "extensions": {
     "recommendations": [
-      "charliermarsh.ruff"
+      "charliermarsh.ruff",
+      "iamshreydxv.copy-folder-structure"
     ]
   }
 }
