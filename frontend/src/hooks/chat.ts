@@ -41,7 +41,7 @@ const normalizeLLMText = (t: unknown): string => {
 };
 
 const PRESET_QA: Record<string, string> = {
-  "explain knit vs woven (simple).": `Here’s the quick difference:
+  "explain knit vs woven .": `Here’s the quick difference:
 
 • Knit: Made by interlocking loops (like T-shirts, hoodies).
   - Feel: Stretchy, soft, drapes well.
@@ -50,7 +50,7 @@ const PRESET_QA: Record<string, string> = {
 • Woven: Two yarn sets (warp & weft) crossing at right angles (like shirts, jeans).
   - Feel: Usually less stretchy (unless elastane added), more structured.
   - Edge: Frays when cut.`,
-  "how do i use the image analysis feature?": `Quick steps:
+  "how I can use FabricAI ": `Quick steps:
 1) Upload a close-up fabric photo (texture visible).
 2) Pick “Analyze (short)” for a quick overview or “Analyze (long)” for details.
 3) Optional: Add audio to describe context (e.g., “This is cotton twill”).
@@ -82,6 +82,18 @@ export default function useChat() {
   const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
 
   const [status, setStatus] = useState<Status>("idle");
+  const [isFrontendTyping, setIsFrontendTyping] = useState(false);
+
+useEffect(() => {
+  const onStart = () => setIsFrontendTyping(true);
+  const onEnd = () => setIsFrontendTyping(false);
+  window.addEventListener("fabricai:typing-start", onStart);
+  window.addEventListener("fabricai:typing-end", onEnd);
+  return () => {
+    window.removeEventListener("fabricai:typing-start", onStart);
+    window.removeEventListener("fabricai:typing-end", onEnd);
+  };
+}, []);
   const [error, setError] = useState<string>("");
 
   const scrollerRef = useRef<HTMLDivElement | null>(null);
@@ -96,7 +108,6 @@ export default function useChat() {
   const abortRef = useRef<AbortController | null>(null);
   const lastMsgCountRef = useRef<number>(0);
 
-  // Preset follow-up control
   const pendingPresetRef = useRef<string | null>(null);
   const [morePrompt, setMorePrompt] = useState<{ question: string } | null>(null);
   const lastFollowedUpRef = useRef<string | null>(null); // prevents early/dup follow-ups
@@ -109,6 +120,13 @@ export default function useChat() {
     abortRef.current = ac;
     return ac.signal;
   }, []);
+
+const stopGenerating = useCallback(() => {
+  abortRef.current?.abort();
+  window.dispatchEvent(new CustomEvent("fabricai:stop-typing"));
+  setIsFrontendTyping(false);
+}, []);
+
 
   const withAbort = useCallback(<T,>(p: Promise<T>) => {
     const ac = abortRef.current;
@@ -348,24 +366,18 @@ export default function useChat() {
 
     const instr = `Regenerate: cache_key=${cacheKey} image_url=${imageUrl} mode=${mode}`;
 
-    // ✅ Extract text='...' from TextContent(...) without regex
     const extractTextField = (val: any): string => {
       if (!val) return "";
-
       const s = String(
         (typeof val === "object" && ("text" in val || "response" in val)) ? JSON.stringify(val) : val
       );
-
       const key = "text=";
       const idx = s.indexOf(key);
       if (idx === -1) return s;
-
       let i = idx + key.length;
       while (i < s.length && s[i] === " ") i++;
-
       const quote = s[i];
       if (quote !== "'" && quote !== `"`) return s;
-
       let out = "", j = i + 1;
       while (j < s.length) {
         const ch = s[j];
@@ -381,7 +393,6 @@ export default function useChat() {
       return out;
     };
 
-    // ✅ Extract final displayable text from JSON if present
     const extractDisplay = (raw: string): string => {
       const trimmed = raw.trim();
       if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
@@ -549,7 +560,6 @@ export default function useChat() {
       if (abortRef.current) abortRef.current = null;
     }
   }, [uploadedImageFile, fileToBase64, messages, withAbort, createAbort, errorMsg]);
-
 
   const send = useCallback(async (overrideText?: string, opts?: { forceApi?: boolean }) => {
     const raw = typeof overrideText === "string" ? overrideText : input;
@@ -812,6 +822,8 @@ export default function useChat() {
     lastFollowedUpRef.current = null;
   }, [clearImage, clearAudio]);
 
+  const canStop = status === "sending";
+
   return {
     messages,
     input, setInput,
@@ -827,5 +839,7 @@ export default function useChat() {
     searchSimilar,
     morePrompt, confirmMoreYes, confirmMoreNo,
     onAssistantRendered,
+    isFrontendTyping,
+stopGenerating,
   };
 }

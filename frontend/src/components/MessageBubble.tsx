@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+// src/components/MessageBubble.tsx
+import { useMemo, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -16,55 +17,50 @@ type Props = {
 
 const looksLikeUrl = (s?: string) => {
   if (!s) return false;
-  try {
-    const u = new URL(s);
-    return !!u.protocol;
-  } catch {
-    return false;
-  }
+  try { return !!new URL(s).protocol; } catch { return false; }
 };
 
-const isImageUrl = (s?: string) => {
-  if (!s) return false;
-  const lower = s.toLowerCase();
-  return /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/.test(lower) || lower.startsWith("data:image/");
-};
+const isImageUrl = (s?: string) =>
+  !!s && (/\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(s) || s.toLowerCase().startsWith("data:image/"));
 
-const isAudioUrl = (s?: string) => {
-  if (!s) return false;
-  const lower = s.toLowerCase();
-  return /\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/.test(lower) || lower.startsWith("data:audio/");
-};
+const isAudioUrl = (s?: string) =>
+  !!s && (/\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/i.test(s) || s.toLowerCase().startsWith("data:audio/"));
 
 export default function MessageBubble({ role, content, type, url, filename }: Props) {
   const explicitType = type;
   const explicitUrl = url;
-
   const possibleUrl = explicitUrl ?? (looksLikeUrl(content) ? String(content) : undefined);
 
   let renderType: "image" | "audio" | "text" = "text";
   if (explicitType === "image" || (possibleUrl && isImageUrl(possibleUrl))) renderType = "image";
   else if (explicitType === "audio" || (possibleUrl && isAudioUrl(possibleUrl))) renderType = "audio";
 
-  // --- Hooks must be called unconditionally (always) ---
-  const normalized = useMemo(
-    () => normalizeMarkdown(String(content ?? "")),
-    [content]
-  );
+  const normalized = useMemo(() => normalizeMarkdown(String(content ?? "")), [content]);
 
   const shouldType = renderType === "text" && role !== "user";
   const typed = useTypingEffect(shouldType ? normalized : "", 25);
-  const isTyping = shouldType && typed !== normalized; 
+
+  // NEW: respect global stop so the bubble no longer reports "typing"
+  const [externallyStopped, setExternallyStopped] = useState(false);
+  useEffect(() => {
+    const onStop = () => setExternallyStopped(true);
+    window.addEventListener("fabricai:stop-typing", onStop);
+    return () => window.removeEventListener("fabricai:stop-typing", onStop);
+  }, []);
+  // reset stopped flag when content changes (new message)
+  useEffect(() => { setExternallyStopped(false); }, [normalized]);
+
+  const isTyping = shouldType && typed !== normalized && !externallyStopped;
 
   if (renderType === "text") {
     if (role === "user") {
       return (
         <div className="msg-row right" data-typing="false">
           <div className="bubble user">{content}</div>
+          <div className="user-avatar">🧑</div>
         </div>
       );
     }
-    // assistant text
     return (
       <div className="msg-row left" data-typing={isTyping ? "true" : "false"}>
         <div className="assistant-avatar">🤖</div>
@@ -94,7 +90,6 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
     );
   }
 
-  // audio
   const src = String(possibleUrl ?? content);
   return (
     <div className={`msg-row ${role === "user" ? "right" : "left"}`} data-typing="false">

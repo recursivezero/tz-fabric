@@ -261,7 +261,6 @@
 .audio-label {
   color: #64748b;
   font-weight: 600;
-  margin-right: 6px;
   white-space: nowrap;
-  font-size: 20px;
+  font-size: 16px;
 }

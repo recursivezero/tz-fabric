@@ -44,6 +44,8 @@ export default function Chat() {
     confirmMoreYes,
     confirmMoreNo,
     onAssistantRendered,
+    stopGenerating,
+    isFrontendTyping,
   } = useChat();
 
   const isLanding =
@@ -175,10 +177,34 @@ export default function Chat() {
             />
           )}
 
-          {(status === "sending" || status === "validating") && (
-            <TypingIndicator
-              text={status === "validating" ? "Validating image… please wait" : "Bot is thinking…"}
-            />
+          {(status === "sending" || isFrontendTyping) && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <TypingIndicator
+                text={
+                  status === "validating"
+                    ? "Validating image…"
+                    : isFrontendTyping
+                      ? "Generating response…"
+                      : "Bot is thinking…"
+                }
+              />
+              <button
+                onClick={stopGenerating}
+                style={{
+                  marginTop: 10,
+                  padding: "6px 12px",
+                  background: "#ef4444",
+                  color: "white",
+                  borderRadius: 6,
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}
+              >
+                ⏹ Stop Generating
+              </button>
+            </div>
           )}
 
           {error && <div className="error">{error} "Please try again"</div>}
