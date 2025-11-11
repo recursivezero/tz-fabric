@@ -260,7 +260,7 @@ export default function ContentGrid() {
               </figure>
               <div className="media-audio">
                 <div className="audio-box">
-                  <span className="audio-label">Fabric Description :</span>
+                  <span className="audio-label">Fabric description</span>
 
                   {item.audioUrl && (
                     <audio
@@ -271,6 +271,7 @@ export default function ContentGrid() {
                           : `${BASE_URL}${item.audioUrl}`
                       }
                       preload="metadata"
+                      controlsList="nodownload"
                     />
                   )}
                 </div>

@@ -57,6 +57,7 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
       return (
         <div className="msg-row right" data-typing="false">
           <div className="bubble user">{content}</div>
+          <div className="user-avatar">🧑</div>
         </div>
       );
     }
