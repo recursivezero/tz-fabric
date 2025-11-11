@@ -50,7 +50,7 @@ export const extractFilenameFromText = (
   {
     const shortThresholdWords = 5;
     const words = s.split(/\s+/).filter(Boolean);
-    const containsVerbLike = /\b(upload|submit|analyz|analyse|inspect|please|with|image|audio|file|send|queue|start)\b/i.test(s);
+    const containsVerbLike = /\b(upload|submit|analyz|analyse|analysis|inspect|please|with|image|audio|file|send|queue|start)\b/i.test(s);
     if (words.length > 0 && words.length <= shortThresholdWords && !containsVerbLike) {
       const c = clean(s); if (c) return c;
     }

@@ -6,7 +6,6 @@ export async function analyzeImage(file, analysisType) {
   formData.append("analysis_type", analysisType);
 
   try {
-    console.log("Hitting:", `${FULL_API_URL}/analyse`);
     const res = await fetch(`${FULL_API_URL}/analyse`, {
       method: "POST",
       body: formData,
@@ -23,10 +22,10 @@ export async function analyzeImage(file, analysisType) {
   }
 }
 
-export async function regenerateResponse(cachekey, index) {
+export async function regenerateResponse(cache_key:string, index:string) {
   try {
     const res = await fetch(
-      `${FULL_API_URL}/regenerate?key=${cachekey}&index=${index}`,
+      `${FULL_API_URL}/regenerate?key=${cache_key}&index=${index}`,
       {
         method: "GET",
       },
@@ -39,7 +38,7 @@ export async function regenerateResponse(cachekey, index) {
   return null;
 }
 
-export async function validateImageAPI(imageFile) {
+export async function validateImageAPI(imageFile:File) {
   const formData = new FormData();
   formData.append("image", imageFile);
 

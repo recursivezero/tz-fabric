@@ -35,38 +35,38 @@ const AnimatedSearchBox = ({
     <div className="searchbar-container">
       <div className="top-texts">
         <span className="animated-placeholder shimmer-text">
-          Upload a fabric image <span style={{ margin: "0 8px" }}>or</span>
+          Upload a fabric image <span style={ { margin: "0 8px" } }>or</span>
           <span className="sample-text">Try with our sample images →</span>
         </span>
       </div>
 
       <div className="search-box">
-        {/* htmlFor now matches the input id */}
+        {/* htmlFor now matches the input id */ }
         <label
-          htmlFor={fileid}
+          htmlFor={ fileid }
           className="upload-icon"
           role="button"
-          aria-disabled={loading}
+          aria-disabled={ loading }
         >
           📁
         </label>
 
-        {/* keep input present but visually hidden; label will trigger it */}
+        {/* keep input present but visually hidden; label will trigger it */ }
         <input
-          id={fileid}
+          id={ fileid }
           type="file"
           accept="image/*"
-          onChange={handleImageChange}
-          style={{ display: "none" }}
-          disabled={!!loading}
+          onChange={ handleImageChange }
+          style={ { display: "none" } }
+          disabled={ !!loading }
         />
 
-        {showPrompt && selectedImage ? (
+        { showPrompt && selectedImage ? (
           <>
             <span className="file-name">
-              {typeof selectedImage === "string"
+              { typeof selectedImage === "string"
                 ? selectedImage
-                : selectedImage.name}
+                : selectedImage.name }
             </span>
             <p className="search-instruction">
               Image uploaded successfully. Showing preview...
@@ -74,7 +74,7 @@ const AnimatedSearchBox = ({
           </>
         ) : (
           <div className="text-container" />
-        )}
+        ) }
 
         <button className="search-btn" disabled>
           🔍

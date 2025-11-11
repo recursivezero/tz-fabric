@@ -1,6 +1,6 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import "../styles/Home.css";
-import { useEffect } from "react";
 
 
 
@@ -45,7 +45,7 @@ export default function Home() {
             </p>
           </Link>
 
-          <Link to="/describe" className="featureCard featureCard--link">
+          <Link to="/analysis" className="featureCard featureCard--link">
             <div className="featureCard__icon" aria-hidden>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M13 2L4 14h7l-1 8L20 9h-7l0-7z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
@@ -81,7 +81,7 @@ export default function Home() {
               <span className="stepCard__link">Go to Upload →</span>
             </Link>
 
-            <Link to="/analyse" className="stepCard stepCard--link">
+            <Link to="/analysis" className="stepCard stepCard--link">
               <div className="stepCard__badge">2</div>
               <h4 className="stepCard__title">Choose Analysis</h4>
               <p className="stepCard__text">Select short or long analysis mode</p>
