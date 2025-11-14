@@ -138,15 +138,6 @@ const ImageDescription = () => {
                 <p className="placeholder-text">
                   Upload an image or try a sample. Then click <strong>Short Analysis</strong> or <strong>Long Analysis</strong> to see results.
                 </p>
-
-                <div style={{ marginTop: 12 }}>
-                  <button className="btn primary" disabled>
-                    Short Analysis
-                  </button>
-                  <button className="btn" disabled style={{ marginLeft: 10 }}>
-                    Long Analysis
-                  </button>
-                </div>
               </div>
             )}
           </div>
