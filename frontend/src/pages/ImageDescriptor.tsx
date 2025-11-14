@@ -69,8 +69,11 @@ const ImageDescription = () => {
     <div className="home-container">
       <Header />
 
-      <div className="upload-wrapper">
-        <div className="upload-inner"></div>
+      <div className="top-texts">
+        <span className="animated-placeholder shimmer-text">
+          Upload a fabric image <span style={{ margin: "0 8px" }}>or</span>
+          <span className="sample-text">Try with our sample images →</span>
+        </span>
       </div>
 
       <div className="result-wrapper grid">

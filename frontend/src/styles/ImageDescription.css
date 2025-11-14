@@ -357,7 +357,7 @@
 }
 
 .image-preview-container {
-  width: 320px;
+  width: 100%;
 }
 
 @media (max-width: 900px) {
@@ -410,4 +410,11 @@
 
 .action-col .upload-action-card {
   margin-bottom: 6px;
+}
+
+.top-texts {
+  color: black;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 12px;
 }
