@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import Header from "../components/ImageDescriptorHeader";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
 import DescriptionBox from "../components/DescriptionBox";
@@ -5,7 +6,6 @@ import DrawerToggle from "../components/DrawerToggle";
 import ImagePreview from "../components/ImagePreviewPanel";
 import useImageAnalysis from "../hooks/useImageAnalysis";
 import "../styles/ImageDescription.css";
-import { useEffect, useRef, useState } from "react";
 
 const ImageDescription = () => {
   useEffect(() => {
@@ -51,7 +51,9 @@ const ImageDescription = () => {
     try {
       const res = handleRunAnalysis?.(file, mode);
       if (res && typeof res.then === "function") await res;
-    } catch (err) { }
+    } catch (err) {
+      // swallow
+    }
   };
 
   useEffect(() => {
@@ -63,7 +65,6 @@ const ImageDescription = () => {
     if (!uploadedImageUrl && !sampleImageUrl) setOpenDescription(false);
   }, [uploadedImageUrl, sampleImageUrl]);
 
-
   return (
     <div className="home-container">
       <Header />
@@ -74,36 +75,17 @@ const ImageDescription = () => {
 
       <div className="result-wrapper grid">
         <section className="preview-col">
-          {uploadedImageUrl || sampleImageUrl ? (
-            <ImagePreview
-              uploadedImageUrl={uploadedImageUrl}
-              sampleImageUrl={sampleImageUrl}
-              validationLoading={validationLoading}
-              isValidImage={isValidImage}
-              loading={loading}
-              currentFile={currentFile}
-              handleRunAnalysis={wrappedRunAnalysis}
-              showButtons={false}
-            />
-          ) : (
-            <div
-              className="dropzone"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const file = e.dataTransfer.files?.[0];
-                if (file) handleUploadedImage(file);
-              }}
-              onClick={() => imageInputRef.current?.click()}
-              role="button"
-              aria-label="Upload image"
-            >
-              <div className="dz-icon">🖼️</div>
-              <div className="dz-text">
-                <strong>Drop image</strong> or <span className="link">browse</span>
-              </div>
-            </div>
-          )}
+          <ImagePreview
+            uploadedImageUrl={uploadedImageUrl}
+            sampleImageUrl={sampleImageUrl}
+            validationLoading={validationLoading}
+            isValidImage={isValidImage}
+            loading={loading}
+            currentFile={currentFile}
+            handleRunAnalysis={wrappedRunAnalysis}
+            handleUploadedImage={handleUploadedImage}
+            imageInputRef={imageInputRef}
+          />
 
           <input
             ref={imageInputRef}
@@ -119,27 +101,18 @@ const ImageDescription = () => {
 
         <section className="action-col">
           <div className="description-area slide-in-right">
-            {openDescription || showResults ? (
-              <DescriptionBox
-                isValidImage={isValidImage}
-                validationMessage={validationMessage}
-                showResults={showResults}
-                loading={loading}
-                responses={responses}
-                currentIndex={currentIndex}
-                typedText={typedText}
-                description={description}
-                handlePrev={handlePrev}
-                handleNext={handleNext}
-              />
-            ) : (
-              <div className="description-placeholder">
-                <h4 className="placeholder-title">Analysis will appear here</h4>
-                <p className="placeholder-text">
-                  Upload an image or try a sample. Then click <strong>Short Analysis</strong> or <strong>Long Analysis</strong> to see results.
-                </p>
-              </div>
-            )}
+            <DescriptionBox
+              isValidImage={isValidImage}
+              validationMessage={validationMessage}
+              showResults={showResults}
+              loading={loading}
+              responses={responses}
+              currentIndex={currentIndex}
+              typedText={typedText}
+              description={description}
+              handlePrev={handlePrev}
+              handleNext={handleNext}
+            />
           </div>
         </section>
       </div>
