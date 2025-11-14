@@ -4,6 +4,8 @@ from typing import List, Literal, Optional, Dict, Any
 import re
 import json
 import logging
+import difflib
+import re as _re
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
@@ -34,6 +36,7 @@ class ChatResponse(BaseModel):
     bot_messages: Optional[List[str]] = None
     analysis_responses: Optional[List[Dict[str, Any]]] = None
     results: Optional[List[Dict[str, Any]]] = None
+    ask_more: Optional[bool] = None  # <-- ADDED: backend indicates whether to show "Would you like to know more?"
 
 
 ALLOWED_HINTS = [
@@ -52,28 +55,101 @@ CHITCHAT_HINTS = [
     "how are you", "what can you do", "help", "thanks", "thank you"
 ]
 
-REFUSAL_MESSAGE = (
-    "❌ I can only answer **fabric/textile** questions or **how to use this app**.\n\n"
-    "Try asking things like:\n"
-    "• Difference between knit and woven\n"
-    "• What is GSM and how is it measured?\n"
-    "• How to use the image analysis feature here"
-)
+REFUSAL_MESSAGE = "Sorry — I can only answer fabric/textile questions. Please try a fabric-related question."
 
-CHITCHAT_RESPONSE = (
-    "👋 Hi there! I’m your Fabric Finder assistant. "
-    "I can help you with fabrics, textiles, and how to use this app. "
-    "Ask me about weave, knit, GSM, fibers, or try uploading an image for analysis!"
-)
+CHITCHAT_RESPONSE = "Hi — I can help with fabric/textile questions or how to use this app. Ask about GSM, knit vs woven, or upload an image."
+
+
+def _fuzzy_contains(text: str, hints: List[str], cutoff: float = 0.72) -> bool:
+    if not text:
+        return False
+    t = text.lower()
+
+    # fast exact substring
+    for h in hints:
+        if h in t:
+            return True
+
+    # tokenize words (alpha tokens)
+    tokens = re.findall(r"[a-zA-Z]+", t)
+    if not tokens:
+        tokens = [t]
+
+    for tok in tokens:
+        for h in hints:
+            if " " in h:
+                parts = h.split()
+                for p in parts:
+                    if p in tok:
+                        return True
+                    if difflib.SequenceMatcher(None, tok, p).ratio() >= cutoff:
+                        return True
+            else:
+                if difflib.SequenceMatcher(None, tok, h).ratio() >= cutoff:
+                    return True
+
+    # compare full text to hint (covers multi-word queries)
+    for h in hints:
+        if difflib.SequenceMatcher(None, t, h).ratio() >= cutoff:
+            return True
+
+    return False
+
+
+# ---- New helper: conservative typo normalization ----
+def _normalize_for_typos(text: str, hints: List[str], min_ratio: float = 0.80) -> str:
+    """
+    Replace individual alpha tokens in `text` with the closest matching hint word
+    if the similarity ratio is >= min_ratio. Returns a normalized text string.
+    Conservative: only replaces tokens when there's a confident single-word match.
+    """
+    if not text:
+        return text
+    # build single-word hint set for matching (split multi-word hints into parts too)
+    single_words = set()
+    for h in hints:
+        for part in h.split():
+            single_words.add(part.lower())
+    single_words = sorted(single_words)
+
+    tokens = re.findall(r"[a-zA-Z]+", text)
+    if not tokens:
+        return text
+
+    normalized = text
+    # For each token, try to find a close hint match
+    for tok in set(tokens):  # unique tokens to reduce work
+        lower_tok = tok.lower()
+        # exact match: skip
+        if lower_tok in single_words:
+            continue
+        # try close matches
+        matches = difflib.get_close_matches(lower_tok, single_words, n=1, cutoff=min_ratio)
+        if matches:
+            best = matches[0]
+            # Replace whole-word occurrences of the token in the original text (case-insensitive)
+            normalized = re.sub(rf'\b{re.escape(tok)}\b', best, normalized, flags=re.IGNORECASE)
+    return normalized
+# ----------------------------------------------------
 
 
 def classify_message(user_text: str) -> str:
-    t = (user_text or "").lower()
-    if any(h in t for h in ALLOWED_HINTS):
+    raw = (user_text or "").strip()
+    # conservative typo-normalization using both allowed and chitchat hints
+    all_hints = ALLOWED_HINTS + CHITCHAT_HINTS
+    try:
+        normalized = _normalize_for_typos(raw, all_hints, min_ratio=0.80)
+    except Exception:
+        normalized = raw
+    t = normalized.lower()
+    # fabric detection (tolerant to typos)
+    if _fuzzy_contains(t, ALLOWED_HINTS, cutoff=0.72):
         return "fabric"
-    if any(h in t for h in CHITCHAT_HINTS):
+    # chitchat slightly stricter
+    if _fuzzy_contains(t, CHITCHAT_HINTS, cutoff=0.82):
         return "chitchat"
     return "blocked"
+
 
 
 MAX_MESSAGES = 30
@@ -161,6 +237,34 @@ def _extract_embedded_payload(s: str) -> Optional[Dict[str, Any]]:
 
     return None
 
+# ---- Replace/enforce short replies ----
+def _enforce_short_reply(s: str) -> str:
+    if not s:
+        return s
+    s = s.strip()
+    # split into sentences (heuristic) and keep only the first sentence
+    sentences = _re.split(r'(?<=[.!?])\s+', s)
+    if sentences:
+        out = sentences[0].strip()
+    else:
+        out = s
+    # enforce much shorter maximum
+    max_chars = 200
+    if len(out) > max_chars:
+        out = out[:max_chars].rsplit(' ', 1)[0] + '...'
+    # final safety: if it's empty return exact refusal fallback
+    if not out:
+        return REFUSAL_MESSAGE
+    return out.strip()
+# ----------------------------------------------------
+
+def _make_reply(text: str) -> Message:
+    short = _enforce_short_reply(str(text or ""))
+    if not short:
+        short = REFUSAL_MESSAGE
+    return Message(role="assistant", content=short)
+
+
 
 @router.post("/chat", response_model=ChatResponse)
 def chat_endpoint(body: ChatRequest):
@@ -177,13 +281,42 @@ def chat_endpoint(body: ChatRequest):
 
     category = classify_message(last_user)
 
+    # If the conversation history contains an assistant prompt asking "Would you like to know more"
+    # and the current user message is the same as an earlier user question (the original),
+    # treat this as the user's confirmation to get a detailed answer.
+    try:
+        lower_last_user = (last_user or "").strip().lower()
+        # find last assistant "would you like to know more" occurrence (if any)
+        assistant_msgs = [m for m in body.messages if m.role == "assistant" and isinstance(m.content, str)]
+        ask_more_idx = None
+        for idx in range(len(body.messages)-1, -1, -1):
+            m = body.messages[idx]
+            if m.role == "assistant" and isinstance(m.content, str) and "would you like to know more" in m.content.lower():
+                ask_more_idx = idx
+                break
+        if ask_more_idx is not None:
+            # find the original user question prior to that assistant message (scan backwards)
+            original_user = None
+            for j in range(ask_more_idx - 1, -1, -1):
+                mm = body.messages[j]
+                if mm.role == "user" and isinstance(mm.content, str):
+                    original_user = mm.content.strip()
+                    break
+            if original_user and original_user.strip().lower() == lower_last_user:
+                # detected a 'Yes' follow-up (frontend resends original). Request a long/detailed answer.
+                # We modify last_user to explicitly indicate long/detailed mode. This is stateless and safe.
+                last_user = "Please provide a detailed answer: " + (last_user or "")
+                # Also adjust category in case normalization matters
+                category = classify_message(last_user)
+    except Exception:
+        # non-fatal; continue normally if anything goes wrong
+        pass
+
     if category == "blocked":
-        reply = Message(role="assistant", content=REFUSAL_MESSAGE)
-        return ChatResponse(reply=reply)
+      return ChatResponse(reply=_make_reply(REFUSAL_MESSAGE), ask_more=False)
 
     if category == "chitchat":
-        reply = Message(role="assistant", content=CHITCHAT_RESPONSE)
-        return ChatResponse(reply=reply)
+      return ChatResponse(reply=_make_reply(CHITCHAT_RESPONSE), ask_more=False)
 
     if len(body.messages) > MAX_MESSAGES:
         raise HTTPException(status_code=400, detail=f"Too many messages (>{MAX_MESSAGES}).")
@@ -191,7 +324,14 @@ def chat_endpoint(body: ChatRequest):
     if total_len > MAX_TOTAL_CHARS:
         raise HTTPException(status_code=400, detail="Conversation too long for this endpoint.")
 
+    # rebuild messages_payload but ensure we include the (possibly rewritten) last_user as the final user turn
     messages_payload = [m.model_dump() for m in body.messages]
+    # replace the last user content in payload (the last occurrence of role==user)
+    for i in range(len(messages_payload)-1, -1, -1):
+        if messages_payload[i].get("role") == "user":
+            messages_payload[i]["content"] = last_user
+            break
+
     if not any(m["role"] == "system" for m in messages_payload):
         messages_payload = [{"role": "system", "content": SYSTEM_PROMPT}] + messages_payload
 
@@ -223,7 +363,7 @@ def chat_endpoint(body: ChatRequest):
         else:
             reply_text = out.get("message") or out.get("reply") or out.get("text") or str(out)
 
-        reply = Message(role="assistant", content=str(reply_text))
+        reply = _make_reply(reply_text)
 
         action_obj = None
         if action and isinstance(action, dict) and action.get("type"):
@@ -233,12 +373,22 @@ def chat_endpoint(body: ChatRequest):
             except Exception:
                 action_obj = None
 
+        # compute ask_more: only for fabric textual answers with no action and no analysis_responses
+        try:
+            has_text_reply = bool(reply_text and str(reply_text).strip())
+            no_action = not action
+            no_analysis = not analysis_responses
+            ask_more_flag = True if (category == "fabric" and has_text_reply and no_action and no_analysis) else False
+        except Exception:
+            ask_more_flag = False
+
         return ChatResponse(
             reply=reply,
             action=action_obj,
             bot_messages=_to_jsonable(bot_messages) if bot_messages else ([reply_text] if reply_text else None),
             analysis_responses=_to_jsonable(analysis_responses) if analysis_responses else None,
             results=_to_jsonable(results) if results else None,
+            ask_more=ask_more_flag,
         )
 
     if isinstance(result, list):
@@ -265,15 +415,30 @@ def chat_endpoint(body: ChatRequest):
                 except Exception:
                     action_obj = None
 
+            # compute ask_more from payload-derived values
+            try:
+                has_text_reply = bool(reply_text and str(reply_text).strip())
+                no_action = not action
+                no_analysis = not analysis_responses
+                ask_more_flag = True if (category == "fabric" and has_text_reply and no_action and no_analysis) else False
+            except Exception:
+                ask_more_flag = False
+
             return ChatResponse(
                 reply=Message(role="assistant", content=str(bot_messages[0] if bot_messages else reply_text)),
                 action=action_obj,
                 bot_messages=_to_jsonable(bot_messages) if isinstance(bot_messages, list) else None,
                 analysis_responses=_to_jsonable(analysis_responses) if isinstance(analysis_responses, list) else None,
+                ask_more=ask_more_flag,
             )
 
-        reply = Message(role="assistant", content=str(reply_text))
-        return ChatResponse(reply=reply)
+        reply = _make_reply(reply_text)
+        try:
+            has_text_reply = bool(reply_text and str(reply_text).strip())
+            ask_more_flag = True if (category == "fabric" and has_text_reply and not None and True) else False
+        except Exception:
+            ask_more_flag = False
+        return ChatResponse(reply=reply, ask_more=ask_more_flag)
 
     potential = _extract_text_from_message_item(result)
     reply_text = potential if potential else str(result)
@@ -294,12 +459,26 @@ def chat_endpoint(body: ChatRequest):
             except Exception:
                 action_obj = None
 
+        try:
+            has_text_reply = bool(reply_text and str(reply_text).strip())
+            no_action = not action
+            no_analysis = not analysis_responses
+            ask_more_flag = True if (category == "fabric" and has_text_reply and no_action and no_analysis) else False
+        except Exception:
+            ask_more_flag = False
+
         return ChatResponse(
             reply=Message(role="assistant", content=str(bot_messages[0] if bot_messages else reply_text)),
             action=action_obj,
             bot_messages=_to_jsonable(bot_messages) if isinstance(bot_messages, list) else None,
             analysis_responses=_to_jsonable(analysis_responses) if isinstance(analysis_responses, list) else None,
+            ask_more=ask_more_flag,
         )
 
     reply = Message(role="assistant", content=str(reply_text))
-    return ChatResponse(reply=reply)
+    try:
+        has_text_reply = bool(reply_text and str(reply_text).strip())
+        ask_more_flag = True if (category == "fabric" and has_text_reply and not None and True) else False
+    except Exception:
+        ask_more_flag = False
+    return ChatResponse(reply=reply, ask_more=ask_more_flag)

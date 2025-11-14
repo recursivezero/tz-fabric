@@ -7,10 +7,12 @@ from langchain_groq import ChatGroq
 from core.config import settings
 from tools.mcp_client import invoke_tool_sync
 
+# LLM: set deterministic and short response bias via temperature=0 and max_tokens
 llm = ChatGroq(
     api_key=settings.GROQ_API_KEY,
     model=settings.GROQ_MODEL,
     temperature=0,
+    max_tokens=200,
 )
 
 
@@ -178,8 +180,11 @@ SYSTEM_PROMPT = (
     "- Answer questions about fabrics, textiles, and how to use this app.\n"
     "- If unrelated to fabrics or this app, politely refuse.\n"
     "- Never invent tool names. Only reply conversationally here.\n"
+    "- IMPORTANT: Keep replies very short and concise (preferably 1–2 short sentences).\n"
+    "- If you cannot answer a question, reply exactly with: "
+    "'Sorry — I can only answer fabric/textile questions. Please try a fabric-related question.'\n"
+    "- If the user asks for more detail, ask whether they want 'short' or 'detailed'.\n"
 )
-
 
 def agent_fallback(params: Dict[str, Any]) -> str:
     user_text: str = params.get("text", "")

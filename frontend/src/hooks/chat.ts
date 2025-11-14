@@ -304,46 +304,65 @@ const stopGenerating = useCallback(() => {
   );
 
   const handleResponse = useCallback((res: ChatResponse) => {
-    const rc = res as RichChatResponse;
-    setMessages(prev => {
-      const next = [...prev];
-      const bots = getBots(rc);
-      if (bots.length) {
-        next.push(...bots.map(txt => ({ role: "assistant", content: normalizeLLMText(txt) })));
-      } else if (rc.reply) {
-        next.push({ role: "assistant", content: normalizeLLMText(rc.reply.content) });
+  const rc = res as RichChatResponse;
+
+  setMessages(prev => {
+    const next = [...prev];
+
+    const bots = getBots(rc);
+    if (bots.length) {
+      next.push(...bots.map(txt => ({ role: "assistant", content: normalizeLLMText(txt) })));
+    } else if (rc.reply) {
+      next.push({ role: "assistant", content: normalizeLLMText(rc.reply.content) });
+    }
+
+    const action = getAction(rc);
+    const raw = getAnalysis(rc);
+    const hasCache = Boolean(action?.params?.cache_key);
+    const normalized = raw.map((r, i) => ({
+      id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
+      text: r.text ?? r.content ?? String(r ?? "")
+    }));
+
+    if (
+      action &&
+      (action.type === "redirect_to_analysis" || action.type === "redirect_to_media_analysis") &&
+      normalized.length > 0
+    ) {
+      const firstText = normalizeLLMText(normalized[0].text);
+      const lastAssistant = next.slice().reverse().find(m => m.role === "assistant");
+      const alreadyIncluded =
+        bots.includes(firstText) || (lastAssistant && lastAssistant.content === firstText);
+      if (!alreadyIncluded) {
+        next.push({ role: "assistant", content: firstText });
       }
-      const action = getAction(rc);
-      const raw = getAnalysis(rc);
-      const hasCache = Boolean(action?.params?.cache_key);
-      const normalized = raw.map((r, i) => ({
-        id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
-        text: r.text ?? r.content ?? String(r ?? ""),
-      }));
-      if (
-        action &&
-        (action.type === "redirect_to_analysis" || action.type === "redirect_to_media_analysis") &&
-        normalized.length > 0
-      ) {
-        const firstText = normalizeLLMText(normalized[0].text);
-        const lastAssistant = next.slice().reverse().find(m => m.role === "assistant");
-        const alreadyIncluded =
-          bots.includes(firstText) || (lastAssistant && lastAssistant.content === firstText);
-        if (!alreadyIncluded) {
-          next.push({ role: "assistant", content: firstText });
-        }
-        setCurrentResponse(firstText);
-        setPendingAction({
-          action,
-          analysis_responses: normalized.map(r => ({ ...r, text: normalizeLLMText(r.text) })),
-          used_ids: [normalized[0].id],
-        });
-      } else {
-        setPendingAction(null);
+      setCurrentResponse(firstText);
+      setPendingAction({
+        action,
+        analysis_responses: normalized.map(r => ({ ...r, text: normalizeLLMText(r.text) })),
+        used_ids: [normalized[0].id]
+      });
+    } else {
+      setPendingAction(null);
+    }
+
+    // BACKEND DECIDES: ask_more
+    if ((rc as any).ask_more === true) {
+      const lastUser = prev.slice().reverse().find(m => m.role === "user")?.content || "";
+      const lastAssistant = next.slice().reverse().find(m => m.role === "assistant")?.content || "";
+
+      if (lastAssistant && lastFollowedUpRef.current !== lastAssistant) {
+        lastFollowedUpRef.current = lastAssistant;
+        next.push({ role: "assistant", content: "Would you like to know more about this?" });
+        setMorePrompt({ question: String(lastUser) });
+        pendingPresetRef.current = String(lastUser);
       }
-      return next;
-    });
-  }, [getBots, getAction, getAnalysis]);
+    }
+
+    return next;
+  });
+}, [getBots, getAction, getAnalysis]);
+
 
   const acceptAction = useCallback(() => {
     if (!pendingAction) return;
