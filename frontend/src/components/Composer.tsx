@@ -21,6 +21,8 @@ type Props = {
   fileName?: string;
   setFileName?: (name: string) => void;
   status?: string;
+  stopGenerating?: () => void;
+  isFrontendTyping?: boolean;
 };
 
 const MAX_SECONDS = 60;
@@ -56,6 +58,8 @@ export default function Composer({
   onChipAction,
   status,
   setFileName,
+  stopGenerating,
+  isFrontendTyping,
 }: Props) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -536,6 +540,28 @@ export default function Composer({
                 rows={1}
                 readOnly={mode !== "free"}
               />
+              {(status === "sending" || isFrontendTyping) && (
+                <div className="stop-overlay" role="status" aria-live="polite">
+                  <div className="stop-overlay-inner" onMouseDown={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="stop-overlay-btn"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof stopGenerating === "function") stopGenerating();
+                        else console.warn("stopGenerating not provided");
+                      }}
+                    >
+                      ⏹ Stop Generating
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <button
                 className="send-btn inside"

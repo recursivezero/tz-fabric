@@ -188,22 +188,6 @@ export default function Chat() {
                       : "Bot is thinking…"
                 }
               />
-              <button
-                onClick={stopGenerating}
-                style={{
-                  marginTop: 10,
-                  padding: "6px 12px",
-                  background: "#ef4444",
-                  color: "white",
-                  borderRadius: 6,
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                ⏹ Stop Generating
-              </button>
             </div>
           )}
 
@@ -224,6 +208,8 @@ export default function Chat() {
           fileName={fileName}
           setFileName={setFileName}
           status={status}
+          stopGenerating={stopGenerating}
+          isFrontendTyping={isFrontendTyping}
         />
       </div>
     </div>
