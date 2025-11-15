@@ -1,3 +1,4 @@
+// useChat.tsx  (full file)
 import { useCallback, useEffect, useRef, useState } from "react";
 import { chatOnce, type Message, type ChatResponse } from "../services/chat_api";
 import { FULL_API_URL } from "../constants";
@@ -40,35 +41,6 @@ const normalizeLLMText = (t: unknown): string => {
   return s.trim();
 };
 
-const PRESET_QA: Record<string, string> = {
-  "explain knit vs woven .": `Here’s the quick difference:
-
-• Knit: Made by interlocking loops (like T-shirts, hoodies).
-  - Feel: Stretchy, soft, drapes well.
-  - Edge: Doesn’t fray easily, curls at edges.
-
-• Woven: Two yarn sets (warp & weft) crossing at right angles (like shirts, jeans).
-  - Feel: Usually less stretchy (unless elastane added), more structured.
-  - Edge: Frays when cut.`,
-  "how I can use FabricAI ": `Quick steps:
-1) Upload a close-up fabric photo (texture visible).
-2) Pick “Analyze (short)” for a quick overview or “Analyze (long)” for details.
-3) Optional: Add audio to describe context (e.g., “This is cotton twill”).
-4) Use “Search similar” to find nearest matches in your library.
-Tip: Avoid full garments or backgrounds; close-up of weave/texture works best.`,
-  "suggest tags for a denim fabric photo.": `Suggested tags:
-• Material: Denim, Cotton, Indigo
-• Construction: Twill, 3x1, Ring-spun
-• Look: Faded, Raw, Distressed, Slub
-• Weight: Mid-weight, Heavy
-• Use: Jeans, Jacket, Workwear
-Pick the 5–8 most relevant for clarity.`,
-  "what is gsm in fabrics?": `GSM = Grams per Square Meter (fabric weight).
-• Lower GSM (e.g., 120–160): lighter, airy (tees, summer).
-• Mid GSM (180–240): everyday knits/wovens.
-• Higher GSM (260+): heavier, warmer, more structured.
-Rule of thumb: Higher GSM = thicker/denser, but fiber & weave also affect feel and drape.`,
-};
 const norm = (s: string) => (s || "").trim().toLowerCase();
 
 export default function useChat() {
@@ -84,16 +56,17 @@ export default function useChat() {
   const [status, setStatus] = useState<Status>("idle");
   const [isFrontendTyping, setIsFrontendTyping] = useState(false);
 
-useEffect(() => {
-  const onStart = () => setIsFrontendTyping(true);
-  const onEnd = () => setIsFrontendTyping(false);
-  window.addEventListener("fabricai:typing-start", onStart);
-  window.addEventListener("fabricai:typing-end", onEnd);
-  return () => {
-    window.removeEventListener("fabricai:typing-start", onStart);
-    window.removeEventListener("fabricai:typing-end", onEnd);
-  };
-}, []);
+  useEffect(() => {
+    const onStart = () => setIsFrontendTyping(true);
+    const onEnd = () => setIsFrontendTyping(false);
+    window.addEventListener("fabricai:typing-start", onStart);
+    window.addEventListener("fabricai:typing-end", onEnd);
+    return () => {
+      window.removeEventListener("fabricai:typing-start", onStart);
+      window.removeEventListener("fabricai:typing-end", onEnd);
+    };
+  }, []);
+
   const [error, setError] = useState<string>("");
 
   const scrollerRef = useRef<HTMLDivElement | null>(null);
@@ -107,10 +80,9 @@ useEffect(() => {
 
   const abortRef = useRef<AbortController | null>(null);
   const lastMsgCountRef = useRef<number>(0);
-
-  const pendingPresetRef = useRef<string | null>(null);
-  const [morePrompt, setMorePrompt] = useState<{ question: string } | null>(null);
+  const [morePrompt, setMorePrompt] = useState<{ question: string; prompt?: string } | null>(null);
   const lastFollowedUpRef = useRef<string | null>(null); // prevents early/dup follow-ups
+  const pendingAskMoreRef = useRef<string | null>(null);
 
   const createAbort = useCallback(() => {
     if (abortRef.current) {
@@ -121,12 +93,11 @@ useEffect(() => {
     return ac.signal;
   }, []);
 
-const stopGenerating = useCallback(() => {
-  abortRef.current?.abort();
-  window.dispatchEvent(new CustomEvent("fabricai:stop-typing"));
-  setIsFrontendTyping(false);
-}, []);
-
+  const stopGenerating = useCallback(() => {
+    abortRef.current?.abort();
+    window.dispatchEvent(new CustomEvent("fabricai:stop-typing"));
+    setIsFrontendTyping(false);
+  }, []);
 
   const withAbort = useCallback(<T,>(p: Promise<T>) => {
     const ac = abortRef.current;
@@ -303,67 +274,84 @@ const stopGenerating = useCallback(() => {
     []
   );
 
+  // -------------------- handleResponse (backend ask_more OR in-message detection) --------------------
   const handleResponse = useCallback((res: ChatResponse) => {
-  const rc = res as RichChatResponse;
+    const rc = res as RichChatResponse;
+    console.debug("[useChat] handleResponse rc:", rc);
 
-  setMessages(prev => {
-    const next = [...prev];
+    setMessages(prev => {
+      const next = [...prev];
 
-    const bots = getBots(rc);
-    if (bots.length) {
-      next.push(...bots.map(txt => ({ role: "assistant", content: normalizeLLMText(txt) })));
-    } else if (rc.reply) {
-      next.push({ role: "assistant", content: normalizeLLMText(rc.reply.content) });
-    }
-
-    const action = getAction(rc);
-    const raw = getAnalysis(rc);
-    const hasCache = Boolean(action?.params?.cache_key);
-    const normalized = raw.map((r, i) => ({
-      id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
-      text: r.text ?? r.content ?? String(r ?? "")
-    }));
-
-    if (
-      action &&
-      (action.type === "redirect_to_analysis" || action.type === "redirect_to_media_analysis") &&
-      normalized.length > 0
-    ) {
-      const firstText = normalizeLLMText(normalized[0].text);
-      const lastAssistant = next.slice().reverse().find(m => m.role === "assistant");
-      const alreadyIncluded =
-        bots.includes(firstText) || (lastAssistant && lastAssistant.content === firstText);
-      if (!alreadyIncluded) {
-        next.push({ role: "assistant", content: firstText });
+      // pick a single assistant-visible string (prefer bot_messages[0], else reply)
+      const bots = getBots(rc);
+      let assistantText = "";
+      if (Array.isArray(bots) && bots.length > 0) {
+        assistantText = normalizeLLMText(bots[0]);
+      } else if (rc.reply && rc.reply.content) {
+        assistantText = normalizeLLMText(rc.reply.content);
       }
-      setCurrentResponse(firstText);
-      setPendingAction({
-        action,
-        analysis_responses: normalized.map(r => ({ ...r, text: normalizeLLMText(r.text) })),
-        used_ids: [normalized[0].id]
-      });
-    } else {
-      setPendingAction(null);
-    }
 
-    // BACKEND DECIDES: ask_more
-    if ((rc as any).ask_more === true) {
-      const lastUser = prev.slice().reverse().find(m => m.role === "user")?.content || "";
-      const lastAssistant = next.slice().reverse().find(m => m.role === "assistant")?.content || "";
+      // normalize analysis responses
+      const action = getAction(rc);
+      const raw = getAnalysis(rc);
+      const hasCache = Boolean(action?.params?.cache_key);
+      const normalized = raw.map((r, i) => ({
+        id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
+        text: r.text ?? r.content ?? String(r ?? ""),
+      }));
 
-      if (lastAssistant && lastFollowedUpRef.current !== lastAssistant) {
-        lastFollowedUpRef.current = lastAssistant;
-        next.push({ role: "assistant", content: "Would you like to know more about this?" });
-        setMorePrompt({ question: String(lastUser) });
-        pendingPresetRef.current = String(lastUser);
+      // If there's an action redirect to analysis, push the first analysis item text if not already included
+      if (
+        action &&
+        (action.type === "redirect_to_analysis" || action.type === "redirect_to_media_analysis") &&
+        normalized.length > 0
+      ) {
+        const firstText = normalizeLLMText(normalized[0].text);
+        const lastAssistant = next.slice().reverse().find(m => m.role === "assistant");
+        const alreadyIncluded =
+          assistantText === firstText ||
+          (lastAssistant && lastAssistant.content === firstText);
+        if (!alreadyIncluded) {
+          // push a single assistant bubble with that firstText
+          next.push({ role: "assistant", content: firstText });
+        }
+        setCurrentResponse(firstText);
+        setPendingAction({
+          action,
+          analysis_responses: normalized.map(r => ({ ...r, text: normalizeLLMText(r.text) })),
+          used_ids: [normalized[0].id],
+        });
+      } else {
+        // Default: push a single assistant message (bot_messages[0] or reply)
+        if (assistantText) {
+          // If backend asked for more, append the prompt into the same bubble (avoid separate bubble)
+          const askMore = (rc as any).ask_more === true;
+          let finalText = assistantText;
+          if (askMore) {
+            const low = finalText.toLowerCase();
+            if (
+              !low.includes("would you like to know more") &&
+              !low.includes("want to know more") &&
+              !low.includes("would you like more")
+            ) {
+              finalText = finalText + "\n\nWould you like to know more?";
+            }
+          }
+          next.push({ role: "assistant", content: finalText });
+
+          // IMPORTANT: If backend signaled ask_more we DON'T immediately show quick replies.
+          // Instead we keep the exact visible assistant content in pendingAskMoreRef and only
+          // set morePrompt after we observe that content settled in the UI (via onAssistantRendered).
+          if ((rc as any).ask_more === true) {
+            pendingAskMoreRef.current = finalText;
+          }
+        }
+        setPendingAction(null);
       }
-    }
 
-    return next;
-  });
-}, [getBots, getAction, getAnalysis]);
-
-
+      return next;
+    });
+  }, [getBots, getAction, getAnalysis]);
   const acceptAction = useCallback(() => {
     if (!pendingAction) return;
     setMessages(prev => [...prev, { role: "assistant", content: "Great — glad that helped!" }]);
@@ -546,7 +534,7 @@ const stopGenerating = useCallback(() => {
       const payload = {
         createdAt: Date.now(),
         k: Number(k) || 1,
-        min_sim: Number(min_sim),
+        min_sim: Number(min_sim) || 0.5,
         imageUrl,
         queryPreview: dataUrl,
         results: Array.isArray(results) ? results : []
@@ -581,223 +569,229 @@ const stopGenerating = useCallback(() => {
   }, [uploadedImageFile, fileToBase64, messages, withAbort, createAbort, errorMsg]);
 
   const send = useCallback(async (overrideText?: string, opts?: { forceApi?: boolean }) => {
-    const raw = typeof overrideText === "string" ? overrideText : input;
-    const text = raw.trim();
-    const forceApi = Boolean(opts?.forceApi);
+  const raw = typeof overrideText === "string" ? overrideText : input;
+  const text = raw.trim();
+  const forceApi = Boolean(opts?.forceApi);
 
-    if (status === "sending") {
-      console.warn("[send] early return: status === 'sending'");
+  if (status === "sending") {
+    console.warn("[send] early return: status === 'sending'");
+    return;
+  }
+  if (!text && !uploadedImageFile && !uploadedAudioFile) {
+    console.warn("[send] early return: nothing to send (no text or media). raw:", JSON.stringify(raw));
+    return;
+  }
+
+  if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
+
+  if (!forceApi && morePrompt && text) {
+    const yesRegex = /\b(yes|yeah|yep|ya|sure|ok|okay|more|tell me more|details|go ahead)\b/i;
+    if (yesRegex.test(text)) {
+      const original = morePrompt.question;
+      setMorePrompt(null);
+      setMessages(prev => [...prev, { role: "assistant", content: "Great — fetching more details…" }]);
+      await send(original, { forceApi: true });
       return;
     }
-    if (!text && !uploadedImageFile && !uploadedAudioFile) {
-      console.warn("[send] early return: nothing to send (no text or media). raw:", JSON.stringify(raw));
-      return;
-    }
+  }
 
-    if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
+  createAbort();
+  setStatus("sending");
+  setError("");
 
-    if (!forceApi && pendingPresetRef.current && text) {
-      const yesRegex = /\b(yes|yeah|yep|ya|sure|ok|okay|more|tell me more|details|go ahead)\b/i;
-      if (yesRegex.test(text)) {
-        const original = pendingPresetRef.current;
-        pendingPresetRef.current = null;
-        setMorePrompt(null);
-        setMessages(prev => [...prev, { role: "assistant", content: "Great — fetching more details…" }]);
-        await send(original, { forceApi: true });
+  if (text) setMessages(prev => [...prev, { role: "user", content: text }]);
+  setInput("");
+
+  try {
+    const searchIntentMatch = text.match(/^\s*search\s+similar\s+images\b/i);
+    if (searchIntentMatch) {
+      const kMatch = text.match(/k\s*[:=]?\s*(\d+)/i) || text.match(/\(\s*k\s*=\s*(\d+)\s*\)/i);
+      const k = kMatch ? Math.max(1, Math.min(300, Number(kMatch[1]))) : 3;
+      const payload = await searchSimilar(k);
+      if (payload) {
+        setStatus("idle");
+        if (abortRef.current) abortRef.current = null;
+        return;
+      } else {
+        setStatus("idle");
+        if (abortRef.current) abortRef.current = null;
+        setMessages(prev => [...prev, { role: "assistant", content: "Search did not start (see console). Please try again." }]);
         return;
       }
     }
 
-    const presetAnswer = !forceApi ? PRESET_QA[norm(text)] : undefined;
-    if (presetAnswer && !uploadedImageFile && !uploadedAudioFile) {
-      setMessages(prev => [
-        ...prev,
-        { role: "user", content: text },
-        { role: "assistant", content: presetAnswer },
-      ]);
-      pendingPresetRef.current = text;
-      setInput("");
-      setMorePrompt(null);
-      lastFollowedUpRef.current = null;
-      return;
-    }
+    if (uploadedImageFile || uploadedAudioFile) {
+      const form = new FormData();
+      if (uploadedImageFile) form.append("image", uploadedImageFile);
+      if (uploadedAudioFile) form.append("audio", uploadedAudioFile);
 
-    createAbort();
-    setStatus("sending");
-    setError("");
-
-    if (text) setMessages(prev => [...prev, { role: "user", content: text }]);
-    setInput("");
-
-    try {
-      const searchIntentMatch = text.match(/^\s*search\s+similar\s+images\b/i);
-      if (searchIntentMatch) {
-        const kMatch = text.match(/k\s*[:=]?\s*(\d+)/i) || text.match(/\(\s*k\s*=\s*(\d+)\s*\)/i);
-        const k = kMatch ? Math.max(1, Math.min(300, Number(kMatch[1]))) : 3;
-        const payload = await searchSimilar(k);
-        if (payload) {
-          setStatus("idle");
-          if (abortRef.current) abortRef.current = null;
-          return;
-        } else {
-          setStatus("idle");
-          if (abortRef.current) abortRef.current = null;
-          setMessages(prev => [...prev, { role: "assistant", content: "Search did not start (see console). Please try again." }]);
-          return;
-        }
+      const filenameFromText = extractFilenameFromText(text);
+      if (filenameFromText) {
+        form.append("filename", filenameFromText);
+        setFileName(filenameFromText);
       }
 
-      if (uploadedImageFile || uploadedAudioFile) {
-        const form = new FormData();
-        if (uploadedImageFile) form.append("image", uploadedImageFile);
-        if (uploadedAudioFile) form.append("audio", uploadedAudioFile);
-
-        const filenameFromText = extractFilenameFromText(text);
-        if (filenameFromText) {
-          form.append("filename", filenameFromText);
-          setFileName(filenameFromText);
-        }
-
+      try {
         try {
-          try {
-            const debug: Record<string, unknown> = {};
-            for (const [k, v] of form.entries()) {
-              if (v instanceof File) debug[k] = { name: v.name, type: v.type, size: v.size };
-              else debug[k] = String(v);
-            }
-            console.log("[UPLOAD DEBUG]", debug);
-          } catch { }
-
-          const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, {
-            method: "POST",
-            body: form
-          }));
-          if (!upResp.ok) {
-            const t = await upResp.text().catch(() => "");
-            throw new Error(`Upload failed: ${upResp.status} ${t}`);
+          const debug: Record<string, unknown> = {};
+          for (const [k, v] of form.entries()) {
+            if (v instanceof File) debug[k] = { name: v.name, type: v.type, size: v.size };
+            else debug[k] = String(v);
           }
+          console.log("[UPLOAD DEBUG]", debug);
+        } catch { }
 
-          const upJson = (await upResp.json()) as Record<string, unknown>;
-
-          const imagePath = (upJson.image_path as string) || null;
-          const audioPath = (upJson.audio_path as string) || null;
-
-          const imageUrl = !imagePath ? (upJson.image_url as string | undefined) : undefined;
-          const audioUrl = !audioPath ? (upJson.audio_url as string | undefined) : undefined;
-
-          const finalBasename =
-            (filenameFromText?.trim()?.length ? filenameFromText.trim() : null) ||
-            (upJson.basename as string) ||
-            (upJson.filename as string) ||
-            "upload";
-
-          const mode = getModeFromText(text);
-
-          let mediaInstruction = "";
-          if (imagePath) {
-            if (!uploadedAudioFile && !upJson.audio_path && !upJson.audio_url) {
-              mediaInstruction = `Analyze Image: image_path=${imagePath} filename=${finalBasename} mode=${mode}`;
-            } else {
-              mediaInstruction = `Analyze media: image_path=${imagePath} ${audioPath ? `audio_path=${audioPath}` : ""} filename=${finalBasename}`;
-            }
-          } else if (imageUrl) {
-            if (!uploadedAudioFile && !upJson.audio_url) {
-              mediaInstruction = `Analyze Image: image_url=${imageUrl} filename=${finalBasename} mode=${mode}`;
-            } else {
-              mediaInstruction = `Analyze media: image_url=${imageUrl} ${audioUrl ? `audio_url=${audioUrl}` : ""} filename=${finalBasename} `;
-            }
-          } else {
-            throw new Error("Upload did not return a usable image.");
-          }
-
-          const chatRes = await withAbort(
-            chatOnce([...messages, { role: "user", content: mediaInstruction }])
-          );
-
-          const rc = chatRes as RichChatResponse;
-          handleResponse({
-            reply: {
-              role: "assistant", content: audioPath || audioUrl
-                ? "Media uploaded and queued."
-                : "Image uploaded and queued for processing."
-            },
-            bot_messages: rc.bot_messages || [],
-            action: rc.action,
-            analysis_responses: rc.analysis_responses,
-          } as ChatResponse);
-
-          if (audioPath || audioUrl) {
-            setMessages(prev => [
-              ...prev,
-              { role: "assistant", content: "Files saved. Want to open the list page? [See your upload](/view)" }
-            ]);
-          }
-
-          clearImage();
-          clearAudio();
-          setStatus("idle");
-          if (abortRef.current) abortRef.current = null;
-          return;
-        } catch (err: unknown) {
-          console.error("[upload→agent] error:", err);
-          setStatus("error");
-          setError(errorMsg(err, "Failed to upload/process media."));
-        } finally {
-          if (abortRef.current) abortRef.current = null;
+        const upResp = await withAbort(fetch(`${FULL_API_URL}/uploads/tmp_media`, {
+          method: "POST",
+          body: form
+        }));
+        if (!upResp.ok) {
+          const t = await upResp.text().catch(() => "");
+          throw new Error(`Upload failed: ${upResp.status} ${t}`);
         }
-      }
 
-      const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }]));
-      handleResponse(chatRes);
-      setStatus("idle");
-      if (abortRef.current) abortRef.current = null;
-    } catch (e: unknown) {
-      if (e instanceof DOMException && e.name === "AbortError") {
-        setStatus("idle"); setError("");
-      } else {
-        setStatus("error"); setError(errorMsg(e, "Something went wrong."));
+        const upJson = (await upResp.json()) as Record<string, unknown>;
+
+        const imagePath = (upJson.image_path as string) || null;
+        const audioPath = (upJson.audio_path as string) || null;
+
+        const imageUrl = !imagePath ? (upJson.image_url as string | undefined) : undefined;
+        const audioUrl = !audioPath ? (upJson.audio_url as string | undefined) : undefined;
+
+        const finalBasename =
+          (filenameFromText?.trim()?.length ? filenameFromText.trim() : null) ||
+          (upJson.basename as string) ||
+          (upJson.filename as string) ||
+          "upload";
+
+        const mode = getModeFromText(text);
+
+        let mediaInstruction = "";
+        if (imagePath) {
+          if (!uploadedAudioFile && !upJson.audio_path && !upJson.audio_url) {
+            mediaInstruction = `Analyze Image: image_path=${imagePath} filename=${finalBasename} mode=${mode}`;
+          } else {
+            mediaInstruction = `Analyze media: image_path=${imagePath} ${audioPath ? `audio_path=${audioPath}` : ""} filename=${finalBasename}`;
+          }
+        } else if (imageUrl) {
+          if (!uploadedAudioFile && !upJson.audio_url) {
+            mediaInstruction = `Analyze Image: image_url=${imageUrl} filename=${finalBasename} mode=${mode}`;
+          } else {
+            mediaInstruction = `Analyze media: image_url=${imageUrl} ${audioUrl ? `audio_url=${audioUrl}` : ""} filename=${finalBasename} `;
+          }
+        } else {
+          throw new Error("Upload did not return a usable image.");
+        }
+
+        const chatRes = await withAbort(
+          chatOnce([...messages, { role: "user", content: mediaInstruction }])
+        );
+
+        const rc = chatRes as RichChatResponse;
+        handleResponse({
+          reply: {
+            role: "assistant", content: audioPath || audioUrl
+              ? "Media uploaded and queued."
+              : "Image uploaded and queued for processing."
+          },
+          bot_messages: rc.bot_messages || [],
+          action: rc.action,
+          analysis_responses: rc.analysis_responses,
+        } as ChatResponse);
+
+        if (audioPath || audioUrl) {
+          setMessages(prev => [
+            ...prev,
+            { role: "assistant", content: "Files saved. Want to open the list page? [See your upload](/view)" }
+          ]);
+        }
+
+        clearImage();
+        clearAudio();
+        setStatus("idle");
+        if (abortRef.current) abortRef.current = null;
+        return;
+      } catch (err: unknown) {
+        console.error("[upload→agent] error:", err);
+        setStatus("error");
+        setError(errorMsg(err, "Failed to upload/process media."));
+      } finally {
+        if (abortRef.current) abortRef.current = null;
       }
-    } finally {
-      if (abortRef.current) abortRef.current = null;
     }
-  }, [
-    input, messages, uploadedImageFile, uploadedAudioFile, status,
-    handleResponse, clearImage, clearAudio, createAbort, withAbort,
-    getModeFromText, searchSimilar, errorMsg, setFileName
-  ]);
 
+    const chatRes = await withAbort(chatOnce([...messages, { role: "user", content: text }]));
+    handleResponse(chatRes);
+    setStatus("idle");
+    if (abortRef.current) abortRef.current = null;
+  } catch (e: unknown) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      setStatus("idle"); setError("");
+    } else {
+      setStatus("error"); setError(errorMsg(e, "Something went wrong."));
+    }
+  } finally {
+    if (abortRef.current) abortRef.current = null;
+  }
+}, [
+  input, messages, uploadedImageFile, uploadedAudioFile, status,
+  handleResponse, clearImage, clearAudio, createAbort, withAbort,
+  getModeFromText, searchSimilar, errorMsg, setFileName
+]);
   const onAssistantRendered = useCallback((lastAssistant: Message) => {
-    const q = pendingPresetRef.current;
-    if (!q || morePrompt) return;
+    try {
+      if (!lastAssistant || !lastAssistant.content) return;
+      const content = String(lastAssistant.content).trim();
 
-    const expectedAnswer = PRESET_QA[norm(q)];
-    if (!expectedAnswer) return;
+      // If we have a pending ask-more token and the rendered content matches it,
+      // promote it to the UI prompt (sets quick replies).
+      const pending = pendingAskMoreRef.current;
+      if (pending && content.includes(pending)) {
+        // Avoid re-triggering if morePrompt already set
+        if (!morePrompt) {
+          const lastUser = messages.slice().reverse().find(m => m.role === "user")?.content || "";
+          setMorePrompt({ question: String(lastUser), prompt: pending });
+        }
+        // clear pending marker
+        pendingAskMoreRef.current = null;
+        return;
+      }
 
-    const rendered = String(lastAssistant.content ?? "").trim();
-    const expected = expectedAnswer.trim();
-
-    if (rendered === expected && lastFollowedUpRef.current !== expected) {
-      lastFollowedUpRef.current = expected; // guard
-      setMessages(prev => [
-        ...prev,
-        { role: "assistant", content: "Would you like to know more about this?" }
-      ]);
-      setMorePrompt({ question: q });
+      // Fallback detection: if bubble contains phrase and there is no pending token,
+      // set morePrompt only if not already present. This helps if backend appended the phrase
+      // but we didn't capture it earlier.
+      const low = content.toLowerCase();
+      if (!morePrompt && (low.includes("would you like to know more") || low.includes("want to know more"))) {
+        const lastUser = messages.slice().reverse().find(m => m.role === "user")?.content || "";
+        setMorePrompt({ question: String(lastUser), prompt: content });
+      }
+    } catch (e) {
+      console.error("onAssistantRendered error", e);
     }
-  }, [morePrompt]);
+  }, [messages, morePrompt]);
 
   const confirmMoreYes = useCallback(async () => {
-    const q = pendingPresetRef.current;
-    setMorePrompt(null);
-    if (!q) return;
-    pendingPresetRef.current = null;
-    lastFollowedUpRef.current = null;
-    setMessages(prev => [...prev, { role: "assistant", content: "Great — fetching more details…" }]);
-    await send(q, { forceApi: true });
-  }, [send]);
+  const q = morePrompt?.question;
+  if (!q) return;
+
+  pendingAskMoreRef.current = null;
+  setMorePrompt(null);
+  lastFollowedUpRef.current = null;
+
+  setMessages(prev => [
+    ...prev,
+    { role: "assistant", content: "Great — fetching more details…" }
+  ]);
+
+  await send(q, { forceApi: true });
+
+}, [morePrompt, send]);
+
 
   const confirmMoreNo = useCallback(() => {
-    pendingPresetRef.current = null;
+    // Cancel pending ask-more token
+    pendingAskMoreRef.current = null;
+
     lastFollowedUpRef.current = null;
     setMorePrompt(null);
     setMessages(prev => [...prev, { role: "assistant", content: "Okay! Ask me anything else or upload an image when ready." }]);
@@ -837,11 +831,9 @@ const stopGenerating = useCallback(() => {
     setPendingAction(null);
     setCurrentResponse(null);
     setMorePrompt(null);
-    pendingPresetRef.current = null;
     lastFollowedUpRef.current = null;
   }, [clearImage, clearAudio]);
 
-  const canStop = status === "sending";
 
   return {
     messages,
@@ -859,6 +851,6 @@ const stopGenerating = useCallback(() => {
     morePrompt, confirmMoreYes, confirmMoreNo,
     onAssistantRendered,
     isFrontendTyping,
-stopGenerating,
+    stopGenerating,
   };
 }

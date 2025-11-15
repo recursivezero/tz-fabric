@@ -158,16 +158,10 @@ export default function Chat() {
             messages={messages}
             scrollerRef={scrollerRef}
             onLastAssistantRendered={onAssistantRendered}
+            morePrompt={morePrompt}
+            confirmMoreYes={confirmMoreYes}
+            confirmMoreNo={confirmMoreNo}
           />
-
-          {morePrompt && (
-            <div className="quick-replies">
-              <div className="quick-replies-row">
-                <button type="button" onClick={confirmMoreYes} className="chip">Yes</button>
-                <button type="button" onClick={confirmMoreNo} className="chip">No</button>
-              </div>
-            </div>
-          )}
 
           {pendingAction?.action?.type === "redirect_to_analysis" && (
             <HandleRedirectAction

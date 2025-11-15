@@ -180,3 +180,59 @@
   font-size: 18px;
   margin-right: 8px;
 }
+
+/* Inline quick replies container under assistant bubble */
+.inline-quick-replies {
+  margin: 8px 0 14px 0;
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  padding-left: 8px;
+  /* align with bubble padding if needed */
+}
+
+/* Row that contains chips */
+.quick-replies-row {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Chip style (Yes / No) */
+.chip {
+  background: #f3f4f6;
+  /* light neutral background */
+  color: #111827;
+  /* dark text */
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* Hover / focus states */
+.chip:hover,
+.chip:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+  outline: none;
+}
+
+/* Primary emphasis for positive action (Yes) - optional (apply by extra class if needed) */
+.chip-primary {
+  background: #111827;
+  /* dark */
+  color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.chip[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
