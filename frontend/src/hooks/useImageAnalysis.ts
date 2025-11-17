@@ -271,6 +271,12 @@ const useImageAnalysis = () => {
     }
   };
 
+  const clearImage = () => {
+    setShowUploadedImage(false);
+    setUploadedImageUrl(null);
+    setCurrentFile(null);
+  };
+
   return {
     showResults,
     loading,
@@ -295,6 +301,7 @@ const useImageAnalysis = () => {
     handleRunAnalysis,
     handleNext,
     handlePrev,
+    clearImage
   };
 };
 

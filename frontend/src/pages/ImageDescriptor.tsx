@@ -42,6 +42,7 @@ const ImageDescription = () => {
     handleSampleShortAnalysis,
     handlePrev,
     handleNext,
+    clearImage
   } = useImageAnalysis();
 
   const [openDescription, setOpenDescription] = useState(false);
@@ -88,6 +89,7 @@ const ImageDescription = () => {
             handleRunAnalysis={wrappedRunAnalysis}
             handleUploadedImage={handleUploadedImage}
             imageInputRef={imageInputRef}
+            clearImage={clearImage}
           />
 
           <input

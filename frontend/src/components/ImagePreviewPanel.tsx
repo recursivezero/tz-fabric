@@ -1,12 +1,6 @@
 import React from "react";
 import "../styles/ImagePreviewPanel.css";
 
-/**
- * ImagePreviewPanel
- * - always renders the buttons in a dedicated container below the visual area
- * - accepts `showButtons` (default true) so parent can override, but default is visible
- * - logs a debug message so you can confirm rendering
- */
 const ImagePreviewPanel = ({
   uploadedImageUrl,
   sampleImageUrl,
@@ -18,6 +12,7 @@ const ImagePreviewPanel = ({
   handleUploadedImage,
   imageInputRef,
   showButtons = true,
+  clearImage
 }) => {
   const giveFileNameAndSize = (currentFile) => {
     if (!currentFile) return "";
@@ -41,13 +36,10 @@ const ImagePreviewPanel = ({
     if (file && typeof handleUploadedImage === "function") handleUploadedImage(file);
   };
 
-  // Debug log to confirm rendering
-  // Remove or comment out in production
   console.log("ImagePreviewPanel render — showButtons:", showButtons, "hasImage:", hasImage, "canRun:", canRun);
 
   return (
     <div className="image-preview-container">
-      {/* Visual area (preview or dropzone) */}
       <div className="preview-visual">
         {hasImage ? (
           <div className="preview-wrap">
@@ -56,6 +48,14 @@ const ImagePreviewPanel = ({
               alt="Preview"
               className="preview-image"
             />
+
+            <button
+              className="chip chip-clear"
+              onClick={clearImage}
+              title="Remove audio"
+            >
+              ✕
+            </button>
           </div>
         ) : (
           <div
@@ -80,10 +80,12 @@ const ImagePreviewPanel = ({
           </div>
         )}
       </div>
-
-      {/* file name / size */}
       <div className="filesize-name">
-        <span className="filename">{giveFileNameAndSize(currentFile)}</span>
+        {hasImage && currentFile ? (
+          <span className="filename">{giveFileNameAndSize(currentFile)}</span>
+        ) : (
+          <span className="filename" />
+        )}
       </div>
 
       {showButtons && (
