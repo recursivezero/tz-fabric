@@ -1,5 +1,3 @@
-/* ===== FabricSearch.css (full) ===== */
-
 .search-container {
   max-width: 1100px;
   margin: 4px auto;
@@ -9,6 +7,76 @@
   grid-template-rows: auto auto 1fr;
   row-gap: 10px;
 }
+
+.hero-area {
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 48px;
+  line-height: 1.02;
+  margin: 0 auto 22px;
+  max-width: 900px;
+  font-weight: 900;
+  color: #0b0b0b;
+  position: relative;
+  letter-spacing: -0.02em;
+}
+
+.hero-title .hero-highlight {
+  display: inline-block;
+  height: 12px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(255, 200, 140, 0.9) 0%, rgba(255, 200, 140, 0.85) 100%);
+  transform: translateY(12px) skewX(-6deg);
+  z-index: -1;
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  transform-origin: left center;
+  transform: translateX(-50%) translateY(18px) skewX(-8deg);
+  width: 80%;
+  border-radius: 6px;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.hero-cta {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.hero-search-btn {
+  font-weight: 800;
+  padding: 14px 22px;
+  border-radius: 10px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(11, 11, 11, 0.18);
+  transition: transform 0.12s ease, box-shadow 0.16s ease;
+}
+
+.hero-search-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(11, 11, 11, 0.22);
+}
+
+/* smaller screen adjustments */
+@media (max-width: 800px) {
+  .hero-title {
+    font-size: 34px;
+    padding: 0 16px;
+  }
+
+  .hero-title .hero-highlight {
+    width: 92%;
+    top: 70%;
+  }
+}
+
+/* ---------- Rest of your existing CSS (unchanged) ---------- */
 
 .search-container h2 {
   margin: 0;
@@ -114,7 +182,7 @@
 }
 
 .search-container .preview-box {
-  max-width: 340px;
+  max-width: 130px;
 }
 
 .search-container .section-title {
@@ -133,7 +201,11 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-/* ---------- Pager ---------- */
+.center-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .pagination-controls,
 .search-container .pager {
@@ -526,4 +598,136 @@ input[type="number"] {
   box-shadow: 0 6px 18px rgba(0, 0, 0, .22);
   opacity: 1;
   transition: opacity .18s ease, transform .18s ease, background .12s ease;
+}
+
+/* ===== Crop drawer (right-side) ===== */
+.crop-drawer {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 0;
+  pointer-events: none;
+  transition: width 260ms cubic-bezier(.2, .9, .2, 1);
+  z-index: 15000;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.crop-drawer.open {
+  width: 420px;
+  /* width of the drawer */
+  pointer-events: auto;
+}
+
+.crop-drawer-inner {
+  width: 420px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -18px 0 40px rgba(9, 10, 12, 0.18);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.drawer-title {
+  font-size: 18px;
+  color: #111;
+  margin: 6px 0 0;
+  font-weight: 800;
+}
+
+/* area where the image sits */
+.crop-stage {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  border-radius: 8px;
+  background: #f7f7f8;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.crop-image-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  max-height: calc(100vh - 220px);
+  overflow: hidden;
+  display: block;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.crop-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.crop-rect {
+  position: absolute;
+  border: 2px dashed rgba(20, 20, 20, 0.85);
+  box-sizing: border-box;
+  cursor: move;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02));
+}
+
+.crop-rect::before {
+  content: "";
+  position: absolute;
+  inset: -9999px;
+  box-shadow: 9999px 9999px 0 0 rgba(0, 0, 0, 0.32), -9999px -9999px 0 0 rgba(0, 0, 0, 0.32);
+  pointer-events: none;
+}
+
+.crop-handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 3px;
+  border: 2px solid rgba(0, 0, 0, 0.6);
+  right: -9px;
+  bottom: -9px;
+  cursor: se-resize;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+}
+
+.drawer-btn {
+  flex: 1 1 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 15px;
+  border: 0;
+  cursor: pointer;
+}
+
+.drawer-btn.cancel {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.drawer-btn.confirm {
+  background: #0b0b0b;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(11, 11, 11, 0.12);
 }
