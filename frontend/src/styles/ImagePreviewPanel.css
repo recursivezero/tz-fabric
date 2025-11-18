@@ -4,8 +4,6 @@
 }
 
 .preview-image {
-  aspect-ratio: 1;
-  object-fit: contain;
   border-radius: 10px;
 }
 
@@ -58,33 +56,24 @@
   font-weight: 500;
 }
 
-/* Ensure preview-wrap matches image size */
 .preview-wrap {
   position: relative;
   display: inline-block;
-  max-width: 260px;
-  /* Adjust according to your UI */
-  width: 100%;
 }
 
-/* Make image fill the preview-wrap */
 .preview-image {
   width: 100%;
-  height: auto;
+  height: 400px;
   border-radius: 10px;
-  object-fit: contain;
   display: block;
-  /* Prevents extra space below image */
 }
 
-/* Cross button correctly positioned */
 .preview-wrap .chip-clear {
   position: absolute;
-  right: 30px;
-
+  right: 0;
+  top: 1px;
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
-
   border: none;
   width: 35px;
   height: 35px;
@@ -97,7 +86,6 @@
   justify-content: center;
 
   cursor: pointer;
-  z-index: 5;
 
   transition: all 0.15s ease;
 }

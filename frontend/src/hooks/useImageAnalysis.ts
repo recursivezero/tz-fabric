@@ -275,6 +275,7 @@ const useImageAnalysis = () => {
     setShowUploadedImage(false);
     setUploadedImageUrl(null);
     setCurrentFile(null);
+    setSampleImageUrl(null);
   };
 
   return {
