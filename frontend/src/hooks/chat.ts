@@ -224,6 +224,7 @@ useEffect(() => {
       setUploadedPreviewUrl(url);
       setStatus("idle");
       setError("");
+      setPendingAction(null);
     } catch (err: unknown) {
       console.error("handleImageUpload error:", err);
       setStatus("idle");
@@ -235,6 +236,7 @@ useEffect(() => {
     if (uploadedAudioUrl) URL.revokeObjectURL(uploadedAudioUrl);
     setUploadedAudioFile(file);
     setUploadedAudioUrl(URL.createObjectURL(file));
+    setPendingAction(null);
   }, [uploadedAudioUrl]);
 
   const getModeFromText = useCallback((text: string | undefined | null): "short" | "long" => {
@@ -587,6 +589,8 @@ useEffect(() => {
 if (morePrompt && text && !/^(yes|yeah|yep|ya|sure|ok|okay|more|tell me more|details|go ahead)$/i.test(text)) {
     setMorePrompt(null);
 }
+
+if (!forceApi) setPendingAction(null);
 
 
   if (status === "sending") {

@@ -163,7 +163,7 @@ export default function Chat() {
             confirmMoreNo={confirmMoreNo}
           />
 
-          {pendingAction?.action?.type === "redirect_to_analysis" && (
+          {pendingAction?.action?.type === "redirect_to_analysis" && !uploadedPreviewUrl && !uploadedAudioUrl && (
             <HandleRedirectAction
               pendingAction={pendingAction}
               onAccept={acceptAction}
