@@ -39,13 +39,6 @@ export default function MessageList({
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, scrollerRef]);
 
-  // Purely event-driven settle check (no timeouts)
-  // Fires when:
-  //  - all images inside the last assistant bubble have loaded (if any),
-  //  - height is identical for two consecutive RAF frames,
-  //  - the scroller is at the bottom,
-  //  - the bubble is NOT typing (MessageBubble sets data-typing),
-  //  - and no new messages were appended during the check.
   const waitForSettled = (
     node: HTMLElement,
     container: HTMLElement,

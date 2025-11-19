@@ -374,7 +374,6 @@ export default function Search() {
     // Set the cropped file as the query file (preview updates). DO NOT auto-run search.
     setFile(croppedFile);
     setDrawerOpen(false);
-    setNotification({ message: "Preview ready — click Search when you're ready.", type: "success" });
     // reset page and badImages (optional)
     setPage(1);
     setBadImages(new Set());
@@ -413,7 +412,6 @@ export default function Search() {
 
       <FabricSearchHeader />
 
-      { /* HERO */}
       {!file && visibleResults.length === 0 && !loading && !drawerOpen && (
         <header className="hero-area">
           <h1 className="hero-title">
@@ -467,8 +465,6 @@ export default function Search() {
                   setDrawerOpen(true);
                   setNotification(null);
                   setCropRect({ x: 20, y: 20, w: 160, h: 160 });
-
-                  // notify to clear redirect blocks (user intentionally opened recrop)
                   try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
                 }}
                 title="Re-crop"
@@ -506,8 +502,6 @@ export default function Search() {
           🔎 Search
         </button>
       )}
-
-
       {notification && <Notification message={notification.message} type={notification.type} />}
       {loading && <Loader />}
       {error && <p className="search-error">{error}</p>}
@@ -600,7 +594,6 @@ export default function Search() {
         <div className={`crop-drawer open`} role="dialog" aria-hidden={!drawerOpen}>
           <div className="crop-drawer-inner">
             <h3 className="drawer-title">Crop & Confirm</h3>
-
             <div className="crop-stage">
               {rawImageUrl ? (
                 <div className="crop-image-wrap">
@@ -612,7 +605,6 @@ export default function Search() {
                     className="crop-image"
                     draggable={false}
                   />
-
                   <div
                     className="crop-rect"
                     style={{
@@ -648,8 +640,6 @@ export default function Search() {
           </div>
         </div>
       )}
-
-
     </div>
   );
 }

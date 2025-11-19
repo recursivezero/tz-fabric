@@ -1,4 +1,3 @@
-// src/components/MessageBubble.tsx
 import { useMemo, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -52,6 +51,37 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
 
   const isTyping = shouldType && typed !== normalized && !externallyStopped;
 
+  // COPY BUTTON STATE
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    // reset copied flag on new content
+    setCopied(false);
+  }, [normalized]);
+
+  const doCopy = async (text: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "absolute";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      // auto-clear after a short delay
+      setTimeout(() => setCopied(false), 1300);
+    } catch (err) {
+      console.error("copy failed", err);
+    }
+  };
+
   if (renderType === "text") {
     if (role === "user") {
       return (
@@ -61,13 +91,29 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
         </div>
       );
     }
+    // assistant text bubble with copy button
     return (
       <div className="msg-row left" data-typing={isTyping ? "true" : "false"}>
         <div className="assistant-avatar">🤖</div>
-        <div className="assistant-block">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {shouldType ? (typed ?? "") : normalized}
-          </ReactMarkdown>
+
+        <div className="assistant-block assistant-block--with-copy">
+          {/* copy button area */}
+          <div className="assistant-block__controls">
+            <button
+              type="button"
+              className={`copy-btn ${copied ? "copied" : ""}`}
+              aria-label={copied ? "Copied" : "Copy reply"}
+              onClick={() => doCopy(normalized)}
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+
+          <div className="assistant-content">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {shouldType ? (typed ?? "") : normalized}
+            </ReactMarkdown>
+          </div>
         </div>
       </div>
     );

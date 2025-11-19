@@ -527,7 +527,7 @@ export default function Composer({
 
               <textarea
                 className="composer-input"
-                placeholder="Ask about your fabric analysis..."
+                placeholder="Ask about your fabric..."
                 value={value}
                 onChange={(e) => {
                   if (mode === "free") onChange(e.target.value);
