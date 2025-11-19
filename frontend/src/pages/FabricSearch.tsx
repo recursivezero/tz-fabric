@@ -51,6 +51,11 @@ export default function Search() {
     // clear any previous notifications / bad images
     setNotification(null);
     setBadImages(new Set());
+
+    // notify other parts of app (chat) to clear pending redirect actions / yes/no blocks
+    try {
+      window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
+    } catch { /* ignore */ }
   };
 
   const dataUrlToFile = useCallback(async (dataUrl: string, filename = "query.png"): Promise<File> => {
@@ -148,6 +153,10 @@ export default function Search() {
       try { URL.revokeObjectURL(rawImageUrl); } catch { }
       setRawImageUrl(null);
     }
+    // notify other parts of app (chat) to clear pending redirect actions
+    try {
+      window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
+    } catch { /* ignore */ }
     // revoke preview object URL handled by effect
     originalFileRef.current = null;
   };
@@ -164,14 +173,27 @@ export default function Search() {
 
   const totalPages = Math.max(1, Math.ceil(visibleResults.length / pageSize));
   const fileid = useId();
-  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+
+  // safer preview URL handling: create+revoke whenever `file` changes
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   useEffect(() => {
+    let cur: string | null = null;
+    if (file) {
+      try {
+        cur = URL.createObjectURL(file);
+        setPreviewUrl(cur);
+      } catch {
+        setPreviewUrl(null);
+      }
+    } else {
+      setPreviewUrl(null);
+    }
     return () => {
-      if (previewUrl) {
-        try { URL.revokeObjectURL(previewUrl); } catch { }
+      if (cur) {
+        try { URL.revokeObjectURL(cur); } catch { /* ignore */ }
       }
     };
-  }, [previewUrl]);
+  }, [file]);
 
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
@@ -422,48 +444,69 @@ export default function Search() {
       {file && !drawerOpen && (
         <div className="preview-box center-preview">
           <p className="section-title">Your Image</p>
-          <img className="preview-img" src={previewUrl ?? ""} alt="query" />
+
+          <div className="preview-img-wrap" role="group" aria-label="Image preview with actions">
+            <img
+              className="preview-img"
+              src={previewUrl ?? ""}
+              alt="query"
+              onError={() => setNotification({ message: "Preview failed to load.", type: "error" })}
+            />
+
+            <div className="preview-img-actions" aria-hidden={loading ? "true" : "false"}>
+              <button
+                className="btn"
+                onClick={() => {
+                  const orig = originalFileRef.current;
+                  if (!orig) {
+                    setNotification({ message: "Original image not available to re-crop.", type: "error" });
+                    return;
+                  }
+                  const url = URL.createObjectURL(orig);
+                  setRawImageUrl(url);
+                  setDrawerOpen(true);
+                  setNotification(null);
+                  setCropRect({ x: 20, y: 20, w: 160, h: 160 });
+
+                  // notify to clear redirect blocks (user intentionally opened recrop)
+                  try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
+                }}
+                title="Re-crop"
+              >
+                ✂️crop
+              </button>
+
+              <button
+                className="btn secondary"
+                onClick={() => {
+                  handleClear();
+                  originalFileRef.current = null;
+                }}
+                title="Clear"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
         </div>
       )}
+
       {file && !drawerOpen && (
-        <div className="preview-actions">
-          <button
-            className="btn primary"
-            onClick={handleSearch}
-            disabled={loading || !file}
-          >
-            🔎 Search
-          </button>
-
-          <button
-            className="btn"
-            onClick={() => {
-              const orig = originalFileRef.current;
-              if (!orig) {
-                setNotification({ message: "Original image not available to re-crop.", type: "error" });
-                return;
-              }
-              const url = URL.createObjectURL(orig);
-              setRawImageUrl(url);
-              setDrawerOpen(true);
-              setNotification(null);
-              setCropRect({ x: 20, y: 20, w: 160, h: 160 });
-            }}
-          >
-            ✂️ Re-crop
-          </button>
-
-          <button
-            className="btn secondary"
-            onClick={() => {
-              handleClear();
-              originalFileRef.current = null;
-            }}
-          >
-            🗑 Clear
-          </button>
-        </div>
+        <button
+          className="btn primary"
+          onClick={handleSearch}
+          disabled={loading || !file}
+          title="Search with this image"
+          style={{
+            width: "fit-content",
+            backgroundColor: "blue",
+            color: "white",
+          }}
+        >
+          🔎 Search
+        </button>
       )}
+
 
       {notification && <Notification message={notification.message} type={notification.type} />}
       {loading && <Loader />}
