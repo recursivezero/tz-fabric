@@ -15,7 +15,6 @@ export default function Home() {
   }, []);
   return (
     <div className="homeV2">
-      <div className="homeV2__bg" />
 
       <main className="homeV2__container">
         <header className="homeV2__hero">

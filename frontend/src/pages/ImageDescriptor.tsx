@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import Header from "../components/ImageDescriptorHeader";
-import SampleImageGallery from "../components/SampleImageGalleryCard";
 import DescriptionBox from "../components/DescriptionBox";
 import DrawerToggle from "../components/DrawerToggle";
+import Header from "../components/ImageDescriptorHeader";
 import ImagePreview from "../components/ImagePreviewPanel";
+import SampleImageGallery from "../components/SampleImageGalleryCard";
 import useImageAnalysis from "../hooks/useImageAnalysis";
 import "../styles/ImageDescription.css";
 
@@ -12,13 +12,6 @@ const ImageDescription = () => {
     const wrapper = document.querySelector(".app-wrapper");
     wrapper?.classList.add("upload-bg");
 
-    const header = document.querySelector(".site-header");
-    header?.classList.add("header-width");
-
-    return () => {
-      wrapper?.classList.remove("upload-bg", "header-width");
-      header?.classList.remove("header-width");
-    };
   }, []);
 
   const {
@@ -35,7 +28,6 @@ const ImageDescription = () => {
     isValidImage,
     validationLoading,
     validationMessage,
-    canUpload,
     setShowDrawer,
     handleUploadedImage,
     handleRunAnalysis,
@@ -72,7 +64,7 @@ const ImageDescription = () => {
 
       <div className="top-texts">
         <span className="animated-placeholder shimmer-text">
-          Upload a fabric image <span style={{ margin: "0 8px" }}>or</span>
+          Upload a fabric image <span style={ { margin: "0 8px" } }>or</span>
           <span className="sample-text">Try with our sample images →</span>
         </span>
       </div>
@@ -80,60 +72,60 @@ const ImageDescription = () => {
       <div className="result-wrapper grid">
         <section className="preview-col">
           <ImagePreview
-            uploadedImageUrl={uploadedImageUrl}
-            sampleImageUrl={sampleImageUrl}
-            validationLoading={validationLoading}
-            isValidImage={isValidImage}
-            loading={loading}
-            currentFile={currentFile}
-            handleRunAnalysis={wrappedRunAnalysis}
-            handleUploadedImage={handleUploadedImage}
-            imageInputRef={imageInputRef}
-            clearImage={clearImage}
+            uploadedImageUrl={ uploadedImageUrl }
+            sampleImageUrl={ sampleImageUrl }
+            validationLoading={ validationLoading }
+            isValidImage={ isValidImage }
+            loading={ loading }
+            currentFile={ currentFile }
+            handleRunAnalysis={ wrappedRunAnalysis }
+            handleUploadedImage={ handleUploadedImage }
+            imageInputRef={ imageInputRef }
+            clearImage={ clearImage }
           />
 
           <input
-            ref={imageInputRef}
+            ref={ imageInputRef }
             type="file"
             accept="image/*"
             hidden
-            onChange={(e) => {
+            onChange={ (e) => {
               const file = e.target.files?.[0];
               if (file) handleUploadedImage(file);
-            }}
+            } }
           />
         </section>
 
         <section className="action-col">
           <div className="description-area slide-in-right">
             <DescriptionBox
-              isValidImage={isValidImage}
-              validationMessage={validationMessage}
-              showResults={showResults}
-              loading={loading}
-              responses={responses}
-              currentIndex={currentIndex}
-              typedText={typedText}
-              description={description}
-              handlePrev={handlePrev}
-              handleNext={handleNext}
+              isValidImage={ isValidImage }
+              validationMessage={ validationMessage }
+              showResults={ showResults }
+              loading={ loading }
+              responses={ responses }
+              currentIndex={ currentIndex }
+              typedText={ typedText }
+              description={ description }
+              handlePrev={ handlePrev }
+              handleNext={ handleNext }
             />
           </div>
         </section>
       </div>
 
-      <DrawerToggle showDrawer={showDrawer} setShowDrawer={setShowDrawer} />
+      <DrawerToggle showDrawer={ showDrawer } setShowDrawer={ setShowDrawer } />
 
-      {showDrawer && (
+      { showDrawer && (
         <div className="drawer-panel">
           <SampleImageGallery
-            onAnalyze={(samplePath) => {
+            onAnalyze={ (samplePath) => {
               handleSampleShortAnalysis(samplePath);
-            }}
-            loading={loading}
+            } }
+            loading={ loading }
           />
         </div>
-      )}
+      ) }
     </div>
   );
 };

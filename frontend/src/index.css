@@ -1,5 +1,4 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -30,6 +29,7 @@ body {
   padding: 0;
   height: 100%;
   box-sizing: border-box;
+  contain: content;
 }
 
 h1 {
