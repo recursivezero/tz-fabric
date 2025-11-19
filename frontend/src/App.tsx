@@ -1,4 +1,5 @@
 import React from "react";
+import { FaRegMoon } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 import "./App.css";
 import { Routing } from "./Routing";
@@ -46,6 +47,9 @@ const App: React.FC = () => {
             </NavLink></li>
           </ul>
         </nav>
+        <div className="action">
+          <div id="theme"> <FaRegMoon /></div>
+        </div>
       </header>
 
       <main className="main-content">
