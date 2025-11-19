@@ -21,7 +21,7 @@ export default function EmptyState({ onSend, disabled }: Props) {
 
   return (
     <div className="empty-state-large">
-      <h3>Ask questions about fabrics</h3>
+      <h3>Ask questions or upload fabric images for analysis</h3>
       <p>Try one of the sample prompts below to get started.</p>
       <div className="chips" role="list">
         {samples.map((s, i) => (

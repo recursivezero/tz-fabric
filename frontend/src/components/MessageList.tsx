@@ -216,41 +216,42 @@ export default function MessageList({
                 filename={filename}
               />
 
-              {/* Inline quick replies: render directly under the assistant bubble that contains the phrase */}
-              {includesAskMore && morePrompt && (
-                <div className="quick-replies inline-quick-replies" aria-live="polite">
-                  <div className="quick-replies-row">
-                    <button
-                      type="button"
-                      className="chip"
-                      onClick={async () => {
-                        try {
-                          // optional micro-interaction: disable, show loading, etc (omitted for brevity)
-                          await confirmMoreYes?.();
-                        } catch (err) {
-                          console.error("confirmMoreYes error", err);
-                        }
-                      }}
-                    >
-                      Yes
-                    </button>
+              <div className={`ask-more-container ${morePrompt ? "show" : ""}`}>
+                {includesAskMore && morePrompt && (
+                  <div className="quick-replies inline-quick-replies" aria-live="polite">
+                    <div className="quick-replies-row">
+                      <button
+                        type="button"
+                        className="chip"
+                        onClick={async () => {
+                          try {
+                            // optional micro-interaction: disable, show loading, etc (omitted for brevity)
+                            await confirmMoreYes?.();
+                          } catch (err) {
+                            console.error("confirmMoreYes error", err);
+                          }
+                        }}
+                      >
+                        Yes
+                      </button>
 
-                    <button
-                      type="button"
-                      className="chip"
-                      onClick={() => {
-                        try {
-                          confirmMoreNo?.();
-                        } catch (err) {
-                          console.error("confirmMoreNo error", err);
-                        }
-                      }}
-                    >
-                      No
-                    </button>
+                      <button
+                        type="button"
+                        className="chip"
+                        onClick={() => {
+                          try {
+                            confirmMoreNo?.();
+                          } catch (err) {
+                            console.error("confirmMoreNo error", err);
+                          }
+                        }}
+                      >
+                        No
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })}

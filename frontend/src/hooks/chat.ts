@@ -81,6 +81,17 @@ export default function useChat() {
   const abortRef = useRef<AbortController | null>(null);
   const lastMsgCountRef = useRef<number>(0);
   const [morePrompt, setMorePrompt] = useState<{ question: string; prompt?: string } | null>(null);
+  // Auto-hide Yes/No after 10 seconds of no interaction
+useEffect(() => {
+  if (!morePrompt) return;
+
+  const timer = setTimeout(() => {
+    setMorePrompt(null);
+  }, 10000); // 10 seconds
+
+  return () => clearTimeout(timer);
+}, [morePrompt]);
+
   const lastFollowedUpRef = useRef<string | null>(null); // prevents early/dup follow-ups
   const pendingAskMoreRef = useRef<string | null>(null);
 
@@ -572,6 +583,11 @@ export default function useChat() {
   const raw = typeof overrideText === "string" ? overrideText : input;
   const text = raw.trim();
   const forceApi = Boolean(opts?.forceApi);
+
+if (morePrompt && text && !/^(yes|yeah|yep|ya|sure|ok|okay|more|tell me more|details|go ahead)$/i.test(text)) {
+    setMorePrompt(null);
+}
+
 
   if (status === "sending") {
     console.warn("[send] early return: status === 'sending'");

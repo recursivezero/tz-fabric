@@ -236,3 +236,47 @@
   transform: none;
   box-shadow: none;
 }
+
+.ask-more-container {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+
+.ask-more-container.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ask-more-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.ask-more-buttons button {
+  padding: 8px 18px;
+  border-radius: 25px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s ease;
+}
+
+.ask-more-buttons button.yes-btn {
+  background: #28a745;
+  color: white;
+}
+
+.ask-more-buttons button.no-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.ask-more-buttons button:hover {
+  transform: scale(1.05);
+}
+
+.ask-more-buttons button:active {
+  transform: scale(0.95);
+}

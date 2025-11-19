@@ -1,5 +1,5 @@
 from typing import Optional, Literal, Dict, Any, List, Union
-import re, json, traceback
+import re, json, traceback, logging
 
 from langchain_core.runnables import RunnableLambda
 from langchain_groq import ChatGroq
@@ -7,12 +7,23 @@ from langchain_groq import ChatGroq
 from core.config import settings
 from tools.mcp_client import invoke_tool_sync
 
-# LLM: set deterministic and short response bias via temperature=0 and max_tokens
-llm = ChatGroq(
+logger = logging.getLogger(__name__)
+
+# NOTE: We create two LLM clients using the SAME model but different token budgets:
+# - llm_short: conservative max_tokens for short replies
+# - llm_long: larger max_tokens for detailed replies
+llm_short = ChatGroq(
     api_key=settings.GROQ_API_KEY,
     model=settings.GROQ_MODEL,
     temperature=0,
-    max_tokens=200,
+    max_tokens=150,   # short replies (adjust as needed)
+)
+
+llm_long = ChatGroq(
+    api_key=settings.GROQ_API_KEY,
+    model=settings.GROQ_MODEL,
+    temperature=0,
+    max_tokens=1500,  # long/detailed replies (adjust to model limits)
 )
 
 
@@ -125,9 +136,11 @@ def router_fn(user_text: str) -> Dict[str, Any]:
         m_img = re.search(r"\bimage_url\s*=\s*(https?://\S+)", t_raw)
         if m_img:
             params["image_url"] = m_img.group(1)
-        m_mode = re.search(r"\bmode[:= ](short|long)\b", t, re.I)
+        m_mode = re.search(r"\bmode[:= ](short|long|detailed|full)\b", t, re.I)
         if m_mode:
-            params["mode"] = m_mode.group(1).lower()
+            # normalize to short/long
+            mode_val = m_mode.group(1).lower()
+            params["mode"] = "long" if mode_val in ("long", "detailed", "full") else "short"
         if re.search(r"\bfresh\s*=\s*true\b", t, re.I):
             params["fresh"] = True
         params["user_text"] = user_text
@@ -186,26 +199,59 @@ SYSTEM_PROMPT = (
     "- If the user asks for more detail, ask whether they want 'short' or 'detailed'.\n"
 )
 
+
 def agent_fallback(params: Dict[str, Any]) -> str:
+    """
+    params expected keys:
+      - text: user input
+      - history: optional list of prior messages
+      - mode: optional 'short' or 'long' (default short)
+    """
     user_text: str = params.get("text", "")
     history: List[Dict[str, str]] = params.get("history") or []
+    mode = str(params.get("mode", "short") or "short").lower()
+
+    # choose llm based on mode
+    chosen_llm = llm_long if mode.startswith("long") else llm_short
+
+    # Build system prompt: if mode is long, explicitly PREPEND a strong override that
+    # tells the model to IGNORE previous brevity instructions for this request.
+    system_prompt = SYSTEM_PROMPT
+    if mode.startswith("long"):
+        override = (
+            "IMPORTANT OVERRIDE FOR THIS REQUEST: Ignore any previous instruction that asks you to keep replies short. "
+            "For the user request that follows, provide a detailed, well-structured, multi-paragraph answer. "
+            "You may include headings, bullets, examples, and explanations. Do NOT limit to 1-2 sentences.\n\n"
+        )
+        # Prepend the override so it has priority in system message
+        system_prompt = override + system_prompt
+        logger.info("agent_fallback: mode=long -> prepended override and selecting llm_long")
+
     # Keep only last ~6 turns to avoid long prompts
     clipped = history[-6:] if isinstance(history, list) else []
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": system_prompt}]
     for m in clipped:
         r = m.get("role")
         c = m.get("content")
         if r in ("user", "assistant", "system") and isinstance(c, str):
             messages.append({"role": r, "content": c})
     messages.append({"role": "user", "content": user_text})
+
+    # DEBUG: log which LLM and first 200 chars of system prompt sent
     try:
-        resp = llm.invoke(messages)
+        logger.info("AGENT DEBUG -> chosen_llm=%s system_prompt_preview=%s", "llm_long" if mode.startswith("long") else "llm_short", system_prompt[:200])
+    except Exception:
+        logger.exception("AGENT DEBUG -> failed to log debug info")
+
+    try:
+        resp = chosen_llm.invoke(messages)
         if hasattr(resp, "content"):
             return resp.content
         if isinstance(resp, dict) and resp.get("content"):
             return resp.get("content")
         return str(resp)
     except Exception as e:
+        logger.exception("AGENT DEBUG -> LLM call failed")
         return f"Error calling LLM: {e}"
 
 
@@ -214,9 +260,11 @@ def _agent_graph_callable(payload: Union[str, Dict[str, Any]]) -> Any:
         if isinstance(payload, str):
             user_text = payload
             history = None
+            mode = "short"
         else:
             user_text = str(payload.get("text", "") or "")
             history = payload.get("history")
+            mode = payload.get("mode", "short") if isinstance(payload, dict) else "short"
 
         decision = router_fn(user_text)
 
@@ -231,8 +279,8 @@ def _agent_graph_callable(payload: Union[str, Dict[str, Any]]) -> Any:
             except Exception as e:
                 return {"error": f"tool_call_failed: {e}", "trace": traceback.format_exc()}
 
-        # fallback: conversational agent (with short history if provided)
-        return agent_fallback({"text": user_text, "history": history or []})
+        # fallback: conversational agent (pass mode to agent_fallback)
+        return agent_fallback({"text": user_text, "history": history or [], "mode": mode})
 
     except Exception as e:
         return {"error": f"agent_graph_error: {e}", "trace": traceback.format_exc()}
@@ -242,6 +290,7 @@ agent_graph = RunnableLambda(_agent_graph_callable)
 
 __all__ = [
     "agent_graph",
-    "llm",
+    "llm_short",
+    "llm_long",
     "SYSTEM_PROMPT",
 ]

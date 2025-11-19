@@ -1,4 +1,4 @@
-# chat.py  (FULL updated file)
+# chat.py  (FULL updated file with improved yes-detection heuristic + debug logs)
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
@@ -361,6 +361,7 @@ def _build_response(
     action_obj,
     ask_more_flag: bool,
     reply_text: Optional[str] = None,
+    force_long: bool = False,
 ):
     try:
         # Human-friendly prompt text exposed to the frontend
@@ -372,15 +373,14 @@ def _build_response(
             content = (reply_text or "").strip() or "..."
 
         # If backend intends to ask for more, append the sentence only if it's not already present.
-        if ask_more_flag:
-            low = content.lower()
-            if (
-                "would you like to know more" not in low
-                and "want to know more" not in low
-                and "would you like more" not in low
-            ):
-                # add a new paragraph for clarity
-                content = content + "\n\nWould you like to know more?"
+        if ask_more_flag and not force_long:
+          low = content.lower()
+          if (
+            "would you like to know more" not in low
+            and "want to know more" not in low
+            and "would you like more" not in low
+          ):
+            content = content + "\n\nWould you like to know more?"
 
         # Build the final Message object (ensures pydantic validation)
         final_reply = Message(role="assistant", content=content)
@@ -438,7 +438,8 @@ def chat_endpoint(body: ChatRequest):
     if not last_user:
         raise HTTPException(status_code=400, detail="Need at least one user message.")
 
-    # ---------- NEW: handle YES-after-ask-more override ----------
+    # ---------- NEW: handle YES-after-ask-more override (improved heuristic) ----------
+    force_long = False
     try:
         lower_last_user = (last_user or "").strip().lower()
 
@@ -454,39 +455,77 @@ def chat_endpoint(body: ChatRequest):
                 ask_more_idx = idx
                 break
 
-        # If user replied with a simple Yes after that prompt, upgrade to detailed fetch
-        if ask_more_idx is not None and lower_last_user in ["yes", "yeah", "y", "sure", "ok", "okay"]:
-            # Find the original fabric question (one user turn BEFORE the ask-more message)
-            original_user = None
+        # Helper: extract original user's question before the ask_more assistant message
+        original_user = None
+        if ask_more_idx is not None:
             for j in range(ask_more_idx - 1, -1, -1):
                 prev = body.messages[j]
                 if prev.role == "user" and isinstance(prev.content, str) and prev.content.strip():
                     original_user = prev.content.strip()
                     break
 
+        # 1) If user replied with an explicit simple Yes/OK/etc. after the ask_more prompt -> force long
+        yes_tokens = {"yes", "yeah", "y", "sure", "ok", "okay", "yep", "surely", "please", "more", "tell me more", "details"}
+        if ask_more_idx is not None and lower_last_user in yes_tokens:
             if original_user:
-                # Force the backend to treat this as a detailed fabric request
                 forced = f"Please provide a detailed answer: {original_user}"
-                logger.info("YES-click detected. Forcing detailed question -> %s", forced)
+                logger.info("YES-click detected (explicit). Forcing detailed question -> %s", forced)
                 last_user = forced
-                # classify as fabric to avoid refusal
                 category = "fabric"
+                force_long = True
             else:
-                # No preceding user message found; keep as-is (will be classified normally)
                 category = classify_message(last_user)
+
+        # 2) HEURISTIC: frontend sometimes resends the original question instead of 'yes'.
+        #    If last_user roughly equals the original_user (exact match or very close),
+        #    and it immediately follows an assistant ask-more, treat it as implicit yes.
         else:
-            # Not the special yes-case -> normal classification
-            category = classify_message(last_user)
+            if ask_more_idx is not None and original_user:
+                try:
+                    # simple exact match (case-insensitive, trimmed)
+                    if lower_last_user == original_user.strip().lower():
+                        forced = f"Please provide a detailed answer: {original_user}"
+                        logger.info("YES-click detected (heuristic: repeated question exact match). Forcing detailed question -> %s", forced)
+                        last_user = forced
+                        category = "fabric"
+                        force_long = True
+                    else:
+                        # fuzzy similarity fallback: token overlap ratio
+                        # compute token-level Jaccard-like overlap (cheap)
+                        user_tokens = set(re.findall(r"[a-zA-Z]+", lower_last_user))
+                        orig_tokens = set(re.findall(r"[a-zA-Z]+", original_user.strip().lower()))
+                        if user_tokens and orig_tokens:
+                            intersect = len(user_tokens & orig_tokens)
+                            union = len(user_tokens | orig_tokens)
+                            ratio = float(intersect) / float(union) if union > 0 else 0.0
+                            if ratio >= 0.85:
+                                # high overlap -> treat as implicit yes (user resent same question)
+                                forced = f"Please provide a detailed answer: {original_user}"
+                                logger.info("YES-click detected (heuristic: repeated question fuzzy match ratio=%.2f). Forcing detailed question -> %s", ratio, forced)
+                                last_user = forced
+                                category = "fabric"
+                                force_long = True
+                            else:
+                                # not a repeat; classify normally
+                                category = classify_message(last_user)
+                        else:
+                            category = classify_message(last_user)
+                except Exception as e:
+                    logger.exception("Error in repeated-question heuristic: %s", e)
+                    category = classify_message(last_user)
+            else:
+                # Not the special yes-case -> normal classification
+                category = classify_message(last_user)
     except Exception as e:
         logger.exception("Error in yes-flow override: %s", e)
         # fallback to normal classification
         category = classify_message(last_user)
 
     if category == "blocked":
-      return _build_response(_make_reply(REFUSAL_MESSAGE), None, None, None, None, False, REFUSAL_MESSAGE)
+      return _build_response(_make_reply(REFUSAL_MESSAGE), None, None, None, None, False, REFUSAL_MESSAGE, force_long)
 
     if category == "chitchat":
-      return _build_response(_make_reply(CHITCHAT_RESPONSE), None, None, None, None, False, CHITCHAT_RESPONSE)
+      return _build_response(_make_reply(CHITCHAT_RESPONSE), None, None, None, None, False, CHITCHAT_RESPONSE, force_long)
 
     if len(body.messages) > MAX_MESSAGES:
         raise HTTPException(status_code=400, detail=f"Too many messages (>{MAX_MESSAGES}).")
@@ -504,7 +543,22 @@ def chat_endpoint(body: ChatRequest):
         messages_payload = [{"role": "system", "content": SYSTEM_PROMPT}] + messages_payload
 
     try:
-        result = agent_graph.invoke({"text": last_user, "history": messages_payload[-10:]})
+        # pass explicit mode hint to agent_graph so it can pick long/short LLM
+        mode_var = "long" if force_long else "short"
+
+        # DEBUG: print mode and a short preview of the outgoing payload to verify long-mode is set
+        try:
+            import pprint
+            logger.info("CHAT DEBUG -> mode_var=%s force_long=%s last_user_preview=%s", mode_var, force_long, (last_user or "")[:200])
+            # Print the last 10 message roles+first-120-chars for inspection
+            preview_msgs = []
+            for m in messages_payload[-10:]:
+                preview_msgs.append({"role": m.get("role"), "content_preview": (str(m.get("content") or "")[:120])})
+            logger.info("CHAT DEBUG -> messages_payload_preview: %s", pprint.pformat(preview_msgs))
+        except Exception:
+            logger.exception("CHAT DEBUG -> Failed to log debug payload")
+
+        result = agent_graph.invoke({"text": last_user, "history": messages_payload[-10:], "mode": mode_var})
     except Exception as e:
         logger.exception("Agent graph invocation failed")
         raise HTTPException(status_code=502, detail=f"Agent error: {str(e)}")
@@ -530,7 +584,14 @@ def chat_endpoint(body: ChatRequest):
         else:
             reply_text = out.get("message") or out.get("reply") or out.get("text") or str(out)
 
-        reply = _make_reply(reply_text)
+        # If force_long is requested then use full reply_text, otherwise enforce short reply
+        if force_long:
+            try:
+                reply = Message(role="assistant", content=str(reply_text or ""))
+            except Exception:
+                reply = _make_reply(reply_text)
+        else:
+            reply = _make_reply(reply_text)
 
         action_obj = None
         if action and isinstance(action, dict) and action.get("type"):
@@ -548,7 +609,7 @@ def chat_endpoint(body: ChatRequest):
         except Exception:
             ask_more_flag = False
 
-        return _build_response(reply, bot_messages, analysis_responses, results, action_obj, ask_more_flag, reply_text)
+        return _build_response(reply, bot_messages, analysis_responses, results, action_obj, ask_more_flag, reply_text, force_long)
 
     if isinstance(result, list):
         texts = []
@@ -578,13 +639,34 @@ def chat_endpoint(body: ChatRequest):
                 has_text_reply = bool(reply_text and str(reply_text).strip())
                 no_action = not action
                 no_analysis = not analysis_responses
-                ask_more_flag = True if (category == "fabric" and has_text_reply and no_action and no_analysis) else False
+                is_followup = False
+                for m in reversed(body.messages[:-1]):  
+                    if m.role == "assistant" and isinstance(m.content, str):
+                        if "would you like to know more" in m.content.lower():
+                            is_followup = True
+                        break
+
+                ask_more_flag = (
+                    False
+                    if (
+                        force_long
+                        or category != "fabric"
+                        or is_followup     # <-- fixes the stuck Yes/No block
+                    )
+                    else True if (has_text_reply and no_action and no_analysis)
+                    else False
+                )
+
             except Exception:
                 ask_more_flag = False
 
-            reply_msg = _make_reply(bot_messages[0] if bot_messages else reply_text)
+            # Respect force_long when converting bot_messages -> reply
+            if force_long:
+                reply_msg = Message(role="assistant", content=str(bot_messages[0] if bot_messages else reply_text))
+            else:
+                reply_msg = _make_reply(bot_messages[0] if bot_messages else reply_text)
 
-            return _build_response(reply_msg, bot_messages, analysis_responses, None, action_obj, ask_more_flag, reply_text)
+            return _build_response(reply_msg, bot_messages, analysis_responses, None, action_obj, ask_more_flag, reply_text, force_long)
 
         reply = _make_reply(reply_text)
         try:
@@ -593,7 +675,7 @@ def chat_endpoint(body: ChatRequest):
         except Exception:
             ask_more_flag = False
 
-        return _build_response(reply, None, None, None, None, ask_more_flag, reply_text)
+        return _build_response(reply, None, None, None, None, ask_more_flag, reply_text, force_long)
 
     potential = _extract_text_from_message_item(result)
     reply_text = potential if potential else str(result)
@@ -622,15 +704,22 @@ def chat_endpoint(body: ChatRequest):
         except Exception:
             ask_more_flag = False
 
-        reply_msg = _make_reply(bot_messages[0] if bot_messages else reply_text)
+        if force_long:
+            reply_msg = Message(role="assistant", content=str(bot_messages[0] if bot_messages else reply_text))
+        else:
+            reply_msg = _make_reply(bot_messages[0] if bot_messages else reply_text)
 
-        return _build_response(reply_msg, bot_messages, analysis_responses, None, action_obj, ask_more_flag, reply_text)
+        return _build_response(reply_msg, bot_messages, analysis_responses, None, action_obj, ask_more_flag, reply_text, force_long)
 
-    reply = _make_reply(reply_text if reply_text is not None else "")
+    # Default final fallback: create reply respecting force_long
+    if force_long:
+        reply = Message(role="assistant", content=str(reply_text if reply_text is not None else ""))
+    else:
+        reply = _make_reply(reply_text if reply_text is not None else "")
 
     try:
         has_text_reply = bool(reply_text and str(reply_text).strip())
         ask_more_flag = True if (category == "fabric" and has_text_reply and not None and True) else False
     except Exception:
         ask_more_flag = False
-    return _build_response(reply, None, None, None, None, ask_more_flag, reply_text)
+    return _build_response(reply, None, None, None, None, ask_more_flag, reply_text, force_long)
