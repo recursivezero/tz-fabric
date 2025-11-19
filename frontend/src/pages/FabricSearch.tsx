@@ -21,6 +21,9 @@ export default function Search() {
     setBadImages(prev => new Set([...prev, src]));
   };
 
+  // keep original selected file for re-cropping
+  const originalFileRef = useRef<File | null>(null);
+
   // --- New: drawer + cropping UI state ---
   const [drawerOpen, setDrawerOpen] = useState(false);
   // cropping rectangle in displayed image coordinates
@@ -37,12 +40,17 @@ export default function Search() {
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     if (!f) return;
+    // preserve original file for re-cropping
+    originalFileRef.current = f;
     // set a temporary object URL for cropping preview
     const url = URL.createObjectURL(f);
     setRawImageUrl(url);
     setDrawerOpen(true);
     // reset crop rect to default (will be repositioned on image load)
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
+    // clear any previous notifications / bad images
+    setNotification(null);
+    setBadImages(new Set());
   };
 
   const dataUrlToFile = useCallback(async (dataUrl: string, filename = "query.png"): Promise<File> => {
@@ -121,8 +129,12 @@ export default function Search() {
   const handleSearch = async () => {
     if (!file) return;
     setNotification(null);
-    await runSearch(file);
-    setPage(1);
+    try {
+      await runSearch(file);
+      setPage(1);
+    } catch (err) {
+      setNotification({ message: "Search failed.", type: "error" });
+    }
   };
 
   const handleClear = () => {
@@ -133,9 +145,11 @@ export default function Search() {
     setBadImages(new Set());
     // revoke raw image
     if (rawImageUrl) {
-      URL.revokeObjectURL(rawImageUrl);
+      try { URL.revokeObjectURL(rawImageUrl); } catch { }
       setRawImageUrl(null);
     }
+    // revoke preview object URL handled by effect
+    originalFileRef.current = null;
   };
 
   const visibleResults = useMemo(
@@ -151,7 +165,13 @@ export default function Search() {
   const totalPages = Math.max(1, Math.ceil(visibleResults.length / pageSize));
   const fileid = useId();
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
-  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        try { URL.revokeObjectURL(previewUrl); } catch { }
+      }
+    };
+  }, [previewUrl]);
 
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
@@ -273,17 +293,15 @@ export default function Search() {
     setCropRect({ x, y, w: size, h: size });
   };
 
-  // Convert cropRect (in displayed px) to natural px and create cropped File
-  const makeCroppedFileAndSearch = async (): Promise<void> => {
+  // Create cropped File, set as query preview (file) but DO NOT run search automatically.
+  const makeCroppedPreview = async (): Promise<void> => {
     if (!rawImageUrl || !imgRef.current) return;
     const imgEl = imgRef.current;
-    // get displayed and natural sizes
     const dispW = imgEl.clientWidth;
     const dispH = imgEl.clientHeight;
     const natW = imgEl.naturalWidth;
     const natH = imgEl.naturalHeight;
 
-    // Map crop rect from displayed coords to natural coords
     const rx = cropRect.x / dispW;
     const ry = cropRect.y / dispH;
     const rw = cropRect.w / dispW;
@@ -294,7 +312,6 @@ export default function Search() {
     const sw = Math.max(1, Math.round(rw * natW));
     const sh = Math.max(1, Math.round(rh * natH));
 
-    // draw to canvas
     const canvas = document.createElement("canvas");
     canvas.width = sw;
     canvas.height = sh;
@@ -304,18 +321,21 @@ export default function Search() {
       return;
     }
 
-    // load image into an image object to be safe
     const imgObj = new Image();
     imgObj.crossOrigin = "anonymous";
     imgObj.src = rawImageUrl;
-    await new Promise((res, rej) => {
-      imgObj.onload = () => res(true);
-      imgObj.onerror = () => rej(new Error("load error"));
-    });
+    try {
+      await new Promise((res, rej) => {
+        imgObj.onload = () => res(true);
+        imgObj.onerror = () => rej(new Error("load error"));
+      });
+    } catch {
+      setNotification({ message: "Could not load image for cropping.", type: "error" });
+      return;
+    }
 
     ctx.drawImage(imgObj, sx, sy, sw, sh, 0, 0, sw, sh);
 
-    // create blob
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/jpeg", 0.92));
     if (!blob) {
       setNotification({ message: "Could not generate image blob.", type: "error" });
@@ -323,22 +343,19 @@ export default function Search() {
     }
     const croppedFile = new File([blob], `query-cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
 
-    // revoke previous object URL(s)
+    // revoke previous rawImageUrl but keep originalFileRef for re-cropping
     if (rawImageUrl) {
       try { URL.revokeObjectURL(rawImageUrl); } catch { }
       setRawImageUrl(null);
     }
 
-    // set query file and run search
+    // Set the cropped file as the query file (preview updates). DO NOT auto-run search.
     setFile(croppedFile);
     setDrawerOpen(false);
-    setNotification(null);
-    try {
-      await runSearch(croppedFile);
-      setPage(1);
-    } catch (err) {
-      setNotification({ message: "Search failed after cropping.", type: "error" });
-    }
+    setNotification({ message: "Preview ready — click Search when you're ready.", type: "success" });
+    // reset page and badImages (optional)
+    setPage(1);
+    setBadImages(new Set());
   };
 
   const cancelCropAndClose = () => {
@@ -406,6 +423,45 @@ export default function Search() {
         <div className="preview-box center-preview">
           <p className="section-title">Your Image</p>
           <img className="preview-img" src={previewUrl ?? ""} alt="query" />
+        </div>
+      )}
+      {file && !drawerOpen && (
+        <div className="preview-actions">
+          <button
+            className="btn primary"
+            onClick={handleSearch}
+            disabled={loading || !file}
+          >
+            🔎 Search
+          </button>
+
+          <button
+            className="btn"
+            onClick={() => {
+              const orig = originalFileRef.current;
+              if (!orig) {
+                setNotification({ message: "Original image not available to re-crop.", type: "error" });
+                return;
+              }
+              const url = URL.createObjectURL(orig);
+              setRawImageUrl(url);
+              setDrawerOpen(true);
+              setNotification(null);
+              setCropRect({ x: 20, y: 20, w: 160, h: 160 });
+            }}
+          >
+            ✂️ Re-crop
+          </button>
+
+          <button
+            className="btn secondary"
+            onClick={() => {
+              handleClear();
+              originalFileRef.current = null;
+            }}
+          >
+            🗑 Clear
+          </button>
         </div>
       )}
 
@@ -544,7 +600,7 @@ export default function Search() {
 
             <div className="drawer-actions">
               <button className="drawer-btn cancel" onClick={cancelCropAndClose}>✕ Cancel</button>
-              <button className="drawer-btn confirm" onClick={makeCroppedFileAndSearch}>✔ Use image & Search</button>
+              <button className="drawer-btn confirm" onClick={makeCroppedPreview}>✔ Preview Crop</button>
             </div>
           </div>
         </div>

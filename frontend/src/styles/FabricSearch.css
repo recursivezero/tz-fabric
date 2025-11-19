@@ -1,5 +1,4 @@
 .search-container {
-  max-width: 1100px;
   margin: 4px auto;
   font-weight: 700;
   overflow: hidden;
@@ -731,4 +730,9 @@ input[type="number"] {
   background: #0b0b0b;
   color: #fff;
   box-shadow: 0 10px 30px rgba(11, 11, 11, 0.12);
+}
+
+.preview-actions {
+  display: flex;
+  gap: 10px;
 }

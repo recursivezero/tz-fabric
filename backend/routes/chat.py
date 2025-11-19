@@ -1,3 +1,4 @@
+# chat.py  (FULL updated file)
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
@@ -437,29 +438,49 @@ def chat_endpoint(body: ChatRequest):
     if not last_user:
         raise HTTPException(status_code=400, detail="Need at least one user message.")
 
-    category = classify_message(last_user)
-
+    # ---------- NEW: handle YES-after-ask-more override ----------
     try:
         lower_last_user = (last_user or "").strip().lower()
-        assistant_msgs = [m for m in body.messages if m.role == "assistant" and isinstance(m.content, str)]
+
+        # Detect if the last assistant message asked "Would you like to know more?"
         ask_more_idx = None
-        for idx in range(len(body.messages)-1, -1, -1):
+        for idx in range(len(body.messages) - 1, -1, -1):
             m = body.messages[idx]
-            if m.role == "assistant" and isinstance(m.content, str) and "would you like to know more" in m.content.lower():
+            if (
+                m.role == "assistant"
+                and isinstance(m.content, str)
+                and "would you like to know more" in m.content.lower()
+            ):
                 ask_more_idx = idx
                 break
-        if ask_more_idx is not None:
+
+        # If user replied with a simple Yes after that prompt, upgrade to detailed fetch
+        if ask_more_idx is not None and lower_last_user in ["yes", "yeah", "y", "sure", "ok", "okay"]:
+            # Find the original fabric question (one user turn BEFORE the ask-more message)
             original_user = None
             for j in range(ask_more_idx - 1, -1, -1):
-                mm = body.messages[j]
-                if mm.role == "user" and isinstance(mm.content, str):
-                    original_user = mm.content.strip()
+                prev = body.messages[j]
+                if prev.role == "user" and isinstance(prev.content, str) and prev.content.strip():
+                    original_user = prev.content.strip()
                     break
-            if original_user and original_user.strip().lower() == lower_last_user:
-                last_user = "Please provide a detailed answer: " + (last_user or "")
+
+            if original_user:
+                # Force the backend to treat this as a detailed fabric request
+                forced = f"Please provide a detailed answer: {original_user}"
+                logger.info("YES-click detected. Forcing detailed question -> %s", forced)
+                last_user = forced
+                # classify as fabric to avoid refusal
+                category = "fabric"
+            else:
+                # No preceding user message found; keep as-is (will be classified normally)
                 category = classify_message(last_user)
-    except Exception:
-        pass
+        else:
+            # Not the special yes-case -> normal classification
+            category = classify_message(last_user)
+    except Exception as e:
+        logger.exception("Error in yes-flow override: %s", e)
+        # fallback to normal classification
+        category = classify_message(last_user)
 
     if category == "blocked":
       return _build_response(_make_reply(REFUSAL_MESSAGE), None, None, None, None, False, REFUSAL_MESSAGE)
