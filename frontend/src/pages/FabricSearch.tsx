@@ -503,12 +503,25 @@ export default function Search() {
             <div className="original-img-wrap">
               <img
                 className="original-img"
-                // prefer the true original object URL, fall back to raw image (if cropping session), then to the file preview
                 src={previewUrlOriginal || rawImageUrl || previewUrl || ""}
                 alt="original"
               />
 
               <div className="original-img-actions">
+                {/* Keep only the Clear button on the original image */}
+                <button
+                  className="btn secondary"
+                  onClick={() => {
+                    handleClear();
+                  }}
+                  aria-label="Clear original"
+                  title="Clear"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="preview-img-actions">
+                {/* Crop pill — opens drawer with original for re-cropping */}
                 <button
                   className="btn"
                   onClick={() => {
@@ -517,7 +530,6 @@ export default function Search() {
                       setNotification({ message: "Original image not available to re-crop.", type: "error" });
                       return;
                     }
-                    // create a fresh rawImageUrl from original file so cropping UI can load it
                     if (rawImageUrl) {
                       try { URL.revokeObjectURL(rawImageUrl); } catch { /* ignore */ }
                     }
@@ -526,17 +538,10 @@ export default function Search() {
                     setDrawerOpen(true);
                     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
                   }}
+                  aria-label="Recrop"
+                  title="Recrop"
                 >
-                  ✂️ Crop
-                </button>
-
-                <button
-                  className="btn secondary"
-                  onClick={() => {
-                    handleClear();
-                  }}
-                >
-                  ✕ Clear
+                  ✂️ Recrop
                 </button>
               </div>
             </div>
@@ -546,27 +551,32 @@ export default function Search() {
           {croppedPreviewUrl && (
             <div className="cropped-preview">
               <p className="section-title">Cropped Image</p>
+
               <div className="cropped-img-wrap">
-                <img className="cropped-img" src={croppedPreviewUrl} alt="cropped" />
+                <div className="preview-img-wrap">
+                  <img className="cropped-img preview-img" src={croppedPreviewUrl} alt="cropped" />
+                </div>
+              </div>
+
+              {/* place Search under the cropped image so it centers under it */}
+              <div className="preview-actions-below">
+                <div className="search-btn-wrapper">
+                  <button
+                    className="btn primary big-search-btn"
+                    onClick={handleSearch}
+                    disabled={loading || !file}
+                  >
+                    🔎 Search
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
+
         </div>
       )}
 
-
-      {file && !drawerOpen && (
-        <div className="search-btn-wrapper">
-          <button
-            className="btn primary big-search-btn"
-            onClick={handleSearch}
-            disabled={loading || !file}
-          >
-            🔎 Search
-          </button>
-        </div>
-      )}
       {notification && <Notification message={notification.message} type={notification.type} />}
       {loading && <Loader />}
       {error && <p className="search-error">{error}</p>}
@@ -700,7 +710,7 @@ export default function Search() {
 
             <div className="drawer-actions">
               <button className="drawer-btn cancel" onClick={cancelCropAndClose}>✕ Cancel</button>
-              <button className="drawer-btn confirm" onClick={makeCroppedPreview}>✔ Preview Crop</button>
+              <button className="drawer-btn confirm" onClick={makeCroppedPreview}>✔ Crop</button>
             </div>
           </div>
         </div>

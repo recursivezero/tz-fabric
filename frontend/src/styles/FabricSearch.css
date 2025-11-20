@@ -193,7 +193,7 @@
 }
 
 .search-container .preview-img {
-  height: 200px;
+  height: 315px;
   width: auto;
   border-radius: 12px;
   display: block;
@@ -205,6 +205,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.big-search-btn {
+  background-color: blue;
+  color: white;
 }
 
 .pagination-controls,
@@ -822,7 +827,6 @@ input[type="number"] {
 .preview-img {
   display: block;
   width: 100%;
-  height: auto;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
   object-fit: contain;
@@ -928,7 +932,6 @@ input[type="number"] {
 .preview-img {
   display: block;
   width: 100%;
-  height: auto;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
   object-fit: contain;
@@ -1030,7 +1033,6 @@ input[type="number"] {
 .preview-img {
   display: block !important;
   width: 100% !important;
-  height: auto !important;
   border-radius: 12px !important;
   object-fit: contain !important;
 }
@@ -1138,7 +1140,6 @@ input[type="number"] {
 /* Make the preview image larger and square-ish */
 .preview-img {
   width: 100% !important;
-  height: var(--preview-size) !important;
   object-fit: cover !important;
   /* keeps aspect and fills box */
   border-radius: 12px !important;
@@ -1208,7 +1209,10 @@ input[type="number"] {
 
 .btn.secondary {
   background: crimson;
+  position: absolute;
+  right: 0;
 }
+
 
 .search-btn-wrapper {
   width: 100%;
