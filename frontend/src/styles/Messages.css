@@ -413,3 +413,129 @@
   min-width: 44px;
   /* optional: ensure tappable on mobile */
 }
+
+/* ----- Put this at the END of your CSS file ----- */
+
+/* ensure the bubble is a positioned container */
+.assistant-block--with-copy {
+  position: relative !important;
+  /* keep grid layout for content + controls if present */
+  display: block !important;
+  /* prefer block so absolute controls don't affect layout */
+  padding: 12px 14px 44px 14px !important;
+  /* leave room at bottom for controls */
+  box-sizing: border-box !important;
+}
+
+/* make controls sit absolutely at bottom-right of the bubble and always visible */
+.assistant-block--with-copy .assistant-block__controls {
+  position: absolute !important;
+  right: 10px !important;
+  bottom: 10px !important;
+  top: auto !important;
+  /* ignore top placement rules */
+  display: flex !important;
+  gap: 6px !important;
+  align-items: center !important;
+  z-index: 5 !important;
+  opacity: 1 !important;
+  /* always visible */
+  transform: none !important;
+  /* no translate/hidden movement */
+  pointer-events: auto !important;
+  /* ensure buttons clickable */
+  background: transparent !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* ensure the copy button is compact and matches tappable target size */
+.assistant-block--with-copy .copy-btn {
+  min-width: 44px !important;
+  height: 36px !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  border-radius: 999px !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Remove earlier hover-triggered visibility (override any selector targeting .message-wrapper:hover .assistant-block__controls) */
+.message-wrapper:hover .assistant-block__controls,
+.message-wrapper:focus-within .assistant-block__controls,
+.assistant-block--with-copy:hover .assistant-block__controls,
+.assistant-block--with-copy:focus-within .assistant-block__controls {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* If the bubble contains long code blocks, keep controls visible but avoid overlap: slightly nudge if necessary */
+@media (max-width: 640px) {
+  .assistant-block--with-copy {
+    padding-bottom: 48px !important;
+  }
+
+  .assistant-block--with-copy .copy-btn {
+    min-width: 40px !important;
+    height: 34px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Optional: Differ slightly for right-aligned bubbles (user messages) if you ever add copy there */
+.msg-row.right .assistant-block--with-copy .assistant-block__controls,
+.msg-row.right .assistant-block--with-copy .copy-btn {
+  /* no-op by default - keeps same look; change if you want right-speech variants */
+}
+
+/* Reveal copy button only after typing completes.
+   Place at the END of the CSS file so it overrides earlier hover rules. */
+
+/* Ensure bubble keeps bottom padding so the controls won't shift content */
+.assistant-block--with-copy {
+  padding-bottom: 48px !important;
+  /* reserve space for controls */
+  box-sizing: border-box !important;
+}
+
+/* Default: controls hidden while typing */
+.msg-row[data-typing="true"] .assistant-block__controls {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  /* not clickable while hidden */
+  transition: opacity 220ms cubic-bezier(.2, .9, .2, 1), transform 220ms ease;
+}
+
+/* When typing finished: reveal with a subtle pop */
+.msg-row[data-typing="false"] .assistant-block__controls {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition: opacity 260ms cubic-bezier(.16, .8, .24, 1), transform 220ms cubic-bezier(.2, .9, .2, 1);
+}
+
+/* Keep copy button style stable (no layout shift) */
+.assistant-block--with-copy .copy-btn {
+  min-width: 44px;
+  height: 36px;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* If the user manually stops typing via the global stop event,
+   setExternallyStopped becomes true and isTyping becomes false —
+   the above selector will allow the button to appear immediately. */
+
+/* Small screens: reduce reserved bottom padding */
+@media (max-width: 640px) {
+  .assistant-block--with-copy {
+    padding-bottom: 44px !important;
+  }
+
+  .assistant-block__controls {
+    right: 8px !important;
+    bottom: 8px !important;
+  }
+}
