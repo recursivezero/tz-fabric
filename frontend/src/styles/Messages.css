@@ -350,3 +350,66 @@
     padding-top: 22px;
   }
 }
+
+/* Layout for bubbles that have inline controls:
+   two columns: content | controls (so controls never push content) */
+.assistant-block--with-copy {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  /* content takes available space, controls take minimal width */
+  gap: 8px;
+  align-items: start;
+  position: relative;
+  /* keep if you rely on absolute positioning elsewhere */
+  padding: 10px 12px;
+  /* unify inner spacing (optional, tweak to taste) */
+  box-sizing: border-box;
+}
+
+/* control container (top-right area) — not absolute so it doesn't affect layout height */
+.assistant-block__controls {
+  display: flex;
+  gap: 6px;
+  align-items: start;
+  /* keep controls aligned to top of content */
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  /* prevent controls from wrapping to next line */
+  white-space: nowrap;
+}
+
+/* show controls when hovering the bubble itself (works even when .message-wrapper is not present) */
+.assistant-block--with-copy:hover .assistant-block__controls,
+.assistant-block--with-copy:focus-within .assistant-block__controls,
+.message-wrapper:hover .assistant-block__controls,
+.message-wrapper:focus-within .assistant-block__controls {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ensure content doesn't reserve extra top-padding for controls */
+.assistant-block--with-copy .assistant-content {
+  padding-top: 0;
+}
+
+/* make sure copy button text never wraps and stays compact */
+.copy-btn {
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: #111;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  /* key: prevent wrap */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  /* optional: ensure tappable on mobile */
+}
