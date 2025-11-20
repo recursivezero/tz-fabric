@@ -28,7 +28,6 @@ llm_long = ChatGroq(
 
 
 def _normalize_used_ids(uids) -> list[int]:
-    """Accept ['1','2','r3', 4] and normalize to [1,2,3,4]."""
     if not uids:
         return []
     out = []
@@ -110,15 +109,12 @@ def router_fn(user_text: str) -> Dict[str, Any]:
     t_raw = user_text.strip()
     t = t_raw.lower()
 
-    # Detect URLs
     img_url = IMAGE_URL_RE.search(t_raw)
     aud_url = AUDIO_URL_RE.search(t_raw)
 
-    # Detect explicit server paths
     img_path = re.search(r"\bimage_path\s*=\s*(\S+)", t_raw)
     aud_path = re.search(r"\baudio_path\s*=\s*(\S+)", t_raw)
 
-    # Optional filename
     m_fname = re.search(r"\bfilename\s*=\s*([^\s]+)", t_raw)
     fname = m_fname.group(1) if m_fname else None
 
@@ -138,7 +134,6 @@ def router_fn(user_text: str) -> Dict[str, Any]:
             params["image_url"] = m_img.group(1)
         m_mode = re.search(r"\bmode[:= ](short|long|detailed|full)\b", t, re.I)
         if m_mode:
-            # normalize to short/long
             mode_val = m_mode.group(1).lower()
             params["mode"] = "long" if mode_val in ("long", "detailed", "full") else "short"
         if re.search(r"\bfresh\s*=\s*true\b", t, re.I):
@@ -200,22 +195,50 @@ SYSTEM_PROMPT = (
 )
 
 
+##########################################################
+#   FIX: CLEAN HISTORY BEFORE SENDING TO THE LLM
+##########################################################
+
+def _clean_history_message(m):
+    """
+    Remove tool return representations such as CallToolResult(...),
+    TextContent(...), or dict-like python repr from LLM context.
+    """
+    try:
+        role = m.get("role")
+        content = m.get("content")
+
+        if not isinstance(content, str):
+            return None
+
+        lower = content.lower()
+
+        # Drop ANY assistant message containing tool output garbage
+        if "calltoolresult(" in lower:
+            return None
+        if "textcontent(" in lower:
+            return None
+        if "{'_raw':" in lower:
+            return None
+        if "redirect_to_media_analysis" in lower and "{" in content:
+            return None
+
+        return {"role": role, "content": content}
+    except Exception:
+        return None
+
+
+##########################################################
+
+
+
 def agent_fallback(params: Dict[str, Any]) -> str:
-    """
-    params expected keys:
-      - text: user input
-      - history: optional list of prior messages
-      - mode: optional 'short' or 'long' (default short)
-    """
     user_text: str = params.get("text", "")
     history: List[Dict[str, str]] = params.get("history") or []
     mode = str(params.get("mode", "short") or "short").lower()
 
-    # choose llm based on mode
     chosen_llm = llm_long if mode.startswith("long") else llm_short
 
-    # Build system prompt: if mode is long, explicitly PREPEND a strong override that
-    # tells the model to IGNORE previous brevity instructions for this request.
     system_prompt = SYSTEM_PROMPT
     if mode.startswith("long"):
         override = (
@@ -223,25 +246,30 @@ def agent_fallback(params: Dict[str, Any]) -> str:
             "For the user request that follows, provide a detailed, well-structured, multi-paragraph answer. "
             "You may include headings, bullets, examples, and explanations. Do NOT limit to 1-2 sentences.\n\n"
         )
-        # Prepend the override so it has priority in system message
         system_prompt = override + system_prompt
         logger.info("agent_fallback: mode=long -> prepended override and selecting llm_long")
 
-    # Keep only last ~6 turns to avoid long prompts
     clipped = history[-6:] if isinstance(history, list) else []
-    messages = [{"role": "system", "content": system_prompt}]
+
+    ### FIX: CLEAN HISTORY BEFORE SENDING TO THE MODEL
+    cleaned_history = []
     for m in clipped:
-        r = m.get("role")
-        c = m.get("content")
-        if r in ("user", "assistant", "system") and isinstance(c, str):
-            messages.append({"role": r, "content": c})
+        safe = _clean_history_message(m)
+        if safe:
+            cleaned_history.append(safe)
+
+    messages = [{"role": "system", "content": system_prompt}]
+    messages.extend(cleaned_history)
     messages.append({"role": "user", "content": user_text})
 
-    # DEBUG: log which LLM and first 200 chars of system prompt sent
     try:
-        logger.info("AGENT DEBUG -> chosen_llm=%s system_prompt_preview=%s", "llm_long" if mode.startswith("long") else "llm_short", system_prompt[:200])
+        logger.info(
+            "AGENT DEBUG -> chosen_llm=%s system_prompt_preview=%s",
+            "llm_long" if mode.startswith("long") else "llm_short",
+            system_prompt[:200]
+        )
     except Exception:
-        logger.exception("AGENT DEBUG -> failed to log debug info")
+        logger.exception("AGENT DEBUG -> logging error")
 
     try:
         resp = chosen_llm.invoke(messages)
@@ -279,7 +307,6 @@ def _agent_graph_callable(payload: Union[str, Dict[str, Any]]) -> Any:
             except Exception as e:
                 return {"error": f"tool_call_failed: {e}", "trace": traceback.format_exc()}
 
-        # fallback: conversational agent (pass mode to agent_fallback)
         return agent_fallback({"text": user_text, "history": history or [], "mode": mode})
 
     except Exception as e:

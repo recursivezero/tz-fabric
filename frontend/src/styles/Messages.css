@@ -340,13 +340,11 @@
   color: #166534;
 }
 
-/* make sure the assistant content doesn't overlap controls */
 .assistant-block .assistant-content {
   padding-top: 28px;
   /* room for the top-right controls */
 }
 
-/* tweak padding on very small bubbles */
 @media (max-width: 420px) {
   .assistant-block .assistant-content {
     padding-top: 22px;

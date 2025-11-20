@@ -1,4 +1,4 @@
-# chat.py  (FULL updated file with improved yes-detection heuristic + debug logs)
+# chat.py  (FULL replacement) — preserves existing features; stronger sanitizer + history cleaner
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
@@ -7,11 +7,24 @@ import json
 import logging
 import difflib
 import re as _re
+import traceback
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
 
-from agent.graph import agent_graph, SYSTEM_PROMPT
+# Attempt to import agent_graph; if import fails we still keep file valid
+try:
+    from agent.graph import agent_graph, SYSTEM_PROMPT
+except Exception:
+    agent_graph = None
+    SYSTEM_PROMPT = (
+        "You are a Fabric Assistant.\n"
+        "- Answer questions about fabrics, textiles, and how to use this app.\n"
+        "- If unrelated to fabrics or this app, politely refuse.\n"
+        "- Never invent tool names. Only reply conversationally here.\n"
+        "- IMPORTANT: Keep replies very short and concise (preferably 1–2 short sentences).\n"
+    )
+    logger.exception("Failed to import agent.graph at startup — agent_graph set to None. Ensure agent.graph is importable.")
 
 Role = Literal["user", "assistant", "system"]
 
@@ -26,7 +39,6 @@ class ChatRequest(BaseModel):
 
 
 class Action(BaseModel):
-    # include 'search' as well
     type: Literal["redirect_to_analysis", "redirect_to_media_analysis", "search"]
     params: Dict[str, Any]
 
@@ -38,7 +50,7 @@ class ChatResponse(BaseModel):
     analysis_responses: Optional[List[Dict[str, Any]]] = None
     results: Optional[List[Dict[str, Any]]] = None
     ask_more: Optional[bool] = None
-    ask_more_prompt: Optional[str] = None   
+    ask_more_prompt: Optional[str] = None
 
 
 ALLOWED_HINTS = [
@@ -58,7 +70,6 @@ CHITCHAT_HINTS = [
 ]
 
 REFUSAL_MESSAGE = "Sorry — I can only answer fabric/textile questions. Please try a fabric-related question."
-
 CHITCHAT_RESPONSE = "Hi — I can help with fabric/textile questions or how to use this app. Ask about GSM, knit vs woven, or upload an image."
 
 
@@ -66,17 +77,12 @@ def _fuzzy_contains(text: str, hints: List[str], cutoff: float = 0.72) -> bool:
     if not text:
         return False
     t = text.lower()
-
-    # fast exact substring
     for h in hints:
         if h in t:
             return True
-
-    # tokenize words (alpha tokens)
     tokens = re.findall(r"[a-zA-Z]+", t)
     if not tokens:
         tokens = [t]
-
     for tok in tokens:
         for h in hints:
             if " " in h:
@@ -89,52 +95,33 @@ def _fuzzy_contains(text: str, hints: List[str], cutoff: float = 0.72) -> bool:
             else:
                 if difflib.SequenceMatcher(None, tok, h).ratio() >= cutoff:
                     return True
-
-    # compare full text to hint (covers multi-word queries)
     for h in hints:
         if difflib.SequenceMatcher(None, t, h).ratio() >= cutoff:
             return True
-
     return False
 
 
-# ---- New helper: conservative typo normalization ----
 def _normalize_for_typos(text: str, hints: List[str], min_ratio: float = 0.80) -> str:
-    """
-    Replace individual alpha tokens in `text` with the closest matching hint word
-    if the similarity ratio is >= min_ratio. Returns a normalized text string.
-    Conservative: only replaces tokens when there's a confident single-word match.
-    """
     if not text:
         return text
-    # build single-word hint set for matching (split multi-word hints into parts too)
     single_words = set()
     for h in hints:
         for part in h.split():
             single_words.add(part.lower())
     single_words = sorted(single_words)
-
     tokens = re.findall(r"[a-zA-Z]+", text)
     if not tokens:
         return text
-
     normalized = text
-    # For each token, try to find a close hint match
-    for tok in set(tokens):  # unique tokens to reduce work
+    for tok in set(tokens):
         lower_tok = tok.lower()
-        # exact match: skip
         if lower_tok in single_words:
             continue
-        # try close matches
         matches = difflib.get_close_matches(lower_tok, single_words, n=1, cutoff=min_ratio)
         if matches:
             best = matches[0]
-            # Replace whole-word occurrences of the token in the original text (case-insensitive)
             normalized = re.sub(rf'\b{re.escape(tok)}\b', best, normalized, flags=re.IGNORECASE)
     return normalized
-# ----------------------------------------------------
-
-
 
 
 def classify_message(user_text: str) -> str:
@@ -142,31 +129,20 @@ def classify_message(user_text: str) -> str:
     if not raw:
         logger.debug("classify_message: empty input -> blocked")
         return "blocked"
-
     all_hints = ALLOWED_HINTS + CHITCHAT_HINTS
-
-    # 1) Try conservative typo-normalization (keeps original if it fails)
     try:
         normalized = _normalize_for_typos(raw, all_hints, min_ratio=0.80)
     except Exception:
         normalized = raw
 
-    # 2) Strip wrappers like "Please provide a detailed answer: ..." and similar
     def _strip_detailed_wrappers_local(text: str) -> str:
         s = (text or "").strip()
         if not s:
             return s
-        # Leading wrappers
-        s = re.sub(
-            r'(?i)^\s*(please\s+(provide|give|share)\s+(me\s+)?(a\s+)?|(please\s+)?)(detailed|long|full|comprehensive|in[-\s]?depth|extended|detailed answer|long answer|detailed reply|detailed response)\b[:\-\s]*',
-            '',
-            s,
-        ).strip()
+        s = re.sub(r'(?i)^\s*(please\s+(provide|give|share)\s+(me\s+)?(a\s+)?|(please\s+)?)(detailed|long|full|comprehensive|in[-\s]?depth|extended|detailed answer|long answer|detailed reply|detailed response)\b[:\-\s]*', '', s).strip()
         s = re.sub(r'(?i)^\s*(detailed|long|full|in[-\s]?depth)\s*[:\-\s]+', '', s).strip()
-        # Trailing wrappers
         s = re.sub(r'(?i)\s*\(\s*(detailed|long|full|in[-\s]?depth)\s*\)\s*$', '', s).strip()
         s = re.sub(r'(?i)\s*[-–—]\s*(detailed|long|full|in[-\s]?depth)\s*$', '', s).strip()
-        # simple trailing words
         s = re.sub(r'(?i)\s*\b(detailed|long)\b\s*$', '', s).strip()
         return s or text
 
@@ -175,7 +151,6 @@ def classify_message(user_text: str) -> str:
     except Exception:
         cleaned = normalized
 
-    # 3) Prepare candidate strings to test (prefer cleaned, then normalized, then raw)
     candidates = []
     if isinstance(cleaned, str) and cleaned.strip():
         candidates.append(cleaned.strip().lower())
@@ -184,7 +159,6 @@ def classify_message(user_text: str) -> str:
     if raw.strip().lower() not in candidates:
         candidates.append(raw.strip().lower())
 
-    # 4) Core fuzzy check for fabric (try each candidate)
     for cand in candidates:
         try:
             if _fuzzy_contains(cand, ALLOWED_HINTS, cutoff=0.72):
@@ -193,7 +167,6 @@ def classify_message(user_text: str) -> str:
         except Exception as e:
             logger.exception("classify_message: _fuzzy_contains error on candidate=%r: %s", cand[:200], e)
 
-    # 5) Chitchat check (slightly stricter)
     for cand in candidates:
         try:
             if _fuzzy_contains(cand, CHITCHAT_HINTS, cutoff=0.82):
@@ -202,21 +175,16 @@ def classify_message(user_text: str) -> str:
         except Exception as e:
             logger.exception("classify_message: chitchat fuzzy error on candidate=%r: %s", cand[:200], e)
 
-    # 6) Last-resort token-level fuzzy matching: check tokens against single-word hints
     try:
-        # build single-word hint list
         single_words = set()
         for h in ALLOWED_HINTS:
             for part in h.split():
                 single_words.add(part.lower())
-
         tokens = re.findall(r"[a-zA-Z]+", raw.lower())
         for tok in tokens:
-            # exact
             if tok in single_words:
                 logger.debug("classify_message: token exact match -> fabric token=%r", tok)
                 return "fabric"
-            # fuzzy token match (lower threshold)
             for hw in single_words:
                 if difflib.SequenceMatcher(None, tok, hw).ratio() >= 0.78:
                     logger.debug("classify_message: token fuzzy match -> fabric tok=%r hint=%r ratio>=0.78", tok, hw)
@@ -224,7 +192,6 @@ def classify_message(user_text: str) -> str:
     except Exception as e:
         logger.exception("classify_message: token-level check failed: %s", e)
 
-    # 7) Extra heuristic: try to extract text after colon if message was a wrapper
     try:
         m = re.search(r'[:\-]\s*(.+)$', raw)
         if m:
@@ -292,7 +259,6 @@ def _to_jsonable(v):
 def _extract_embedded_payload(s: str) -> Optional[Dict[str, Any]]:
     if not s:
         return None
-
     m = re.search(r"```json\s*([\s\S]*?)```", s, re.IGNORECASE)
     if m:
         try:
@@ -301,7 +267,6 @@ def _extract_embedded_payload(s: str) -> Optional[Dict[str, Any]]:
                 return obj
         except Exception:
             pass
-
     m = re.search(r"text=(?:'|\")({[\s\S]*})(?:'|\")", s)
     if m:
         candidate = m.group(1).replace(r"\n", "\n").replace(r"\"", "\"").replace(r"\t", "\t")
@@ -311,7 +276,6 @@ def _extract_embedded_payload(s: str) -> Optional[Dict[str, Any]]:
                 return obj
         except Exception:
             pass
-
     i, j = s.find("{"), s.rfind("}")
     if i >= 0 and j > i:
         candidate = s[i:j + 1].replace(r"\n", "\n").replace(r"\"", "\"").replace(r"\t", "\t")
@@ -321,29 +285,25 @@ def _extract_embedded_payload(s: str) -> Optional[Dict[str, Any]]:
                 return obj
         except Exception:
             pass
-
     return None
 
-# ---- Replace/enforce short replies ----
+
 def _enforce_short_reply(s: str) -> str:
     if not s:
         return s
     s = s.strip()
-    # split into sentences (heuristic) and keep only the first sentence
     sentences = _re.split(r'(?<=[.!?])\s+', s)
     if sentences:
         out = sentences[0].strip()
     else:
         out = s
-    # enforce much shorter maximum
     max_chars = 200
     if len(out) > max_chars:
         out = out[:max_chars].rsplit(' ', 1)[0] + '...'
-    # final safety: if it's empty return exact refusal fallback
     if not out:
         return REFUSAL_MESSAGE
     return out.strip()
-# ----------------------------------------------------
+
 
 def _make_reply(text: str) -> Message:
     short = _enforce_short_reply(str(text or ""))
@@ -351,6 +311,203 @@ def _make_reply(text: str) -> Message:
         short = REFUSAL_MESSAGE
     return Message(role="assistant", content=short)
 
+
+# === History cleaner: remove previously stored broken assistant messages ===
+def _clean_history(history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Remove any assistant messages that contain raw tool reprs like
+    CallToolResult(...) or TextContent(...) or dictionary wrappers like {'_raw': ...}
+    This prevents old broken messages from re-entering the pipeline.
+    """
+    cleaned = []
+    for m in history:
+        if m.get("role") == "assistant":
+            c = str(m.get("content", "") or "")
+            if "CallToolResult(" in c or "TextContent(" in c or "{'_raw':" in c or '"_raw":' in c:
+                # Skip corrupted assistant message entirely
+                logger.debug("Dropping corrupted assistant history message preview: %s", (c[:200] + ("..." if len(c) > 200 else "")))
+                continue
+        cleaned.append(m)
+    return cleaned
+
+
+# === Unwrap tool outputs BEFORE sanitization ===
+def _unwrap_tool_result(obj: Any):
+    """Unwrap CallToolResult/TextContent wrappers into clean dicts."""
+    try:
+        # Case 1: Direct CallToolResult(content=[TextContent(text=...)])
+        if hasattr(obj, "content"):
+            content = obj.content
+            if isinstance(content, list) and len(content) > 0:
+                first = content[0]
+                if hasattr(first, "text"):
+                    raw = first.text
+                    try:
+                        return json.loads(raw)
+                    except:
+                        return raw
+
+        # Case 2: Python repr("{'_raw': CallToolResult(...) }")
+        s = str(obj)
+        if "{'_raw':" in s or "CallToolResult(" in s:
+            # extract the first JSON-like {...}
+            m = re.search(r"{[\s\S]*}", s)
+            if m:
+                try:
+                    return json.loads(m.group(0))
+                except:
+                    return m.group(0)
+
+        return obj
+    except:
+        return obj
+
+
+# === Robust sanitizer (improved) ===
+def _sanitize_agent_output_for_frontend(out: Any) -> Dict[str, Any]:
+    """
+    Convert agent output (dict or non-dict) into a clean dict with:
+      - bot_messages: list[str]
+      - reply: {"role":"assistant","content": str}
+      - action/analysis_responses/results when parsable from embedded JSON
+    """
+    def _string_to_friendly(s: str) -> str:
+        if not s:
+            return ""
+        s = s.strip()
+        # try extract explicit JSON payload
+        payload = _extract_embedded_payload(s)
+        if isinstance(payload, dict):
+            for k in ("display_text", "text", "message", "reply", "response"):
+                if isinstance(payload.get(k), str) and payload.get(k).strip():
+                    return payload.get(k).strip()
+            return f"[tool result: {', '.join(sorted(payload.keys()))}]"
+        # TextContent(...) pattern
+        m_tc = re.search(r"TextContent\([^)]*text\s*=\s*(['\"])(?P<t>[\s\S]*?)\1", s, flags=re.IGNORECASE)
+        if m_tc and m_tc.group("t"):
+            inner = m_tc.group("t")
+            try:
+                inner_obj = json.loads(inner)
+                for k in ("display_text", "text", "message", "reply", "response"):
+                    if isinstance(inner_obj.get(k), str) and inner_obj.get(k).strip():
+                        return inner_obj.get(k).strip()
+                return f"[tool result: {', '.join(sorted(inner_obj.keys()))}]"
+            except Exception:
+                return inner.strip()[:1200]
+        # final try: if looks like JSON blob, parse and pick best field
+        if "{" in s and "}" in s:
+            try:
+                i = s.find("{"); j = s.rfind("}")
+                candidate = s[i:j+1]
+                obj = json.loads(candidate)
+                if isinstance(obj, dict):
+                    for k in ("display_text", "text", "message", "reply", "response"):
+                        if isinstance(obj.get(k), str) and obj.get(k).strip():
+                            return obj.get(k).strip()
+                    return f"[tool result: {', '.join(sorted(obj.keys()))}]"
+            except Exception:
+                pass
+        # fallback remove typical wrappers and truncate
+        stripped = re.sub(r"^.*?TextContent\(|^.*?CallToolResult\(|\)$", "", s).strip()
+        if not stripped:
+            stripped = s
+        return (stripped[:1200] + "...") if len(stripped) > 1200 else stripped
+
+    try:
+        # If out is not a dict, parse its string repr aggressively and return a friendly dict
+        if not isinstance(out, dict):
+            try:
+                raw_str = out if isinstance(out, str) else str(out)
+            except Exception:
+                raw_str = repr(out)
+            # first: if there's JSON embedded that decodes to dict, return that dict directly
+            payload = _extract_embedded_payload(raw_str)
+            if isinstance(payload, dict):
+                clean = dict(payload)
+                if "bot_messages" in clean and isinstance(clean["bot_messages"], str):
+                    clean["bot_messages"] = [clean["bot_messages"]]
+                if "reply" in clean and isinstance(clean["reply"], str):
+                    clean["reply"] = {"role": "assistant", "content": clean["reply"]}
+                if "bot_messages" not in clean:
+                    clean["bot_messages"] = [_string_to_friendly(raw_str)]
+                if "reply" not in clean:
+                    friendly = _string_to_friendly(raw_str)
+                    clean["reply"] = {"role": "assistant", "content": friendly}
+                return clean
+
+            # otherwise build a minimal friendly dict
+            friendly = _string_to_friendly(raw_str)
+            return {
+                "bot_messages": [friendly],
+                "reply": {"role": "assistant", "content": friendly},
+                "analysis_responses": None,
+                "results": None,
+                "action": None,
+            }
+
+        # If out is dict: shallow-copy and sanitize fields
+        clean = dict(out)
+        # bot_messages => list of friendly strings
+        bm = clean.get("bot_messages")
+        if bm and isinstance(bm, (list, tuple)):
+            nm = []
+            for itm in bm:
+                try:
+                    s = itm if isinstance(itm, str) else str(itm)
+                except Exception:
+                    s = repr(itm)
+                nm.append(_string_to_friendly(s))
+            clean["bot_messages"] = nm
+        elif isinstance(bm, str):
+            clean["bot_messages"] = [_string_to_friendly(bm)]
+
+        # reply normalization
+        rep = clean.get("reply")
+        if isinstance(rep, dict) and "content" in rep:
+            try:
+                rstr = rep.get("content") if isinstance(rep.get("content"), str) else str(rep.get("content"))
+            except Exception:
+                rstr = repr(rep)
+            clean["reply"] = {"role": "assistant", "content": _string_to_friendly(rstr)}
+        elif isinstance(rep, str):
+            clean["reply"] = {"role": "assistant", "content": _string_to_friendly(rep)}
+        else:
+            if "reply" not in clean:
+                if clean.get("bot_messages") and isinstance(clean.get("bot_messages"), list):
+                    clean["reply"] = {"role": "assistant", "content": clean["bot_messages"][0]}
+                else:
+                    clean["reply"] = {"role": "assistant", "content": ""}
+
+        # analysis_responses -> ensure json-friendly
+        ars = clean.get("analysis_responses")
+        if ars and isinstance(ars, (list, tuple)):
+            new_ars = []
+            for a in ars:
+                if isinstance(a, dict):
+                    new_ars.append(a)
+                else:
+                    try:
+                        new_ars.append({"text": a if isinstance(a, str) else str(a)})
+                    except Exception:
+                        new_ars.append({"text": "[non-displayable]"})
+            clean["analysis_responses"] = new_ars
+
+        return clean
+
+    except Exception:
+        logger.exception("sanitize failure (fallback)")
+        try:
+            s = str(out)
+        except Exception:
+            s = "[unserializable agent output]"
+        return {
+            "bot_messages": [s[:1200] + ("..." if len(s) > 1200 else "")],
+            "reply": {"role": "assistant", "content": s[:1200] + ("..." if len(s) > 1200 else "")},
+            "analysis_responses": None,
+            "results": None,
+            "action": None,
+        }
+# === end sanitizer ===
 
 
 def _build_response(
@@ -364,28 +521,16 @@ def _build_response(
     force_long: bool = False,
 ):
     try:
-        # Human-friendly prompt text exposed to the frontend
         ask_more_prompt = "Would you like to know more about this?" if ask_more_flag else None
-
-        # Start from reply_msg.content (fallback to reply_text)
         content = (getattr(reply_msg, "content", "") or "").strip()
         if not content:
             content = (reply_text or "").strip() or "..."
-
-        # If backend intends to ask for more, append the sentence only if it's not already present.
         if ask_more_flag and not force_long:
-          low = content.lower()
-          if (
-            "would you like to know more" not in low
-            and "want to know more" not in low
-            and "would you like more" not in low
-          ):
-            content = content + "\n\nWould you like to know more?"
-
-        # Build the final Message object (ensures pydantic validation)
+            low = content.lower()
+            if ("would you like to know more" not in low and "want to know more" not in low and "would you like more" not in low):
+                content = content + "\n\nWould you like to know more?"
         final_reply = Message(role="assistant", content=content)
 
-        # Normalize bot_messages into a list of strings the frontend can use.
         bot_messages_list: List[str] = []
         if bot_messages and isinstance(bot_messages, (list, tuple)) and len(bot_messages) > 0:
             for b in bot_messages:
@@ -394,21 +539,12 @@ def _build_response(
                 except Exception:
                     bot_messages_list.append(json.dumps(b, default=str))
         else:
-            # Fallback: present the reply text as the only bot message
             bot_messages_list = [reply_text or content]
 
-        # Ensure the first visible bot_message equals the final visible content (with appended prompt)
-        # This ensures frontend sees the same text for quick-reply logic and visual display.
         bot_messages_list[0] = content
-
         bot_messages_json = _to_jsonable(bot_messages_list)
 
-        logger.info(
-            "CHAT_RESPONSE ready: ask_more=%s ask_more_prompt=%s reply_preview=%s",
-            ask_more_flag,
-            ask_more_prompt,
-            (content[:240] + ("..." if len(content) > 240 else "")),
-        )
+        logger.info("CHAT_RESPONSE ready: ask_more=%s ask_more_prompt=%s reply_preview=%s", ask_more_flag, ask_more_prompt, (content[:240] + ("..." if len(content) > 240 else "")))
 
         return ChatResponse(
             reply=final_reply,
@@ -419,11 +555,11 @@ def _build_response(
             ask_more=ask_more_flag,
             ask_more_prompt=ask_more_prompt,
         )
-
     except Exception as e:
         logger.exception("Error in _build_response: %s", e)
         safe_reply = Message(role="assistant", content="Sorry — something went wrong preparing the reply.")
         return ChatResponse(reply=safe_reply, ask_more=False)
+
 
 @router.post("/chat", response_model=ChatResponse)
 def chat_endpoint(body: ChatRequest):
@@ -438,24 +574,15 @@ def chat_endpoint(body: ChatRequest):
     if not last_user:
         raise HTTPException(status_code=400, detail="Need at least one user message.")
 
-    # ---------- NEW: handle YES-after-ask-more override (improved heuristic) ----------
     force_long = False
     try:
         lower_last_user = (last_user or "").strip().lower()
-
-        # Detect if the last assistant message asked "Would you like to know more?"
         ask_more_idx = None
         for idx in range(len(body.messages) - 1, -1, -1):
             m = body.messages[idx]
-            if (
-                m.role == "assistant"
-                and isinstance(m.content, str)
-                and "would you like to know more" in m.content.lower()
-            ):
+            if (m.role == "assistant" and isinstance(m.content, str) and "would you like to know more" in m.content.lower()):
                 ask_more_idx = idx
                 break
-
-        # Helper: extract original user's question before the ask_more assistant message
         original_user = None
         if ask_more_idx is not None:
             for j in range(ask_more_idx - 1, -1, -1):
@@ -463,8 +590,6 @@ def chat_endpoint(body: ChatRequest):
                 if prev.role == "user" and isinstance(prev.content, str) and prev.content.strip():
                     original_user = prev.content.strip()
                     break
-
-        # 1) If user replied with an explicit simple Yes/OK/etc. after the ask_more prompt -> force long
         yes_tokens = {"yes", "yeah", "y", "sure", "ok", "okay", "yep", "surely", "please", "more", "tell me more", "details"}
         if ask_more_idx is not None and lower_last_user in yes_tokens:
             if original_user:
@@ -475,14 +600,9 @@ def chat_endpoint(body: ChatRequest):
                 force_long = True
             else:
                 category = classify_message(last_user)
-
-        # 2) HEURISTIC: frontend sometimes resends the original question instead of 'yes'.
-        #    If last_user roughly equals the original_user (exact match or very close),
-        #    and it immediately follows an assistant ask-more, treat it as implicit yes.
         else:
             if ask_more_idx is not None and original_user:
                 try:
-                    # simple exact match (case-insensitive, trimmed)
                     if lower_last_user == original_user.strip().lower():
                         forced = f"Please provide a detailed answer: {original_user}"
                         logger.info("YES-click detected (heuristic: repeated question exact match). Forcing detailed question -> %s", forced)
@@ -490,8 +610,6 @@ def chat_endpoint(body: ChatRequest):
                         category = "fabric"
                         force_long = True
                     else:
-                        # fuzzy similarity fallback: token overlap ratio
-                        # compute token-level Jaccard-like overlap (cheap)
                         user_tokens = set(re.findall(r"[a-zA-Z]+", lower_last_user))
                         orig_tokens = set(re.findall(r"[a-zA-Z]+", original_user.strip().lower()))
                         if user_tokens and orig_tokens:
@@ -499,14 +617,12 @@ def chat_endpoint(body: ChatRequest):
                             union = len(user_tokens | orig_tokens)
                             ratio = float(intersect) / float(union) if union > 0 else 0.0
                             if ratio >= 0.85:
-                                # high overlap -> treat as implicit yes (user resent same question)
                                 forced = f"Please provide a detailed answer: {original_user}"
                                 logger.info("YES-click detected (heuristic: repeated question fuzzy match ratio=%.2f). Forcing detailed question -> %s", ratio, forced)
                                 last_user = forced
                                 category = "fabric"
                                 force_long = True
                             else:
-                                # not a repeat; classify normally
                                 category = classify_message(last_user)
                         else:
                             category = classify_message(last_user)
@@ -514,18 +630,15 @@ def chat_endpoint(body: ChatRequest):
                     logger.exception("Error in repeated-question heuristic: %s", e)
                     category = classify_message(last_user)
             else:
-                # Not the special yes-case -> normal classification
                 category = classify_message(last_user)
     except Exception as e:
         logger.exception("Error in yes-flow override: %s", e)
-        # fallback to normal classification
         category = classify_message(last_user)
 
     if category == "blocked":
-      return _build_response(_make_reply(REFUSAL_MESSAGE), None, None, None, None, False, REFUSAL_MESSAGE, force_long)
-
+        return _build_response(_make_reply(REFUSAL_MESSAGE), None, None, None, None, False, REFUSAL_MESSAGE, force_long)
     if category == "chitchat":
-      return _build_response(_make_reply(CHITCHAT_RESPONSE), None, None, None, None, False, CHITCHAT_RESPONSE, force_long)
+        return _build_response(_make_reply(CHITCHAT_RESPONSE), None, None, None, None, False, CHITCHAT_RESPONSE, force_long)
 
     if len(body.messages) > MAX_MESSAGES:
         raise HTTPException(status_code=400, detail=f"Too many messages (>{MAX_MESSAGES}).")
@@ -533,24 +646,18 @@ def chat_endpoint(body: ChatRequest):
     if total_len > MAX_TOTAL_CHARS:
         raise HTTPException(status_code=400, detail="Conversation too long for this endpoint.")
 
+    # Build messages_payload and CLEAN history from corrupted assistant messages
     messages_payload = [m.model_dump() for m in body.messages]
-    for i in range(len(messages_payload)-1, -1, -1):
-        if messages_payload[i].get("role") == "user":
-            messages_payload[i]["content"] = last_user
-            break
+    messages_payload = _clean_history(messages_payload)
 
     if not any(m["role"] == "system" for m in messages_payload):
         messages_payload = [{"role": "system", "content": SYSTEM_PROMPT}] + messages_payload
 
     try:
-        # pass explicit mode hint to agent_graph so it can pick long/short LLM
         mode_var = "long" if force_long else "short"
-
-        # DEBUG: print mode and a short preview of the outgoing payload to verify long-mode is set
         try:
             import pprint
             logger.info("CHAT DEBUG -> mode_var=%s force_long=%s last_user_preview=%s", mode_var, force_long, (last_user or "")[:200])
-            # Print the last 10 message roles+first-120-chars for inspection
             preview_msgs = []
             for m in messages_payload[-10:]:
                 preview_msgs.append({"role": m.get("role"), "content_preview": (str(m.get("content") or "")[:120])})
@@ -558,23 +665,58 @@ def chat_endpoint(body: ChatRequest):
         except Exception:
             logger.exception("CHAT DEBUG -> Failed to log debug payload")
 
-        result = agent_graph.invoke({"text": last_user, "history": messages_payload[-10:], "mode": mode_var})
+        if agent_graph is None:
+            logger.error("agent_graph is None — cannot call agent_graph.invoke. Ensure agent.graph is present.")
+            return _build_response(_make_reply("Sorry — the analysis engine is unavailable."), None, None, None, None, False, "Sorry — the analysis engine is unavailable.", force_long)
+
+        # Call agent_graph and sanitize its output immediately
+        raw_result = agent_graph.invoke({"text": last_user, "history": messages_payload[-10:], "mode": mode_var})
+        logger.debug("RAW_AGENT_RESULT preview: %s", str(raw_result)[:1800])
+
+        unwrapped_result = _unwrap_tool_result(raw_result)
+        result = _sanitize_agent_output_for_frontend(unwrapped_result)
+
     except Exception as e:
         logger.exception("Agent graph invocation failed")
         raise HTTPException(status_code=502, detail=f"Agent error: {str(e)}")
 
+    # result is sanitized dict-like (or convertible) now
     if isinstance(result, dict):
         out = result
+        try:
+            raw_bot_messages = out.get("bot_messages")
+            if raw_bot_messages and isinstance(raw_bot_messages, (list, tuple)) and len(raw_bot_messages) > 0:
+                first = raw_bot_messages[0]
+                sfirst = first if isinstance(first, str) else str(first)
+                payload = _extract_embedded_payload(sfirst)
+                if isinstance(payload, dict):
+                    if payload.get("action"):
+                        out["action"] = payload.get("action")
+                    if payload.get("analysis_responses"):
+                        out["analysis_responses"] = payload.get("analysis_responses")
+                    if payload.get("bot_messages"):
+                        out["bot_messages"] = payload.get("bot_messages")
+                    elif isinstance(payload.get("text"), str):
+                        out["bot_messages"] = [payload.get("text")] + (out.get("bot_messages") or [])[1:]
+                    elif isinstance(payload.get("display_text"), str):
+                        out["bot_messages"] = [payload.get("display_text")] + (out.get("bot_messages") or [])[1:]
+        except Exception:
+            logger.exception("Failed to normalize raw bot_messages / extract embedded payload from dict result")
 
         results = out.get("results")
-
         bot_messages = out.get("bot_messages") or []
         action = out.get("action")
         analysis_responses = out.get("analysis_responses")
 
         reply_text = None
         if bot_messages and isinstance(bot_messages, (list, tuple)) and bot_messages:
-            reply_text = str(bot_messages[0])
+            first = bot_messages[0]
+            sfirst = first if isinstance(first, str) else str(first)
+            payload_candidate = _extract_embedded_payload(sfirst)
+            if isinstance(payload_candidate, dict) and isinstance(payload_candidate.get("text"), str):
+                reply_text = payload_candidate.get("text")
+            else:
+                reply_text = str(sfirst)
         elif analysis_responses and isinstance(analysis_responses, (list, tuple)) and analysis_responses:
             first = analysis_responses[0]
             if isinstance(first, dict):
@@ -584,7 +726,6 @@ def chat_endpoint(body: ChatRequest):
         else:
             reply_text = out.get("message") or out.get("reply") or out.get("text") or str(out)
 
-        # If force_long is requested then use full reply_text, otherwise enforce short reply
         if force_long:
             try:
                 reply = Message(role="assistant", content=str(reply_text or ""))
@@ -596,7 +737,7 @@ def chat_endpoint(body: ChatRequest):
         action_obj = None
         if action and isinstance(action, dict) and action.get("type"):
             try:
-                clean_params = _to_jsonable(action.get("params", {}))  # sanitize params
+                clean_params = _to_jsonable(action.get("params", {}))
                 action_obj = Action(type=action["type"], params=clean_params)
             except Exception:
                 action_obj = None
@@ -611,115 +752,9 @@ def chat_endpoint(body: ChatRequest):
 
         return _build_response(reply, bot_messages, analysis_responses, results, action_obj, ask_more_flag, reply_text, force_long)
 
-    if isinstance(result, list):
-        texts = []
-        for item in result:
-            txt = _extract_text_from_message_item(item)
-            if txt:
-                texts.append(txt)
-        reply_text = texts[-1] if texts else str(result)
-
-        payload = _extract_embedded_payload("\n".join([t for t in texts if t]))
-        if isinstance(payload, dict):
-            action = payload.get("action")
-            analysis_responses = payload.get("analysis_responses")
-            bot_messages = payload.get("bot_messages")
-
-            action_obj = None
-            if isinstance(action, dict) and action.get("type"):
-                try:
-                    action_obj = Action(
-                        type=action["type"],
-                        params=_to_jsonable(action.get("params", {})),  # sanitize
-                    )
-                except Exception:
-                    action_obj = None
-
-            try:
-                has_text_reply = bool(reply_text and str(reply_text).strip())
-                no_action = not action
-                no_analysis = not analysis_responses
-                is_followup = False
-                for m in reversed(body.messages[:-1]):  
-                    if m.role == "assistant" and isinstance(m.content, str):
-                        if "would you like to know more" in m.content.lower():
-                            is_followup = True
-                        break
-
-                ask_more_flag = (
-                    False
-                    if (
-                        force_long
-                        or category != "fabric"
-                        or is_followup     # <-- fixes the stuck Yes/No block
-                    )
-                    else True if (has_text_reply and no_action and no_analysis)
-                    else False
-                )
-
-            except Exception:
-                ask_more_flag = False
-
-            # Respect force_long when converting bot_messages -> reply
-            if force_long:
-                reply_msg = Message(role="assistant", content=str(bot_messages[0] if bot_messages else reply_text))
-            else:
-                reply_msg = _make_reply(bot_messages[0] if bot_messages else reply_text)
-
-            return _build_response(reply_msg, bot_messages, analysis_responses, None, action_obj, ask_more_flag, reply_text, force_long)
-
-        reply = _make_reply(reply_text)
-        try:
-            has_text_reply = bool(reply_text and str(reply_text).strip())
-            ask_more_flag = True if (category == "fabric" and has_text_reply and not None and True) else False
-        except Exception:
-            ask_more_flag = False
-
-        return _build_response(reply, None, None, None, None, ask_more_flag, reply_text, force_long)
-
-    potential = _extract_text_from_message_item(result)
-    reply_text = potential if potential else str(result)
-
-    payload = _extract_embedded_payload(reply_text)
-    if isinstance(payload, dict):
-        action = payload.get("action")
-        analysis_responses = payload.get("analysis_responses")
-        bot_messages = payload.get("bot_messages")
-
-        action_obj = None
-        if isinstance(action, dict) and action.get("type"):
-            try:
-                action_obj = Action(
-                    type=action["type"],
-                    params=_to_jsonable(action.get("params", {})),  # sanitize
-                )
-            except Exception:
-                action_obj = None
-
-        try:
-            has_text_reply = bool(reply_text and str(reply_text).strip())
-            no_action = not action
-            no_analysis = not analysis_responses
-            ask_more_flag = True if (category == "fabric" and has_text_reply and no_action and no_analysis) else False
-        except Exception:
-            ask_more_flag = False
-
-        if force_long:
-            reply_msg = Message(role="assistant", content=str(bot_messages[0] if bot_messages else reply_text))
-        else:
-            reply_msg = _make_reply(bot_messages[0] if bot_messages else reply_text)
-
-        return _build_response(reply_msg, bot_messages, analysis_responses, None, action_obj, ask_more_flag, reply_text, force_long)
-
-    # Default final fallback: create reply respecting force_long
-    if force_long:
-        reply = Message(role="assistant", content=str(reply_text if reply_text is not None else ""))
-    else:
-        reply = _make_reply(reply_text if reply_text is not None else "")
-
+    # fallback generic handling (should rarely happen)
     try:
-        has_text_reply = bool(reply_text and str(reply_text).strip())
-        ask_more_flag = True if (category == "fabric" and has_text_reply and not None and True) else False
+        reply = _make_reply(str(result))
     except Exception:
-        ask_more_flag = False
-    return _build_response(reply, None, None, None, None, ask_more_flag, reply_text, force_long)
+        reply = _make_reply("Sorry — something went wrong.")
+    return _build_response(reply, None, None, None, None, False, None, force_long)

@@ -286,85 +286,142 @@ useEffect(() => {
     (r: RichChatResponse): string[] => Array.isArray(r.bot_messages) ? r.bot_messages : [],
     []
   );
+const handleResponse = useCallback((res: ChatResponse) => {
+  const rc = res as RichChatResponse;
+  console.debug("[useChat] handleResponse rc:", rc);
 
-  // -------------------- handleResponse (backend ask_more OR in-message detection) --------------------
-  const handleResponse = useCallback((res: ChatResponse) => {
-    const rc = res as RichChatResponse;
-    console.debug("[useChat] handleResponse rc:", rc);
+  setMessages(prev => {
+    const next = [...prev];
 
-    setMessages(prev => {
-      const next = [...prev];
+    // pick a single assistant-visible string (prefer bot_messages[0], else reply)
+    const bots = getBots(rc);
 
-      // pick a single assistant-visible string (prefer bot_messages[0], else reply)
-      const bots = getBots(rc);
-      let assistantText = "";
-      if (Array.isArray(bots) && bots.length > 0) {
-        assistantText = normalizeLLMText(bots[0]);
-      } else if (rc.reply && rc.reply.content) {
-        assistantText = normalizeLLMText(rc.reply.content);
-      }
+    // helper: normalize a raw bot string (mirrors backend sanitizer)
+    const sanitizeBotString = (rawIn: unknown, action?: ToolAction, analysis_resps?: any[]) => {
+      try {
+        let s = typeof rawIn === "string" ? rawIn : String(rawIn || "");
+        s = s.trim();
 
-      // normalize analysis responses
-      const action = getAction(rc);
-      const raw = getAnalysis(rc);
-      const hasCache = Boolean(action?.params?.cache_key);
-      const normalized = raw.map((r, i) => ({
-        id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
-        text: r.text ?? r.content ?? String(r ?? ""),
-      }));
+        if (!s) return "";
 
-      // If there's an action redirect to analysis, push the first analysis item text if not already included
-      if (
-        action &&
-        (action.type === "redirect_to_analysis" || action.type === "redirect_to_media_analysis") &&
-        normalized.length > 0
-      ) {
-        const firstText = normalizeLLMText(normalized[0].text);
-        const lastAssistant = next.slice().reverse().find(m => m.role === "assistant");
-        const alreadyIncluded =
-          assistantText === firstText ||
-          (lastAssistant && lastAssistant.content === firstText);
-        if (!alreadyIncluded) {
-          // push a single assistant bubble with that firstText
-          next.push({ role: "assistant", content: firstText });
-        }
-        setCurrentResponse(firstText);
-        setPendingAction({
-          action,
-          analysis_responses: normalized.map(r => ({ ...r, text: normalizeLLMText(r.text) })),
-          used_ids: [normalized[0].id],
-        });
-      } else {
-        // Default: push a single assistant message (bot_messages[0] or reply)
-        if (assistantText) {
-          // If backend asked for more, append the prompt into the same bubble (avoid separate bubble)
-          const askMore = (rc as any).ask_more === true;
-          let finalText = assistantText;
-          if (askMore) {
-            const low = finalText.toLowerCase();
-            if (
-              !low.includes("would you like to know more") &&
-              !low.includes("want to know more") &&
-              !low.includes("would you like more")
-            ) {
-              finalText = finalText + "\n\nWould you like to know more?";
+        // extract JSON substring if present
+        const jsonMatch = s.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const obj = JSON.parse(jsonMatch[0]);
+            if (obj) {
+              if (typeof obj.text === "string" && obj.text.trim()) return normalizeLLMText(obj.text);
+              if (typeof obj.display_text === "string" && obj.display_text.trim()) return normalizeLLMText(obj.display_text);
+              if (Array.isArray(obj.bot_messages) && typeof obj.bot_messages[0] === "string") return normalizeLLMText(obj.bot_messages[0]);
+              // fallback: keys summary
+              return `[tool result: ${Object.keys(obj).join(", ")}]`;
             }
-          }
-          next.push({ role: "assistant", content: finalText });
-
-          // IMPORTANT: If backend signaled ask_more we DON'T immediately show quick replies.
-          // Instead we keep the exact visible assistant content in pendingAskMoreRef and only
-          // set morePrompt after we observe that content settled in the UI (via onAssistantRendered).
-          if ((rc as any).ask_more === true) {
-            pendingAskMoreRef.current = finalText;
+          } catch (e) {
+            // not parseable JSON - try TextContent extraction below
           }
         }
-        setPendingAction(null);
-      }
 
-      return next;
-    });
-  }, [getBots, getAction, getAnalysis]);
+        // TextContent(text='...') pattern
+        const tc = s.match(/TextContent\([^)]*text\s*=\s*(['"])([\s\S]*?)\1/);
+        if (tc && tc[2]) {
+          const inner = tc[2];
+          try {
+            const innerObj = JSON.parse(inner);
+            if (innerObj) {
+              if (typeof innerObj.text === "string") return normalizeLLMText(innerObj.text);
+              if (typeof innerObj.display_text === "string") return normalizeLLMText(innerObj.display_text);
+              return `[tool result: ${Object.keys(innerObj).join(", ")}]`;
+            }
+          } catch (e) {
+            return normalizeLLMText(inner);
+          }
+        }
+
+        // If looks like raw JSON blob and action indicates upload, return friendly canned message
+        if (s.includes("{") && s.includes("}")) {
+          if (action && action.params && action.type && ["redirect_to_analysis", "redirect_to_media_analysis", "search"].includes(action.type)) {
+            if (Array.isArray(analysis_resps) && analysis_resps.length > 0) {
+              const first = analysis_resps[0];
+              if (first && typeof first === "object" && typeof first.text === "string") return normalizeLLMText(first.text);
+            }
+            return "Files saved. Want to open the list page? [See your upload](/view)";
+          }
+          return "[tool returned structured data]";
+        }
+
+        // otherwise: normal text
+        return normalizeLLMText(s);
+      } catch (e) {
+        return "[tool returned non-displayable result]";
+      }
+    };
+
+    // compute assistantText
+    let assistantText = "";
+    if (Array.isArray(bots) && bots.length > 0) {
+      assistantText = sanitizeBotString(bots[0], rc.action as ToolAction | undefined, rc.analysis_responses as any[] | undefined);
+      // if sanitized result is summary token, avoid leaking raw JSON-like strings
+      if (!assistantText) assistantText = "[tool returned non-displayable result]";
+    } else if (rc.reply && rc.reply.content) {
+      assistantText = normalizeLLMText(rc.reply.content);
+    }
+
+    // normalize analysis responses
+    const action = getAction(rc);
+    const raw = getAnalysis(rc);
+    const hasCache = Boolean(action?.params?.cache_key);
+    const normalized = raw.map((r, i) => ({
+      id: hasCache ? String(i + 1) : String(r.id ?? `r${i}`),
+      text: r.text ?? r.content ?? String(r ?? ""),
+    }));
+
+    // If there's an action redirect to analysis, push the first analysis item text if not already included
+    if (
+      action &&
+      (action.type === "redirect_to_analysis" || action.type === "redirect_to_media_analysis") &&
+      normalized.length > 0
+    ) {
+      const firstText = normalizeLLMText(normalized[0].text);
+      const lastAssistant = next.slice().reverse().find(m => m.role === "assistant");
+      const alreadyIncluded =
+        assistantText === firstText ||
+        (lastAssistant && lastAssistant.content === firstText);
+      if (!alreadyIncluded) {
+        next.push({ role: "assistant", content: firstText });
+      }
+      setCurrentResponse(firstText);
+      setPendingAction({
+        action,
+        analysis_responses: normalized.map(r => ({ ...r, text: normalizeLLMText(r.text) })),
+        used_ids: [normalized[0].id],
+      });
+    } else {
+      // Default: push a single assistant message (bot_messages[0] or reply)
+      if (assistantText) {
+        const askMore = (rc as any).ask_more === true;
+        let finalText = assistantText;
+        if (askMore) {
+          const low = finalText.toLowerCase();
+          if (
+            !low.includes("would you like to know more") &&
+            !low.includes("want to know more") &&
+            !low.includes("would you like more")
+          ) {
+            finalText = finalText + "\n\nWould you like to know more?";
+          }
+        }
+        next.push({ role: "assistant", content: finalText });
+        if ((rc as any).ask_more === true) {
+          pendingAskMoreRef.current = finalText;
+        }
+      }
+      setPendingAction(null);
+    }
+
+    return next;
+  });
+}, [getBots, getAction, getAnalysis]);
+
   const acceptAction = useCallback(() => {
     if (!pendingAction) return;
     setMessages(prev => [...prev, { role: "assistant", content: "Great — glad that helped!" }]);
