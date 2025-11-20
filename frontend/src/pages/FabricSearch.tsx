@@ -1,3 +1,4 @@
+// (same imports as before)
 import { useId, useMemo, useState, useEffect, useRef, useCallback } from "react";
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
@@ -9,6 +10,8 @@ import { throttle } from "../utils/throttle";
 export default function Search() {
   const { loading, error, exactMatches, runSearch, clear } = useImageSearch();
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrlOriginal, setPreviewUrlOriginal] = useState<string | null>(null); // used now to preserve the true original
+
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const pageSize = 4;
@@ -36,14 +39,37 @@ export default function Search() {
   const resizingRef = useRef(false);
   const lastMouseRef = useRef({ x: 0, y: 0 });
 
+  // helper: create & manage object URL for original file safely
+  const setOriginalObjectUrl = useCallback((f: File | null) => {
+    // revoke previous original preview
+    if (previewUrlOriginal) {
+      try { URL.revokeObjectURL(previewUrlOriginal); } catch { /* ignore */ }
+    }
+    if (f) {
+      try {
+        const u = URL.createObjectURL(f);
+        setPreviewUrlOriginal(u);
+      } catch {
+        setPreviewUrlOriginal(null);
+      }
+    } else {
+      setPreviewUrlOriginal(null);
+    }
+  }, [previewUrlOriginal]);
+
   // --- existing file handling (modified to open drawer on selection) ---
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     if (!f) return;
     // preserve original file for re-cropping
     originalFileRef.current = f;
-    // set a temporary object URL for cropping preview
+
+    // set and keep an object URL for the true original (so it won't be replaced by cropped preview)
+    setOriginalObjectUrl(f);
+
+    // set a temporary object URL for cropping preview (rawImageUrl)
     const url = URL.createObjectURL(f);
+    setPreviewUrlOriginal(prev => prev ?? url); // ensure original preview exists (but setOriginalObjectUrl already set it)
     setRawImageUrl(url);
     setDrawerOpen(true);
     // reset crop rect to default (will be repositioned on image load)
@@ -85,6 +111,10 @@ export default function Search() {
       (async () => {
         try {
           const f = await urlToFile(urlImage, `query-${Date.now()}`);
+          // keep original file ref + original preview URL
+          originalFileRef.current = f;
+          setOriginalObjectUrl(f);
+
           setFile(f);
           await runSearch(f);
         } catch {
@@ -116,6 +146,10 @@ export default function Search() {
 
           if (!f) throw new Error("No usable image in payload.");
 
+          // keep original file ref + preview
+          originalFileRef.current = f;
+          setOriginalObjectUrl(f);
+
           setFile(f);
           await runSearch(f);
         } catch {
@@ -126,7 +160,7 @@ export default function Search() {
         }
       })();
     } catch { }
-  }, [runSearch, dataUrlToFile, urlToFile]);
+  }, [runSearch, dataUrlToFile, urlToFile, setOriginalObjectUrl]);
 
   const cleanName = (filename: string) =>
     filename ? filename.split("_")[0].split(".")[0] : "";
@@ -153,12 +187,18 @@ export default function Search() {
       try { URL.revokeObjectURL(rawImageUrl); } catch { }
       setRawImageUrl(null);
     }
+    // revoke original preview URL
+    if (previewUrlOriginal) {
+      try { URL.revokeObjectURL(previewUrlOriginal); } catch { }
+      setPreviewUrlOriginal(null);
+    }
     // notify other parts of app (chat) to clear pending redirect actions
     try {
       window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
     } catch { /* ignore */ }
     // revoke preview object URL handled by effect
     originalFileRef.current = null;
+    setCroppedPreviewUrl(null);
   };
 
   const visibleResults = useMemo(
@@ -195,6 +235,15 @@ export default function Search() {
     };
   }, [file]);
 
+  // ensure we also cleanup previewUrlOriginal on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrlOriginal) {
+        try { URL.revokeObjectURL(previewUrlOriginal); } catch { /* ignore */ }
+      }
+    };
+  }, [previewUrlOriginal]);
+
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
     wrapper?.classList.add("upload-bg");
@@ -208,6 +257,8 @@ export default function Search() {
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const draggingLightboxRef = useRef(false);
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
+
   const lastPosRef = useRef({ x: 0, y: 0 });
   const MIN_SCALE = 0.5, MAX_SCALE = 6, ZOOM_STEP = 0.2;
 
@@ -373,6 +424,9 @@ export default function Search() {
 
     // Set the cropped file as the query file (preview updates). DO NOT auto-run search.
     setFile(croppedFile);
+
+    const cropUrl = URL.createObjectURL(croppedFile);
+    setCroppedPreviewUrl(cropUrl);
     setDrawerOpen(false);
     // reset page and badImages (optional)
     setPage(1);
@@ -440,67 +494,78 @@ export default function Search() {
       )}
 
       {file && !drawerOpen && (
-        <div className="preview-box center-preview">
-          <p className="section-title">Your Image</p>
+        <div className="side-by-side-preview">
 
-          <div className="preview-img-wrap" role="group" aria-label="Image preview with actions">
-            <img
-              className="preview-img"
-              src={previewUrl ?? ""}
-              alt="query"
-              onError={() => setNotification({ message: "Preview failed to load.", type: "error" })}
-            />
+          {/* ORIGINAL IMAGE */}
+          <div className="original-preview">
+            <p className="section-title">Original Image</p>
 
-            <div className="preview-img-actions" aria-hidden={loading ? "true" : "false"}>
-              <button
-                className="btn"
-                onClick={() => {
-                  const orig = originalFileRef.current;
-                  if (!orig) {
-                    setNotification({ message: "Original image not available to re-crop.", type: "error" });
-                    return;
-                  }
-                  const url = URL.createObjectURL(orig);
-                  setRawImageUrl(url);
-                  setDrawerOpen(true);
-                  setNotification(null);
-                  setCropRect({ x: 20, y: 20, w: 160, h: 160 });
-                  try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
-                }}
-                title="Re-crop"
-              >
-                ✂️crop
-              </button>
+            <div className="original-img-wrap">
+              <img
+                className="original-img"
+                // prefer the true original object URL, fall back to raw image (if cropping session), then to the file preview
+                src={previewUrlOriginal || rawImageUrl || previewUrl || ""}
+                alt="original"
+              />
 
-              <button
-                className="btn secondary"
-                onClick={() => {
-                  handleClear();
-                  originalFileRef.current = null;
-                }}
-                title="Clear"
-              >
-                ✕
-              </button>
+              <div className="original-img-actions">
+                <button
+                  className="btn"
+                  onClick={() => {
+                    const orig = originalFileRef.current;
+                    if (!orig) {
+                      setNotification({ message: "Original image not available to re-crop.", type: "error" });
+                      return;
+                    }
+                    // create a fresh rawImageUrl from original file so cropping UI can load it
+                    if (rawImageUrl) {
+                      try { URL.revokeObjectURL(rawImageUrl); } catch { /* ignore */ }
+                    }
+                    const url = URL.createObjectURL(orig);
+                    setRawImageUrl(url);
+                    setDrawerOpen(true);
+                    setCropRect({ x: 20, y: 20, w: 160, h: 160 });
+                  }}
+                >
+                  ✂️ Crop
+                </button>
+
+                <button
+                  className="btn secondary"
+                  onClick={() => {
+                    handleClear();
+                  }}
+                >
+                  ✕ Clear
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* CROPPED IMAGE */}
+          {croppedPreviewUrl && (
+            <div className="cropped-preview">
+              <p className="section-title">Cropped Image</p>
+              <div className="cropped-img-wrap">
+                <img className="cropped-img" src={croppedPreviewUrl} alt="cropped" />
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 
+
       {file && !drawerOpen && (
-        <button
-          className="btn primary"
-          onClick={handleSearch}
-          disabled={loading || !file}
-          title="Search with this image"
-          style={{
-            width: "fit-content",
-            backgroundColor: "blue",
-            color: "white",
-          }}
-        >
-          🔎 Search
-        </button>
+        <div className="search-btn-wrapper">
+          <button
+            className="btn primary big-search-btn"
+            onClick={handleSearch}
+            disabled={loading || !file}
+          >
+            🔎 Search
+          </button>
+        </div>
       )}
       {notification && <Notification message={notification.message} type={notification.type} />}
       {loading && <Loader />}
