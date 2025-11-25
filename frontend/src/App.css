@@ -4,11 +4,13 @@
   --muted: #596b7a;
   --border: rgba(0, 0, 0, 0.904);
   --accent: #2f6bff;
-  --container-max: 1200px;
+  --container-max: 100vw;
 }
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 #root {
@@ -32,27 +34,18 @@
   background-repeat: no-repeat;
 }
 
-.app-wrapper.bg-color {
-  background-color: rgba(241, 198, 143, 0.4);
-}
 
 .site-header {
   width: 100%;
-  max-width: var(--container-max);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 4px 20px;
-  margin-top: 18px;
   background: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  border: 1px solid var(--border);
   box-shadow: 0 6px 24px rgba(66, 66, 67, 0.767);
 }
 
-.site-header.header-width {
-  width: 65%;
-}
+
 
 .header-left {
   display: flex;

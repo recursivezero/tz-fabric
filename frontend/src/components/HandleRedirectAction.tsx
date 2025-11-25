@@ -39,6 +39,8 @@ export default function HandleRedirectAction({
         borderRadius: 6,
         marginTop: 8,
         background: "#fff",
+        marginLeft: 48,
+        width: "50%",
       }}
     >
       <div style={{ marginBottom: 8, color: "black" }}>

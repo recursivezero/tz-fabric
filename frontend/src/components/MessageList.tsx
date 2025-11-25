@@ -8,6 +8,11 @@ interface Props {
   messages: Message[];
   scrollerRef: RefObject<HTMLDivElement>;
   onLastAssistantRendered?: (lastAssistant: Message) => void; // fired only when the last assistant bubble has fully settled
+
+  // NEW props for inline quick replies
+  morePrompt?: { question: string; prompt?: string } | null;
+  confirmMoreYes?: () => Promise<void> | void;
+  confirmMoreNo?: () => void;
 }
 
 type MaybeMedia = {
@@ -16,7 +21,14 @@ type MaybeMedia = {
   filename?: string;
 };
 
-export default function MessageList({ messages, scrollerRef, onLastAssistantRendered }: Props) {
+export default function MessageList({
+  messages,
+  scrollerRef,
+  onLastAssistantRendered,
+  morePrompt = null,
+  confirmMoreYes = () => { },
+  confirmMoreNo = () => { },
+}: Props) {
   const lastAssistantRef = useRef<HTMLDivElement | null>(null);
   const lastAssistantMsgRef = useRef<Message | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -27,13 +39,6 @@ export default function MessageList({ messages, scrollerRef, onLastAssistantRend
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, scrollerRef]);
 
-  // Purely event-driven settle check (no timeouts)
-  // Fires when:
-  //  - all images inside the last assistant bubble have loaded (if any),
-  //  - height is identical for two consecutive RAF frames,
-  //  - the scroller is at the bottom,
-  //  - the bubble is NOT typing (MessageBubble sets data-typing),
-  //  - and no new messages were appended during the check.
   const waitForSettled = (
     node: HTMLElement,
     container: HTMLElement,
@@ -145,12 +150,38 @@ export default function MessageList({ messages, scrollerRef, onLastAssistantRend
     };
   }, [messages, onLastAssistantRendered, scrollerRef]);
 
+  // helper to decide whether a message contains the "ask more" prompt
+  const messageIncludesAskMore = (content: string | undefined) => {
+    if (!content) return false;
+    return content.toLowerCase().includes("would you like to know more");
+  };
+
+  // robust detection whether this assistant bubble should show inline quick replies:
+  const shouldShowQuickRepliesFor = (content: string | undefined) => {
+    if (!content) return false;
+    if (!morePrompt) return false;
+    const rawContent = content.replace(/\s+/g, " ").trim().toLowerCase();
+
+    // 1) If the backend provided a prompt string to match, try substring match (not strict equality)
+    if (typeof morePrompt.prompt === "string" && morePrompt.prompt.trim().length > 0) {
+      const normalizedPrompt = morePrompt.prompt.replace(/\s+/g, " ").trim().toLowerCase();
+      if (normalizedPrompt && rawContent.includes(normalizedPrompt)) {
+        return true;
+      }
+    }
+
+    // 2) Fallback: detect presence of the phrase in bubble text
+    if (messageIncludesAskMore(content)) return true;
+
+    return false;
+  };
+
   return (
     <div className="chat-list" ref={scrollerRef}>
       <div className="content-col">
         {messages.map((m, i) => {
           const role = (m.role ?? "assistant").toLowerCase();
-          const content = m.content ?? "";
+          const content = (m.content ?? "") as string;
 
           let type: MaybeMedia["type"];
           let url: MaybeMedia["url"];
@@ -159,6 +190,9 @@ export default function MessageList({ messages, scrollerRef, onLastAssistantRend
           if ("type" in m) type = (m as { type?: MaybeMedia["type"] }).type;
           if ("url" in m) url = (m as { url?: string }).url;
           if ("filename" in m) filename = (m as { filename?: string }).filename;
+
+          const isAssistant = role === "assistant";
+          const includesAskMore = isAssistant && shouldShowQuickRepliesFor(content);
 
           return (
             <div
@@ -174,6 +208,43 @@ export default function MessageList({ messages, scrollerRef, onLastAssistantRend
                 url={url}
                 filename={filename}
               />
+
+              <div className={`ask-more-container ${morePrompt ? "show" : ""}`}>
+                {includesAskMore && morePrompt && (
+                  <div className="quick-replies inline-quick-replies" aria-live="polite">
+                    <div className="quick-replies-row">
+                      <button
+                        type="button"
+                        className="chip"
+                        onClick={async () => {
+                          try {
+                            // optional micro-interaction: disable, show loading, etc (omitted for brevity)
+                            await confirmMoreYes?.();
+                          } catch (err) {
+                            console.error("confirmMoreYes error", err);
+                          }
+                        }}
+                      >
+                        Yes
+                      </button>
+
+                      <button
+                        type="button"
+                        className="chip"
+                        onClick={() => {
+                          try {
+                            confirmMoreNo?.();
+                          } catch (err) {
+                            console.error("confirmMoreNo error", err);
+                          }
+                        }}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}

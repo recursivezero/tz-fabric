@@ -256,6 +256,7 @@
   gap: 10px;
   margin-top: 8px;
   flex-direction: row-reverse;
+  margin-right: 6px;
 }
 
 .audio-label {
@@ -263,4 +264,65 @@
   font-weight: 600;
   white-space: nowrap;
   font-size: 16px;
+}
+
+.composer-input-wrapper {
+  position: relative;
+}
+
+/* overlay container covers input wrapper but doesn't block pointer events by default */
+.stop-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  /* allow clicks to fall through except where inner overrides */
+  z-index: 800;
+  /* must be > send button's z-index */
+}
+
+/* inner card — receives pointer events and sits above other controls */
+.stop-overlay-inner {
+  pointer-events: auto;
+  /* enable clicks for this element and its children */
+  z-index: 900;
+  /* above overlay and send button */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  max-width: calc(100% - 28px);
+  text-align: center;
+}
+
+/* short label above the button */
+.stop-text {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* stop button */
+.stop-overlay-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.14);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.send-btn.inside {
+  z-index: 100;
 }

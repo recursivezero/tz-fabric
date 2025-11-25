@@ -4,20 +4,14 @@
   display: flex;
   justify-content: center;
   color: var(--text-color);
-}
 
-.homeV2__bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(1200px 600px at 50% -10%, rgba(47, 107, 255, 0.18), transparent 60%),
+  background: radial-gradient(1200px 600px at 50% -10%, rgba(47, 107, 255, 0.18), transparent 60%),
     linear-gradient(180deg, #eaf1ff 0%, #f6f9ff 60%, #ffffff 100%);
-  z-index: -1;
 }
 
 .homeV2__container {
-  width: 100%;
-  max-width: var(--container-max);
+  width: 80%;
+  max-width: 80vw;
   padding: 36px 20px 56px;
 }
 
@@ -166,8 +160,7 @@
 
 .featureCard--link {
   cursor: pointer;
-  transition:
-    transform 0.22s cubic-bezier(.2, .8, .4, 1),
+  transition: transform 0.22s cubic-bezier(.2, .8, .4, 1),
     box-shadow 0.22s cubic-bezier(.2, .8, .4, 1),
     background 0.22s cubic-bezier(.2, .8, .4, 1),
     border-color 0.22s cubic-bezier(.2, .8, .4, 1);
@@ -188,8 +181,7 @@
 
 .stepCard--link {
   cursor: pointer;
-  transition:
-    transform 0.22s cubic-bezier(.2, .8, .4, 1),
+  transition: transform 0.22s cubic-bezier(.2, .8, .4, 1),
     box-shadow 0.22s cubic-bezier(.2, .8, .4, 1),
     background 0.22s cubic-bezier(.2, .8, .4, 1),
     border-color 0.22s cubic-bezier(.2, .8, .4, 1);

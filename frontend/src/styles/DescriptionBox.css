@@ -1,10 +1,10 @@
 .description-wrapper {
-  width: 55%;
+  width: 93%;
 }
 
 .description-wrapper .nav-buttons {
   display: flex;
-  gap: 10px;
+  gap: 265px;
   margin-bottom: 15px;
 }
 
@@ -18,7 +18,7 @@
 }
 
 .description-wrapper .nav-btn.disabled {
-  background: #ccc;
+  background: #cccccc75;
   cursor: not-allowed;
 }
 
@@ -27,6 +27,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -52,7 +53,6 @@
 
 .description-wrapper .description-content {
   overflow-y: auto;
-  max-height: 150px;
   padding-right: 5px;
   scrollbar-width: none;
   -ms-overflow-style: none;

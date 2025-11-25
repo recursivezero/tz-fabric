@@ -1,3 +1,7 @@
+/* SearchBar.css - stable layout + ellipsis for long filenames
+   Keeps your original class names but adds the required flex rules */
+
+/* container */
 .searchbar-container {
   display: flex;
   flex-direction: column;
@@ -5,6 +9,7 @@
   margin-bottom: 10px;
 }
 
+/* top helper text */
 .searchbar-container .top-texts {
   display: block;
   align-items: center;
@@ -17,25 +22,27 @@
   align-items: center;
   border: 2px solid #ccc;
   border-radius: 20px;
-  padding: 0px 20px;
+  padding: 8px 20px;
   width: 700px;
+  max-width: calc(100% - 40px);
   background-color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   gap: 12px;
+  box-sizing: border-box;
 }
 
 .searchbar-container .upload-icon {
   cursor: pointer;
   font-size: 24px;
+  flex: 0 0 auto;
 }
 
-.searchbar-container .search-btn {
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-  margin-left: 12px;
-  flex-shrink: 0;
+.searchbar-container .file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .searchbar-container .text-container {
@@ -43,14 +50,7 @@
   flex-direction: column;
   flex-grow: 1;
   position: relative;
-}
-
-.searchbar-container .animated-placeholder {
-  font-size: 19px;
-  color: #888;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .searchbar-container .file-name {
@@ -59,13 +59,46 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  line-height: 1.1;
+  max-width: 100%;
+  font-weight: 600;
+}
+
+.searchbar-container .file-name[title] {
+  cursor: default;
 }
 
 .searchbar-container .search-instruction {
-  text-align-last: end;
-  flex-grow: 10;
+  margin: 0;
   font-size: 13px;
   color: #777;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.searchbar-container .search-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  margin-left: 12px;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* animated & sample text kept from your original */
+.searchbar-container .animated-placeholder {
+  font-size: 19px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .searchbar-container .shimmer-text {

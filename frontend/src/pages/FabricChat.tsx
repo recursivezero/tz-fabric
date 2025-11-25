@@ -158,18 +158,12 @@ export default function Chat() {
             messages={messages}
             scrollerRef={scrollerRef}
             onLastAssistantRendered={onAssistantRendered}
+            morePrompt={morePrompt}
+            confirmMoreYes={confirmMoreYes}
+            confirmMoreNo={confirmMoreNo}
           />
 
-          {morePrompt && (
-            <div className="quick-replies">
-              <div className="quick-replies-row">
-                <button type="button" onClick={confirmMoreYes} className="chip">Yes</button>
-                <button type="button" onClick={confirmMoreNo} className="chip">No</button>
-              </div>
-            </div>
-          )}
-
-          {pendingAction?.action?.type === "redirect_to_analysis" && (
+          {pendingAction?.action?.type === "redirect_to_analysis" && !uploadedPreviewUrl && !uploadedAudioUrl && (
             <HandleRedirectAction
               pendingAction={pendingAction}
               onAccept={acceptAction}
@@ -188,22 +182,6 @@ export default function Chat() {
                       : "Bot is thinking…"
                 }
               />
-              <button
-                onClick={stopGenerating}
-                style={{
-                  marginTop: 10,
-                  padding: "6px 12px",
-                  background: "#ef4444",
-                  color: "white",
-                  borderRadius: 6,
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                ⏹ Stop Generating
-              </button>
             </div>
           )}
 
@@ -224,6 +202,8 @@ export default function Chat() {
           fileName={fileName}
           setFileName={setFileName}
           status={status}
+          stopGenerating={stopGenerating}
+          isFrontendTyping={isFrontendTyping}
         />
       </div>
     </div>

@@ -224,7 +224,6 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  align-self: stretch;
 }
 
 .upload-page .hint {
