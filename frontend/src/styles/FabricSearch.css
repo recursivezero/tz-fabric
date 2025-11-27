@@ -1,0 +1,1221 @@
+.search-container {
+  margin: 4px auto;
+  font-weight: 700;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  row-gap: 10px;
+}
+
+.hero-area {
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 48px;
+  line-height: 1.02;
+  margin: 0 auto 22px;
+  max-width: 900px;
+  font-weight: 900;
+  color: #0b0b0b6b;
+  position: relative;
+  letter-spacing: -0.02em;
+}
+
+.hero-title .hero-highlight {
+  display: inline-block;
+  height: 12px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(255, 200, 140, 0.9) 0%, rgba(255, 200, 140, 0.85) 100%);
+  transform: translateY(12px) skewX(-6deg);
+  z-index: -1;
+  position: absolute;
+  left: 50%;
+  top: 68%;
+  transform-origin: left center;
+  transform: translateX(-50%) translateY(18px) skewX(-8deg);
+  width: 80%;
+  border-radius: 6px;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.hero-cta {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.hero-search-btn {
+  font-weight: 800;
+  padding: 14px 22px;
+  border-radius: 10px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(11, 11, 11, 0.18);
+  transition: transform 0.12s ease, box-shadow 0.16s ease;
+}
+
+.hero-search-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(11, 11, 11, 0.22);
+}
+
+/* smaller screen adjustments */
+@media (max-width: 800px) {
+  .hero-title {
+    font-size: 34px;
+    padding: 0 16px;
+  }
+
+  .hero-title .hero-highlight {
+    width: 92%;
+    top: 70%;
+  }
+}
+
+/* ---------- Rest of your existing CSS (unchanged) ---------- */
+
+.search-container h2 {
+  margin: 0;
+  font-weight: 700;
+  text-align: center;
+  color: #010101;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  margin-top: 10px;
+}
+
+.search-container .uploader-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-container .uploader-row span {
+  color: #010101;
+}
+
+.search-container .file-input-hidden {
+  display: none;
+}
+
+.search-container .file-button,
+.search-container .primary-btn,
+.search-container .secondary-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #1c76cb;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, filter 0.2s ease;
+}
+
+.search-container .secondary-btn {
+  background: #234055;
+}
+
+.search-container .file-button:hover,
+.search-container .primary-btn:hover:not(:disabled),
+.search-container .secondary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.05);
+}
+
+.search-container .primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.search-container .file-name {
+  font-size: 14px;
+  color: #ffffff;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-container .k-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: #ffffff;
+}
+
+.search-container .k-input input {
+  width: 72px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(14, 17, 22, 0.9);
+  color: #f2f6fa;
+}
+
+.search-container .k-input input:focus {
+  outline: none;
+  border-color: #19a2e2;
+  box-shadow: 0 0 0 2px rgba(25, 162, 226, 0.35);
+}
+
+.search-container .search-error {
+  color: #ff0000;
+}
+
+.search-container .empty-hint {
+  color: #000811;
+  margin-top: 5px;
+  margin-bottom: 0;
+  text-align: center;
+}
+
+.search-container .section-header {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-container .preview-box {
+  max-width: 130px;
+}
+
+.search-container .section-title {
+  text-align: start;
+  margin: 0 0 3px;
+  font-weight: 700;
+  color: #070707;
+}
+
+.search-container .preview-img {
+  height: 315px;
+  width: auto;
+  border-radius: 12px;
+  display: block;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.center-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.big-search-btn {
+  background-color: blue;
+  color: white;
+}
+
+.pagination-controls,
+.search-container .pager {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin: 3px 0 0;
+}
+
+.pagination-controls button {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(27, 34, 48, 0.9);
+  color: #f2f6fa;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.search-container .page-indicator {
+  font-size: 12px;
+  color: #d8e0ea;
+}
+
+/* ---------- Results grid ---------- */
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+  align-content: start;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.result-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.result-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+}
+
+.result-card {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(27, 34, 48, 0.85);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.result-thumb {
+  position: relative;
+  padding: 10px;
+}
+
+.result-thumb img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.result-audio {
+  padding: 8px 10px 12px;
+}
+
+.result-audio audio {
+  width: 100%;
+  background: #0e1116;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Reset bootstrap-like defaults for any card classes if present */
+.search-container .grid {
+  display: contents;
+}
+
+.search-container .card,
+.search-container .card-body,
+.search-container .card-img,
+.search-container .card-title,
+.search-container .card-audio {
+  all: unset;
+}
+
+/* Remove arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ---------- Lightbox ---------- */
+
+.lb-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 16, 0.76);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lb-stage {
+  position: relative;
+  width: min(92vw, 1200px);
+  height: min(86vh, 820px);
+  background: #0f1116;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+
+.lb-stage:active {
+  cursor: grabbing;
+}
+
+.lb-img {
+  max-width: none;
+  user-select: none;
+  will-change: transform;
+  transition: transform 80ms linear;
+}
+
+.lb-caption {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  color: #e5e7eb;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 20px;
+  pointer-events: none;
+}
+
+.lb-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.lb-controls button {
+  min-width: 42px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgb(255, 255, 255);
+  background: rgba(0, 0, 0, 0.995);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.lb-controls .lb-close {
+  min-width: 42px;
+  background: rgba(239, 68, 68, 0.9);
+  border-color: rgba(239, 68, 68, 0.95);
+}
+
+.lb-controls button:hover {
+  filter: brightness(1.05);
+}
+
+.typing-indicator {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* ---------- New: label outside bar + clear on right ---------- */
+
+.mega-area {
+  max-width: 760px;
+  /* keep bar width */
+  margin: 8px auto 10px;
+}
+
+.mega-label {
+  font-weight: 700;
+  color: #0c0c0c;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.mega-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  /* center bar + clear as a group */
+}
+
+.clear-inline {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.mega-search {
+  position: relative;
+  width: 700px;
+  flex: 1 1 760px;
+  margin: 0;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  padding: 10px 50px;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+}
+
+.mega-icon-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.mega-icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.mega-left {
+  left: -3px;
+}
+
+.mega-right {
+  right: -10px;
+}
+
+.mega-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 26px;
+  text-align: center;
+  color: #0c0c0c;
+}
+
+/* When no file, we keep the bar empty (label is outside now) */
+.mega-placeholder {
+  display: none;
+}
+
+.mega-k-row {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.query-name {
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  color: #0b0b0b;
+}
+
+.k-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #111;
+}
+
+.k-inline input {
+  width: 86px;
+  height: 30px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: #fff;
+  color: #111;
+}
+
+.k-inline input:focus {
+  outline: none;
+  border-color: #1c76cb;
+  box-shadow: 0 0 0 2px rgba(28, 118, 203, 0.25);
+}
+
+/* Old centered Clear bar removed */
+.bar-actions {
+  display: none;
+}
+
+/* Responsive: stack clear under bar on narrow screens */
+@media (max-width: 520px) {
+  .mega-bar-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .clear-inline {
+    height: 38px;
+    align-self: center;
+  }
+}
+
+/* ---------- Name + zoom icon below thumbnails ---------- */
+
+.img-overlay {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  user-select: none;
+}
+
+.result-name {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #eaeef6;
+  padding: 6px 8px 0;
+  background: transparent;
+}
+
+.result-name:hover {
+  opacity: 0.95;
+}
+
+.zoom-icon {
+  font-size: 14px;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.result-thumb {
+  position: relative;
+  overflow: hidden;
+}
+
+.zoom-btn {
+  position: absolute;
+  right: 11px;
+  bottom: 16px;
+  border: 0;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  display: grid;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .22);
+  opacity: 1;
+  transition: opacity .18s ease, transform .18s ease, background .12s ease;
+}
+
+/* ===== Crop drawer (right-side) ===== */
+.crop-drawer {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 0;
+  pointer-events: none;
+  transition: width 260ms cubic-bezier(.2, .9, .2, 1);
+  z-index: 15000;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.crop-drawer.open {
+  width: 420px;
+  /* width of the drawer */
+  pointer-events: auto;
+}
+
+.crop-drawer-inner {
+  width: 420px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: -18px 0 40px rgba(9, 10, 12, 0.18);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.drawer-title {
+  font-size: 18px;
+  color: #111;
+  margin: 6px 0 0;
+  font-weight: 800;
+}
+
+.crop-stage {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  border-radius: 8px;
+  background: #f7f7f8;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.crop-image-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  max-height: calc(100vh - 220px);
+  overflow: hidden;
+  display: block;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.crop-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.crop-rect {
+  position: absolute;
+  border: 2px dashed rgba(20, 20, 20, 0.85);
+  box-sizing: border-box;
+  cursor: move;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02));
+}
+
+.crop-rect::before {
+  content: "";
+  position: absolute;
+  inset: -9999px;
+  box-shadow: 9999px 9999px 0 0 rgba(0, 0, 0, 0.32), -9999px -9999px 0 0 rgba(0, 0, 0, 0.32);
+  pointer-events: none;
+}
+
+.crop-handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 3px;
+  border: 2px solid rgba(0, 0, 0, 0.6);
+  right: -9px;
+  bottom: -9px;
+  cursor: se-resize;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+}
+
+.drawer-btn {
+  flex: 1 1 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 15px;
+  border: 0;
+  cursor: pointer;
+}
+
+.drawer-btn.cancel {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.drawer-btn.confirm {
+  background: #0b0b0b;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(11, 11, 11, 0.12);
+}
+
+.preview-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* preview wrap & overlay styling (buttons on image) */
+.preview-img-wrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: visible;
+}
+
+.preview-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  object-fit: contain;
+}
+
+.preview-img-actions {
+  position: absolute;
+  bottom: 12px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+/* responsive: move overlay to bottom center on small screens */
+@media (max-width: 520px) {
+  .preview-img-actions {
+    right: 50%;
+    transform: translateX(50%);
+    bottom: 8px;
+  }
+}
+
+.preview-img-actions .btn {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: #0b0b0b;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.preview-img-actions .btn.primary {
+  background: #0b0b0b;
+}
+
+.preview-img-actions .btn.secondary {
+  background: #efefef;
+  color: #111;
+}
+
+.preview-img-actions .btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.preview-img-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed
+}
+
+.btn primary {
+  width: 10px
+}
+
+/* preview wrap & overlay styling (buttons on image) */
+.preview-img-wrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: visible;
+}
+
+/* image style */
+.preview-img {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  object-fit: contain;
+}
+
+/* TOP-RIGHT clear button (small circle) */
+.preview-top-right {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 30;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.clear-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 0;
+  display: inline-grid;
+  place-items: center;
+  font-weight: 800;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 18px rgba(11, 11, 11, 0.08);
+  color: #111;
+}
+
+/* BOTTOM-RIGHT crop button (pill) */
+.preview-bottom-right {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.crop-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 0;
+  font-weight: 800;
+  cursor: pointer;
+  background: rgba(11, 11, 11, 0.9);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(11, 11, 11, 0.08);
+}
+
+/* Primary search button below the preview */
+.preview-actions-below {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-start;
+  /* align left like your screenshot */
+}
+
+.search-btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 0;
+  font-weight: 900;
+  background: linear-gradient(90deg, #1133ff, #0b76ff);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(11, 11, 11, 0.12);
+  cursor: pointer;
+}
+
+/* Small responsive adjustments: center the search button on narrow screens */
+@media (max-width: 520px) {
+  .preview-actions-below {
+    justify-content: center;
+  }
+
+  .preview-top-right {
+    top: 6px;
+    right: 6px;
+  }
+
+  .preview-bottom-right {
+    right: 6px;
+    bottom: 6px;
+  }
+}
+
+/* ---------- Preview overlay: top-right X & bottom-right Crop (CSS-only) ---------- */
+
+/* ensure wrapper is positioned (you already have this, but keep for safety) */
+.preview-img-wrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: visible;
+}
+
+/* base image */
+.preview-img {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  object-fit: contain;
+}
+
+/* container for the two overlay buttons (keeps semantic markup intact) */
+.preview-img-actions {
+  position: absolute;
+  inset: 0;
+  /* cover the whole image area */
+  pointer-events: none;
+  /* allow clicks to pass through except on buttons */
+  z-index: 30;
+}
+
+/* make buttons absolutely positioned and clickable */
+.preview-img-actions .btn {
+  pointer-events: auto;
+  /* re-enable clicks for the buttons */
+  border: 0;
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(11, 11, 11, 0.08);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* SMALL circular Clear (X) at top-right */
+.preview-img-actions .btn.secondary {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  /* circle */
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.98);
+  color: #111;
+  box-shadow: 0 8px 20px rgba(11, 11, 11, 0.10);
+}
+
+/* Pill-style Crop at bottom-right */
+.preview-img-actions .btn:not(.secondary) {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(11, 11, 11, 0.92);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  box-shadow: 0 10px 26px rgba(11, 11, 11, 0.14);
+}
+
+/* hover effects */
+.preview-img-actions .btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(11, 11, 11, 0.16);
+}
+
+/* slightly smaller buttons on very small screens */
+@media (max-width: 520px) {
+  .preview-img-actions .btn.secondary {
+    top: 6px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .preview-img-actions .btn:not(.secondary) {
+    right: 8px;
+    bottom: 8px;
+    padding: 7px 10px;
+    font-size: 14px;
+  }
+}
+
+/* ---------- FIX: preview overlay positions (place at end of FabricSearch.css) ---------- */
+/* make sure wrapper is positioned and on top of background */
+.preview-img-wrap {
+  position: relative !important;
+  display: inline-block !important;
+  width: 100% !important;
+  max-width: 560px !important;
+  margin: 0 auto !important;
+  border-radius: 12px !important;
+  overflow: visible !important;
+  z-index: 20;
+}
+
+/* image safety */
+.preview-img {
+  display: block !important;
+  width: 100% !important;
+  border-radius: 12px !important;
+  object-fit: contain !important;
+}
+
+/* overlay covers the image but lets clicks through except on buttons */
+.preview-img-actions {
+  position: absolute !important;
+  inset: 0 !important;
+  /* cover full image area */
+  pointer-events: none !important;
+  /* clicks fall through by default */
+  z-index: 30 !important;
+}
+
+/* default style for overlay buttons (make clickable) */
+.preview-img-actions .btn {
+  pointer-events: auto !important;
+  /* re-enable clicks for buttons */
+  border: 0 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #111 !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 0 6px 18px rgba(11, 11, 11, 0.08) !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+/* CLEAR (X) - top right small circle
+   Uses the ".secondary" class you apply to the X button */
+.preview-img-actions .btn.secondary {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  color: #111 !important;
+  box-shadow: 0 8px 22px rgba(11, 11, 11, 0.10) !important;
+  z-index: 40 !important;
+}
+
+/* CROP pill - bottom right
+   Targets the other button (not .secondary) so no extra class is required */
+.preview-img-actions .btn:not(.secondary) {
+  position: absolute !important;
+  right: 10px !important;
+  bottom: 10px !important;
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
+  background: rgba(11, 11, 11, 0.92) !important;
+  color: #fff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 10px 26px rgba(11, 11, 11, 0.14) !important;
+  z-index: 40 !important;
+}
+
+/* hover micro-effect */
+.preview-img-actions .btn:hover:not(:disabled) {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 30px rgba(11, 11, 11, 0.16) !important;
+}
+
+/* Small screens: nudge positions inward */
+@media (max-width: 520px) {
+  .preview-img-actions .btn.secondary {
+    top: 6px !important;
+    right: 6px !important;
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .preview-img-actions .btn:not(.secondary) {
+    right: 8px !important;
+    bottom: 8px !important;
+    padding: 7px 10px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* ---------- Preview size override (place at end of FabricSearch.css) ---------- */
+/* Change this value to increase/decrease preview size */
+:root {
+  --preview-size: 360px;
+}
+
+/* Make the preview box wider so image can grow */
+.search-container .preview-box {
+  max-width: var(--preview-size) !important;
+}
+
+/* Ensure the preview wrapper can expand to the new size */
+.preview-img-wrap {
+  max-width: var(--preview-size) !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+/* Make the preview image larger and square-ish */
+.preview-img {
+  width: 100% !important;
+  object-fit: cover !important;
+  /* keeps aspect and fills box */
+  border-radius: 12px !important;
+  display: block !important;
+}
+
+/* Keep overlay buttons positioned correctly relative to the larger image */
+.preview-img-actions {
+  inset: 0 !important;
+  z-index: 30 !important;
+  pointer-events: none !important;
+}
+
+/* If you want the preview to be responsive on small screens, scale it down */
+@media (max-width: 900px) {
+  :root {
+    --preview-size: 320px;
+  }
+}
+
+@media (max-width: 520px) {
+  :root {
+    --preview-size: 260px;
+  }
+
+  .preview-img {
+    height: var(--preview-size) !important;
+  }
+
+  .preview-img-wrap {
+    max-width: var(--preview-size) !important;
+  }
+}
+
+.side-by-side-preview {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.original-preview,
+.cropped-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.original-img,
+.cropped-img {
+  max-width: 280px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.original-img-wrap {
+  position: relative;
+}
+
+.original-img-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn.secondary {
+  background: crimson;
+  position: absolute;
+  right: 0;
+}
+
+
+.search-btn-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

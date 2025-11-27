@@ -1,6 +1,8 @@
 import base64
 import io
+
 from PIL import Image
+
 
 def convert_image_to_base64_for_validation(image_bytes: bytes) -> str:
     try:

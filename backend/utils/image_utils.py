@@ -1,6 +1,7 @@
 import base64
 import io
 
+
 def convert_image_to_base64(image) -> str:
     try:
         image_byte_arr = io.BytesIO()

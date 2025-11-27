@@ -1,12 +1,23 @@
-import { useState } from "react";
+// AnimatedSearchBox.tsx (replace current file)
+import { useId, useState } from "react";
 import "../styles/SearchBar.css";
 
-const AnimatedSearchBox = ({ onSearch, loading }) => {
-  const [selectedImage, setSelectedImage] = useState(null);
+type SelectedImage = File | string | null;
+
+type AnimatedSearchBoxProps = {
+  onSearch?: (file: File) => void;
+  loading?: boolean;
+};
+
+const AnimatedSearchBox = ({
+  onSearch,
+  loading = false,
+}: AnimatedSearchBoxProps) => {
+  const [selectedImage, setSelectedImage] = useState<SelectedImage>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
     if (file) {
       setSelectedImage(file);
       setShowPrompt(true);
@@ -17,8 +28,12 @@ const AnimatedSearchBox = ({ onSearch, loading }) => {
     }
   };
 
+  // useId() can include ":" in generated id on some runtimes — remove it to be safe for htmlFor
+  const rawId = useId();
+  const fileid = rawId.replace(/[:]/g, "");
+
   return (
-    <div className="search-container">
+    <div className="searchbar-container">
       <div className="top-texts">
         <span className="animated-placeholder shimmer-text">
           Upload a fabric image <span style={{ margin: "0 8px" }}>or</span>
@@ -27,26 +42,51 @@ const AnimatedSearchBox = ({ onSearch, loading }) => {
       </div>
 
       <div className="search-box">
-        <label htmlFor="file-upload" className="upload-icon">📁</label>
+        {/* htmlFor now matches the input id */}
+        <label
+          htmlFor={fileid}
+          className="upload-icon"
+          role="button"
+          aria-disabled={loading}
+        >
+          📁
+        </label>
+
+        {/* keep input present but visually hidden; label will trigger it */}
         <input
-          id="file-upload"
+          id={fileid}
           type="file"
           accept="image/*"
           onChange={handleImageChange}
-          hidden
-          disabled={loading}
+          style={{ display: "none" }}
+          disabled={!!loading}
         />
 
-        {showPrompt && selectedImage ? (
-          <>
-            <span className="file-name">{selectedImage?.name}</span>
-            <p className="search-instruction">Image uploaded successfully. Showing preview...</p>
-          </>
-        ) : (
-          <div className="text-container" />
-        )}
+        {/* NEW: wrap filename + instruction inside a flex child (.file-info)
+            This child has min-width:0 so ellipsis works and it won't push other items */}
+        <div className="file-info">
+          {showPrompt && selectedImage ? (
+            <>
+              <span
+                className="file-name"
+                title={typeof selectedImage === "string" ? selectedImage : selectedImage.name}
+              >
+                {typeof selectedImage === "string"
+                  ? selectedImage
+                  : selectedImage.name}
+              </span>
+              <p className="search-instruction">
+                Image uploaded successfully. Showing preview...
+              </p>
+            </>
+          ) : (
+            <div className="text-container" />
+          )}
+        </div>
 
-        <button className="search-btn" disabled>🔍</button>
+        <button className="search-btn" disabled>
+          🔍
+        </button>
       </div>
     </div>
   );

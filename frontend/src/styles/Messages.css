@@ -1,0 +1,541 @@
+.msg-row {
+  display: flex;
+  gap: 2px;
+  margin: 8px 0;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.msg-row.left {
+  justify-content: flex-start;
+}
+
+.msg-row.right {
+  justify-content: flex-end;
+}
+
+.assistant-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eef2ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-top: 4px;
+  flex: 0 0 36px;
+  border: 1px solid #e5e7eb;
+}
+
+.assistant-block {
+  text-align: left;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #e9eef5;
+  border-radius: 14px;
+  padding: 0px 14px;
+  line-height: 1.55;
+  box-shadow: 0 4px 14px rgba(2, 6, 23, 0.04);
+  max-width: min(78ch, 74%);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  display: block;
+}
+
+.assistant-block p,
+.assistant-block ul,
+.assistant-block ol,
+.assistant-block li {
+  color: inherit;
+}
+
+.assistant-block ul,
+.assistant-block ol {
+  margin: 8px 0 12px 1.1rem;
+  padding-left: 0;
+  list-style-position: outside;
+  line-height: 1.55;
+}
+
+.assistant-block li {
+  margin: 6px 0;
+  font-size: 15px;
+}
+
+.assistant-block a {
+  color: #2563eb;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(37, 99, 235, .18);
+}
+
+.assistant-block a:hover {
+  text-decoration: underline;
+}
+
+.assistant-block pre {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 10px;
+  overflow: auto;
+  font-size: 13px;
+  margin: 10px 0;
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+
+.assistant-block code {
+  background: rgba(2, 6, 23, 0.06);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+  font-size: 13px;
+}
+
+.bubble.user {
+  background: linear-gradient(180deg, #2563eb, #1e40af);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border-top-right-radius: 6px;
+  max-width: min(70ch, 70%);
+  line-height: 1.4;
+  box-shadow: 0 6px 16px rgba(2, 6, 23, .12);
+}
+
+/* Media */
+.media-bubble {
+  background: #fff;
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
+  border: 1px solid #eef2f6;
+}
+
+.image-bubble {
+  padding: 4px;
+}
+
+.audio-bubble {
+  padding: 6px 8px;
+}
+
+.chat-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 360px;
+  border-radius: 12px;
+  display: block;
+  object-fit: cover;
+  border: 1px solid rgba(2, 6, 23, .06);
+}
+
+.media-filename,
+.image-caption {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.typing {
+  padding: 8px 12px;
+  color: #64748b;
+  font-style: italic;
+  background: transparent;
+}
+
+.typing,
+.typing-indicator {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.assistant-block :focus,
+.bubble.user :focus {
+  outline: 3px solid rgba(37, 99, 235, .12);
+  outline-offset: 2px;
+}
+
+.msg-row.left {
+  justify-content: flex-start;
+  padding-left: 9px;
+}
+
+.message-wrapper {
+  padding-right: 60px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: #d1f5ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+/* Inline quick replies container under assistant bubble */
+.inline-quick-replies {
+  margin: 8px 0 14px 0;
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  padding-left: 8px;
+  /* align with bubble padding if needed */
+}
+
+/* Row that contains chips */
+.quick-replies-row {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Chip style (Yes / No) */
+.chip {
+  background: #f3f4f6;
+  /* light neutral background */
+  color: #111827;
+  /* dark text */
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* Hover / focus states */
+.chip:hover,
+.chip:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+  outline: none;
+}
+
+/* Primary emphasis for positive action (Yes) - optional (apply by extra class if needed) */
+.chip-primary {
+  background: #111827;
+  /* dark */
+  color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.chip[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.ask-more-container {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+
+.ask-more-container.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ask-more-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.ask-more-buttons button {
+  padding: 8px 18px;
+  border-radius: 25px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s ease;
+}
+
+.ask-more-buttons button.yes-btn {
+  background: #28a745;
+  color: white;
+}
+
+.ask-more-buttons button.no-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.ask-more-buttons button:hover {
+  transform: scale(1.05);
+}
+
+.ask-more-buttons button:active {
+  transform: scale(0.95);
+}
+
+/* wrapper that allows control placement */
+.assistant-block--with-copy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* control container (top-right) */
+.assistant-block__controls {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+/* show on hover of the message wrapper (desktop) */
+.message-wrapper:hover .assistant-block__controls,
+.message-wrapper:focus-within .assistant-block__controls {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ensure controls visible on small/touch screens */
+@media (hover: none) {
+  .assistant-block__controls {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* button styles — tweak to match your theme */
+.copy-btn {
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: #111;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.copy-btn:active {
+  transform: scale(0.98);
+}
+
+.copy-btn.copied {
+  background: rgba(34, 197, 94, 0.12);
+  /* subtle green */
+  color: #166534;
+}
+
+.assistant-block .assistant-content {
+  padding-top: 28px;
+  /* room for the top-right controls */
+}
+
+@media (max-width: 420px) {
+  .assistant-block .assistant-content {
+    padding-top: 22px;
+  }
+}
+
+/* Layout for bubbles that have inline controls:
+   two columns: content | controls (so controls never push content) */
+.assistant-block--with-copy {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  /* content takes available space, controls take minimal width */
+  gap: 8px;
+  align-items: start;
+  position: relative;
+  /* keep if you rely on absolute positioning elsewhere */
+  padding: 10px 12px;
+  /* unify inner spacing (optional, tweak to taste) */
+  box-sizing: border-box;
+}
+
+/* control container (top-right area) — not absolute so it doesn't affect layout height */
+.assistant-block__controls {
+  display: flex;
+  gap: 6px;
+  align-items: start;
+  /* keep controls aligned to top of content */
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  /* prevent controls from wrapping to next line */
+  white-space: nowrap;
+}
+
+/* show controls when hovering the bubble itself (works even when .message-wrapper is not present) */
+.assistant-block--with-copy:hover .assistant-block__controls,
+.assistant-block--with-copy:focus-within .assistant-block__controls,
+.message-wrapper:hover .assistant-block__controls,
+.message-wrapper:focus-within .assistant-block__controls {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ensure content doesn't reserve extra top-padding for controls */
+.assistant-block--with-copy .assistant-content {
+  padding-top: 0;
+}
+
+/* make sure copy button text never wraps and stays compact */
+.copy-btn {
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: #111;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+  /* key: prevent wrap */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  /* optional: ensure tappable on mobile */
+}
+
+/* ----- Put this at the END of your CSS file ----- */
+
+/* ensure the bubble is a positioned container */
+.assistant-block--with-copy {
+  position: relative !important;
+  /* keep grid layout for content + controls if present */
+  display: block !important;
+  /* prefer block so absolute controls don't affect layout */
+  padding: 12px 14px 44px 14px !important;
+  /* leave room at bottom for controls */
+  box-sizing: border-box !important;
+}
+
+/* make controls sit absolutely at bottom-right of the bubble and always visible */
+.assistant-block--with-copy .assistant-block__controls {
+  position: absolute !important;
+  right: 10px !important;
+  bottom: 10px !important;
+  top: auto !important;
+  /* ignore top placement rules */
+  display: flex !important;
+  gap: 6px !important;
+  align-items: center !important;
+  z-index: 5 !important;
+  opacity: 1 !important;
+  /* always visible */
+  transform: none !important;
+  /* no translate/hidden movement */
+  pointer-events: auto !important;
+  /* ensure buttons clickable */
+  background: transparent !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* ensure the copy button is compact and matches tappable target size */
+.assistant-block--with-copy .copy-btn {
+  min-width: 44px !important;
+  height: 36px !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  border-radius: 999px !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Remove earlier hover-triggered visibility (override any selector targeting .message-wrapper:hover .assistant-block__controls) */
+.message-wrapper:hover .assistant-block__controls,
+.message-wrapper:focus-within .assistant-block__controls,
+.assistant-block--with-copy:hover .assistant-block__controls,
+.assistant-block--with-copy:focus-within .assistant-block__controls {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* If the bubble contains long code blocks, keep controls visible but avoid overlap: slightly nudge if necessary */
+@media (max-width: 640px) {
+  .assistant-block--with-copy {
+    padding-bottom: 48px !important;
+  }
+
+  .assistant-block--with-copy .copy-btn {
+    min-width: 40px !important;
+    height: 34px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Optional: Differ slightly for right-aligned bubbles (user messages) if you ever add copy there */
+.msg-row.right .assistant-block--with-copy .assistant-block__controls,
+.msg-row.right .assistant-block--with-copy .copy-btn {
+  /* no-op by default - keeps same look; change if you want right-speech variants */
+}
+
+/* Reveal copy button only after typing completes.
+   Place at the END of the CSS file so it overrides earlier hover rules. */
+
+/* Ensure bubble keeps bottom padding so the controls won't shift content */
+.assistant-block--with-copy {
+  padding-bottom: 48px !important;
+  /* reserve space for controls */
+  box-sizing: border-box !important;
+}
+
+/* Default: controls hidden while typing */
+.msg-row[data-typing="true"] .assistant-block__controls {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  /* not clickable while hidden */
+  transition: opacity 220ms cubic-bezier(.2, .9, .2, 1), transform 220ms ease;
+}
+
+/* When typing finished: reveal with a subtle pop */
+.msg-row[data-typing="false"] .assistant-block__controls {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  transition: opacity 260ms cubic-bezier(.16, .8, .24, 1), transform 220ms cubic-bezier(.2, .9, .2, 1);
+}
+
+/* Keep copy button style stable (no layout shift) */
+.assistant-block--with-copy .copy-btn {
+  min-width: 44px;
+  height: 36px;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* If the user manually stops typing via the global stop event,
+   setExternallyStopped becomes true and isTyping becomes false —
+   the above selector will allow the button to appear immediately. */
+
+/* Small screens: reduce reserved bottom padding */
+@media (max-width: 640px) {
+  .assistant-block--with-copy {
+    padding-bottom: 44px !important;
+  }
+
+  .assistant-block__controls {
+    right: 8px !important;
+    bottom: 8px !important;
+  }
+}

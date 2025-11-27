@@ -1,0 +1,33 @@
+  {
+    "env": {
+      "browser": true,
+      "es2021": true
+    },
+    "extends": [
+      "eslint:recommended",
+      "plugin:react/recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      },
+      "ecmaVersion": "latest",
+      "sourceType": "module",
+      "project": "./tsconfig.json" // Required for some TypeScript rules
+    },
+    "plugins": [
+      "react",
+      "@typescript-eslint"
+    ],
+    "rules": {
+      // Custom rules or overrides can go here
+      "react/react-in-jsx-scope": "off" // For React 17+ where React import is not always needed
+    },
+    "settings": {
+      "react": {
+        "version": "detect" // Automatically detect React version
+      }
+    }
+  }

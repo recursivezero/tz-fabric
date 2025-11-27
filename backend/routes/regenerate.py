@@ -4,6 +4,7 @@ import asyncio
 
 router = APIRouter()
 
+
 @router.get("/regenerate")
 async def regenerate(key: str, index: int):
     try:
@@ -14,7 +15,7 @@ async def regenerate(key: str, index: int):
         while waiting < timeout:
             response = get_response(key, index)
             if response is not None:
-                return response  
+                return response
             await asyncio.sleep(interval)
             waiting += interval
 

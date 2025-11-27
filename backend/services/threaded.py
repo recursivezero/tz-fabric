@@ -8,10 +8,13 @@ from utils.cache import generate_cache_key, store_response
 
 executor = ThreadPoolExecutor(max_workers=6)
 
+
 def process_remaining_prompts(prompts, image_base_64, cache_key, already_stored_idx):
-    print(f"Processing remaining prompts for cache={cache_key}, skipping idx={already_stored_idx}")
+    print(
+        f"Processing remaining prompts for cache={cache_key}, skipping idx={already_stored_idx}"
+    )
     futures = {
-        executor.submit(analyse_fabric_image, image_base_64, prompt, idx+1): idx+1
+        executor.submit(analyse_fabric_image, image_base_64, prompt, idx + 1): idx + 1
         for idx, prompt in enumerate(prompts)
         if idx + 1 != already_stored_idx
     }
@@ -20,14 +23,15 @@ def process_remaining_prompts(prompts, image_base_64, cache_key, already_stored_
         idx = futures[future]
         try:
             result = future.result()
-            response_text = result.get('response') if result else None
+            response_text = result.get("response") if result else None
             store_response(cache_key, idx, {"id": idx, "response": response_text})
-            print(f"Background stored index={idx}, response={response_text[:30] if response_text else 'None'}")
-           
+            print(
+                f"Background stored index={idx}, response={response_text[:30] if response_text else 'None'}"
+            )
+
         except Exception as e:
             print(f" Exception in background prompt idx={idx}: {e}")
             store_response(cache_key, idx, {"id": idx, "response": None})
-    
 
 
 def analyse_all_variations(image, analysis_type):
@@ -37,7 +41,6 @@ def analyse_all_variations(image, analysis_type):
 
     cache_key = str(uuid.uuid4())
     generate_cache_key(cache_key)
-    
 
     image_base64 = convert_image_to_base64(image)
     if not image_base64:
@@ -67,22 +70,22 @@ def analyse_all_variations(image, analysis_type):
             response_id = result.get("id")
             response_text = result.get("response")
 
-            print(f"Parsed → id: {response_id}, response_text: {response_text[:40] if response_text else 'None'}")
+            print(
+                f"Parsed → id: {response_id}, response_text: {response_text[:40] if response_text else 'None'}"
+            )
 
             try:
-                store_response(cache_key, response_id, {
-                    "id": response_id,
-                    "response": response_text
-                })
+                store_response(
+                    cache_key,
+                    response_id,
+                    {"id": response_id, "response": response_text},
+                )
                 print(f"Stored response for index {response_id}")
             except Exception as e:
                 print(f" Failed to store response {response_id}:", e)
 
             if not first_response:
-                first_response = {
-                    "id": response_id,
-                    "response": response_text
-                }
+                first_response = {"id": response_id, "response": response_text}
                 print(" First response set:", first_response)
                 break
 
@@ -97,7 +100,6 @@ def analyse_all_variations(image, analysis_type):
                 first_response = {"id": idx, "response": None}
                 break
 
-
     if not first_response or "id" not in first_response:
         print("ERROR: Invalid or missing first_response:", first_response)
         return {"cache_key": cache_key, "first": {"id": 1, "response": None}}
@@ -106,7 +108,7 @@ def analyse_all_variations(image, analysis_type):
         threading.Thread(
             target=process_remaining_prompts,
             args=(prompts, image_base64, cache_key, first_response["id"]),
-            daemon=True
+            daemon=True,
         ).start()
         print(" Background thread started.")
     except Exception as e:
@@ -114,7 +116,4 @@ def analyse_all_variations(image, analysis_type):
 
     print(" Returning from analyse_all_variations with:", first_response)
 
-    return {
-        "cache_key": cache_key,
-        "first": first_response
-    }
+    return {"cache_key": cache_key, "first": first_response}

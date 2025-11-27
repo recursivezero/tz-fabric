@@ -1,94 +1,112 @@
-.search-container {
+/* SearchBar.css - stable layout + ellipsis for long filenames
+   Keeps your original class names but adds the required flex rules */
+
+/* container */
+.searchbar-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 10px;
 }
 
-.top-texts {
+/* top helper text */
+.searchbar-container .top-texts {
   display: block;
-  flex-direction: column;
   align-items: center;
   margin-bottom: 10px;
 }
 
-.search-box {
+.searchbar-container .search-box {
   position: relative;
   display: flex;
   align-items: center;
   border: 2px solid #ccc;
   border-radius: 20px;
-  padding: 0px 20px;
+  padding: 8px 20px;
   width: 700px;
+  max-width: calc(100% - 40px);
   background-color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   gap: 12px;
+  box-sizing: border-box;
 }
 
-.upload-icon {
+.searchbar-container .upload-icon {
   cursor: pointer;
   font-size: 24px;
-  margin-right: 12px;
+  flex: 0 0 auto;
 }
 
-.search-btn {
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-  margin-left: 12px;
-  flex-shrink: 0;
+.searchbar-container .file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.text-container {
+.searchbar-container .text-container {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   position: relative;
+  min-width: 0;
 }
 
-.animated-placeholder {
-  font-size: 19px;
-  color: #888;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.file-name {
+.searchbar-container .file-name {
   font-size: 16px;
   color: #000000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  line-height: 1.1;
+  max-width: 100%;
+  font-weight: 600;
 }
 
-.search-instruction {
-  text-align-last: end;
-  flex-grow: 10;
+.searchbar-container .file-name[title] {
+  cursor: default;
+}
+
+.searchbar-container .search-instruction {
+  margin: 0;
   font-size: 13px;
   color: #777;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
-.shimmer-text {
-  animation: shimmer 1.5s infinite;
-  background: linear-gradient(90deg, #f0f0f0 25%, #ffffff 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.searchbar-container .search-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  margin-left: 12px;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.sample-text {
+/* animated & sample text kept from your original */
+.searchbar-container .animated-placeholder {
   font-size: 19px;
   color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.searchbar-container .shimmer-text {
+  background-size: 200% 100%;
+  color: #142d2d;
   font-weight: 500;
+}
+
+.searchbar-container .sample-text {
+  color: #000000;
 }

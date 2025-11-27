@@ -1,11 +1,10 @@
-import "../styles/Header.css";
-
+import "../styles/ImageDescriptorHeader.css";
 
 const Header = () => {
   return (
     <div className="header-wrapper">
       <div className="animated-header">
-        <h1>AI Fabric Search</h1>
+        <h1>Search Similar Images</h1>
       </div>
     </div>
   );
