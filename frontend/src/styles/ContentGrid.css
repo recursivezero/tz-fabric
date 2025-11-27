@@ -112,6 +112,7 @@ figcaption {
 .grid-page .media-thumb {
   position: relative;
   background: rgba(27, 34, 48, 0.85);
+  max-width: unset;
 }
 
 .grid-page .media-thumb img {

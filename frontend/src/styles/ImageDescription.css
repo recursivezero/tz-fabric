@@ -23,7 +23,7 @@
   margin-bottom: 5px;
 }
 
-.grid {
+.home-container .grid {
   display: grid;
   grid-template-columns: 1.0fr 1.0fr;
   gap: 28px;
@@ -144,7 +144,7 @@
   margin-bottom: 5px;
 }
 
-.grid {
+.home-container .grid {
   display: grid;
   grid-template-columns: 1.0fr 1.0fr;
   gap: 28px;
