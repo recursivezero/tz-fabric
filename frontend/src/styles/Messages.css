@@ -199,7 +199,7 @@
 }
 
 /* Chip style (Yes / No) */
-.chip {
+.msg-row .chip {
   background: #f3f4f6;
   /* light neutral background */
   color: #111827;
