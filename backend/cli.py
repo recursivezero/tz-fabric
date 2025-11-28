@@ -18,7 +18,7 @@ def app():
     Legacy function kept exactly as before.
     Running: poetry run dev
     """
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=Port, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=Port, reload=True)
 
 
 # --- NEW CLI ENTRYPOINT ---
