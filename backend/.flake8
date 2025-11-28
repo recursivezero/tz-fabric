@@ -1,0 +1,10 @@
+[flake8]
+exclude =
+    .git,
+    __pycache__,
+    .poetry,
+    .venv,
+    env,
+    venv
+max-line-length = 300
+extend-ignore = E203

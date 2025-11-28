@@ -1,15 +1,16 @@
-from typing import Optional, Literal, Dict, Any, List
-from mcp.server.fastmcp import FastMCP
 import traceback
+from pathlib import Path
+from typing import Any, Dict, List, Literal, Optional
+from urllib.parse import urlparse
+
+from mcp.server.fastmcp import FastMCP
 from PIL import Image
+
+from constants import IMAGE_DIR
+from services.threaded import analyse_all_variations
 from tools.media_tools import redirect_to_media_analysis as media_tool
 from tools.search_tool import search_tool as _search_tool
-from services.threaded import analyse_all_variations
 from utils.cache import get_response
-
-from urllib.parse import urlparse
-from pathlib import Path
-from constants import IMAGE_DIR
 
 mcp = FastMCP("fabric-tools")
 
@@ -67,7 +68,10 @@ def redirect_to_analysis(
         if not path:
             return {
                 "ok": False,
-                "error": {"code": "image_not_found", "message": "Image not found on server."},
+                "error": {
+                    "code": "image_not_found",
+                    "message": "Image not found on server.",
+                },
             }
 
     try:
@@ -76,12 +80,21 @@ def redirect_to_analysis(
         cache_key = raw.get("cache_key")
         first = raw.get("first")
         if not first:
-            return {"ok": False, "error": {"code": "no_result", "message": "Analyzer returned no response"}}
+            return {
+                "ok": False,
+                "error": {
+                    "code": "no_result",
+                    "message": "Analyzer returned no response",
+                },
+            }
 
         txt = first.get("response", "")
         return {
             "ok": True,
-            "action": {"type": "redirect_to_analysis", "params": {"cache_key": cache_key, "mode": mode}},
+            "action": {
+                "type": "redirect_to_analysis",
+                "params": {"cache_key": cache_key, "mode": mode},
+            },
             "bot_messages": ["Here is the first result:", txt],
             "analysis_responses": [{"id": first.get("id", "1"), "text": txt}],
             "_via": "mcp.analysis",
@@ -160,6 +173,7 @@ def regenerate(
         "_via": "mcp.regenerate",
     }
 
+
 @mcp.tool()
 def redirect_to_media_analysis(
     image_path: Optional[str] = None,
@@ -187,7 +201,13 @@ def redirect_to_media_analysis(
             audio_url=audio_url,
         )
         if not isinstance(out, dict):
-            return {"ok": False, "error": {"code": "bad_output", "message": "media_tool returned non-dict"}}
+            return {
+                "ok": False,
+                "error": {
+                    "code": "bad_output",
+                    "message": "media_tool returned non-dict",
+                },
+            }
         out.setdefault("ok", True)
         out["_via"] = "mcp.media"
         return out
@@ -220,7 +240,10 @@ def search(
             if not resolved:
                 return {
                     "ok": False,
-                    "error": {"code": "not_found", "message": f"Image not found on server for URL: {image_url}"},
+                    "error": {
+                        "code": "not_found",
+                        "message": f"Image not found on server for URL: {image_url}",
+                    },
                     "hint": "Ensure you used the upload endpoint and the filename matches files in IMAGE_DIR.",
                     "_via": "mcp.search",
                 }
@@ -229,7 +252,10 @@ def search(
         if not (resolved_path or image_b64):
             return {
                 "ok": False,
-                "error": {"code": "no_image", "message": "Provide image_url (resolvable), image_path, or image_b64."},
+                "error": {
+                    "code": "no_image",
+                    "message": "Provide image_url (resolvable), image_path, or image_b64.",
+                },
                 "hint": "If you only have a local file in the browser, upload it first to get an image_url.",
                 "_via": "mcp.search",
             }
@@ -247,11 +273,17 @@ def search(
         if not isinstance(out, dict):
             return {
                 "ok": False,
-                "error": {"code": "bad_tool_output", "message": "search_tool returned a non-dict result"},
+                "error": {
+                    "code": "bad_tool_output",
+                    "message": "search_tool returned a non-dict result",
+                },
                 "_via": "mcp.search",
             }
 
-        out.setdefault("count", len(out.get("results", []) if isinstance(out.get("results"), list) else []))
+        out.setdefault(
+            "count",
+            len(out.get("results", []) if isinstance(out.get("results"), list) else []),
+        )
         out["ok"] = True
         out["_via"] = "mcp.search"
         return out
@@ -289,10 +321,16 @@ def search_base64(
         if not isinstance(out, dict):
             return {
                 "ok": False,
-                "error": {"code": "bad_tool_output", "message": "search_tool returned a non-dict result"},
+                "error": {
+                    "code": "bad_tool_output",
+                    "message": "search_tool returned a non-dict result",
+                },
                 "_via": "mcp.search_base64",
             }
-        out.setdefault("count", len(out.get("results", []) if isinstance(out.get("results"), list) else []))
+        out.setdefault(
+            "count",
+            len(out.get("results", []) if isinstance(out.get("results"), list) else []),
+        )
         results = out.get("results", [])
 
         analysis_responses = []

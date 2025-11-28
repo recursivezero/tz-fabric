@@ -1,5 +1,7 @@
+from typing import Dict, List
+
 import google.generativeai as genai
-from typing import List, Dict
+
 from core.config import settings
 
 # Configure Gemini once on import
@@ -17,6 +19,7 @@ model = genai.GenerativeModel(
     system_instruction=SYSTEM_PROMPT,
 )
 
+
 def to_gemini_history(messages: List[Dict]) -> List[Dict]:
     history: List[Dict] = []
     for m in messages:
@@ -29,6 +32,7 @@ def to_gemini_history(messages: List[Dict]) -> List[Dict]:
         gem_role = "model" if role == "assistant" else "user"
         history.append({"role": gem_role, "parts": [{"text": content}]})
     return history
+
 
 def chat_once(messages: List[Dict]) -> str:
     contents = to_gemini_history(messages)

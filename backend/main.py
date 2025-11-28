@@ -1,18 +1,18 @@
-from fastapi import FastAPI, Request
+import os
+from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
-from dotenv import load_dotenv
-from contextlib import asynccontextmanager
-from constants import API_PREFIX, IMAGE_DIR,AUDIO_DIR, ASSETS
-import os
-from utils.emoji_logger import get_logger
 
-from routes import analysis, regenerate, validate_image, search, submit, media, chat, uploads
+from constants import API_PREFIX, ASSETS, AUDIO_DIR, IMAGE_DIR
+from routes import analysis, chat, media, regenerate, search, submit, uploads, validate_image
 from tools.mcpserver import sse_app
+from utils.emoji_logger import get_logger
 
 app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
 load_dotenv()
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 origins = [
     "http://localhost:4173",
-    "http://localhost:5173"  # Allow requests from your frontend origin
+    "http://localhost:5173",  # Allow requests from your frontend origin
     # You can add more origins here if needed
 ]
 
@@ -38,9 +38,7 @@ DATABASE_URI = os.getenv(
     "mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority",
 )
 if not DATABASE_URI:
-    raise RuntimeError(
-        "DATABASE_URI is not set in environment variables. Please configure it in .env"
-    )
+    raise RuntimeError("DATABASE_URI is not set in environment variables. Please configure it in .env")
 # Parse the URI to extract db name
 parsed_uri = uri_parser.parse_uri(DATABASE_URI)
 db_name = parsed_uri.get("database")
@@ -95,6 +93,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Error while closing MongoDB client: {e}")
 
+
 app.include_router(analysis.router, prefix=API_PREFIX)
 app.include_router(regenerate.router, prefix=API_PREFIX)
 app.include_router(validate_image.router, prefix=API_PREFIX)
@@ -104,9 +103,11 @@ app.include_router(media.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 
+
 @app.get("/__routes")
 def _routes():
     return [getattr(r, "path", str(r)) for r in app.routes]
+
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):

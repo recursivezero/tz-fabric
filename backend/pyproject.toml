@@ -1,6 +1,6 @@
 [project]
 name = "tzfabric"
-version = "0.2.6"
+version = "0.2.11"
 description = "This is fabric analyzer backend"
 authors = [{ name = "recursivezero", email = "recursivezero@outlook.com" }]
 readme = "README.md"
@@ -53,6 +53,8 @@ documentation = "https://github.com/recursivezero/tz-script/docs"
 
 [project.scripts]
 dev = "cli:app"
+tzfabric = "cli:main"
+lint = "lint:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -72,12 +74,14 @@ without = ["dev"]
 
 [tool.poetry.group.dev.dependencies]
 uvicorn = { extras = ["standard"], version = "^0.35.0" }
-black = "^24.10.0"
+black = ">=24.10.0,<25.0.0"
 flake8 = "^7.1.1"
 mypy = "^1.14.1"
 pip-audit = "^2.9.0"
 pipreqs = "0.5.0"
 ruff = "^0.13.1"
+isort = "^7.0.0"
+autoflake = "^2.3.1"
 
 [tool.flake8]
 max_line_length = 190

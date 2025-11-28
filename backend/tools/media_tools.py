@@ -1,15 +1,19 @@
 # tools/media_tool.py
-from typing import Optional, Dict, Any, List
-from pathlib import Path
+import os
+import tempfile
+import threading
+import uuid
 from datetime import datetime
-import os, uuid, threading, tempfile, requests
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
+import requests
 from dotenv import load_dotenv
 
+from constants import AUDIO_DIR, IMAGE_DIR
 from core.embedder import embed_image_bytes
 from core.store import get_index
 from utils.filename import sanitize_filename
-from constants import IMAGE_DIR, AUDIO_DIR
 
 load_dotenv()
 
@@ -51,7 +55,7 @@ def _background_index_job(
         if db is not None:
             db.images.update_one(
                 {"filename": image_filename, "status": "queued"},
-                {"$set": {"status": "processing"}}
+                {"$set": {"status": "processing"}},
             )
     except Exception:
         pass
@@ -76,7 +80,10 @@ def _background_index_job(
             db.images.update_one(
                 {"filename": image_filename},
                 {
-                    "$set": {"status": "indexed", "indexedAt": datetime.utcnow().isoformat()},
+                    "$set": {
+                        "status": "indexed",
+                        "indexedAt": datetime.utcnow().isoformat(),
+                    },
                     "$unset": {"errorMessage": ""},
                 },
             )
@@ -114,7 +121,10 @@ def redirect_to_media_analysis(
     if not image_path and not image_url:
         return {
             "ok": False,
-            "error": {"code": "no_image", "message": "Provide image_path or image_url."},
+            "error": {
+                "code": "no_image",
+                "message": "Provide image_path or image_url.",
+            },
             "bot_messages": ["❌ No image provided."],
             "_via": "media_tool",
         }
@@ -134,7 +144,10 @@ def redirect_to_media_analysis(
             if not src.exists():
                 return {
                     "ok": False,
-                    "error": {"code": "image_missing", "message": f"image_path not found: {image_path}"},
+                    "error": {
+                        "code": "image_missing",
+                        "message": f"image_path not found: {image_path}",
+                    },
                     "_via": "media_tool",
                 }
             image_filename = src.name
@@ -190,6 +203,7 @@ def redirect_to_media_analysis(
     db = None
     try:
         from pymongo import MongoClient, uri_parser
+
         DATABASE_URI = os.getenv("DATABASE_URI")
         parsed_uri = uri_parser.parse_uri(DATABASE_URI)
         db_name = parsed_uri.get("database") or "tz-fabric"
@@ -205,25 +219,29 @@ def redirect_to_media_analysis(
     created_on = datetime.utcnow().isoformat()
     if db is not None:
         try:
-            db.images.insert_one({
-                "basename": basename,
-                "filename": final_image_path.name,
-                "created_on": created_on,
-                "file_type": "image",
-                "status": "queued",
-                "indexedAt": None,
-                "errorMessage": None,
-            })
+            db.images.insert_one(
+                {
+                    "basename": basename,
+                    "filename": final_image_path.name,
+                    "created_on": created_on,
+                    "file_type": "image",
+                    "status": "queued",
+                    "indexedAt": None,
+                    "errorMessage": None,
+                }
+            )
         except Exception as e:
             bot_messages.append(f"DB warning (image insert): {e}")
         if audio_filename:
             try:
-                db.audios.insert_one({
-                    "basename": basename,
-                    "filename": saved_audio_path.name if saved_audio_path else audio_filename,
-                    "created_on": created_on,
-                    "file_type": "audio",
-                })
+                db.audios.insert_one(
+                    {
+                        "basename": basename,
+                        "filename": (saved_audio_path.name if saved_audio_path else audio_filename),
+                        "created_on": created_on,
+                        "file_type": "audio",
+                    }
+                )
             except Exception as e:
                 bot_messages.append(f"DB warning (audio insert): {e}")
 
@@ -231,8 +249,15 @@ def redirect_to_media_analysis(
     try:
         t = threading.Thread(
             target=_background_index_job,
-            args=(db, final_image_path, basename, final_image_path.name, (saved_audio_path.name if saved_audio_path else None), created_on),
-            daemon=True
+            args=(
+                db,
+                final_image_path,
+                basename,
+                final_image_path.name,
+                (saved_audio_path.name if saved_audio_path else None),
+                created_on,
+            ),
+            daemon=True,
         )
         t.start()
     except Exception as e:
@@ -248,7 +273,8 @@ def redirect_to_media_analysis(
                 "saved_audio": str(saved_audio_path) if saved_audio_path else None,
             },
         },
-        "bot_messages": bot_messages + [f"Uploaded and queued as basename='{basename}', image='{final_image_path.name}'"],
+        "bot_messages": bot_messages
+        + [f"Uploaded and queued as basename='{basename}', image='{final_image_path.name}'"],
         "analysis_responses": None,
         "_via": "media_tool",
     }

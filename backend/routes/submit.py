@@ -1,12 +1,13 @@
-from fastapi import APIRouter, UploadFile, File, Request, BackgroundTasks, Form
-from pathlib import Path
-from datetime import datetime
 import shutil
+from datetime import datetime
+from pathlib import Path
 
-from utils.filename import sanitize_filename
-from constants import IMAGE_DIR, AUDIO_DIR
+from fastapi import APIRouter, BackgroundTasks, File, Form, Request, UploadFile
+
+from constants import AUDIO_DIR, IMAGE_DIR
 from core.embedder import embed_image_bytes
 from core.store import get_index
+from utils.filename import sanitize_filename
 
 router = APIRouter()
 
@@ -39,9 +40,7 @@ def _process_index_job(
             "audioFilename": audio_filename,
             "createdAt": created_on,
         }
-        collection.add(
-            ids=[image_filename], embeddings=[embedding], metadatas=[metadata]
-        )
+        collection.add(ids=[image_filename], embeddings=[embedding], metadatas=[metadata])
 
         db.images.update_one(
             {"filename": image_filename},

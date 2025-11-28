@@ -1,5 +1,7 @@
-from typing import Optional, Literal, Dict, Any, List, Union
-import re, json, traceback, logging
+import logging
+import re
+import traceback
+from typing import Any, Dict, List, Union
 
 from langchain_core.runnables import RunnableLambda
 from langchain_groq import ChatGroq
@@ -16,7 +18,7 @@ llm_short = ChatGroq(
     api_key=settings.GROQ_API_KEY,
     model=settings.GROQ_MODEL,
     temperature=0,
-    max_tokens=150,   # short replies (adjust as needed)
+    max_tokens=150,  # short replies (adjust as needed)
 )
 
 llm_long = ChatGroq(
@@ -46,7 +48,10 @@ def call_redirect_to_analysis(params: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         return {
             "action": {"type": "redirect_to_analysis", "params": params},
-            "bot_messages": [f"Error calling MCP tool redirect_to_analysis: {e}", traceback.format_exc()],
+            "bot_messages": [
+                f"Error calling MCP tool redirect_to_analysis: {e}",
+                traceback.format_exc(),
+            ],
         }
 
 
@@ -59,7 +64,10 @@ def call_regenerate(params: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "type": "regenerate",
             "params": params,
-            "bot_messages": [f"Error calling MCP tool regenerate: {e}", traceback.format_exc()],
+            "bot_messages": [
+                f"Error calling MCP tool regenerate: {e}",
+                traceback.format_exc(),
+            ],
         }
 
 
@@ -69,7 +77,10 @@ def call_redirect_to_media_analysis(params: Dict[str, Any]):
     except Exception as e:
         return {
             "action": {"type": "redirect_to_media_analysis", "params": params},
-            "bot_messages": [f"Error calling MCP tool redirect_to_media_analysis: {e}", traceback.format_exc()],
+            "bot_messages": [
+                f"Error calling MCP tool redirect_to_media_analysis: {e}",
+                traceback.format_exc(),
+            ],
         }
 
 
@@ -80,7 +91,10 @@ def call_search(params: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "type": "search",
             "params": params,
-            "bot_messages": [f"Error calling MCP tool search: {e}", traceback.format_exc()],
+            "bot_messages": [
+                f"Error calling MCP tool search: {e}",
+                traceback.format_exc(),
+            ],
         }
 
 
@@ -118,7 +132,11 @@ def router_fn(user_text: str) -> Dict[str, Any]:
     m_fname = re.search(r"\bfilename\s*=\s*([^\s]+)", t_raw)
     fname = m_fname.group(1) if m_fname else None
 
-    if re.search(r"\b(regen|regenerate|variant|alternative|another|next alternative|more variants)\b", t, re.I):
+    if re.search(
+        r"\b(regen|regenerate|variant|alternative|another|next alternative|more variants)\b",
+        t,
+        re.I,
+    ):
         params: Dict[str, Any] = {}
         m_cache = re.search(r"cache[_\- ]?key[:= ]?([A-Za-z0-9_\-]+)", t_raw)
         if m_cache:
@@ -199,6 +217,7 @@ SYSTEM_PROMPT = (
 #   FIX: CLEAN HISTORY BEFORE SENDING TO THE LLM
 ##########################################################
 
+
 def _clean_history_message(m):
     """
     Remove tool return representations such as CallToolResult(...),
@@ -231,7 +250,6 @@ def _clean_history_message(m):
 ##########################################################
 
 
-
 def agent_fallback(params: Dict[str, Any]) -> str:
     user_text: str = params.get("text", "")
     history: List[Dict[str, str]] = params.get("history") or []
@@ -251,7 +269,6 @@ def agent_fallback(params: Dict[str, Any]) -> str:
 
     clipped = history[-6:] if isinstance(history, list) else []
 
-    ### FIX: CLEAN HISTORY BEFORE SENDING TO THE MODEL
     cleaned_history = []
     for m in clipped:
         safe = _clean_history_message(m)
@@ -266,7 +283,7 @@ def agent_fallback(params: Dict[str, Any]) -> str:
         logger.info(
             "AGENT DEBUG -> chosen_llm=%s system_prompt_preview=%s",
             "llm_long" if mode.startswith("long") else "llm_short",
-            system_prompt[:200]
+            system_prompt[:200],
         )
     except Exception:
         logger.exception("AGENT DEBUG -> logging error")
@@ -305,7 +322,10 @@ def _agent_graph_callable(payload: Union[str, Dict[str, Any]]) -> Any:
                 out = fn(params or {})
                 return out
             except Exception as e:
-                return {"error": f"tool_call_failed: {e}", "trace": traceback.format_exc()}
+                return {
+                    "error": f"tool_call_failed: {e}",
+                    "trace": traceback.format_exc(),
+                }
 
         return agent_fallback({"text": user_text, "history": history or [], "mode": mode})
 

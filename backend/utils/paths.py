@@ -5,9 +5,7 @@ from typing import Optional
 from constants import API_PREFIX, AUDIO_DIR, IMAGE_DIR, PROJECT_DIR
 
 
-def _url_from_path(
-    dir_path: Path, filename: str, api_prefix: str = API_PREFIX
-) -> Optional[str]:
+def _url_from_path(dir_path: Path, filename: str, api_prefix: str = API_PREFIX) -> Optional[str]:
     if not filename:
         return None
     try:

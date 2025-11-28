@@ -3,12 +3,12 @@ import base64
 import os
 import re
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from core.embedder import embed_image_bytes
 from core.search import topk_search
 from core.store import get_index
-from utils.paths import build_image_url, build_audio_url
+from utils.paths import build_audio_url, build_image_url
 
 ISO_FORMATS = (
     "%Y-%m-%dT%H:%M:%S.%fZ",
