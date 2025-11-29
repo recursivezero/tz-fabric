@@ -357,7 +357,7 @@ const UploadPage = () => {
       {showConfirmAudio && (
         <div className="confirm-overlay" role="dialog" aria-modal="true" aria-label="Remove audio confirmation">
           <div className="confirm-modal">
-            <div className="confirm-title">Remove <A></A>udio!</div>
+            <div className="confirm-title">Remove Audio!</div>
             <div className="confirm-body">Are you sure you want to remove this audio?</div>
             <div className="confirm-actions">
               <button className="btn btn-cancel" onClick={cancelClearAudio}>Cancel</button>
