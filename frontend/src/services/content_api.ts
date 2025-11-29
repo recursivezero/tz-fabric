@@ -22,15 +22,41 @@ export async function fetchContent(
   page = 1,
   limit = 4,
 ): Promise<ContentResponse> {
-  const res = await fetch(
-    `${FULL_API_URL}/media/content?page=${page}&limit=${limit}`,
-  );
-  if (!res.ok) {
-    const msg = await res.text().catch(() => "Failed to load content");
-    throw new Error(msg || "Failed to load content");
-  }
-  const data = (await res.json()) as ContentResponse;
+  let res: Response;
 
+  try {
+    res = await fetch(
+      `${FULL_API_URL}/media/content?page=${page}&limit=${limit}`,
+    );
+  } catch (err) {
+    throw new Error("Cannot reach server — check your network ");
+  }
+
+  if (!res.ok) {
+    let msg = `Failed to load content (${res.status})`;
+
+    if (res.status === 503) {
+      msg = "Content service unavailable — check your network.";
+    }
+
+    try {
+      const text = await res.text();
+      if (text) msg = text;
+    } catch (_) {
+    }
+
+    throw new Error(msg);
+  }
+
+  // SUCCESS → parse JSON safely
+  let data: ContentResponse;
+  try {
+    data = await res.json();
+  } catch (err) {
+    throw new Error("Failed to parse content response.");
+  }
+
+  // keep your mapping exactly as is
   data.items = data.items.map((it) => ({
     ...it,
     audioUrl: it.audioUrl ?? null,
@@ -41,3 +67,4 @@ export async function fetchContent(
 
   return data;
 }
+

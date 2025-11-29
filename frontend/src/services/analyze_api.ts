@@ -11,14 +11,24 @@ export async function analyzeImage(file, analysisType) {
       body: formData,
     });
 
-    console.log("Status:", res.status);
-    const data = await res.json();
-    console.log("Received:", data);
+    if (!res.ok) {
+      if (res.status === 503) {
+        throw new Error("Server unavailable — check your network");
+      }
+      if (res.status === 400) {
+        throw new Error("Invalid image — please upload a proper fabric image.");
+      }
+      if (res.status === 500) {
+        throw new Error("Server error during analysis — try again later.");
+      }
 
-    return data;
-  } catch (error) {
-    console.error("Error while fetching:", error);
-    throw error;
+      throw new Error(`Unexpected error (${res.status})`);
+    }
+
+    return await res.json();
+
+  } catch (err) {
+    throw new Error("Cannot reach the server. Check your network");
   }
 }
 
@@ -38,7 +48,7 @@ export async function regenerateResponse(cache_key:string, index:string) {
   return null;
 }
 
-export async function validateImageAPI(imageFile:File) {
+export async function validateImageAPI(imageFile) {
   const formData = new FormData();
   formData.append("image", imageFile);
 
@@ -48,10 +58,17 @@ export async function validateImageAPI(imageFile:File) {
       body: formData,
     });
 
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error("Validation error:", error);
-    throw new Error("Error validating image.");
+    if (!res.ok) {
+      if (res.status === 503) throw new Error("Validation service unavailable — check server.");
+      if (res.status === 500) throw new Error("Validation failed on server.");
+      if (res.status === 400) throw new Error("Invalid image file.");
+      throw new Error(`Unexpected error (${res.status})`);
+    }
+
+    return await res.json();
+
+  } catch (err) {
+    throw new Error("Cannot reach the server. Check your network.");
   }
 }
+

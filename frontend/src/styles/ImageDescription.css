@@ -89,7 +89,7 @@
   box-sizing: border-box;
 }
 
-.chip.chip-clear {
+.home-container .chip.chip-clear {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(21, 26, 33, 0.8);
   color: #f2f6fa;
@@ -408,4 +408,8 @@
   font-size: 18px;
   font-weight: 500;
   margin-bottom: 12px;
+}
+
+.home-container .response-counter-text {
+  color: rgb(153, 152, 152);
 }
