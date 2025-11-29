@@ -6,10 +6,8 @@ import "../styles/Messages.css";
 
 interface Props {
   messages: Message[];
-  scrollerRef: RefObject<HTMLDivElement>;
+  scrollerRef: RefObject<HTMLDivElement | null>;
   onLastAssistantRendered?: (lastAssistant: Message) => void; // fired only when the last assistant bubble has fully settled
-
-  // NEW props for inline quick replies
   morePrompt?: { question: string; prompt?: string } | null;
   confirmMoreYes?: () => Promise<void> | void;
   confirmMoreNo?: () => void;
@@ -180,7 +178,10 @@ export default function MessageList({
     <div className="chat-list" ref={scrollerRef}>
       <div className="content-col">
         {messages.map((m, i) => {
-          const role = (m.role ?? "assistant").toLowerCase();
+          // ✅ Keep role strongly typed as Message["role"]
+          const role: Message["role"] = m.role ?? "assistant";
+          // ✅ Separate lowercased string for DOM attributes / CSS hooks
+          const roleAttr = String(role).toLowerCase();
           const content = (m.content ?? "") as string;
 
           let type: MaybeMedia["type"];
@@ -198,7 +199,7 @@ export default function MessageList({
             <div
               key={i}
               className="message-wrapper"
-              data-role={role}
+              data-role={roleAttr}
               data-idx={i}
             >
               <MessageBubble
@@ -218,7 +219,6 @@ export default function MessageList({
                         className="chip"
                         onClick={async () => {
                           try {
-                            // optional micro-interaction: disable, show loading, etc (omitted for brevity)
                             await confirmMoreYes?.();
                           } catch (err) {
                             console.error("confirmMoreYes error", err);

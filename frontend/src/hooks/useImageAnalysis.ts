@@ -240,7 +240,7 @@ const useImageAnalysis = () => {
     }
 
     try {
-      const res = await regenerateResponse(cacheKey, newIndex);
+      const res = await regenerateResponse(cacheKey, String(newIndex));
       const nextText = (res?.response as string) ?? "";
       if (nextText) {
         const updated = [...responses];

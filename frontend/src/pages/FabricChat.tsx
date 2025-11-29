@@ -130,6 +130,7 @@ export default function Chat() {
     messages.length === 0 ||
     (messages.length === 1 && (messages as ChatDisplayMessage[])[0]?.id === "welcome");
 
+
   return (
     <div className={`page-root ${isLanding ? "is-empty" : ""}`}>
       <div className="chat-card-topbar">

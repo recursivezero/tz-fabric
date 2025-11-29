@@ -1,5 +1,5 @@
 // src/components/DescriptionBox.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
 import "../styles/DescriptionBox.css";
 import Loader from "./Loader";
@@ -7,9 +7,8 @@ import Loader from "./Loader";
 const DescriptionBox = ({
   isValidImage,
   validationMessage,
-  showResults,
   loading,
-  responses = [],
+  responses,
   currentIndex = 0,
   typedText = "",
   description = "",

@@ -33,12 +33,6 @@ const textForAnalysisShort = "Analyze this image (short analysis).";
 const textForAnalysisLong = "Analyze this image (long analysis).";
 const textForSubmitName = (nm: string) =>
   nm.trim() ? `Submit files — Name: ${nm}` : `Submit files — Name: [name]`;
-const textForSearchK = (k: number) =>
-  `Search similar images (k=${Math.max(1, Math.floor(k || 1))}).`;
-
-const randInt = (min: number, max: number) =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
-
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024
     ? `${(bytes / 1024).toFixed(1)} KB`
@@ -80,7 +74,6 @@ export default function Composer({
 
   const [mode, setMode] = useState<Mode>("free");
   const [nameOnly, setNameOnly] = useState<string>("");
-  const [kOnly, setKOnly] = useState<number>(3);
 
   const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);// before
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string; trimmed?: boolean } | null>(null);

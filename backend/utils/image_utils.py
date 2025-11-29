@@ -10,3 +10,4 @@ def convert_image_to_base64(image) -> str:
         return base64.b64encode(img_byte_arr).decode()
     except Exception as e:
         print("Failed to convert image:", e)
+        return ""

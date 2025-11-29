@@ -13,6 +13,8 @@ export default function Search() {
   const [previewUrlOriginal, setPreviewUrlOriginal] = useState<string | null>(null); // used now to preserve the true original
 
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [selectingImage, setSelectingImage] = useState(false);
+
 
   const pageSize = 4;
   const [page, setPage] = useState(1);
@@ -62,6 +64,7 @@ export default function Search() {
     const f = e.target.files?.[0] ?? null;
     if (!f) return;
     // preserve original file for re-cropping
+    setSelectingImage(true);
     originalFileRef.current = f;
 
     // set and keep an object URL for the true original (so it won't be replaced by cropped preview)
@@ -176,6 +179,8 @@ export default function Search() {
     }
   };
 
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
+
   const handleClear = () => {
     setFile(null);
     clear();
@@ -202,7 +207,12 @@ export default function Search() {
   };
 
   const visibleResults = useMemo(
-    () => exactMatches.filter(item => !badImages.has(item.imageSrc)),
+    () =>
+      exactMatches.filter((item) => {
+        const src = item.imageSrc;
+        if (!src) return true; // keep entries without imageSrc (or change to false if you prefer to drop them)
+        return !badImages.has(src);
+      }),
     [exactMatches, badImages]
   );
 
@@ -257,7 +267,6 @@ export default function Search() {
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const draggingLightboxRef = useRef(false);
-  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
 
   const lastPosRef = useRef({ x: 0, y: 0 });
   const MIN_SCALE = 0.5, MAX_SCALE = 6, ZOOM_STEP = 0.2;
@@ -305,9 +314,6 @@ export default function Search() {
     [totalPages]
   );
 
-  // Show hero when there is no active file and no results currently visible.
-  const showHero = !file && visibleResults.length === 0 && !loading;
-
   // --- CROP interactions (basic: move and bottom-right resize) ---
   useEffect(() => {
     const onMove = (ev: MouseEvent) => {
@@ -352,21 +358,19 @@ export default function Search() {
     };
   }, []);
 
-  // When image loads, ensure crop rect fits inside and scale reasonably
   const onCropImageLoad = () => {
     const img = imgRef.current;
     if (!img) return;
     const dispW = img.clientWidth;
     const dispH = img.clientHeight;
-    // Set default crop to centered square taking 40% of shortest side
     const short = Math.min(dispW, dispH);
     const size = Math.round(short * 0.48);
     const x = Math.round((dispW - size) / 2);
     const y = Math.round((dispH - size) / 2);
     setCropRect({ x, y, w: size, h: size });
+    setSelectingImage(false);
   };
 
-  // Create cropped File, set as query preview (file) but DO NOT run search automatically.
   const makeCroppedPreview = async (): Promise<void> => {
     if (!rawImageUrl || !imgRef.current) return;
     const imgEl = imgRef.current;
@@ -416,25 +420,21 @@ export default function Search() {
     }
     const croppedFile = new File([blob], `query-cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
 
-    // revoke previous rawImageUrl but keep originalFileRef for re-cropping
     if (rawImageUrl) {
       try { URL.revokeObjectURL(rawImageUrl); } catch { }
       setRawImageUrl(null);
     }
 
-    // Set the cropped file as the query file (preview updates). DO NOT auto-run search.
     setFile(croppedFile);
 
     const cropUrl = URL.createObjectURL(croppedFile);
     setCroppedPreviewUrl(cropUrl);
     setDrawerOpen(false);
-    // reset page and badImages (optional)
     setPage(1);
     setBadImages(new Set());
   };
 
   const cancelCropAndClose = () => {
-    // close drawer, revoke raw url and keep user on search page (no new file)
     if (rawImageUrl) {
       try { URL.revokeObjectURL(rawImageUrl); } catch { }
       setRawImageUrl(null);
@@ -443,7 +443,6 @@ export default function Search() {
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
   };
 
-  // ensure cropRect never leaves image area
   useEffect(() => {
     const img = imgRef.current;
     if (!img) return;
@@ -458,7 +457,6 @@ export default function Search() {
     });
   }, [rawImageUrl, drawerOpen, imgRef.current?.clientWidth, imgRef.current?.clientHeight]);
 
-  // cleanup rawImageUrl on unmount
   useEffect(() => () => { if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } } }, [rawImageUrl]);
 
   return (
@@ -496,7 +494,6 @@ export default function Search() {
       {file && !drawerOpen && (
         <div className="side-by-side-preview">
 
-          {/* ORIGINAL IMAGE */}
           <div className="original-preview">
             <p className="section-title">Original Image</p>
 
@@ -508,7 +505,6 @@ export default function Search() {
               />
 
               <div className="original-img-actions">
-                {/* Keep only the Clear button on the original image */}
                 <button
                   className="btn secondary"
                   onClick={() => {
@@ -521,7 +517,6 @@ export default function Search() {
                 </button>
               </div>
               <div className="preview-img-actions">
-                {/* Crop pill — opens drawer with original for re-cropping */}
                 <button
                   className="btn"
                   onClick={() => {
@@ -547,7 +542,6 @@ export default function Search() {
             </div>
           </div>
 
-          {/* CROPPED IMAGE */}
           {croppedPreviewUrl && (
             <div className="cropped-preview">
               <p className="section-title">Cropped Image</p>
@@ -558,7 +552,6 @@ export default function Search() {
                 </div>
               </div>
 
-              {/* place Search under the cropped image so it centers under it */}
               <div className="preview-actions-below">
                 <div className="search-btn-wrapper">
                   <button
@@ -579,6 +572,7 @@ export default function Search() {
 
       {notification && <Notification message={notification.message} type={notification.type} />}
       {loading && <Loader />}
+      {selectingImage && <Loader />}
       {error && <p className="search-error">{error}</p>}
 
       {visibleResults.length > 0 ? (
@@ -598,7 +592,10 @@ export default function Search() {
                     alt={item.filename}
                     loading="lazy"
                     onError={() => markBadImage(item.imageSrc)}
-                    onClick={() => openLightbox(item.imageSrc, cleanName(item.filename))}
+                    onClick={() => {
+                      if (!item.imageSrc) return;
+                      openLightbox(item.imageSrc, cleanName(item.filename));
+                    }}
                     style={{ cursor: "zoom-in" }}
                   />
 
@@ -609,6 +606,7 @@ export default function Search() {
                     title="Zoom"
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!item.imageSrc) return;
                       openLightbox(item.imageSrc, cleanName(item.filename));
                     }}
                   >
@@ -618,7 +616,10 @@ export default function Search() {
 
                 <div
                   className="result-name"
-                  onClick={() => openLightbox(item.imageSrc, cleanName(item.filename))}
+                  onClick={() => {
+                    if (!item.imageSrc) return;
+                    openLightbox(item.imageSrc, cleanName(item.filename));
+                  }}
                 >
                   {cleanName(item.filename)}
                 </div>

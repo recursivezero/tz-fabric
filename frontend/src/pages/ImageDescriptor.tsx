@@ -15,7 +15,6 @@ const ImageDescription = () => {
   }, []);
 
   const {
-    showResults,
     loading,
     description,
     responses,
@@ -37,7 +36,7 @@ const ImageDescription = () => {
     clearImage
   } = useImageAnalysis();
 
-  const [openDescription, setOpenDescription] = useState(false);
+  const [, setOpenDescription] = useState(false);
   const imageInputRef = useRef(null);
 
   const wrappedRunAnalysis = async (file, mode) => {
@@ -64,7 +63,7 @@ const ImageDescription = () => {
 
       <div className="top-texts">
         <span className="animated-placeholder shimmer-text">
-          Upload a fabric image <span style={ { margin: "0 8px" } }>or</span>
+          Upload a fabric image <span style={{ margin: "0 8px" }}>or</span>
           <span className="sample-text">Try with our sample images →</span>
         </span>
       </div>
@@ -72,60 +71,59 @@ const ImageDescription = () => {
       <div className="result-wrapper grid">
         <section className="preview-col">
           <ImagePreview
-            uploadedImageUrl={ uploadedImageUrl }
-            sampleImageUrl={ sampleImageUrl }
-            validationLoading={ validationLoading }
-            isValidImage={ isValidImage }
-            loading={ loading }
-            currentFile={ currentFile }
-            handleRunAnalysis={ wrappedRunAnalysis }
-            handleUploadedImage={ handleUploadedImage }
-            imageInputRef={ imageInputRef }
-            clearImage={ clearImage }
+            uploadedImageUrl={uploadedImageUrl}
+            sampleImageUrl={sampleImageUrl}
+            validationLoading={validationLoading}
+            isValidImage={isValidImage}
+            loading={loading}
+            currentFile={currentFile}
+            handleRunAnalysis={wrappedRunAnalysis}
+            handleUploadedImage={handleUploadedImage}
+            imageInputRef={imageInputRef}
+            clearImage={clearImage}
           />
 
           <input
-            ref={ imageInputRef }
+            ref={imageInputRef}
             type="file"
             accept="image/*"
             hidden
-            onChange={ (e) => {
+            onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleUploadedImage(file);
-            } }
+            }}
           />
         </section>
 
         <section className="action-col">
           <div className="description-area slide-in-right">
             <DescriptionBox
-              isValidImage={ isValidImage }
-              validationMessage={ validationMessage }
-              showResults={ showResults }
-              loading={ loading }
-              responses={ responses }
-              currentIndex={ currentIndex }
-              typedText={ typedText }
-              description={ description }
-              handlePrev={ handlePrev }
-              handleNext={ handleNext }
+              isValidImage={isValidImage}
+              validationMessage={validationMessage}
+              loading={loading}
+              responses={responses}
+              currentIndex={currentIndex}
+              typedText={typedText}
+              description={description}
+              handlePrev={handlePrev}
+              handleNext={handleNext}
             />
           </div>
         </section>
       </div>
 
-      <DrawerToggle showDrawer={ showDrawer } setShowDrawer={ setShowDrawer } />
+      <DrawerToggle showDrawer={showDrawer} setShowDrawer={setShowDrawer} />
 
-      { showDrawer && (
+      {showDrawer && (
         <div className="drawer-panel">
           <SampleImageGallery
-            onAnalyze={ (samplePath) => {
+            onAnalyze={(samplePath) => {
               handleSampleShortAnalysis(samplePath);
-            } }
-            loading={ loading }
+            }}
+            loading={loading}
           />
         </div>
-      ) }
+      )}
     </div>
   );
 };

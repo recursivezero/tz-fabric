@@ -96,6 +96,7 @@ target/
 
 # Emacs
 .#*
+!.flake8
 
 # Notebook Checkpoints
 .ipynb_checkpoints/

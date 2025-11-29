@@ -1,9 +1,9 @@
 import "../styles/SampleImageGalleryCard.css";
 
 const sampleImages = [
-  { id: 1, name: "Sample 1", path: "src/assets/sample1.jpeg" },
-  { id: 2, name: "Sample 2", path: "src/assets/sample2.jpeg" },
-  { id: 3, name: "Sample 3", path: "src/assets/sample3.jpeg" },
+  { id: 1, name: "Sample 1", path: "../assets/sample1.jpeg" },
+  { id: 2, name: "Sample 2", path: "../assets/sample2.jpeg" },
+  { id: 3, name: "Sample 3", path: "../assets/sample3.jpeg" },
 ];
 
 const SampleImageGallery = ({ onAnalyze, loading }) => {

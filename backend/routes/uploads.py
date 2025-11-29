@@ -1,9 +1,12 @@
 # routes/uploads.py
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+import shutil
+import uuid
 from pathlib import Path
-import shutil, uuid
-from constants import IMAGE_DIR, AUDIO_DIR
-from utils.filename import sanitize_filename   
+
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+
+from constants import AUDIO_DIR, IMAGE_DIR
+from utils.filename import sanitize_filename
 
 router = APIRouter()
 
@@ -11,15 +14,17 @@ IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
 
-
 @router.post("/uploads/tmp_media")
 async def upload_tmp_media(
     image: UploadFile = File(None),
     audio: UploadFile = File(None),
-    filename: str | None = Form(None)          # <-- 👈 accept provided name
+    filename: str | None = Form(None),  # <-- 👈 accept provided name
 ):
     if not image and not audio:
-        raise HTTPException(status_code=400, detail="No files provided. Provide at least image or audio.")
+        raise HTTPException(
+            status_code=400,
+            detail="No files provided. Provide at least image or audio.",
+        )
 
     # 1) Decide the base name (prefer provided filename)
     if filename and filename.strip():
@@ -33,7 +38,7 @@ async def upload_tmp_media(
 
     base = sanitize_filename(stem) or "upload"
     base = base[:80]
-    uniq = uuid.uuid4().hex[:6]   # avoid collisions
+    uniq = uuid.uuid4().hex[:6]  # avoid collisions
 
     saved_image_url = saved_audio_url = None
     saved_image_name = saved_audio_name = None
@@ -71,10 +76,10 @@ async def upload_tmp_media(
     return {
         "image_url": saved_image_url,
         "audio_url": saved_audio_url,
-        "basename": base,          
-        "filename": base,          
+        "basename": base,
+        "filename": base,
         "image_filename": saved_image_name,
         "audio_filename": saved_audio_name,
-        "image_path": saved_image_path,      
-        "audio_path": saved_audio_path, 
+        "image_path": saved_image_path,
+        "audio_path": saved_audio_path,
     }
