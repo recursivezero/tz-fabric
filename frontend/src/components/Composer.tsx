@@ -82,10 +82,14 @@ export default function Composer({
   const [nameOnly, setNameOnly] = useState<string>("");
   const [kOnly, setKOnly] = useState<number>(3);
 
-  const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);// before
+  const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string; trimmed?: boolean } | null>(null);
 
   const FILE_NAME_MAX = 20;
+
+  // --- NEW: pending confirmations for image/audio before calling callbacks ---
+  const [pendingImage, setPendingImage] = useState<{ file: File; url: string } | null>(null);
+  const [pendingAudio, setPendingAudio] = useState<{ file: File; url: string } | null>(null);
 
   const encodeWAV = (audioBuffer: AudioBuffer) => {
     const numChannels = audioBuffer.numberOfChannels;
@@ -185,63 +189,107 @@ export default function Composer({
     }
   };
 
+  // --- CHANGED: onImageFile now only sets pendingImage and shows confirmation modal ---
   const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f && onUpload) {
-      onUpload(f);
-      setImageMeta({ name: f.name, size: formatSize(f.size) });
-    }
     (e.target as HTMLInputElement).value = "";
     setShowAttachMenu(false);
+    if (!f) return;
+
+    // create preview URL for confirmation modal
+    const url = URL.createObjectURL(f);
+    setPendingImage({ file: f, url });
   };
 
+  // --- CHANGED: onAudioFile now sets pendingAudio and shows confirmation modal ---
   const onAudioFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (!f) return;
     (e.target as HTMLInputElement).value = "";
-
     setShowAttachMenu(false);
     setError(null);
     setInfo(null);
+    if (!f) return;
 
     const url = URL.createObjectURL(f);
-    const audio = document.createElement("audio");
-    audio.src = url;
+    setPendingAudio({ file: f, url });
+  };
 
-    audio.onloadedmetadata = async () => {
-      URL.revokeObjectURL(url);
-      const duration = audio.duration;
+  // --- NEW: confirm handlers for pending image/audio ---
+  const confirmImageUpload = () => {
+    if (!pendingImage) return;
+    const { file, url } = pendingImage;
+    // call original onUpload callback
+    onUpload?.(file);
+    setImageMeta({ name: file.name, size: formatSize(file.size) });
+    // parent probably sets previewUrl; we still revoke local URL to avoid leak
+    try { URL.revokeObjectURL(url); } catch { }
+    setPendingImage(null);
+  };
 
-      if (duration > MAX_SECONDS + 0.1) {
-        try {
-          const trimmedFile = await trimAudioFile(f);
-          onAudioUpload?.(trimmedFile);
-          const base = f.name.replace(/\.\w+$/, "");
-          setAudioMeta({
-            name: `${base}.wav`,
-            size: formatSize(trimmedFile.size),
-            trimmed: true,
-          });
-        } catch (err) {
-          console.error("trimAudioFile error", err);
-          setError("Audio is too long and could not be trimmed. Try a shorter clip.");
-          onClearAudio?.();
+  const cancelImageUpload = () => {
+    if (pendingImage) {
+      try { URL.revokeObjectURL(pendingImage.url); } catch { }
+    }
+    setPendingImage(null);
+  };
+
+  // For audio confirm we must preserve trimming logic (copy of your existing behavior)
+  const confirmAudioUpload = async () => {
+    if (!pendingAudio) return;
+    const { file, url } = pendingAudio;
+
+    // we emulate the same behavior you had: check duration and possibly trim
+    const audioEl = document.createElement("audio");
+    audioEl.src = url;
+
+    audioEl.onloadedmetadata = async () => {
+      try {
+        const duration = audioEl.duration;
+        try { URL.revokeObjectURL(url); } catch { }
+        if (duration > MAX_SECONDS + 0.1) {
+          // attempt to trim
+          try {
+            const trimmedFile = await trimAudioFile(file);
+            onAudioUpload?.(trimmedFile);
+            const base = file.name.replace(/\.\w+$/, "");
+            setAudioMeta({
+              name: `${base}.wav`,
+              size: formatSize(trimmedFile.size),
+              trimmed: true,
+            });
+          } catch (err) {
+            console.error("trimAudioFile error", err);
+            setError("Audio is too long and could not be trimmed. Try a shorter clip.");
+            onClearAudio?.();
+          }
+        } else {
+          onAudioUpload?.(file);
+          setAudioMeta({ name: file.name, size: formatSize(file.size), trimmed: false });
+          setError(null);
         }
-        return;
+      } catch (err) {
+        console.error("confirmAudioUpload error", err);
+        setError("Failed to upload audio.");
+      } finally {
+        setPendingAudio(null);
       }
-
-
-      onAudioUpload?.(f);
-      setAudioMeta({ name: f.name, size: formatSize(f.size), trimmed: false });
-      setError(null);
     };
 
-    audio.onerror = () => {
-      URL.revokeObjectURL(url);
+    audioEl.onerror = () => {
+      try { URL.revokeObjectURL(url); } catch { }
       setError("Could not read audio file. Try again with a supported format.");
+      setPendingAudio(null);
     };
   };
 
+  const cancelAudioUpload = () => {
+    if (pendingAudio) {
+      try { URL.revokeObjectURL(pendingAudio.url); } catch { }
+    }
+    setPendingAudio(null);
+  };
+
+  // NOTE: keep the rest of your logic unchanged (recording functions etc.)
   const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
     if (actionId === "image:analyze_short") {
       setMode("analysis");
@@ -387,7 +435,11 @@ export default function Composer({
         streamRef.current = null;
       }
       startTimeRef.current = null;
+      // revoke any pending object URLs on unmount
+      if (pendingImage) try { URL.revokeObjectURL(pendingImage.url); } catch { }
+      if (pendingAudio) try { URL.revokeObjectURL(pendingAudio.url); } catch { }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -443,6 +495,85 @@ export default function Composer({
       {info && (
         <div role="status" style={{ color: "seagreen", marginTop: 8 }}>
           {info}
+        </div>
+      )}
+
+      {/* --- NEW: Confirmation modal for image upload --- */}
+      {pendingImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm image upload"
+          style={{
+            position: "fixed",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1300,
+            background: "rgba(0,0,0,0.4)",
+            padding: 16,
+          }}
+        >
+          <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <div style={{ flex: "0 0 120px" }}>
+                <img src={pendingImage.url} alt="Confirm preview" style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 6 }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>Upload this image?</div>
+                <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingImage.file.name} — {formatSize(pendingImage.file.size)}</div>
+                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                  <button onClick={confirmImageUpload} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>
+                    Confirm
+                  </button>
+                  <button onClick={cancelImageUpload} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {pendingAudio && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm audio upload"
+          style={{
+            position: "fixed",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1300,
+            background: "rgba(0,0,0,0.4)",
+            padding: 16,
+          }}
+        >
+          <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <div style={{ flex: "0 0 120px" }}>
+                <audio controls src={pendingAudio.url} style={{ width: 120 }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>Upload this audio?</div>
+                <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingAudio.file.name} — {formatSize(pendingAudio.file.size)}</div>
+                <div style={{ marginTop: 8, fontSize: 13, color: "rgba(0,0,0,0.6)" }}>
+                  If longer than 1 minute we will trim it automatically.
+                </div>
+                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                  <button onClick={confirmAudioUpload} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>
+                    Confirm
+                  </button>
+                  <button onClick={cancelAudioUpload} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -519,7 +650,7 @@ export default function Composer({
                 title="Attachments"
                 disabled={disabled}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21.44 11.05l-9.19 9.19a5 5 0 01-7.07-7.07l9.19-9.19a3 3 0 014.24 4.24l-9.2 9.19a1 1 0 01-1.41-1.41l8.48-8.48" />
                 </svg>
 
