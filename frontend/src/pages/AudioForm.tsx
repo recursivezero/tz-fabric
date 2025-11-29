@@ -230,7 +230,7 @@ const UploadPage = () => {
                     </div>
                     <div className="audio-clear">
                       <div className="audio-player">
-                        <audio controls src={audioUrl} />
+                        <audio controls src={audioUrl} controlsList="nodownload" />
                       </div>
 
                       <div className="img-footer">
@@ -295,7 +295,7 @@ const UploadPage = () => {
                 </div>
                 <div className="audio-clear">
                   <div className="audio-player">
-                    <audio controls src={audioUrl} />
+                    <audio controls src={audioUrl} controlsList="nodownload" />
                   </div>
 
                   <div className="img-footer">

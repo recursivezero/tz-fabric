@@ -86,10 +86,33 @@ export default function Composer({
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string; trimmed?: boolean } | null>(null);
 
   const FILE_NAME_MAX = 20;
-
-  // --- NEW: pending confirmations for image/audio before calling callbacks ---
+  // A: new state
   const [pendingImage, setPendingImage] = useState<{ file: File; url: string } | null>(null);
   const [pendingAudio, setPendingAudio] = useState<{ file: File; url: string } | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<null | { kind: "image" | "audio"; name?: string }>(null);
+
+  // A: handlers for remove
+  const requestRemoveImage = () => setPendingRemove({ kind: "image", name: imageMeta?.name });
+  const requestRemoveAudio = () => setPendingRemove({ kind: "audio", name: audioMeta?.name });
+
+  const confirmRemove = () => {
+    if (!pendingRemove) return;
+    if (pendingRemove.kind === "image") {
+      onClearUpload?.();
+      setImageMeta(null);
+      setMode("free");
+    } else {
+      onClearAudio?.();
+      setAudioMeta(null);
+      setInfo(null);
+      setError(null);
+      setMode("analysis");
+    }
+    setPendingRemove(null);
+  };
+
+  const cancelRemove = () => setPendingRemove(null);
+
 
   const encodeWAV = (audioBuffer: AudioBuffer) => {
     const numChannels = audioBuffer.numberOfChannels;
@@ -189,14 +212,12 @@ export default function Composer({
     }
   };
 
-  // --- CHANGED: onImageFile now only sets pendingImage and shows confirmation modal ---
   const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     (e.target as HTMLInputElement).value = "";
     setShowAttachMenu(false);
     if (!f) return;
 
-    // create preview URL for confirmation modal
     const url = URL.createObjectURL(f);
     setPendingImage({ file: f, url });
   };
@@ -555,7 +576,7 @@ export default function Composer({
           <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <div style={{ flex: "0 0 120px" }}>
-                <audio controls src={pendingAudio.url} style={{ width: 120 }} />
+                <audio controls src={pendingAudio.url} style={{ width: 120 }} controlsList="nodownload" />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, marginBottom: 6 }}>Upload this audio?</div>
@@ -596,11 +617,7 @@ export default function Composer({
                 )}
                 <button
                   className="upload-remove"
-                  onClick={() => {
-                    onClearUpload?.();
-                    setImageMeta(null);
-                    setMode("free");
-                  }}
+                  onClick={requestRemoveImage}
                   type="button"
                   aria-label="Remove image"
                 >
@@ -620,13 +637,7 @@ export default function Composer({
                 )}
                 <button
                   className="upload-remove"
-                  onClick={() => {
-                    onClearAudio?.();
-                    setAudioMeta(null);
-                    setInfo(null);
-                    setError(null);
-                    setMode("analysis");
-                  }}
+                  onClick={requestRemoveAudio}
                   type="button"
                   aria-label="Remove audio"
                 >
@@ -876,6 +887,28 @@ export default function Composer({
             handleChipActionDefault(actionId, opts);
           }}
         />
+        {pendingRemove && (
+          <div role="dialog" aria-modal="true" aria-label={`Confirm remove ${pendingRemove.kind}`} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300, background: "rgba(0,0,0,0.4)", padding: 16 }}>
+            <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <div style={{ flex: "0 0 84px" }}>
+                  <div style={{ width: 84, height: 84, background: "#f3f4f6", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>
+                    {pendingRemove.kind === "image" ? "Image" : "Audio"}
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 6 }}>{pendingRemove.kind === "image" ? "Remove this image?" : "Remove this audio?"}</div>
+                  {pendingRemove.name && <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingRemove.name}</div>}
+                  <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                    <button onClick={confirmRemove} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>Confirm</button>
+                    <button onClick={cancelRemove} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );
