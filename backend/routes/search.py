@@ -6,7 +6,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
 from core.embedder import embed_image_bytes
-from core.search import topk_search
+from core.db_search import topk_search
 from core.store import get_index
 from utils.paths import build_audio_url, build_image_url
 
@@ -77,7 +77,9 @@ def _created_ts(meta: dict) -> float:
 async def search_similar(
     file: UploadFile = File(...),
     order: str = Query("recent", pattern="^(recent|score)$"),
-    debug_ts: bool = Query(False, description="Include computed _ts in metadata for debugging"),
+    debug_ts: bool = Query(
+        False, description="Include computed _ts in metadata for debugging"
+    ),
     min_sim: float = Query(0.5, ge=0.0, le=1.0),
     require_audio: bool = Query(True),
 ):

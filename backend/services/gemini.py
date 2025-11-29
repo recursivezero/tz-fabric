@@ -1,11 +1,16 @@
-from typing import Dict, List
+from typing import Any, Dict, List, cast
+import os
 
 import google.generativeai as genai
 
 from core.config import settings
 
-# Configure Gemini once on import
-genai.configure(api_key=settings.GOOGLE_API_KEY)
+api_key = getattr(settings, "GOOGLE_API_KEY", os.getenv("GEMINI_API_KEY"))
+model_name = getattr(
+    settings, "GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
+)
+
+genai.configure(api_key=api_key)
 
 SYSTEM_PROMPT = (
     "You are a helpful assistant ONLY for fabric/textiles and this app.\n"
@@ -15,7 +20,7 @@ SYSTEM_PROMPT = (
 )
 
 model = genai.GenerativeModel(
-    model_name=settings.GEMINI_MODEL,
+    model_name=model_name,
     system_instruction=SYSTEM_PROMPT,
 )
 
@@ -36,5 +41,5 @@ def to_gemini_history(messages: List[Dict]) -> List[Dict]:
 
 def chat_once(messages: List[Dict]) -> str:
     contents = to_gemini_history(messages)
-    resp = model.generate_content(contents)
-    return (resp.text or "").strip()
+    resp: Any = model.generate_content(cast(Any, contents))
+    return (getattr(resp, "text", "") or "").strip()

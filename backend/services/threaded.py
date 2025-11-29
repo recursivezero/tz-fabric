@@ -11,7 +11,9 @@ executor = ThreadPoolExecutor(max_workers=6)
 
 
 def process_remaining_prompts(prompts, image_base_64, cache_key, already_stored_idx):
-    print(f"Processing remaining prompts for cache={cache_key}, skipping idx={already_stored_idx}")
+    print(
+        f"Processing remaining prompts for cache={cache_key}, skipping idx={already_stored_idx}"
+    )
     futures = {
         executor.submit(analyse_fabric_image, image_base_64, prompt, idx + 1): idx + 1
         for idx, prompt in enumerate(prompts)
@@ -24,7 +26,9 @@ def process_remaining_prompts(prompts, image_base_64, cache_key, already_stored_
             result = future.result()
             response_text = result.get("response") if result else None
             store_response(cache_key, idx, {"id": idx, "response": response_text})
-            print(f"Background stored index={idx}, response={response_text[:30] if response_text else 'None'}")
+            print(
+                f"Background stored index={idx}, response={response_text[:30] if response_text else 'None'}"
+            )
 
         except Exception as e:
             print(f" Exception in background prompt idx={idx}: {e}")
@@ -67,7 +71,9 @@ def analyse_all_variations(image, analysis_type):
             response_id = result.get("id")
             response_text = result.get("response")
 
-            print(f"Parsed → id: {response_id}, response_text: {response_text[:40] if response_text else 'None'}")
+            print(
+                f"Parsed → id: {response_id}, response_text: {response_text[:40] if response_text else 'None'}"
+            )
 
             try:
                 store_response(

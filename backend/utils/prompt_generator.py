@@ -10,4 +10,7 @@ def generate_prompts(analysis_type: str) -> list:
         f"Be concise and precise. Use precise textile terms."
     )
 
-    return [f"{base}\nNote: This is variation {i + 1}. Provide a slightly different perspective." for i in range(6)]
+    return [
+        f"{base}\nNote: This is variation {i + 1}. Provide a slightly different perspective."
+        for i in range(6)
+    ]

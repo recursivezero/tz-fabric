@@ -1,13 +1,14 @@
-# tools/media_tool.py
+# tools/media_tools.py (mypy fixes - minimal changes)
 import os
 import tempfile
 import threading
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
-import requests
+# requests stubs often not installed in CI; silence mypy here (or install types-requests).
+import requests  # type: ignore[import-not-found]
 from dotenv import load_dotenv
 
 from constants import AUDIO_DIR, IMAGE_DIR
@@ -74,7 +75,12 @@ def _background_index_job(
             metadata["audioFilename"] = str(audio_filename)
 
         collection = get_index()
-        collection.add(ids=[image_filename], embeddings=[embedding], metadatas=[metadata])
+        # Chromadb stubs are strict about ndarray vs list; cast to Any so mypy accepts it.
+        collection.add(
+            ids=[image_filename],
+            embeddings=cast(Any, [embedding]),
+            metadatas=[metadata],
+        )
 
         if db is not None:
             db.images.update_one(
@@ -130,9 +136,10 @@ def redirect_to_media_analysis(
         }
 
     # Decide human-friendly basename
+    # Narrow image_path/image_url before calling Path(...) so mypy knows they are str.
     raw_basename = filename or (
-        (Path(image_path).stem if image_path else None)
-        or (Path(image_url).stem if image_url else None)
+        ((Path(image_path).stem) if image_path else None)
+        or ((Path(image_url).stem) if image_url else None)
         or uuid.uuid4().hex[:8]
     )
     basename = sanitize_filename(raw_basename)
@@ -140,6 +147,7 @@ def redirect_to_media_analysis(
     # Save / copy IMAGE to IMAGE_DIR
     try:
         if image_path:
+            # Narrowed: image_path is str here
             src = Path(image_path)
             if not src.exists():
                 return {
@@ -156,6 +164,8 @@ def redirect_to_media_analysis(
             if str(src.resolve()) != str(final_image_path.resolve()):
                 _atomic_write(final_image_path, src.read_bytes())
         else:
+            # image_path falsy -> image_url must be provided (guarded above).
+            assert image_url is not None
             img_ext = Path(image_url).suffix or ".jpg"
             image_filename = f"{basename}.{img_ext.lstrip('.')}"
             final_image_path = IMAGE_DIR / image_filename
@@ -183,6 +193,8 @@ def redirect_to_media_analysis(
             else:
                 bot_messages.append(f"Warning: audio_path not found: {audio_path}")
         elif audio_url:
+            # Narrow audio_url before Path(...)
+            assert audio_url is not None
             aud_ext = Path(audio_url).suffix or ".mp3"
             audio_filename = f"{basename}.{aud_ext.lstrip('.')}"
             final_audio_path = AUDIO_DIR / audio_filename
@@ -201,19 +213,27 @@ def redirect_to_media_analysis(
 
     # Connect DB (best-effort)
     db = None
+    # annotate client so mypy won't complain
+    client: Any = None
     try:
         from pymongo import MongoClient, uri_parser
 
         DATABASE_URI = os.getenv("DATABASE_URI")
-        parsed_uri = uri_parser.parse_uri(DATABASE_URI)
-        db_name = parsed_uri.get("database") or "tz-fabric"
-        client = MongoClient(DATABASE_URI)
-        db = client[db_name]
-        print("✅ Connected to MongoDB, using database:", db.name)
+        if DATABASE_URI:
+            parsed_uri = uri_parser.parse_uri(DATABASE_URI)
+            db_name = parsed_uri.get("database") or "tz-fabric"
+            client = MongoClient(DATABASE_URI)
+            db = client[db_name]
+            print("✅ Connected to MongoDB, using database:", db.name)
+        else:
+            # no DATABASE_URI: skip DB connect
+            raise RuntimeError("DATABASE_URI not set")
     except Exception as e:
         db = None
         print("MongoDB not available:", e)
-        bot_messages.append("Warning: MongoDB not available; files saved but DB insert skipped.")
+        bot_messages.append(
+            "Warning: MongoDB not available; files saved but DB insert skipped."
+        )
 
     # Insert docs (if DB available)
     created_on = datetime.utcnow().isoformat()
@@ -237,7 +257,11 @@ def redirect_to_media_analysis(
                 db.audios.insert_one(
                     {
                         "basename": basename,
-                        "filename": (saved_audio_path.name if saved_audio_path else audio_filename),
+                        "filename": (
+                            saved_audio_path.name
+                            if saved_audio_path
+                            else audio_filename
+                        ),
                         "created_on": created_on,
                         "file_type": "audio",
                     }
@@ -274,7 +298,9 @@ def redirect_to_media_analysis(
             },
         },
         "bot_messages": bot_messages
-        + [f"Uploaded and queued as basename='{basename}', image='{final_image_path.name}'"],
+        + [
+            f"Uploaded and queued as basename='{basename}', image='{final_image_path.name}'"
+        ],
         "analysis_responses": None,
         "_via": "media_tool",
     }

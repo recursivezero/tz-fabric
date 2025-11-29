@@ -1,5 +1,6 @@
 # routes/media.py
 from pathlib import Path
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
@@ -26,12 +27,18 @@ def get_audio(filename: str):
     return FileResponse(path)
 
 
-def _image_exists(filename: str | None) -> bool:
-    return bool(filename) and (IMAGE_DIR / filename).exists()
+def _image_exists(filename: Optional[str]) -> bool:
+    # Narrow filename before using Path / filename so mypy knows it's a str
+    if not filename:
+        return False
+    return (IMAGE_DIR / filename).exists()
 
 
-def _audio_exists(filename: str | None) -> bool:
-    return bool(filename) and (AUDIO_DIR / filename).exists()
+def _audio_exists(filename: Optional[str]) -> bool:
+    # Narrow filename before using Path / filename so mypy knows it's a str
+    if not filename:
+        return False
+    return (AUDIO_DIR / filename).exists()
 
 
 @router.get("/media/content")
@@ -50,7 +57,9 @@ def list_media_content(
 
     want_start = (page - 1) * limit
 
-    q = db.images.find({}, {"_id": 1, "filename": 1, "created_on": 1, "basename": 1}).sort("created_on", -1)
+    q = db.images.find(
+        {}, {"_id": 1, "filename": 1, "created_on": 1, "basename": 1}
+    ).sort("created_on", -1)
 
     valid_index = 0
     items: list[dict] = []
@@ -60,6 +69,9 @@ def list_media_content(
         if not _image_exists(image_filename):
             continue
 
+        # Tell mypy that image_filename is a str here
+        assert isinstance(image_filename, str)
+
         if valid_index >= want_start and len(items) < limit:
             basename = img.get("basename") or Path(image_filename).stem
             created_at = img.get("created_on")
@@ -68,7 +80,13 @@ def list_media_content(
 
             audio_doc = db.audios.find_one({"basename": basename}, {"filename": 1})
             audio_filename = audio_doc["filename"] if audio_doc else None
-            audio_url = build_audio_url(audio_filename) if _audio_exists(audio_filename) else None
+
+            # Only call build_audio_url with a real str (narrowed)
+            if audio_filename is not None and _audio_exists(audio_filename):
+                # mypy now knows audio_filename is str
+                audio_url = build_audio_url(audio_filename)
+            else:
+                audio_url = None
 
             items.append(
                 {

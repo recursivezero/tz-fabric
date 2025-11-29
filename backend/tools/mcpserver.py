@@ -141,7 +141,9 @@ def regenerate(
             return {
                 "ok": False,
                 "display_text": "⏳ Still generating more variations… try again shortly.",
-                "bot_messages": ["⏳ Still generating more variations… try again shortly."],
+                "bot_messages": [
+                    "⏳ Still generating more variations… try again shortly."
+                ],
                 "error": {"code": "pending"},
                 "_via": "mcp.regenerate",
             }
@@ -150,7 +152,12 @@ def regenerate(
         SERVED_RESPONSES[cache_key] = served
 
         if isinstance(resp, dict):
-            txt = resp.get("response") or resp.get("text") or resp.get("message") or str(resp)
+            txt = (
+                resp.get("response")
+                or resp.get("text")
+                or resp.get("message")
+                or str(resp)
+            )
             rid = str(resp.get("id", i))
         else:
             txt, rid = str(resp), str(i)
@@ -168,7 +175,9 @@ def regenerate(
     return {
         "ok": False,
         "display_text": "All cached alternatives shown. Upload again for new analysis.",
-        "bot_messages": ["All cached alternatives shown. Upload again for new analysis."],
+        "bot_messages": [
+            "All cached alternatives shown. Upload again for new analysis."
+        ],
         "error": {"code": "exhausted"},
         "_via": "mcp.regenerate",
     }

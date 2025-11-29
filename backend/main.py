@@ -8,13 +8,29 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
+from pymongo.database import Database
+from typing import Optional
 
 from constants import API_PREFIX, ASSETS, AUDIO_DIR, IMAGE_DIR
-from routes import analysis, chat, media, regenerate, search, submit, uploads, validate_image
+from routes import (
+    analysis,
+    chat,
+    media,
+    regenerate,
+    search,
+    submit,
+    uploads,
+    validate_image,
+)
 from tools.mcpserver import sse_app
 from utils.emoji_logger import get_logger
 
-app = FastAPI(title="TZ Fabric Assistant (with MCP Agent)")
+
+class MyApp(FastAPI):
+    mongo_client: MongoClient
+    database: Database
+
+
 load_dotenv()
 
 logger = get_logger(__name__)
@@ -25,50 +41,34 @@ origins = [
     # You can add more origins here if needed
 ]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 DATABASE_URI = os.getenv(
     "DATABASE_URI",
     "mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority",
 )
 if not DATABASE_URI:
-    raise RuntimeError("DATABASE_URI is not set in environment variables. Please configure it in .env")
+    raise RuntimeError(
+        "DATABASE_URI is not set in environment variables. Please configure it in .env"
+    )
 # Parse the URI to extract db name
 parsed_uri = uri_parser.parse_uri(DATABASE_URI)
 db_name = parsed_uri.get("database")
 if not db_name:
     db_name = "tz-fabric"  # Default database name if not specified in URI
 
-client = MongoClient(DATABASE_URI)
-default_db = client.get_default_database()
+# Explicit typing so mypy is happy
+client: MongoClient = MongoClient(DATABASE_URI)
+default_db: Optional[Database] = client.get_default_database()
 if default_db is not None:
-    db = default_db
+    db: Database = default_db
 elif db_name is not None:
     db = client[db_name]
 else:
     raise ValueError("No database specified in URI and no default database available")
 print("Connected to MongoDB, using database:", db.name)
 
-app.mongo_client = client
-app.database = db
-
-os.makedirs(ASSETS, exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/mcp/", sse_app())
-app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_images")
-app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audios")
-
-templates = Jinja2Templates(directory="templates")
-
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: MyApp):
     # Attach the client and db to the app so routes can access them
     app.mongo_client = client
     app.database = db
@@ -94,6 +94,26 @@ async def lifespan(app: FastAPI):
         logger.warning(f"Error while closing MongoDB client: {e}")
 
 
+# Create the app using your MyApp subclass and wire the lifespan manager
+app: MyApp = MyApp(title="TZ Fabric Assistant (with MCP Agent)", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+os.makedirs(ASSETS, exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/mcp/", sse_app())
+app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_images")
+app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audios")
+
+templates = Jinja2Templates(directory="templates")
+
+# Include routers after app creation
 app.include_router(analysis.router, prefix=API_PREFIX)
 app.include_router(regenerate.router, prefix=API_PREFIX)
 app.include_router(validate_image.router, prefix=API_PREFIX)

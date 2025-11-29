@@ -1,10 +1,11 @@
-# routes_validate.py (updated - robust JSON extraction & cache fix)
+# routes/validate_image.py (mypy-friendly)
 import asyncio
 import io
 import json
 import re
 import time
 from collections import OrderedDict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -13,10 +14,17 @@ from PIL import ExifTags, Image
 from utils.gemini_client import gemini_vision_check
 
 # Optional CV functions use opencv; install opencv-python-headless
+# mypy doesn't ship stubs for cv2/numpy in many environments; declare as Optional[Any]
+cv2: Optional[Any] = None
+np: Optional[Any] = None
 try:
-    import cv2
-    import numpy as np
+    import cv2 as _cv2  # type: ignore[import-not-found]
+    import numpy as _np  # type: ignore[import-not-found]
+
+    cv2 = _cv2
+    np = _np
 except Exception:
+    # keep cv2/np as None if import fails
     cv2 = None
     np = None
 
@@ -52,7 +60,9 @@ GEMINI_TIMEOUT_SEC = 15
 
 # ---------------- CACHE ----------------
 _MAX_CACHE = 1024
-_verdict_cache = OrderedDict()  # img_hash -> {"verdict","reason","meta"}
+_verdict_cache: "OrderedDict[str, dict]" = (
+    OrderedDict()
+)  # img_hash -> {"verdict","reason","meta"}
 
 
 def _sha256(b: bytes) -> str:
@@ -61,22 +71,18 @@ def _sha256(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
-def _cache_get(img_hash: str):
+def _cache_get(img_hash: str) -> Optional[dict]:
     item = _verdict_cache.get(img_hash)
     if item:
         _verdict_cache.move_to_end(img_hash)
     return item
 
 
-def _cache_set(img_hash: str, verdict_obj: dict):
+def _cache_set(img_hash: str, verdict_obj: dict) -> None:
     _verdict_cache[img_hash] = verdict_obj
     _verdict_cache.move_to_end(img_hash)
     while len(_verdict_cache) > _MAX_CACHE:
         _verdict_cache.popitem(last=False)
-
-
-# If you need to flush a single cached image during debugging:
-# _verdict_cache.pop(img_hash, None)
 
 
 # ---------------- IMAGE UTIL ----------------
@@ -84,11 +90,13 @@ def _resize_to_jpeg(data: bytes) -> bytes:
     with Image.open(io.BytesIO(data)) as im:
         try:
             # handle EXIF orientation if present
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation] == "Orientation":
+            orientation = None
+            for k, v in ExifTags.TAGS.items():
+                if v == "Orientation":
+                    orientation = k
                     break
-            exif = im._getexif()
-            if exif is not None:
+            exif = getattr(im, "_getexif", lambda: None)()
+            if exif is not None and orientation is not None:
                 orientation_value = exif.get(orientation)
                 if orientation_value == 3:
                     im = im.rotate(180, expand=True)
@@ -108,7 +116,9 @@ def _resize_to_jpeg(data: bytes) -> bytes:
             else:
                 nh = MAX_SIDE
                 nw = int(w * (MAX_SIDE / h))
-            im = im.resize((nw, nh), Image.LANCZOS)
+            # Use getattr to avoid mypy complaining about missing LANCZOS symbol in PIL stubs
+            resample_filter = getattr(Image, "LANCZOS", getattr(Image, "BICUBIC"))
+            im = im.resize((nw, nh), resample_filter)
         out = io.BytesIO()
         im.save(out, format="JPEG", quality=JPEG_QUALITY, optimize=True)
         return out.getvalue()
@@ -122,10 +132,12 @@ def _to_b64(data: bytes) -> str:
 
 async def _gemini_check_base64(b64_str: str) -> str:
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, gemini_vision_check, b64_str, VALIDATION_PROMPT)
+    return await loop.run_in_executor(
+        None, gemini_vision_check, b64_str, VALIDATION_PROMPT
+    )
 
 
-def _strip_code_fences(text: str) -> str:
+def _strip_code_fences(text: Optional[str]) -> str:
     """Remove common Markdown code fences (```json ... ```), and surrounding backticks."""
     if text is None:
         return ""
@@ -136,7 +148,7 @@ def _strip_code_fences(text: str) -> str:
     return t
 
 
-def _extract_json_object_from_text(text: str):
+def _extract_json_object_from_text(text: str) -> Optional[str]:
     """
     Robustly find and return the first balanced JSON object substring (from '{' to matching '}').
     Returns None if not found.
@@ -151,7 +163,7 @@ def _extract_json_object_from_text(text: str):
         return None
 
     depth = 0
-    start = None
+    start: Optional[int] = None
     for i in range(idx, len(t)):
         ch = t[i]
         if ch == "{":
@@ -167,45 +179,53 @@ def _extract_json_object_from_text(text: str):
     return None
 
 
-def _texture_metrics_from_bytes(image_bytes: bytes, target_size=512):
+def _texture_metrics_from_bytes(
+    image_bytes: bytes, target_size: int = 512
+) -> Optional[dict]:
     """
     Returns dict: {"lap_var": float, "edge_density": float, "patch_std_mean": float}
     Returns None if cv2 not available or decode fails.
     """
-    if cv2 is None or np is None:
+    # copy to locals so mypy can see the non-None type after the check
+    np_local = np
+    cv2_local = cv2
+    if cv2_local is None or np_local is None:
         return None
     try:
-        arr = np.frombuffer(image_bytes, dtype=np.uint8)
-        im = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        # mypy now knows np_local and cv2_local are not None
+        arr = np_local.frombuffer(image_bytes, dtype=np_local.uint8)
+        im = cv2_local.imdecode(arr, cv2_local.IMREAD_COLOR)
         if im is None:
             return None
 
         h, w = im.shape[:2]
         scale = target_size / max(h, w) if max(h, w) > target_size else 1.0
         if scale != 1.0:
-            im = cv2.resize(im, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+            im = cv2_local.resize(
+                im, (int(w * scale), int(h * scale)), interpolation=cv2_local.INTER_AREA
+            )
 
-        gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        gray = cv2_local.cvtColor(im, cv2_local.COLOR_BGR2GRAY)
 
-        lap = cv2.Laplacian(gray, cv2.CV_64F)
+        lap = cv2_local.Laplacian(gray, cv2_local.CV_64F)
         lap_var = float(lap.var())
 
-        v = np.median(gray)
+        v = np_local.median(gray)
         lower = int(max(0, 0.66 * v))
         upper = int(min(255, 1.33 * v))
-        edges = cv2.Canny(gray, lower, upper)
+        edges = cv2_local.Canny(gray, lower, upper)
         edge_density = float((edges > 0).sum()) / (gray.shape[0] * gray.shape[1])
 
         ph, pw = 64, 64
         H, W = gray.shape
-        stds = []
+        stds: list[float] = []
         for y in range(0, H, ph):
             for x in range(0, W, pw):
                 patch = gray[y : y + ph, x : x + pw]
                 if patch.size == 0:
                     continue
                 stds.append(float(patch.std()))
-        patch_std_mean = float(np.mean(stds)) if len(stds) else 0.0
+        patch_std_mean = float(np_local.mean(stds)) if len(stds) else 0.0
 
         return {
             "lap_var": lap_var,
@@ -221,7 +241,7 @@ EDGE_DENSITY_TH = 0.02
 PATCH_STD_TH = 8.0
 
 
-def _is_close_up_local(metrics: dict):
+def _is_close_up_local(metrics: Optional[dict]) -> bool:
     if not metrics:
         return False
     count = 0
@@ -234,7 +254,7 @@ def _is_close_up_local(metrics: dict):
     return count >= 2
 
 
-def _reason_mentions_person_like(text: str):
+def _reason_mentions_person_like(text: Optional[str]) -> bool:
     if not text:
         return False
     low = text.lower()
@@ -255,16 +275,22 @@ def _reason_mentions_person_like(text: str):
     return any(k in low for k in keywords)
 
 
-def _contains_face_bytes(image_bytes: bytes):
-    if cv2 is None:
+def _contains_face_bytes(image_bytes: bytes) -> bool:
+    cv2_local = cv2
+    np_local = np
+    if cv2_local is None or np_local is None:
         return False
     try:
-        arr = np.frombuffer(image_bytes, dtype=np.uint8)
-        img = cv2.imdecode(arr, cv2.IMREAD_GRAYSCALE)
+        arr = np_local.frombuffer(image_bytes, dtype=np_local.uint8)
+        img = cv2_local.imdecode(arr, cv2_local.IMREAD_GRAYSCALE)
         if img is None:
             return False
-        cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-        faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=4, minSize=(20, 20))
+        cascade = cv2_local.CascadeClassifier(
+            cv2_local.data.haarcascades + "haarcascade_frontalface_default.xml"
+        )
+        faces = cascade.detectMultiScale(
+            img, scaleFactor=1.1, minNeighbors=4, minSize=(20, 20)
+        )
         return len(faces) > 0
     except Exception:
         return False
@@ -281,7 +307,9 @@ async def validate_image(image: UploadFile = File(...)):
 
         cached = _cache_get(img_hash)
         if cached:
-            print(f"[validate-image] cache-hit verdict={cached} total={(time.time()-t0)*1000:.0f}ms")
+            print(
+                f"[validate-image] cache-hit verdict={cached} total={(time.time()-t0)*1000:.0f}ms"
+            )
             return JSONResponse(
                 content={
                     "valid": cached["verdict"] == "valid",
@@ -290,7 +318,12 @@ async def validate_image(image: UploadFile = File(...)):
                 }
             )
 
-        local_metrics_raw = _texture_metrics_from_bytes(raw) if cv2 is not None else None
+        # declare reason early so we don't re-declare later
+        reason: str = ""
+
+        local_metrics_raw = (
+            _texture_metrics_from_bytes(raw) if cv2 is not None else None
+        )
         if local_metrics_raw is not None:
             if local_metrics_raw.get("lap_var", 0.0) < 20:
                 reason = "blurry image (very low laplacian variance)"
@@ -315,7 +348,9 @@ async def validate_image(image: UploadFile = File(...)):
 
         b64 = _to_b64(small_jpeg)
         try:
-            response_text = await asyncio.wait_for(_gemini_check_base64(b64), timeout=GEMINI_TIMEOUT_SEC)
+            response_text = await asyncio.wait_for(
+                _gemini_check_base64(b64), timeout=GEMINI_TIMEOUT_SEC
+            )
         except asyncio.TimeoutError:
             print(f"[validate-image] timeout total={(time.time()-t0)*1000:.0f}ms")
             return JSONResponse(
@@ -325,10 +360,11 @@ async def validate_image(image: UploadFile = File(...)):
 
         t3 = time.time()
         response_text = (response_text or "").strip()
-        parsed = None
-        reason = ""
-        verdict = "invalid"
-        model_meta = {"raw": response_text}
+        parsed: Optional[Dict[str, Any]] = None
+        # reason already declared above
+        verdict: str = "invalid"
+        # model_meta holds heterogeneous types: annotate as Dict[str, Any]
+        model_meta: Dict[str, Any] = {"raw": response_text}
 
         try:
             candidate_json = _extract_json_object_from_text(response_text)
@@ -339,21 +375,29 @@ async def validate_image(image: UploadFile = File(...)):
         except Exception:
             parsed = None
 
-        texture_visible_flag = None
-        model_texture_conf = None
-        pattern_full_motif = None
+        texture_visible_flag: Optional[bool] = None
+        model_texture_conf: Optional[float] = None
+        pattern_full_motif: Optional[bool] = None
 
         if parsed and isinstance(parsed, dict):
-            mv = parsed.get("verdict", "").lower()
+            mv = str(parsed.get("verdict", "")).lower()
             reason = parsed.get("reason", "") or ""
             texture_visible_flag = parsed.get("texture_visible", None)
             pattern_full_motif = parsed.get("pattern_full_motif", None)
-            try:
-                model_texture_conf = (
-                    float(parsed.get("texture_confidence")) if parsed.get("texture_confidence") is not None else None
-                )
-            except Exception:
-                model_texture_conf = None
+
+            # safe conversion helper for texture_confidence
+            def _to_optional_float(x: Any) -> Optional[float]:
+                if x is None:
+                    return None
+                if isinstance(x, (float, int)):
+                    return float(x)
+                try:
+                    return float(str(x))
+                except Exception:
+                    return None
+
+            model_texture_conf = _to_optional_float(parsed.get("texture_confidence"))
+
             model_meta.update(
                 {
                     "parsed_model": parsed,
@@ -380,7 +424,9 @@ async def validate_image(image: UploadFile = File(...)):
                 reason = "uncertain: unparseable response from model"
             model_meta["heuristic_reason"] = reason
 
-        local_metrics = _texture_metrics_from_bytes(small_jpeg) if cv2 is not None else None
+        local_metrics = (
+            _texture_metrics_from_bytes(small_jpeg) if cv2 is not None else None
+        )
         if local_metrics:
             model_meta["metrics"] = local_metrics
 
@@ -401,7 +447,9 @@ async def validate_image(image: UploadFile = File(...)):
         face_found = _contains_face_bytes(small_jpeg) if cv2 is not None else False
 
         if verdict == "invalid":
-            if texture_visible_flag is True or (model_texture_conf is not None and model_texture_conf >= 0.6):
+            if texture_visible_flag is True or (
+                model_texture_conf is not None and model_texture_conf >= 0.6
+            ):
                 if not mentions_person and not face_found:
                     prev_reason = reason
                     verdict = "valid"
@@ -431,7 +479,9 @@ async def validate_image(image: UploadFile = File(...)):
             f"[validate-image] read={(t1-t0)*1000:.0f}ms resize={(t2-t1)*1000:.0f}ms gemini={(t3-t2)*1000:.0f}ms total={(t3-t0)*1000:.0f}ms verdict={verdict} meta_metrics={out_meta.get('metrics', {})}"
         )
 
-        return JSONResponse(content={"valid": verdict == "valid", "reason": reason, "meta": out_meta})
+        return JSONResponse(
+            content={"valid": verdict == "valid", "reason": reason, "meta": out_meta}
+        )
 
     except Exception as e:
         print("Validation error:", e)
