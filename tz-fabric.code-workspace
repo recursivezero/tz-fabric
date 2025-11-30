@@ -96,6 +96,7 @@
     },
     "peacock.color": "#34ea23",
     "cSpell.words": [
+      "fastapi",
       "generativeai",
       "gitstash"
     ],
