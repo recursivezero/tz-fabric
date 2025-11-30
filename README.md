@@ -167,36 +167,36 @@ VITE_API_URL="http://localhost:8000"
 
 ### Analysis Page
 
-![Analysis]('./assets/screenshots/analysis-page.png')
-![Analysis Feature]('./assets/screenshots/analysis-feature.png')
+![Analysis](/assets/screenshots/analysis-page.png)
+![Analysis Feature](/assets/screenshots/analysis-feature.png)
 
 ---
 
 ### Upload Page
 
-![Upload]('./assets/screenshots/upload-page.png'>)
-![UploadFeature]('./assets/screenshots/upload-page-feature.png')
+![Upload](/assets/screenshots/upload-page.png)
+![UploadFeature](/assets/screenshots/upload-page-feature.png)
 
 ---
 
 ### List Page
 
-![ListPage]('./assets/screenshots/list-page.png')
+![ListPage](/assets/screenshots/list-page.png)
 
 ---
 
 ### Search Page
 
-![Search Page]('./assets/screenshots/search-page.png')
-![Search Crop Feature]('./assets/screenshots/search-page-crop.png')
-![Search Page Feature]('./assets/screenshots/search-page-feature.png')
+![Search Page](/assets/screenshots/search-page.png)
+![Search Crop Feature](/assets/screenshots/search-page-crop.png)
+![Search Page Feature](/assets/screenshots/search-page-action.png)
 
 ---
 
 ### Chat Page
 
-![Chat Page]('./assets/screenshots/chat-page.png)
-![Chat feature]('./assets/screenshots/chat-page-feature.png)
+![Chat Page](/assets/screenshots/chat-page.png)
+![Chat feature](/assets/screenshots/chat-page-feature.png)
 
 ## 📄 License
 
