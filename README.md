@@ -159,48 +159,45 @@ VITE_API_URL="http://localhost:8000"
 
 🖼️ Screenshots
 
-```text
-Homepage
-```
+### Homepage
 
-![Homepage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(364).png>)
+![Homepage]('./assets/screenshots/homepage.png)
 
-```text
-Image Analysis Page
-```
+---
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(365).png>)
+### Analysis Page
 
-```text
-Upload Media Page
-```
+![Analysis]('./assets/screenshots/analysis-page.png')
+![Analysis Feature]('./assets/screenshots/analysis-feature.png')
 
-![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(366).png>)
+---
 
-```text
-List Page
-```
+### Upload Page
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(367).png>)
+![Upload]('./assets/screenshots/upload-page.png'>)
+![UploadFeature]('./assets/screenshots/upload-page-feature.png')
 
-```text
-Search Page
-```
+---
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(369).png>)
+### List Page
 
-```text
-Chat Page
-```
+![ListPage]('./assets/screenshots/list-page.png')
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(370).png>)
+---
+
+### Search Page
+
+![Search Page]('./assets/screenshots/search-page.png')
+![Search Crop Feature]('./assets/screenshots/search-page-crop.png')
+![Search Page Feature]('./assets/screenshots/search-page-feature.png')
+
+---
+
+### Chat Page
+
+![Chat Page]('./assets/screenshots/chat-page.png)
+![Chat feature]('./assets/screenshots/chat-page-feature.png)
 
 ## 📄 License
 
 This project is licensed under the terms of the [MIT License](<https://github.com/recursivezero/tz-fabric/blob/main/LICENSE>).
-
-```text
-You are free to use, modify, and distribute this software, 
-provided that proper attribution is
-given and the license terms are followed.
-```
