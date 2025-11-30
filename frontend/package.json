@@ -1,8 +1,43 @@
 {
-  "name": "frontend-fabric",
-  "private": true,
-  "version": "0.0.0",
+  "name": "tz-fabric",
+  "version": "1.0.0",
   "type": "module",
+  "homepage": "https://threadzip.com",
+  "description": "A AI enabled fabric analysis, chatbot integration with image search",
+  "license": "MIT",
+  "publisher": "recursivezero",
+  "private": true,
+  "author": {
+    "name": "Recursive Zero",
+    "email": "recursivezero@outlook.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/recursivezero/tz-fabric.git"
+  },
+  "bugs": {
+    "url": "https://github.com/recursivezero/tz-fabric/issues",
+    "email": "recursivezero@outlook.com"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/xkeshav"
+  },
+  "contributors": [
+    {
+      "name": "Keshav Mohta",
+      "email": "xkeshav@gmail.com"
+    },
+    {
+      "name": "Aaditya Saarda",
+      "github": "@aadityasarda"
+    }
+  ],
+  "keywords": [
+    "threadzip",
+    "client",
+    "tz-fabric"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
