@@ -85,6 +85,7 @@
   gap: 16px;
 }
 
+
 .grid-page .media-card {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
@@ -144,7 +145,7 @@ figcaption {
 .grid-page .empty-state {
   text-align: center;
   padding: 16px;
-  color: #000000;
+  color: #ff0000;
 }
 
 .lb-backdrop {
