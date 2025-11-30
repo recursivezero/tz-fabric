@@ -46,6 +46,8 @@ const UploadPage = () => {
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const [audioMode, setAudioMode] = useState<AudioMode>("record");
   const [name, setName] = useState<string>(() => generateFabricName());
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showConfirmAudio, setShowConfirmAudio] = useState(false);
 
   const canSubmit = !!imageUrl && !!audioUrl && !loading;
   const showUploadAudio = audioMode === "upload" && !audioUrl;
@@ -74,6 +76,34 @@ const UploadPage = () => {
     if (file) handleAudioUpload(file);
   };
 
+  const handleClearClick = () => {
+    // open modal
+    setShowConfirm(true);
+  };
+
+  const confirmClear = () => {
+    setShowConfirm(false);
+    if (typeof clearImage === "function") clearImage();
+  };
+
+  const cancelClear = () => {
+    setShowConfirm(false);
+  };
+
+  const handleClearAudio = () => {
+    setShowConfirmAudio(true);
+  };
+
+  const confirmClearAudio = () => {
+    setShowConfirmAudio(false);
+    // handleBack currently removes/discards audio; call it to remove
+    if (typeof handleBack === "function") handleBack();
+  };
+
+  const cancelClearAudio = () => {
+    setShowConfirmAudio(false);
+  };
+
   const navigate = useNavigate();
   console.log("notification :", notification)
 
@@ -96,7 +126,7 @@ const UploadPage = () => {
                 />
                 <button
                   className="chip chip-clear img-clear-btn"
-                  onClick={clearImage}
+                  onClick={handleClearClick}
                   title="Remove image"
                 >
                   ✕
@@ -194,18 +224,18 @@ const UploadPage = () => {
               <>
                 {audioUrl ? (
                   <div className="audio-card">
-                    <div className="audio-player">
-                      <audio controls src={audioUrl} />
+                    <div className="lock-note">
+                      Start/Stop disabled while preview exists. Clear to re-record
+                      or Submit.
                     </div>
-                    <div className="img-footer">
-                      <span className="chip chip-ok">Audio ready</span>
-                      <button
-                        className="chip chip-clear"
-                        onClick={handleBack}
-                        title="Remove audio"
-                      >
-                        ✕
-                      </button>
+                    <div className="audio-clear">
+                      <div className="audio-player">
+                        <audio controls src={audioUrl} controlsList="nodownload" />
+                      </div>
+
+                      <div className="img-footer">
+                        <button className="chip chip-clear" onClick={() => setShowConfirmAudio(true)} title="Remove audio">✕ Clear Audio</button>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -259,22 +289,18 @@ const UploadPage = () => {
 
             {audioUrl && (
               <div className="audio-card">
-                <div className="audio-player">
-                  <audio controls src={audioUrl} />
-                </div>
                 <div className="lock-note">
-                  Start/Stop disabled while preview exists. Discard to re-record
+                  Start/Stop disabled while preview exists. Clear to re-record
                   or Submit.
                 </div>
-                <div className="img-footer">
-                  <span className="chip chip-ok">Audio ready</span>
-                  <button
-                    className="chip chip-clear"
-                    onClick={handleBack}
-                    title="Remove audio"
-                  >
-                    ✕
-                  </button>
+                <div className="audio-clear">
+                  <div className="audio-player">
+                    <audio controls src={audioUrl} controlsList="nodownload" />
+                  </div>
+
+                  <div className="img-footer">
+                    <button className="chip chip-clear" onClick={() => setShowConfirmAudio(true)} title="Remove audio">✕ Clear Audio</button>
+                  </div>
                 </div>
               </div>
             )}
@@ -306,7 +332,7 @@ const UploadPage = () => {
           </button>
         </div>
         <div>
-          <button className="cancel" onClick={()=>navigate("/")}>cancel</button>
+          <button className="cancel" onClick={() => navigate("/")}>cancel</button>
         </div>
       </div>
       {loading && <Loader />}
@@ -314,6 +340,33 @@ const UploadPage = () => {
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
+
+      {showConfirm && (
+        <div className="confirm-overlay" role="dialog" aria-modal="true">
+          <div className="confirm-modal">
+            <div className="confirm-title">Remove Image!</div>
+            <div className="confirm-body">Are you sure you want to remove this image?</div>
+            <div className="confirm-actions">
+              <button className="btn btn-cancel" onClick={cancelClear}>Cancel</button>
+              <button className="btn btn-confirm" onClick={confirmClear}>Yes, Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmAudio && (
+        <div className="confirm-overlay" role="dialog" aria-modal="true" aria-label="Remove audio confirmation">
+          <div className="confirm-modal">
+            <div className="confirm-title">Remove Audio!</div>
+            <div className="confirm-body">Are you sure you want to remove this audio?</div>
+            <div className="confirm-actions">
+              <button className="btn btn-cancel" onClick={cancelClearAudio}>Cancel</button>
+              <button className="btn btn-confirm" onClick={confirmClearAudio}>Yes, Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

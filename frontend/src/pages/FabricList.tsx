@@ -194,6 +194,8 @@ export default function ContentGrid() {
 
   return (
     <div className="grid-page">
+      <h1 style={{ textAlign: "center", marginBottom: "10px" }}>Fabric List</h1>
+      <h3 style={{ textAlign: "center", color: "#00000059" }}>Here are the uploaded media</h3>
       <div className="upload-wrapper">
         <div className="upload-inner" style={{ display: "flex", gap: 8 }}>
           {mode === "similar" && (
@@ -231,7 +233,7 @@ export default function ContentGrid() {
       </div>
 
       {err && <div className="grid-error">⚠️ {err}</div>}
-      {!loading && visibleItems.length === 0 && (
+      {!loading && visibleItems.length === 0 && !err && (
         <div className="empty-state">No valid images found.</div>
       )}
 

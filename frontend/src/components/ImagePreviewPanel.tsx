@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import "../styles/ImagePreviewPanel.css";
 
 const ImagePreviewPanel = ({
@@ -14,6 +14,8 @@ const ImagePreviewPanel = ({
   showButtons = true,
   clearImage
 }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const giveFileNameAndSize = (currentFile) => {
     if (!currentFile) return "";
     const fileName = currentFile.name;
@@ -36,6 +38,20 @@ const ImagePreviewPanel = ({
     if (file && typeof handleUploadedImage === "function") handleUploadedImage(file);
   };
 
+  const handleClearClick = () => {
+    // open modal
+    setShowConfirm(true);
+  };
+
+  const confirmClear = () => {
+    setShowConfirm(false);
+    if (typeof clearImage === "function") clearImage();
+  };
+
+  const cancelClear = () => {
+    setShowConfirm(false);
+  };
+
   console.log("ImagePreviewPanel render — showButtons:", showButtons, "hasImage:", hasImage, "canRun:", canRun);
 
   return (
@@ -51,8 +67,8 @@ const ImagePreviewPanel = ({
 
             <button
               className="chip chip-clear"
-              onClick={clearImage}
-              title="Remove audio"
+              onClick={handleClearClick}
+              title="Remove image"
             >
               ✕
             </button>
@@ -115,6 +131,19 @@ const ImagePreviewPanel = ({
               </button>
             </>
           )}
+        </div>
+      )}
+
+      {showConfirm && (
+        <div className="confirm-overlay" role="dialog" aria-modal="true">
+          <div className="confirm-modal">
+            <div className="confirm-title">Remove Image!</div>
+            <div className="confirm-body">Are you sure you want to remove this image?</div>
+            <div className="confirm-actions">
+              <button className="btn btn-cancel" onClick={cancelClear}>Cancel</button>
+              <button className="btn btn-confirm" onClick={confirmClear}>Yes, Remove</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
