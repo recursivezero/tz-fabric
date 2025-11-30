@@ -157,43 +157,68 @@ frontend/.env
 VITE_API_URL="http://localhost:8000"
 ```
 
+Build and lint command
+
+```sh
+poetry run lint
+```
+
+```sh
+poetry build
+```
+```text
+This will create a dist folder in which there will be two files .gz and .whl
+```
+
+```sh
+pip install dist/.whl 
+```
+```text
+download the .whl file and then install the optional dependencies
+```
+
+```sh
+pip insatll tzfabric[]
+poetry run dev
+```
+
 🖼️ Screenshots
 
 ```text
 Homepage
 ```
 
-![Homepage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(364).png>)
+![Homepage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250025/frontend/src/assets/Screenshots/Screenshot%20(364).png>)
 
 ```text
 Image Analysis Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(365).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250025/frontend/src/assets/Screenshots/Screenshot%20(365).png>)
 
 ```text
 Upload Media Page
 ```
 
-![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(366).png>)
+![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250025/frontend/src/assets/Screenshots/Screenshot%20(366).png>)
 
 ```text
 List Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(367).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250025/frontend/src/assets/Screenshots/Screenshot%20(367).png>)
 
 ```text
 Search Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(369).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250025/frontend/src/assets/Screenshots/Screenshot%20(369).png>)
 
 ```text
 Chat Page
 ```
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(370).png>)
+![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250025/frontend/src/assets/Screenshots/Screenshot%20(370).png>)
 
 ## 📄 License
 
