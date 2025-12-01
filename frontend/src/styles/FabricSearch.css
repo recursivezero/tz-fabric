@@ -5,6 +5,7 @@
   display: grid;
   grid-template-rows: auto auto 1fr;
   row-gap: 10px;
+  justify-content: center;
 }
 
 .hero-area {
@@ -165,6 +166,7 @@
 
 .search-container .search-error {
   color: #ff0000;
+  text-align: center;
 }
 
 .search-container .empty-hint {
@@ -197,7 +199,7 @@
   width: auto;
   border-radius: 12px;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
@@ -752,14 +754,6 @@ input[type="number"] {
   overflow: visible;
 }
 
-.preview-img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-  object-fit: contain;
-}
 
 .preview-img-actions {
   position: absolute;
@@ -823,16 +817,6 @@ input[type="number"] {
   overflow: visible;
 }
 
-/* image style */
-.preview-img {
-  display: block;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-  object-fit: contain;
-}
-
-/* TOP-RIGHT clear button (small circle) */
 .preview-top-right {
   position: absolute;
   top: 8px;
@@ -928,14 +912,6 @@ input[type="number"] {
   overflow: visible;
 }
 
-/* base image */
-.preview-img {
-  display: block;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-  object-fit: contain;
-}
 
 /* container for the two overlay buttons (keeps semantic markup intact) */
 .preview-img-actions {
@@ -1029,15 +1005,6 @@ input[type="number"] {
   z-index: 20;
 }
 
-/* image safety */
-.preview-img {
-  display: block !important;
-  width: 100% !important;
-  border-radius: 12px !important;
-  object-fit: contain !important;
-}
-
-/* overlay covers the image but lets clicks through except on buttons */
 .preview-img-actions {
   position: absolute !important;
   inset: 0 !important;
@@ -1137,16 +1104,6 @@ input[type="number"] {
   margin: 0 auto !important;
 }
 
-/* Make the preview image larger and square-ish */
-.preview-img {
-  width: 100% !important;
-  object-fit: cover !important;
-  /* keeps aspect and fills box */
-  border-radius: 12px !important;
-  display: block !important;
-}
-
-/* Keep overlay buttons positioned correctly relative to the larger image */
 .preview-img-actions {
   inset: 0 !important;
   z-index: 30 !important;

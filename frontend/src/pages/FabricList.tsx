@@ -194,89 +194,91 @@ export default function ContentGrid() {
 
   return (
     <div className="grid-page">
+      <h1 style={ { textAlign: "center", marginBottom: "10px" } }>Fabric List</h1>
+      <h3 style={ { textAlign: "center", color: "#00000059" } }>List of uploaded fabric with their audio description</h3>
       <div className="upload-wrapper">
-        <div className="upload-inner" style={{ display: "flex", gap: 8 }}>
-          {mode === "similar" && (
-            <button className="btn" onClick={showAll} disabled={loading}>
+        <div className="upload-inner" style={ { display: "flex", gap: 8 } }>
+          { mode === "similar" && (
+            <button className="btn" onClick={ showAll } disabled={ loading }>
               ← Back to All
             </button>
-          )}
+          ) }
         </div>
       </div>
 
       <div className="grid-header">
         <div className="grid-left">
           <span className="grid-title-text">
-            {mode === "all" ? "Total Fabrics" : "Similar Results"}
+            { mode === "all" ? "Total Fabrics" : "Similar Results" }
           </span>
-          <span className="grid-count-inline">({total})</span>
+          <span className="grid-count-inline">({ total })</span>
         </div>
 
-        {mode === "all" && visibleItems.length > 0 && (
+        { mode === "all" && visibleItems.length > 0 && (
           <div className="grid-controls inline">
-            <button disabled={page === 1} onClick={safePrev}>
+            <button disabled={ page === 1 } onClick={ safePrev }>
               ← Prev
             </button>
             <span className="grid-page">
-              Page {page} / {totalPages}
+              Page { page } / { totalPages }
             </span>
             <button
-              disabled={page >= totalPages}
-              onClick={safeNext}
+              disabled={ page >= totalPages }
+              onClick={ safeNext }
             >
               Next →
             </button>
           </div>
-        )}
+        ) }
       </div>
 
-      {err && <div className="grid-error">⚠️ {err}</div>}
-      {!loading && visibleItems.length === 0 && (
+      { err && <div className="grid-error">⚠️ { err }</div> }
+      { !loading && visibleItems.length === 0 && !err && (
         <div className="empty-state">No valid images found.</div>
-      )}
+      ) }
 
       <div className="media-grid">
-        {visibleItems.map((item) => {
+        { visibleItems.map((item) => {
           const rawSrc = item.imageUrl;
           const src =
             rawSrc?.startsWith("http") ? rawSrc : `${BASE_URL}${rawSrc}`;
           const caption = cleanName(pickDisplayName(item));
 
           return (
-            <article className="media-card" key={item._id ?? src}>
+            <article className="media-card" key={ item._id ?? src }>
               <figure className="media-thumb">
                 <div className="img-wrapper">
                   <img
-                    src={src}
-                    alt={caption}
+                    src={ src }
+                    alt={ caption }
                     loading="lazy"
-                    onError={() => markBad(src)}
-                    onClick={() => openLightbox(src, caption)}
+                    onError={ () => markBad(src) }
+                    onClick={ () => openLightbox(src, caption) }
                   />
                   <span
                     className="zoom-icon"
-                    onClick={() => openLightbox(src, caption)}
+                    onClick={ () => openLightbox(src, caption) }
                     title="Zoom image"
                     role="button"
                     aria-label="Zoom image"
                   >
-                    <FiZoomIn size={25} />
+                    <FiZoomIn size={ 25 } />
                   </span>
                 </div>
 
                 <figcaption
                   className="media-name"
-                  title={caption}
-                  onClick={() => openLightbox(src, caption)}
+                  title={ caption }
+                  onClick={ () => openLightbox(src, caption) }
                 >
-                  {caption}
+                  { caption }
                 </figcaption>
               </figure>
               <div className="media-audio">
                 <div className="audio-box">
                   <span className="audio-label">Fabric description</span>
 
-                  {item.audioUrl && (
+                  { item.audioUrl && (
                     <audio
                       controls
                       src={
@@ -287,66 +289,66 @@ export default function ContentGrid() {
                       preload="metadata"
                       controlsList="nodownload"
                     />
-                  )}
+                  ) }
                 </div>
               </div>
 
               <div className="media-meta">
-                {item.createdAt && (
-                  <time dateTime={item.createdAt}>
-                    {displayTime(item.createdAt)}
+                { item.createdAt && (
+                  <time dateTime={ item.createdAt }>
+                    { displayTime(item.createdAt) }
                   </time>
-                )}
+                ) }
               </div>
             </article>
           );
-        })}
+        }) }
       </div>
 
-      {loading && <div className="grid-loading">Loading…</div>}
+      { loading && <div className="grid-loading">Loading…</div> }
 
-      {lightboxOpen && activeSrc && (
+      { lightboxOpen && activeSrc && (
         <div
           className="lb-backdrop"
-          onClick={(e) => {
+          onClick={ (e) => {
             if ((e.target as HTMLElement).classList.contains("lb-backdrop")) {
               closeLightbox();
             }
-          }}
+          } }
         >
           <div
             className="lb-stage"
-            onWheel={onWheel}
-            onMouseDown={onMouseDown}
-            onMouseMove={onMouseMove}
-            onMouseUp={onMouseUpOrLeave}
-            onMouseLeave={onMouseUpOrLeave}
+            onWheel={ onWheel }
+            onMouseDown={ onMouseDown }
+            onMouseMove={ onMouseMove }
+            onMouseUp={ onMouseUpOrLeave }
+            onMouseLeave={ onMouseUpOrLeave }
           >
             <img
-              src={activeSrc}
-              alt={activeCaption ?? "preview"}
+              src={ activeSrc }
+              alt={ activeCaption ?? "preview" }
               className="lb-img"
-              style={{
+              style={ {
                 transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-              }}
-              draggable={false}
+              } }
+              draggable={ false }
             />
 
-            {activeCaption && (
-              <div className="lb-caption">{activeCaption}</div>
-            )}
+            { activeCaption && (
+              <div className="lb-caption">{ activeCaption }</div>
+            ) }
 
             <div className="lb-controls">
-              <button onClick={zoomOut}>−</button>
-              <button onClick={resetView}>Reset</button>
-              <button onClick={zoomIn}>+</button>
-              <button className="lb-close" onClick={closeLightbox}>
+              <button onClick={ zoomOut }>−</button>
+              <button onClick={ resetView }>Reset</button>
+              <button onClick={ zoomIn }>+</button>
+              <button className="lb-close" onClick={ closeLightbox }>
                 ✕
               </button>
             </div>
           </div>
         </div>
-      )}
+      ) }
     </div>
   );
 }

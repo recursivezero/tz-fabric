@@ -2,7 +2,7 @@ name: "Auto Replace X in Issue Title"
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [closed]
 permissions:
   issues: write
 
@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Replace 'X' with issue number
         env:
-          GH_TOKEN: ${{ secrets.ISSUE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ISSUE_NUMBER=${{ github.event.issue.number }}
           OLD_TITLE="${{ github.event.issue.title }}"

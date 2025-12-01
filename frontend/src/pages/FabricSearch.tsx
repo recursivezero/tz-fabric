@@ -625,7 +625,7 @@ export default function Search() {
                 </div>
 
                 <div className="result-audio">
-                  {item.audioSrc && <audio controls src={item.audioSrc} preload="metadata" />}
+                  {item.audioSrc && <audio controls src={item.audioSrc} preload="metadata" controlsList="nodownload" />}
                 </div>
               </article>
             ))}

@@ -7,7 +7,7 @@ readme = "README.md"
 license = { file = "LICENSE-PYTHON" }
 keywords = ["fabric", "analyzer", "fastapi", "gpt", "genai"]
 classifiers = [
-  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.11",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Framework :: FastAPI",
