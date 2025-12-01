@@ -157,30 +157,7 @@ frontend/.env
 VITE_API_URL="http://localhost:8000"
 ```
 
-Build and lint command
 
-```sh
-poetry run lint
-```
-
-```sh
-poetry build
-```
-```text
-This will create a dist folder in which there will be two files .gz and .whl
-```
-
-```sh
-pip install dist/.whl 
-```
-```text
-download the .whl file and then install the optional dependencies
-```
-
-```sh
-pip insatll tzfabric[]
-poetry run dev
-```
 
 🖼️ Screenshots
 
