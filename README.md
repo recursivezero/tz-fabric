@@ -119,10 +119,16 @@ POST /api/uploads/tmp_media - for storing the media in chat
 
 ## How to start
 
-🛋️ Backend
+Clone the repo
 
 ```sh
 git clone https://github.com/recursivezero/tz-fabric.git
+cd tz-fabric
+```
+
+🛋️ Backend
+
+```sh
 cd backend
 curl -sSL https://install.python-poetry.org | python3 -
 poetry install - to install all the dependencies
@@ -132,8 +138,8 @@ poetry run dev
 🛋️ Frontend
 
 ```sh
-git clone https://github.com/recursivezero/tz-fabric.git
-cd frontend_image_Search
+
+cd frontend
 npm install  -> to download the node modules
 npm install axios -> for backend integration
 npm install react-icons // if react-icons is not installed
@@ -159,48 +165,45 @@ VITE_API_URL="http://localhost:8000"
 
 🖼️ Screenshots
 
-```text
-Homepage
-```
+### Homepage
 
-![Homepage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(364).png>)
+![Homepage](/assets/screenshots/homepage.png)
 
-```text
-Image Analysis Page
-```
+---
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(365).png>)
+### Analysis Page
 
-```text
-Upload Media Page
-```
+![Analysis](/assets/screenshots/analysis-page.png)
+![Analysis Feature](/assets/screenshots/analysis-feature.png)
 
-![UploadImage](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(366).png>)
+---
 
-```text
-List Page
-```
+### Upload Page
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(367).png>)
+![Upload](/assets/screenshots/upload-page.png)
+![UploadFeature](/assets/screenshots/upload-page-feature.png)
 
-```text
-Search Page
-```
+---
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(369).png>)
+### List Page
 
-```text
-Chat Page
-```
+![ListPage](/assets/screenshots/list-page.png)
 
-![Results](<https://github.com/recursivezero/tz-fabric/blob/feature/RZF-250003/frontend/src/assets/Screenshots/Screenshot%20(370).png>)
+---
+
+### Search Page
+
+![Search Page](/assets/screenshots/search-page.png)
+![Search Crop Feature](/assets/screenshots/search-page-crop.png)
+![Search Page Feature](/assets/screenshots/search-page-action.png)
+
+---
+
+### Chat Page
+
+![Chat Page](/assets/screenshots/chat-page.png)
+![Chat feature](/assets/screenshots/chat-page-feature.png)
 
 ## 📄 License
 
 This project is licensed under the terms of the [MIT License](<https://github.com/recursivezero/tz-fabric/blob/main/LICENSE>).
-
-```text
-You are free to use, modify, and distribute this software, 
-provided that proper attribution is
-given and the license terms are followed.
-```
