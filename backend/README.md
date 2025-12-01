@@ -1,9 +1,10 @@
-# TZ-Fabric
+# TZ-Fabric: Backend
 
 ## How to start
 
 ```sh
 poetry install
+poetry install --all-extras
 ```
 
 create `.env` file and add content from `.env.local` file anc change value according to your project
