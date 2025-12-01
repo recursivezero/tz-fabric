@@ -119,10 +119,16 @@ POST /api/uploads/tmp_media - for storing the media in chat
 
 ## How to start
 
-🛋️ Backend
+Clone the repo
 
 ```sh
 git clone https://github.com/recursivezero/tz-fabric.git
+cd tz-fabric
+```
+
+🛋️ Backend
+
+```sh
 cd backend
 curl -sSL https://install.python-poetry.org | python3 -
 poetry install - to install all the dependencies
@@ -132,8 +138,8 @@ poetry run dev
 🛋️ Frontend
 
 ```sh
-git clone https://github.com/recursivezero/tz-fabric.git
-cd frontend_image_Search
+
+cd frontend
 npm install  -> to download the node modules
 npm install axios -> for backend integration
 npm install react-icons // if react-icons is not installed
@@ -161,7 +167,7 @@ VITE_API_URL="http://localhost:8000"
 
 ### Homepage
 
-![Homepage]('./assets/screenshots/homepage.png)
+![Homepage](/assets/screenshots/homepage.png)
 
 ---
 
