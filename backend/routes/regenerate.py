@@ -1,6 +1,8 @@
-from fastapi import APIRouter, HTTPException
-from utils.cache import get_response
 import asyncio
+
+from fastapi import APIRouter, HTTPException
+
+from utils.cache import get_response
 
 router = APIRouter()
 
@@ -8,7 +10,7 @@ router = APIRouter()
 @router.get("/regenerate")
 async def regenerate(key: str, index: int):
     try:
-        waiting = 0
+        waiting: float = 0.0
         interval = 0.5
         timeout = 30  # seconds
 

@@ -41,8 +41,6 @@ const normalizeLLMText = (t: unknown): string => {
   return s.trim();
 };
 
-const norm = (s: string) => (s || "").trim().toLowerCase();
-
 export default function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
@@ -141,7 +139,7 @@ useEffect(() => {
 - 📝 Giving short or long analysis
 - 🔍 Searching for similar images
 - 🔁 Regenerating and comparing results`),
-      }]);
+      }as any]);
       sessionStorage.setItem("fabricAI_welcome_seen", "1");
     }
   }, [messages.length]);
@@ -659,7 +657,7 @@ if (!forceApi) setPendingAction(null);
     return;
   }
 
-  if ((!text && !uploadedImageFile && !uploadedAudioFile) || status === "sending") return;
+  if ((!text && !uploadedImageFile && !uploadedAudioFile)) return;
 
   if (!forceApi && morePrompt && text) {
     const yesRegex = /\b(yes|yeah|yep|ya|sure|ok|okay|more|tell me more|details|go ahead)\b/i;

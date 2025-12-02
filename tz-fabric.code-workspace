@@ -98,7 +98,9 @@
     "cSpell.words": [
       "fastapi",
       "generativeai",
-      "gitstash"
+      "gitstash",
+      "langchain",
+      "langgraph"
     ],
     "files.autoSave": "onFocusChange",
     "editor.dragAndDrop": false,
@@ -149,9 +151,8 @@
     "files.exclude": {
       ".git": true,
       ".poetry/**": true,
-      "**/node_modules": true,
-      "**/dist": true,
-      "**/__pycache__": true
+      "**/__pycache__": true,
+      "**/node_modules": true
     },
     "mcp": {
       "inputs": [ ],

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from services.threaded import analyse_all_variations
-from PIL import Image
 from io import BytesIO
+
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from PIL import Image
+
+from services.threaded import analyse_all_variations
 
 router = APIRouter()
 

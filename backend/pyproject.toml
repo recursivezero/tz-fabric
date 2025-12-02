@@ -1,6 +1,6 @@
 [project]
 name = "tz-fabric"
-version = "1.0.0"
+version = "0.2.13"
 description = "This is fabric analyzer backend"
 authors = [{ name = "recursivezero", email = "recursivezero@outlook.com" }]
 readme = "README.md"
@@ -12,7 +12,69 @@ classifiers = [
   "Operating System :: OS Independent",
   "Framework :: FastAPI",
 ]
+requires-python = ">=3.11,<3.13"
 
+# Core, lightweight runtime deps only
+dependencies = [
+  "fastapi>=0.120.4,<0.121.0",
+  "dotenv>=0.9.9,<0.10.0",
+  "python-multipart>=0.0.20,<0.1.0",
+  "jinja2>=3.1.6,<4.0.0",
+  "pydantic>=2.11.7,<3.0.0",
+  "pydantic-settings>=2.10.1,<3.0.0",
+  "types-requests>=2.32.4.20250913,<3.0.0.0",
+]
+
+[project.optional-dependencies]
+# ML-only extras
+ml = [
+  "google-generativeai>=0.8.5,<0.9.0",
+]
+
+# Agent / LangChain stack
+agent = [
+  "langgraph>=0.6.6,<0.7.0",
+  "langchain>=0.3.27,<0.4.0",
+  "langchain-core>=0.3.75,<0.4.0",
+  "langchain-xai>=0.2.5,<0.3.0",
+  "langchain-groq>=0.3.7,<0.4.0",
+]
+
+# MCP integration
+mcp = [
+  "fastmcp>=2.12.5,<3.0.0",
+  "modelcontextprotocol>=0.1.0,<0.2.0",
+]
+
+# "Heavy" bundle: vector DB, image, Mongo, NumPy + all other extras.
+# Install with: pip install "tz-fabric[extra]"
+extra = [
+  # core heavy deps
+  "pillow>=11.3.0,<12.0.0",
+  "pymongo>=4.13.2,<5.0.0",
+  "numpy>=2.3.2,<3.0.0",
+  "chromadb>=1.0.17,<2.0.0",
+
+  # ml
+  "google-generativeai>=0.8.5,<0.9.0",
+
+  # agent
+  "langgraph>=0.6.6,<0.7.0",
+  "langchain>=0.3.27,<0.4.0",
+  "langchain-core>=0.3.75,<0.4.0",
+  "langchain-xai>=0.2.5,<0.3.0",
+  "langchain-groq>=0.3.7,<0.4.0",
+
+  # mcp
+  "fastmcp>=2.12.5,<3.0.0",
+  "modelcontextprotocol>=0.1.0,<0.2.0",
+]
+
+[virtualenvs]
+in-project = true
+
+[installer]
+extras = ["extra"]
 
 [project.urls]
 homepage = "https://theadzip.com"
@@ -21,38 +83,16 @@ documentation = "https://github.com/recursivezero/tz-script/docs"
 
 [project.scripts]
 dev = "cli:app"
+tz-fabric = "cli:main"
+lint = "lint:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-
 [[tool.poetry.packages]]
 include = "*"
 from = "."
-
-
-[tool.poetry.dependencies]
-python = ">=3.11,<3.13"
-fastapi = "^0.120.4"
-dotenv = ">=0.9.9,<0.10.0"
-google-generativeai = ">=0.8.5,<0.9.0"
-pillow = ">=11.3.0,<12.0.0"
-python-multipart = "^0.0.20"
-jinja2 = "^3.1.6"
-pymongo = "^4.13.2"
-numpy = "^2.3.2"
-chromadb = "^1.0.17"
-pydantic = "^2.11.7"
-pydantic-settings = "^2.10.1"
-modelcontextprotocol = "^0.1.0"
-langgraph = "^0.6.6"
-langchain = "^0.3.27"
-langchain-core = "^0.3.75"
-langchain-xai = "^0.2.5"
-langchain-groq = "^0.3.7"
-mcp = "^1.13.1"
-fastmcp = "^2.12.5"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = "^1.9"
@@ -62,15 +102,16 @@ output = "requirements.txt"
 without_hashes = true
 without = ["dev"]
 
-
 [tool.poetry.group.dev.dependencies]
 uvicorn = { extras = ["standard"], version = "^0.35.0" }
-black = "^24.10.0"
+black = ">=24.10.0,<25.0.0"
 flake8 = "^7.1.1"
 mypy = "^1.14.1"
 pip-audit = "^2.9.0"
 pipreqs = "0.5.0"
 ruff = "^0.13.1"
+isort = "^7.0.0"
+autoflake = "^2.3.1"
 
 [tool.flake8]
 max_line_length = 190
