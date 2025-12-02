@@ -90,9 +90,7 @@ const UploadPage = () => {
     setShowConfirm(false);
   };
 
-  const handleClearAudio = () => {
-    setShowConfirmAudio(true);
-  };
+
 
   const confirmClearAudio = () => {
     setShowConfirmAudio(false);
