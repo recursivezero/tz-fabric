@@ -1,6 +1,6 @@
 {
   "name": "tz-fabric",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "homepage": "https://threadzip.com",
   "description": "A AI enabled fabric analysis, chatbot integration with image search",
@@ -9,7 +9,8 @@
   "private": true,
   "author": {
     "name": "Recursive Zero",
-    "email": "recursivezero@outlook.com"
+    "email": "recursivezero@outlook.com",
+    "github": "@recursivezero"
   },
   "repository": {
     "type": "git",
@@ -26,7 +27,7 @@
   "contributors": [
     {
       "name": "Keshav Mohta",
-      "email": "xkeshav@gmail.com"
+      "github": "@xkeshav"
     },
     {
       "name": "Aaditya Saarda",
