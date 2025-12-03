@@ -14,7 +14,7 @@ All notable changes to this repository will be documented in this file.
 
 ## [1.0.1] Wed, Dec 03, 2025
 
-- Added build and deployment script
-
+- Update code for cloud fit
+- Release branch
 
 [Unreleased]
