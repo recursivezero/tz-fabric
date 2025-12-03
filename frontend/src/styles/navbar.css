@@ -1,0 +1,126 @@
+.header-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.header-nav a {
+  text-decoration: none;
+  color: #222;
+  font-weight: 500;
+  display: block;
+}
+
+.header-nav a.active {
+  border-bottom: 2px solid #222;
+}
+
+.nav-toggle {
+  display: none;
+}
+
+@media (min-width: 769px) {
+
+  /* desktop layout stays intact */
+  .hamburger {
+    display: none !important;
+  }
+
+  .header-nav ul {
+    position: static !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 1.5rem;
+    background: none !important;
+    padding: 0 !important;
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    height: auto !important;
+    box-shadow: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .mobile-nav-wrapper {
+    position: relative;
+    z-index: 999;
+  }
+
+  /* position hamburger & cross */
+  .hamburger {
+    display: flex;
+    width: 30px;
+    height: 22px;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+
+    position: fixed;
+    /* always visible */
+    top: 16px;
+    right: 16px;
+    /* 🔹 fully right aligned */
+    z-index: 1002;
+    /* above overlay */
+  }
+
+  .hamburger span {
+    height: 3px;
+    width: 100%;
+    background: #222;
+    border-radius: 3px;
+    transition: 0.3s ease;
+  }
+
+  /* FULLSCREEN OVERLAY */
+  .header-nav ul {
+    position: fixed;
+    inset: 0;
+    background: #ffffffee;
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    padding-top: 100px;
+    padding-left: 24px;
+    padding-right: 24px;
+    gap: 1.2rem;
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.35s ease;
+  }
+
+  /* SHOW MENU */
+  .nav-toggle:checked~.header-nav ul {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ANIMATE BUTTON INTO X */
+  .nav-toggle:checked+.hamburger span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+  }
+
+  .nav-toggle:checked+.hamburger span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .nav-toggle:checked+.hamburger span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+  }
+
+  /* MOBILE ITEM STYLE */
+  .header-nav a {
+    padding: 14px 10px;
+    font-size: 18px;
+    border-radius: 6px;
+  }
+
+  .header-nav a.active {
+    background: rgba(0, 0, 0, 0.1);
+  }
+}
