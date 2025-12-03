@@ -57,17 +57,17 @@ const ImagePreviewPanel = ({
   return (
     <div className="image-preview-container">
       <div className="preview-visual">
-        {hasImage ? (
+        { hasImage ? (
           <div className="preview-wrap">
             <img
-              src={uploadedImageUrl || sampleImageUrl}
+              src={ uploadedImageUrl || sampleImageUrl }
               alt="Preview"
               className="preview-image"
             />
 
             <button
               className="chip chip-clear"
-              onClick={handleClearClick}
+              onClick={ handleClearClick }
               title="Remove image"
             >
               ✕
@@ -76,9 +76,9 @@ const ImagePreviewPanel = ({
         ) : (
           <div
             className="dropzone big-drop"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onDrop}
-            onClick={() => imageInputRef?.current?.click?.()}
+            onDragOver={ (e) => e.preventDefault() }
+            onDrop={ onDrop }
+            onClick={ () => imageInputRef?.current?.click?.() }
             role="button"
             aria-label="Upload image"
           >
@@ -87,65 +87,65 @@ const ImagePreviewPanel = ({
               <strong>Drop image</strong> or <span className="link">browse</span>
             </div>
             <input
-              ref={imageInputRef}
+              ref={ imageInputRef }
               type="file"
               accept="image/*"
-              onChange={onFileChange}
-              style={{ display: "none" }}
+              onChange={ onFileChange }
+              style={ { display: "none" } }
             />
           </div>
-        )}
+        ) }
       </div>
       <div className="filesize-name">
-        {hasImage && currentFile ? (
-          <span className="filename">{giveFileNameAndSize(currentFile)}</span>
+        { hasImage && currentFile ? (
+          <span className="filename">{ giveFileNameAndSize(currentFile) }</span>
         ) : (
           <span className="filename" />
-        )}
+        ) }
       </div>
 
-      {showButtons && (
+      { showButtons && (
         <div className="preview-buttons-container" data-debug="preview-buttons">
-          {validationLoading ? (
+          { validationLoading ? (
             <p className="validation-text">🔍 Checking if this is a valid fabric image...</p>
           ) : (
             <>
               <button
-                onClick={() => handleRunAnalysis(currentFile, "short")}
-                disabled={!canRun}
-                className={`analysis-btn short ${!canRun ? "disabled" : ""}`}
-                title={!hasImage ? "Upload an image first" : !isImageValid ? "Image invalid" : ""}
+                onClick={ () => handleRunAnalysis(currentFile, "short") }
+                disabled={ !canRun }
+                className={ `analysis-btn short ${!canRun ? "disabled" : ""}` }
+                title={ !hasImage ? "Upload an image first" : !isImageValid ? "Image invalid" : "" }
                 data-testid="short-btn"
               >
                 Short Analysis
               </button>
 
               <button
-                onClick={() => handleRunAnalysis(currentFile, "long")}
-                disabled={!canRun}
-                className={`analysis-btn long ${!canRun ? "disabled" : ""}`}
-                title={!hasImage ? "Upload an image first" : !isImageValid ? "Image invalid" : ""}
+                onClick={ () => handleRunAnalysis(currentFile, "long") }
+                disabled={ !canRun }
+                className={ `analysis-btn long ${!canRun ? "disabled" : ""}` }
+                title={ !hasImage ? "Upload an image first" : !isImageValid ? "Image invalid" : "" }
                 data-testid="long-btn"
               >
                 Long Analysis
               </button>
             </>
-          )}
+          ) }
         </div>
-      )}
+      ) }
 
-      {showConfirm && (
+      { showConfirm && (
         <div className="confirm-overlay" role="dialog" aria-modal="true">
           <div className="confirm-modal">
             <div className="confirm-title">Remove Image!</div>
             <div className="confirm-body">Are you sure you want to remove this image?</div>
             <div className="confirm-actions">
-              <button className="btn btn-cancel" onClick={cancelClear}>Cancel</button>
-              <button className="btn btn-confirm" onClick={confirmClear}>Yes, Remove</button>
+              <button className="btn btn-cancel" onClick={ cancelClear }>Cancel</button>
+              <button className="btn btn-confirm" onClick={ confirmClear }>Yes, Remove</button>
             </div>
           </div>
         </div>
-      )}
+      ) }
     </div>
   );
 };

@@ -29,6 +29,103 @@
     "peacock.color": "#a13d22",
     "cSpell.words": [
       "generativeai",
+      "gitstash",
+      "langchain",
+      "langgraph"
+    ],
+    "files.autoSave": "onFocusChange",
+    "editor.dragAndDrop": false,
+    "editor.tabCompletion": "onlySnippets",
+    "editor.formatOnSaveMode": "file",
+    "files.eol": "\r\n",
+    "files.readonlyExclude": {
+      "dist/**": true
+    },
+    "window.title": "${rootNameShort}${separator}${activeEditorShort}${separator}${activeFolderMedium}",
+    "explorer.fileNesting.expand": false,
+    "search.exclude": {
+      "dist/**": true,
+      "package-lock.json": true,
+      ".venv": true
+    },
+    "peacock.affectSideBarBorder": true,
+    "prettier.quoteProps": "consistent",
+    "prettier.documentSelectors": [
+      "**/*.astro"
+    ],
+    "git.branchProtection": [
+      "develop",
+      "main"
+    ],
+    "git.enableCommitSigning": false,
+    "git.postCommitCommand": "push",
+    "workbench.tree.enableStickyScroll": false,
+    "editor.stickyScroll.enabled": true,
+    "workbench.editor.pinnedTabSizing": "compact",
+    "prettier.trailingComma": "none",
+    "editor.inlayHints.enabled": "offUnlessPressed",
+    "workbench.layoutControl.enabled": false,
+    "[markdown]": {
+      "diffEditor.ignoreTrimWhitespace": true
+    },
+    "files.readonlyInclude": {
+      ".githooks/**": true,
+      ".venv/**": true
+    },
+    "workbench.editor.pinnedTabsOnSeparateRow": true,
+    "python.defaultInterpreterPath": "",
+    "python.terminal.activateEnvironment": false,
+    "python.analysis.importFormat": "absolute",
+    "python.analysis.extraPaths": [
+      "./src"
+    ],
+    "files.exclude": {
+      ".git": true,
+      ".poetry/**": true,
+      "**/__pycache__": true,
+      "**/node_modules": true
+    },
+    "mcp": {
+      "inputs": [ ],
+      "servers": { }
+    },
+    "chat.mcp.serverSampling": {
+      "tz-script.code-workspace: my-mcp-server-c37295de": {
+        "allowedModels": [
+          "copilot/gpt-4.1",
+          "copilot/claude-3.5-sonnet"
+        ]
+      }
+    },
+    "gitstash.explorer.display.fileSorting": "tree",
+    "biome.lsp.bin": "./node_modules/@biomejs/cli-linux-x64/bin",
+    "folderStructure.ignorePatterns": [
+      "node_modules",
+      ".*",
+      "__pycache__"
+    ],
+    "[typescript]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "folder-color.pathColors": [
+      {
+        "folderPath": "tz-fabric/frontend/",
+        "color": "foldercolorizer.color_ff33cc"
+      },
+      {
+        "folderPath": "tz-fabric/backend/",
+        "color": "foldercolorizer.color_66cc66"
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "charliermarsh.ruff",
+      "iamshreydxv.copy-folder-structure"
+    ]
       "Threadzip"
     ],
     "files.exclude": {

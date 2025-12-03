@@ -1,8 +1,10 @@
 import asyncio
-from typing import Any, Dict, Optional
-from constants import MCP_URL
-from fastmcp import Client
 import concurrent.futures
+from typing import Any, Dict, Optional
+
+from fastmcp import Client
+
+from constants import MCP_URL
 
 
 async def _invoke_once(name: str, arguments: Optional[Dict[str, Any]] = None) -> Any:

@@ -1,12 +1,14 @@
-from fastapi import APIRouter, UploadFile, File, Request, BackgroundTasks, Form
-from pathlib import Path
-from datetime import datetime
 import shutil
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional, cast
 
-from utils.filename import sanitize_filename
-from constants import IMAGE_DIR, AUDIO_DIR
+from fastapi import APIRouter, BackgroundTasks, File, Form, Request, UploadFile
+
+from constants import AUDIO_DIR, IMAGE_DIR
 from core.embedder import embed_image_bytes
 from core.store import get_index
+from utils.filename import sanitize_filename
 
 router = APIRouter()
 
@@ -39,8 +41,11 @@ def _process_index_job(
             "audioFilename": audio_filename,
             "createdAt": created_on,
         }
+        # Chromadb stubs are strict about ndarray vs list; cast to Any so mypy accepts it.
         collection.add(
-            ids=[image_filename], embeddings=[embedding], metadatas=[metadata]
+            ids=[image_filename],
+            embeddings=cast(Any, [embedding]),
+            metadatas=[metadata],
         )
 
         db.images.update_one(
@@ -66,7 +71,7 @@ async def submit_file(
     background: BackgroundTasks,
     image: UploadFile = File(...),
     audio: UploadFile = File(...),
-    name: str = Form(None),
+    name: Optional[str] = Form(None),
 ):
     db = request.app.database
 
@@ -74,7 +79,13 @@ async def submit_file(
     if name and name.strip():
         base_name = sanitize_filename(name)
     else:
+        # UploadFile.filename may be typed Optional[str] in some stubs — narrow for mypy
+        assert image.filename is not None
         base_name = sanitize_filename(image.filename)
+
+    # narrow filenames before using Path(...) so mypy knows they're str
+    assert image.filename is not None
+    assert audio.filename is not None
 
     image_ext = Path(image.filename).suffix.lower().lstrip(".")
     audio_ext = Path(audio.filename).suffix.lower().lstrip(".")

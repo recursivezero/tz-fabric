@@ -1,10 +1,11 @@
-import uuid
 import threading
+import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from services.generate_response import analyse_fabric_image
+from utils.cache import generate_cache_key, store_response
 from utils.image_utils import convert_image_to_base64
 from utils.prompt_generator import generate_prompts
-from utils.cache import generate_cache_key, store_response
 
 executor = ThreadPoolExecutor(max_workers=6)
 

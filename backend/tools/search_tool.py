@@ -3,12 +3,12 @@ import base64
 import os
 import re
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from core.embedder import embed_image_bytes
-from core.search import topk_search
+from core.db_search import topk_search
 from core.store import get_index
-from utils.paths import build_image_url, build_audio_url
+from utils.paths import build_audio_url, build_image_url
 
 ISO_FORMATS = (
     "%Y-%m-%dT%H:%M:%S.%fZ",
@@ -126,7 +126,9 @@ def search_tool(
             image_bytes = f.read()
 
     if not image_bytes:
-        raise ValueError("No image provided. Provide image_b64 or image_path or image_bytes.")
+        raise ValueError(
+            "No image provided. Provide image_b64 or image_path or image_bytes."
+        )
 
     # Embed
     embedding = embed_image_bytes(image_bytes)
@@ -161,7 +163,9 @@ def search_tool(
 
     # sort
     if order == "recent":
-        items.sort(key=lambda it: (it["score"], _created_ts(it["metadata"])), reverse=True)
+        items.sort(
+            key=lambda it: (it["score"], _created_ts(it["metadata"])), reverse=True
+        )
     else:
         items.sort(key=lambda it: it["score"], reverse=True)
 

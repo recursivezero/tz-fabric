@@ -163,6 +163,8 @@ frontend/.env
 VITE_API_URL="http://localhost:8000"
 ```
 
+
+
 🖼️ Screenshots
 
 ### Homepage
@@ -206,4 +208,4 @@ VITE_API_URL="http://localhost:8000"
 
 ## 📄 License
 
-This project is licensed under the terms of the [MIT License](<https://github.com/recursivezero/tz-fabric/blob/main/LICENSE>).
+This project is licensed under the terms of the [MIT License](https://github.com/recursivezero/tz-fabric/blob/main/LICENSE).

@@ -1,0 +1,20 @@
+[Unit]
+Description=TZ-Fabric MCP backend (via Poetry)
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/project/path/tz-fabric/backend
+Environment="HOME=/root"
+Environment="PYTHONUNBUFFERED=1"
+Environment="PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/root/.local/bin/poetry run threadzip dev
+Restart=always
+RestartSec=5
+
+# Optional: persistent logs
+StandardOutput=append:/var/log/tz-fabric.log
+StandardError=append:/var/log/tz-fabric-error.log
+
+[Install]
+WantedBy=multi-user.target
