@@ -1,5 +1,4 @@
 import React from "react";
-import { FaRegMoon } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 import "./App.css";
 import "./styles/navbar.css";
