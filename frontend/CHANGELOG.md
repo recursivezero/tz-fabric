@@ -12,9 +12,10 @@ All notable changes to this repository will be documented in this file.
 - Added features of Image Search, Fabric Chatbot with upload feature, Fabric analysis
 - Added MCP server with langchain
 
-## [1.0.1] Wed, Dec 03, 2025
+## [1.0.2] Wed, Dec 03, 2025
 
-- Update code for cloud fit
-- Release branch
+- Added open graph meta tags
+- update env variables
+- added logo and favicons
 
-[Unreleased]
+[Unreleased]  
