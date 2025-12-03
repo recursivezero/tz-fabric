@@ -50,3 +50,20 @@ install heavy dependencies separately
 pip install tz-fabric[extra]
 poetry run dev
 ```
+
+## Deployment
+
+- Clone the repo
+- run `poetry install` ( make sure poetry installed; if not then install it)
+- create a file on `/etc/systemd/system/tz-fabric.service`  and copy the content of [this file]('./cloud.service) ; make sure change the path of project where ever it is in your cloud
+- use `which poetry` to know poetry path adn add that 
+
+run
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl start tz-fabric
+sudo systemctl status tz-fabric
+```
+
+last command will should display active and running in the output; if it is not then check for the error log 
