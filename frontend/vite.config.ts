@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/v1': {
-        target: 'http://localhost:8000', // Your FastAPI server
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
     },
@@ -15,4 +15,9 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 2000, 
   },
+  preview: {
+    allowedHosts: ['pro.threadzip.com'],
+    host: true   
+  },
+
 })
