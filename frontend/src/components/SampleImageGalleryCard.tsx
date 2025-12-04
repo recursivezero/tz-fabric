@@ -1,4 +1,4 @@
-import "../styles/SampleImageGalleryCard.css";
+import "@/assets/styles/SampleImageGalleryCard.css";
 
 const sampleImages = [
   { id: 1, name: "Sample 1", path: "../assets/sample1.jpeg" },

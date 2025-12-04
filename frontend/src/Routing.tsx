@@ -7,6 +7,7 @@ import ImageDescription from "./pages/ImageDescriptor";
 import Chat from "./pages/FabricChat";
 import ComingSoon from "./pages/ComingSoon";
 import { NotFound } from './components/NotFound';
+import {ContactUs} from './pages/Contact';
 
 export const Routing = () => {
   return (
@@ -21,8 +22,8 @@ export const Routing = () => {
       <Route path="/pricing" element={ <ComingSoon /> } />
       <Route path="/api" element={ <ComingSoon /> } />
       <Route path="/docs" element={ <ComingSoon /> } />
-      <Route path="/contact" element={ <ComingSoon /> } />
       <Route path="/help" element={ <ComingSoon /> } />
+      <Route path="/contact" element={ <ContactUs /> } />
       <Route path="*" element={ <NotFound /> } />
     </Routes>
   );

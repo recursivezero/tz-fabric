@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import { useUploadAndRecord } from "../hooks/useUploadAndRecord";
-import "../styles/UploadPage.css";
+import "@/assets/styles/UploadPage.css";
 import { generateFabricName } from "../utils/fabric-name";
 
 type AudioMode = "upload" | "record";

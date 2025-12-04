@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import "../styles/Home.css";
+import "@/assets/styles/Home.css";
 
 
 
@@ -15,7 +15,6 @@ export default function Home() {
   }, []);
   return (
     <div className="homeV2">
-
       <main className="homeV2__container">
         <header className="homeV2__hero">
           <h1 className="homeV2__title">

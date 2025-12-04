@@ -1,5 +1,5 @@
 // src/components/EmptyState.tsx
-import "../styles/EmptyState.css";
+import "@/assets/styles/EmptyState.css";
 
 const samples = [
   "Explain knit vs woven.",

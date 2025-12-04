@@ -38,7 +38,6 @@
   width: 100%;
   display: grid;
   align-items: center;
-  justify-items: space-between;
   padding: 4px 20px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 6px 24px rgba(66, 66, 67, 0.767);
@@ -98,4 +97,13 @@
   .brand-name {
     font-size: 15px;
   }
+}
+
+.container {
+  height: 80vh;
+}
+
+.center {
+  display: grid;
+  place-content: center;
 }

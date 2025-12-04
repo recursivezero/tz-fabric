@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
-import "../styles/navbar.css";
+import "@/assets/styles/navbar.css";
 import { NAVBAR_MENU } from '../constants';
 
 
@@ -19,8 +19,8 @@ export const NavBar: React.FC = () => {
 
       <nav className="header-nav">
         <ul>
-          { NAVBAR_MENU.filter((l) => l.enable !== false).map((n) => (
-            <li>
+          { NAVBAR_MENU.filter((l) => l.enable !== false).map((n, i) => (
+            <li key={i}>
               <NavLink to={ n.path } end className={ navClass }>
                 { n.name }
               </NavLink>

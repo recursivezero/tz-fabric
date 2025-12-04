@@ -5,7 +5,7 @@ import HandleRedirectAction from "../components/HandleRedirectAction";
 import MessageList from "../components/MessageList";
 import TypingIndicator from "../components/TypingIndicator";
 import useChat from "../hooks/chat";
-import "../styles/FabricChat.css";
+import "@/assets/styles/FabricChat.css";
 import { jsPDF } from "jspdf";
 
 type ChatDisplayMessage = { id?: string; role?: string; content?: unknown };

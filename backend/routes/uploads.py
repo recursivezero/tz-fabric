@@ -3,6 +3,8 @@ import shutil
 import uuid
 from pathlib import Path
 
+from requests import request
+
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from constants import AUDIO_DIR, IMAGE_DIR
@@ -12,6 +14,8 @@ router = APIRouter()
 
 IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+base_url = str(request.base_url).rstrip("/")
 
 
 @router.post("/uploads/tmp_media")
@@ -53,7 +57,7 @@ async def upload_tmp_media(
         try:
             with img_path.open("wb") as out:
                 shutil.copyfileobj(image.file, out)
-            saved_image_url = f"http://127.0.0.1:8000/assets/images/{img_name}"
+            saved_image_url = f"{base_url}/assets/images/{img_name}"
             saved_image_path = str(img_path.resolve())
             saved_image_name = img_name
         except Exception as e:
@@ -67,7 +71,7 @@ async def upload_tmp_media(
         try:
             with aud_path.open("wb") as out:
                 shutil.copyfileobj(audio.file, out)
-            saved_audio_url = f"http://127.0.0.1:8000/assets/audios/{aud_name}"
+            saved_audio_url = f"{base_url}/assets/audios/{aud_name}"
             saved_audio_name = aud_name
             saved_audio_path = str(aud_path.resolve())
         except Exception as e:

@@ -1,4 +1,4 @@
-import "../styles/ImageDescriptorHeader.css";
+import "@/assets/styles/ImageDescriptorHeader.css";
 
 const Header = () => {
   return (

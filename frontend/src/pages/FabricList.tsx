@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FiZoomIn } from "react-icons/fi";
 import { BASE_URL } from "../constants";
 import { fetchContent, type MediaItem } from "../services/content_api";
-import "../styles/ContentGrid.css";
+import "@/assets/styles/ContentGrid.css";
 import { throttle } from "../utils/throttle";
 
 const displayTime = (t: string) => {
