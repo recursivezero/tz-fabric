@@ -1,7 +1,7 @@
 // src/components/DescriptionBox.jsx
 import { useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
-import "../styles/DescriptionBox.css";
+import "@/assets/styles/DescriptionBox.css";
 import Loader from "./Loader";
 
 const DescriptionBox = ({

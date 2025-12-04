@@ -1,7 +1,7 @@
 // src/components/Composer.tsx
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import "../styles/Composer.css";
+import "@/assets/styles/Composer.css";
 import Loader from "./Loader";
 import SuggestionChips from "./SuggestionChips";
 import { formatFileName } from "../utils/formatFilename";

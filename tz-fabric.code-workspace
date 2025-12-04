@@ -28,10 +28,13 @@
     },
     "peacock.color": "#a13d22",
     "cSpell.words": [
+      "Exif",
       "generativeai",
       "gitstash",
+      "LANCZOS",
       "langchain",
-      "langgraph"
+      "langgraph",
+      "metadatas"
     ],
     "files.autoSave": "onFocusChange",
     "editor.dragAndDrop": false,
@@ -98,7 +101,6 @@
       }
     },
     "gitstash.explorer.display.fileSorting": "tree",
-    "biome.lsp.bin": "./node_modules/@biomejs/cli-linux-x64/bin",
     "folderStructure.ignorePatterns": [
       "node_modules",
       ".*",
@@ -120,16 +122,5 @@
         "color": "foldercolorizer.color_66cc66"
       }
     ]
-  },
-  "extensions": {
-    "recommendations": [
-      "charliermarsh.ruff",
-      "iamshreydxv.copy-folder-structure"
-    ]
-      "Threadzip"
-    ],
-    "files.exclude": {
-      "**/node_modules": true
-    }
   }
 }

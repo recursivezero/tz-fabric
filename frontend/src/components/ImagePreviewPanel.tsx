@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../styles/ImagePreviewPanel.css";
+import "@/assets/styles/ImagePreviewPanel.css";
 
 const ImagePreviewPanel = ({
   uploadedImageUrl,

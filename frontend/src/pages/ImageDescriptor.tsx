@@ -5,7 +5,7 @@ import Header from "../components/ImageDescriptorHeader";
 import ImagePreview from "../components/ImagePreviewPanel";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
 import useImageAnalysis from "../hooks/useImageAnalysis";
-import "../styles/ImageDescription.css";
+import "@/assets/styles/ImageDescription.css";
 
 const ImageDescription = () => {
   useEffect(() => {

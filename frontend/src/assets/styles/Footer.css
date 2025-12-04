@@ -4,10 +4,8 @@
   background: #0c1220;
   /* deep navy like screenshot */
   color: #d2d8e3;
-  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
-  margin-top: 24px;
 }
 
 .footer__inner {

@@ -21,9 +21,11 @@ from routes import (
     submit,
     uploads,
     validate_image,
+    contact
 )
 from tools.mcpserver import sse_app
 from utils.emoji_logger import get_logger
+
 
 
 class MyApp(FastAPI):
@@ -122,6 +124,7 @@ app.include_router(submit.router, prefix=API_PREFIX)
 app.include_router(media.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
+app.include_router(contact.router, prefix=API_PREFIX)
 
 
 @app.get("/__routes")
