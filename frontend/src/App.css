@@ -17,7 +17,6 @@
   height: 100%;
   margin: 0;
   font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif;
-  color: var(--text-color);
 }
 
 .app-wrapper {

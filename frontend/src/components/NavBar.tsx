@@ -2,16 +2,8 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 import "../styles/navbar.css";
+import { NAVBAR_MENU } from '../constants';
 
-const NAV_LINKS = [
-  {name: 'home', path: '/'},
-  { name: 'analysis', path: '/analysis'},
-  {name: 'upload', path: '/upload'},
-  {name: 'list', path: '/view'},
-  { name: 'search', path: '/search'},
-  {name: 'chat', path: '/chat'},
-  {name: 'about', path: '/about', isActive: false},
-]
 
 export const NavBar: React.FC = () => {
   const navClass = ({ isActive }) => (isActive ? "active" : "");
@@ -27,13 +19,16 @@ export const NavBar: React.FC = () => {
 
       <nav className="header-nav">
         <ul>
-          { NAV_LINKS.map ((n) => (
+          { NAVBAR_MENU.filter((l) => l.enable !== false).map((n) => (
             <li>
-              <NavLink to={n.path} end className={ navClass }>
-                {n.name}
+              <NavLink to={ n.path } end className={ navClass }>
+                { n.name }
               </NavLink>
             </li>
-          ))}
+          )) }
+          <li>
+            
+          </li>
         </ul>
       </nav>
     </div>
