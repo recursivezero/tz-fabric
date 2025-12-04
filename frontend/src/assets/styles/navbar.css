@@ -27,18 +27,19 @@
   }
 
   .header-nav ul {
-    position: static !important;
-    display: flex !important;
-    flex-direction: row !important;
+    position: static;
+    display: flex;
+    flex-direction: row;
     align-items: center;
     gap: 1.5rem;
-    background: none !important;
-    padding: 0 !important;
-    transform: none !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    height: auto !important;
-    box-shadow: none !important;
+    background: none;
+    padding: 0;
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+    height: auto;
+    box-shadow: none;
+    top: 1.5rem;
   }
 }
 

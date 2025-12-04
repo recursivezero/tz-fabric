@@ -1,5 +1,6 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -19,5 +20,12 @@ export default defineConfig({
     allowedHosts: ['pro.threadzip.com'],
     host: true   
   },
+
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      "@assets": path.resolve(__dirname, "src/assets")
+    }
+  }
 
 })

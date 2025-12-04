@@ -1,6 +1,6 @@
 // AnimatedSearchBox.tsx (replace current file)
 import { useId, useState } from "react";
-import "../styles/SearchBar.css";
+import "@/assets/styles/SearchBar.css";
 
 type SelectedImage = File | string | null;
 

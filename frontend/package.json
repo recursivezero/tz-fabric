@@ -1,6 +1,6 @@
 {
   "name": "tz-fabric",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "type": "module",
   "homepage": "https://threadzip.com",
   "description": "A AI enabled fabric analysis, chatbot integration with image search",
@@ -59,6 +59,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.0.2",
     "@eslint/js": "^9.30.1",
+    "@types/node": "^24.10.1",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^4.6.0",
