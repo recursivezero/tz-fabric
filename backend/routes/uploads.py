@@ -3,7 +3,8 @@ import shutil
 import uuid
 from pathlib import Path
 
-from requests import request
+from fastapi import Request
+
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
@@ -15,15 +16,17 @@ router = APIRouter()
 IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
-base_url = str(request.base_url).rstrip("/")
 
 
 @router.post("/uploads/tmp_media")
 async def upload_tmp_media(
+    request: Request,
     image: UploadFile = File(None),
     audio: UploadFile = File(None),
     filename: str | None = Form(None),  # <-- 👈 accept provided name
 ):
+    base_url = str(request.base_url).rstrip("/")
+    
     if not image and not audio:
         raise HTTPException(
             status_code=400,
