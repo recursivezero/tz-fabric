@@ -25,6 +25,7 @@ dependencies = [
   "types-requests>=2.32.4.20250913,<3.0.0.0",
 ]
 
+
 [project.optional-dependencies]
 # ML-only extras
 ml = [
@@ -70,11 +71,6 @@ extra = [
   "modelcontextprotocol>=0.1.0,<0.2.0",
 ]
 
-[virtualenvs]
-in-project = true
-
-[installer]
-extras = ["extra"]
 
 [project.urls]
 homepage = "https://theadzip.com"
