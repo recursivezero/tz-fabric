@@ -49,6 +49,7 @@ def dev():
     """Run the development server with reload enabled."""
     uvicorn.run("main:app", host=DEFAULT_HOST, port=DEFAULT_PORT, reload=True)
 
+
 # ------------------------------------------------------------
 # Entry point for poetry / `tzfabric` script
 # ------------------------------------------------------------
