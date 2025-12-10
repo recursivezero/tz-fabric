@@ -14,7 +14,7 @@ class ContactForm(BaseModel):
 
 @router.post("/contact")
 async def save_contact(request: Request, form: ContactForm):
-    db = request.app.database   # ← SAME as all other route files
+    db = request.app.database  # ← SAME as all other route files
 
     collection = db["contact_messages"]
 
