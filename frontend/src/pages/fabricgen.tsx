@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { BASE_URL, FULL_API_URL } from "@/constants";
+import React, { useEffect, useRef, useState } from "react";
+import { FULL_API_URL, BASE_URL } from "@/constants";
 
 type ChatMessage = {
   role: "bot" | "user";
@@ -15,80 +15,87 @@ const Stage = {
   AskMode: "AskMode",
   ReadyToGenerate: "ReadyToGenerate",
   Generating: "Generating",
-} as const;
+};
 
-type Stage = typeof Stage[keyof typeof Stage];
+type StageType=keyof Stage;
 
 const FabricGen
 : React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "bot", text: "Hi! Upload your *single fabric image* to begin.", fileUpload: true },
+    {
+      role: "bot",
+      text: "👋 Welcome! Let's transform your fabric. Upload your *single fabric image* to begin.",
+      fileUpload: true,
+    },
   ]);
 
-  const [stage, setStage] = useState<Stage>(Stage.AskSingle);
+  const [stage, setStage] = useState<StageType>(Stage.AskSingle);
 
   const [singleImage, setSingleImage] = useState<File | null>(null);
   const [groupImage, setGroupImage] = useState<File | null>(null);
+
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
 
-  const wsRef = useRef<WebSocket | null>(null);
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  // auto scroll
+  const append = (msg: ChatMessage) => setMessages((m) => [...m, msg]);
+
   useEffect(() => {
     chatBoxRef.current?.scrollTo({
       top: chatBoxRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  const append = (msg: ChatMessage) => {
-    setMessages((old) => [...old, msg]);
+  const showTyping = () => {
+    setIsTyping(true);
+    setTimeout(() => setIsTyping(false), 800);
   };
 
   // ---------------------------
   // FILE UPLOAD HANDLERS
   // ---------------------------
+  const handleFilePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleSingleUpload = (file: File) => {
-    setSingleImage(file);
-    append({ role: "user", text: `Uploaded single image: ${file.name}` });
+    if (stage === Stage.AskSingle) {
+      setSingleImage(file);
+      append({ role: "user", text: `📄 Selected single: ${file.name}` });
 
-    append({
-      role: "bot",
-      text: "Great! Now upload your *group fabric image*.",
-      fileUpload: true,
-    });
+      showTyping();
+      setTimeout(() => {
+        append({
+          role: "bot",
+          text: "Great! Now upload your *group fabric image*. This provides the color palette.",
+          fileUpload: true,
+        });
+      }, 700);
 
-    setStage(Stage.AskGroup);
-  };
+      setStage(Stage.AskGroup);
+    }
 
-  const handleGroupUpload = (file: File) => {
-    setGroupImage(file);
-    append({ role: "user", text: `Uploaded group image: ${file.name}` });
+    if (stage === Stage.AskGroup) {
+      setGroupImage(file);
+      append({ role: "user", text: `📄 Selected group: ${file.name}` });
 
-    append({
-      role: "bot",
-      text: "Perfect! Now choose a mode:",
-      buttons: ["Fabric Mask (Smooth Blend)", "Hue Shift (HSV)"],
-    });
+      showTyping();
+      setTimeout(() => {
+        append({
+          role: "bot",
+          text: "Choose your generation mode:",
+          buttons: ["Fabric Mask (Smooth Blend)", "Hue Shift (HSV)"],
+        });
+      }, 700);
 
-    setStage(Stage.AskMode);
-  };
-
-  const handleModeSelect = (mode: string) => {
-    append({ role: "user", text: `Selected: ${mode}` });
-
-    append({
-      role: "bot",
-      text: "Uploading your images…",
-    });
-
-    uploadTemp(singleImage!, groupImage!, mode);
+      setStage(Stage.AskMode);
+    }
   };
 
   // ---------------------------
-  // BACKEND: UPLOAD TEMP FILES
+  // UPLOAD TEMP TO BACKEND
   // ---------------------------
   const uploadTemp = async (single: File, group: File, mode: string) => {
     const fd = new FormData();
@@ -100,22 +107,39 @@ const FabricGen
       body: fd,
     });
 
-    if (!res.ok) {
-      append({ role: "bot", text: "Upload failed." });
-      return;
-    }
-
     const data = await res.json();
-    console.log("UPLOAD RESPONSE:", data);
     setSessionId(data.session_id);
 
-    append({ role: "bot", text: "Images uploaded. Starting generation…" });
-
-    startWebSocket(data.session_id, single.name, group.name, mode);
+    return data;
   };
 
   // ---------------------------
-  // WEBSOCKET HANDLING
+  // MODE SELECTION
+  // ---------------------------
+  const handleModeSelect = async (mode: string) => {
+    append({ role: "user", text: `🎛 Mode selected: ${mode}` });
+
+    showTyping();
+    setTimeout(() => {
+      append({
+        role: "bot",
+        text: "Uploading your images…",
+      });
+    }, 500);
+
+    const temp = await uploadTemp(singleImage!, groupImage!, mode);
+
+    showTyping();
+    setTimeout(() => {
+      append({ role: "bot", text: "Preparing generation engine… ⚙️" });
+    }, 500);
+
+    startWebSocket(temp.session_id, temp.single_filename, temp.group_filename, mode);
+    setStage(Stage.Generating);
+  };
+
+  // ---------------------------
+  // WEBSOCKET PROCESS
   // ---------------------------
   const startWebSocket = (
     session_id: string,
@@ -123,146 +147,156 @@ const FabricGen
     group_filename: string,
     mode: string
   ) => {
+
     const backendWs =
-      FULL_API_URL.startsWith("https")
-        ? FULL_API_URL.replace("https", "wss")
-        : FULL_API_URL.replace("http", "ws");
+      BASE_URL.startsWith("https")
+        ? BASE_URL.replace("https", "wss")
+        : BASE_URL.replace("http", "ws");
 
-    const wsUrl = `${backendWs}/ws/chat`;
+    const wsUrl = `${backendWs}/api/v1/ws/chat`;
     console.log("WS URL:", wsUrl);
-
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-
     ws.onopen = () => {
-      console.log("🟢 WS OPEN");
+      console.log("WS OPEN");
 
-      const payload = {
-        type: "start",
-        session_id,
-        single_filename,
-        group_filename,
-        mode,
-      };
-
-      console.log("📤 Sending START:", payload);
-
-      ws.send(JSON.stringify(payload));
-    };
-
-    ws.onerror = (err) => {
-      console.log("🔴 WS ERROR:", err);
-    };
-
-    ws.onclose = () => {
-      console.log("⚪ WS CLOSED");
+      ws.send(
+        JSON.stringify({
+          type: "start",
+          session_id,
+          single_filename,
+          group_filename,
+          mode,
+        })
+      );
     };
 
     ws.onmessage = (ev) => {
-      console.log("📩 WS MESSAGE:", ev.data);
       const data = JSON.parse(ev.data);
 
-      if (data.type === "status") append({ role: "bot", text: data.message });
-      if (data.type === "error") append({ role: "bot", text: `❌ ${data.message}` });
+      if (data.type === "status") {
+        append({ role: "bot", text: `⏳ ${data.message}` });
+      }
+
+      if (data.type === "error") {
+        append({ role: "bot", text: `❌ ${data.message}` });
+      }
+
       if (data.type === "done") {
         const urls = data.images.map((p: string) => `${BASE_URL}${p}`);
-        append({ role: "bot", text: "🎉 Done!", images: urls });
+        append({
+          role: "bot",
+          text: "🎉 Done! Here are your fabric variations:",
+          images: urls,
+        });
       }
     };
   };
 
-
   // ---------------------------
-  // CHAT UI INTERACTIONS
+  // UI COMPONENTS
   // ---------------------------
-  const handleFilePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const Bubble = ({ msg }: { msg: ChatMessage }) => (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+        marginBottom: 16,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "65%",
+          background: msg.role === "user" ? "#0A84FF" : "#eee",
+          color: msg.role === "user" ? "white" : "black",
+          padding: "12px 16px",
+          borderRadius: 14,
+          lineHeight: 1.45,
+          fontSize: "0.95rem",
+          boxShadow: "0px 2px 6px rgba(0,0,0,0.1)",
+        }}
+      >
+        {msg.text && <div dangerouslySetInnerHTML={{ __html: msg.text }} />}
 
-    if (stage === Stage.AskSingle) return handleSingleUpload(file);
-    if (stage === Stage.AskGroup) return handleGroupUpload(file);
-  };
+        {msg.buttons && (
+          <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+            {msg.buttons.map((b) => (
+              <button
+                onClick={() => handleModeSelect(b)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  background: "#222",
+                  color: "white",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {msg.fileUpload && (
+          <div style={{ marginTop: 10 }}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFilePicked}
+              style={{ cursor: "pointer" }}
+            />
+          </div>
+        )}
+
+        {msg.images && (
+          <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 12 }}>
+            {msg.images.map((src) => (
+              <img
+                key={src}
+                src={src}
+                style={{
+                  width: 160,
+                  height: 160,
+                  objectFit: "cover",
+                  borderRadius: 10,
+                  cursor: "zoom-in",
+                  transition: "0.2s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.06)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1 style={{ fontSize: "2.4rem", marginBottom: 20 }}>Fabric Chat</h1>
+    <div style={{ padding: 20, maxWidth: 900, margin: "0 auto" }}>
+      <h1 style={{ fontSize: "2rem", marginBottom: 20 }}>FabricAI Chat</h1>
 
-      {/* CHAT WINDOW */}
       <div
         ref={chatBoxRef}
         style={{
           height: "75vh",
-          border: "1px solid #ddd",
-          borderRadius: 10,
-          padding: 15,
           overflowY: "auto",
+          background: "#f8f8f8",
+          borderRadius: 12,
+          padding: 20,
+          border: "1px solid #ddd",
         }}
       >
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            style={{
-              marginBottom: 15,
-              textAlign: m.role === "user" ? "right" : "left",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-block",
-                background: m.role === "user" ? "#0b74ff" : "#eee",
-                color: m.role === "user" ? "white" : "black",
-                padding: "10px 15px",
-                borderRadius: 14,
-                maxWidth: "75%",
-              }}
-            >
-              {m.text && <div style={{ whiteSpace: "pre-wrap" }}>{m.text}</div>}
-
-              {m.buttons && (
-                <div style={{ marginTop: 10 }}>
-                  {m.buttons.map((b) => (
-                    <button
-                      key={b}
-                      onClick={() => handleModeSelect(b)}
-                      style={{
-                        marginRight: 10,
-                        padding: "6px 12px",
-                        borderRadius: 8,
-                      }}
-                    >
-                      {b}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {m.images && (
-                <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  {m.images.map((src, idx) => (
-                    <img
-                      key={idx}
-                      src={src}
-                      style={{
-                        width: 150,
-                        height: 150,
-                        borderRadius: 10,
-                        objectFit: "cover",
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {m.fileUpload && (
-                <div style={{ marginTop: 10 }}>
-                  <input type="file" accept="image/*" onChange={handleFilePicked} />
-                </div>
-              )}
-            </div>
-          </div>
+        {messages.map((msg, i) => (
+          <Bubble key={i} msg={msg} />
         ))}
+
+        {isTyping && (
+          <div style={{ opacity: 0.7, marginLeft: 8 }}>FabricAI is thinking…</div>
+        )}
       </div>
     </div>
   );
