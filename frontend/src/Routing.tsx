@@ -8,6 +8,8 @@ import Chat from "./pages/FabricChat";
 import ComingSoon from "./pages/ComingSoon";
 import { NotFound } from './components/NotFound';
 import {ContactUs} from './pages/Contact';
+import Generate from "./pages/generate";
+
 
 export const Routing = () => {
   return (
@@ -25,6 +27,7 @@ export const Routing = () => {
       <Route path="/help" element={ <ComingSoon /> } />
       <Route path="/contact" element={ <ContactUs /> } />
       <Route path="*" element={ <NotFound /> } />
+      <Route path="/generate" element={<Generate/>} />
     </Routes>
   );
 };

@@ -4,11 +4,12 @@ export const FULL_API_URL = `${BASE_URL}${API_PREFIX}`
 
 
 export const NAVBAR_MENU = [
-  { name: 'home', path: '/' },
-  { name: 'analysis', path: '/analysis' },
-  { name: 'upload', path: '/upload' },
-  { name: 'list', path: '/view' },
-  { name: 'search', path: '/search' },
-  { name: 'chat', path: '/chat' },
-  { name: 'about', path: '/about', enable: false },
-]
+  { name: "home", path: "/" },
+  { name: "analysis", path: "/analysis" },
+  { name: "upload", path: "/upload" },
+  { name: "list", path: "/view" },
+  { name: "search", path: "/search" },
+  { name: "chat", path: "/chat" },
+  { name: "generate", path: "/generate" },
+  { name: "about", path: "/about", enable: false },
+];
