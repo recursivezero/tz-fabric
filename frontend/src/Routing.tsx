@@ -9,6 +9,7 @@ import ComingSoon from "./pages/ComingSoon";
 import { NotFound } from './components/NotFound';
 import {ContactUs} from './pages/Contact';
 import Generate from "./pages/generate";
+import FabricGen from "./pages/fabricgen";
 
 
 export const Routing = () => {
@@ -28,6 +29,7 @@ export const Routing = () => {
       <Route path="/contact" element={ <ContactUs /> } />
       <Route path="*" element={ <NotFound /> } />
       <Route path="/generate" element={<Generate/>} />
+      <Route path="/fabric-gen" element={<FabricGen />} />
     </Routes>
   );
 };
