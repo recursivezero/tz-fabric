@@ -21,11 +21,10 @@ from routes import (
     submit,
     uploads,
     validate_image,
-    contact
+    contact,
 )
 from tools.mcpserver import sse_app
 from utils.emoji_logger import get_logger
-
 
 
 class MyApp(FastAPI):

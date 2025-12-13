@@ -11,7 +11,7 @@ from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 from PIL import ExifTags, Image
 
-from utils.gemini_client import gemini_vision_check
+from utils.groq_client import groq_vision_check
 
 # Optional CV functions use opencv; install opencv-python-headless
 # mypy doesn't ship stubs for cv2/numpy in many environments; declare as Optional[Any]
@@ -56,7 +56,7 @@ Also: If "texture_visible" is true and "texture_confidence" >= 0.6, do not retur
 
 MAX_SIDE = 1024
 JPEG_QUALITY = 80
-GEMINI_TIMEOUT_SEC = 15
+GROQ_TIMEOUT_SEC = 15
 
 # ---------------- CACHE ----------------
 _MAX_CACHE = 1024
@@ -130,10 +130,10 @@ def _to_b64(data: bytes) -> str:
     return base64.b64encode(data).decode("ascii")
 
 
-async def _gemini_check_base64(b64_str: str) -> str:
+async def _groq_check_base64(b64_str: str) -> str:
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(
-        None, gemini_vision_check, b64_str, VALIDATION_PROMPT
+        None, groq_vision_check, b64_str, VALIDATION_PROMPT
     )
 
 
@@ -349,7 +349,7 @@ async def validate_image(image: UploadFile = File(...)):
         b64 = _to_b64(small_jpeg)
         try:
             response_text = await asyncio.wait_for(
-                _gemini_check_base64(b64), timeout=GEMINI_TIMEOUT_SEC
+                _groq_check_base64(b64), timeout=GROQ_TIMEOUT_SEC
             )
         except asyncio.TimeoutError:
             print(f"[validate-image] timeout total={(time.time()-t0)*1000:.0f}ms")
@@ -476,7 +476,7 @@ async def validate_image(image: UploadFile = File(...)):
         _cache_set(img_hash, {"verdict": verdict, "reason": reason, "meta": out_meta})
 
         print(
-            f"[validate-image] read={(t1-t0)*1000:.0f}ms resize={(t2-t1)*1000:.0f}ms gemini={(t3-t2)*1000:.0f}ms total={(t3-t0)*1000:.0f}ms verdict={verdict} meta_metrics={out_meta.get('metrics', {})}"
+            f"[validate-image] read={(t1-t0)*1000:.0f}ms resize={(t2-t1)*1000:.0f}ms groq={(t3-t2)*1000:.0f}ms total={(t3-t0)*1000:.0f}ms verdict={verdict} meta_metrics={out_meta.get('metrics', {})}"
         )
 
         return JSONResponse(
