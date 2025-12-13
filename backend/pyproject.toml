@@ -1,6 +1,6 @@
 [project]
 name = "tz-fabric"
-version = "1.0.1"
+version = "1.2.0"
 description = "This is fabric analyzer backend"
 authors = [{ name = "recursivezero", email = "recursivezero@outlook.com" }]
 readme = "README.md"
