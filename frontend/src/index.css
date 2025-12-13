@@ -13,7 +13,7 @@
 }
 
 body.app-background {
-  background-image: url('/src/assets/fabric_background.png');
+  background-image: url('/fabric_background.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

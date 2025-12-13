@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import "../styles/SuggestionChips.css";
+import "@/assets/styles/SuggestionChips.css";
 
 type Props = {
   hasImage: boolean;

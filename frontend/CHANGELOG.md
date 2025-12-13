@@ -12,15 +12,10 @@ All notable changes to this repository will be documented in this file.
 - Added features of Image Search, Fabric Chatbot with upload feature, Fabric analysis
 - Added MCP server with langchain
 
-## [1.0.1] Wed, Dec 03, 2025
+## [1.0.2] Wed, Dec 03, 2025
 
-- Added build and deployment script
+- Added open graph meta tags
+- update env variables
+- added logo and favicons
 
-
-## [1.1.0] Fri, Dec 05, 2025
-
-- Contact Us page Added
-- 404 error handling
-- NavBar CSS fixed
-
-[Unreleased]
+[Unreleased]  

@@ -1,4 +1,4 @@
-import "../styles/DrawerToggle.css";
+import "@/assets/styles/DrawerToggle.css";
 
 const DrawerToggle = ({ showDrawer, setShowDrawer }) => {
   return (

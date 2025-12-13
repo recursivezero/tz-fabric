@@ -1,9 +1,9 @@
 import React from "react";
-import { FaRegMoon } from "react-icons/fa";
-import { NavLink } from "react-router-dom";
 import "./App.css";
 import { Routing } from "./Routing";
 import Footer from "./components/Footer";
+import { NavBar } from './components/NavBar';
+import { FaRegMoon } from 'react-icons/fa';
 
 const App: React.FC = () => {
   return (
@@ -24,31 +24,11 @@ const App: React.FC = () => {
             <div className="brand-name">FabricAI</div>
           </div>
         </div>
-        <nav className="header-nav">
-          <ul>
-            <li>
-              <NavLink to="/" end className={ ({ isActive }) => isActive ? "active" : "" }>
-                Home
-              </NavLink></li>
-            <li><NavLink to="/analysis" end className={ ({ isActive }) => isActive ? "active" : "" }>
-              Analysis
-            </NavLink></li>
-            <li><NavLink to="/upload" end className={ ({ isActive }) => isActive ? "active" : "" }>
-              Upload
-            </NavLink></li>
-            <li><NavLink to="/view" end className={ ({ isActive }) => isActive ? "active" : "" }>
-              List
-            </NavLink></li>
-            <li><NavLink to="/search" end className={ ({ isActive }) => isActive ? "active" : "" }>
-              Search
-            </NavLink></li>
-            <li><NavLink to="/chat" end className={ ({ isActive }) => isActive ? "active" : "" }>
-              Chat
-            </NavLink></li>
-          </ul>
-        </nav>
-        <div className="action">
-          <div id="theme"> <FaRegMoon /></div>
+        <div className="header-center">
+         <NavBar/>
+        </div>
+        <div className="header-right action">
+            <div id="theme"> <FaRegMoon /></div>
         </div>
       </header>
 

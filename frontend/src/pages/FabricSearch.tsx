@@ -4,7 +4,7 @@ import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import useImageSearch from "../hooks/useImageSearch";
 import FabricSearchHeader from "../components/FabricSearchHeader";
-import "../styles/FabricSearch.css";
+import "@/assets/styles/FabricSearch.css";
 import { throttle } from "../utils/throttle";
 
 export default function Search() {

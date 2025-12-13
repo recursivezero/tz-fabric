@@ -17,7 +17,6 @@
   height: 100%;
   margin: 0;
   font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif;
-  color: var(--text-color);
 }
 
 .app-wrapper {
@@ -37,51 +36,30 @@
 
 .site-header {
   width: 100%;
-  display: flex;
+  display: grid;
   align-items: center;
-  justify-content: space-between;
   padding: 4px 20px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 6px 24px rgba(66, 66, 67, 0.767);
+  grid-template-columns: 20% 1fr 20%;
+  grid-template-areas: 'left center right';
 }
 
-
-
 .header-left {
+  grid-area: left;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.header-nav ul {
-  display: flex;
-  gap: 20px;
-  list-style: none;
+.header-center {
+  grid-area: center;
+  text-transform: capitalize;
+  justify-self: center;
 }
 
-.header-nav ul li {
-  font-size: 14px;
-  margin: 0 10px;
-}
-
-.header-nav ul li a {
-  text-decoration: none;
-  color: var(--text-color);
-  font-weight: 500;
-  padding: 6px 6px;
-  transition: background-color .15s ease;
-
-}
-
-.header-nav ul li a:hover {
-  background-color: #2f6aff31;
-  border-radius: 10px;
-}
-
-.header-nav ul li a.active {
-  font-weight: 700;
-  background-color: #2f6aff31;
-  border-radius: 10px;
+.header-right {
+  grid-area: right;
 }
 
 .logo-mark {
@@ -100,26 +78,6 @@
   letter-spacing: 0.1px;
 }
 
-.site-nav {
-  display: flex;
-  gap: 22px;
-  align-items: center;
-}
-
-.site-nav a {
-  color: var(--text-color);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: background .15s ease, transform .08s ease;
-}
-
-.site-nav a:hover {
-  background: rgba(47, 107, 255, 0.08);
-  transform: translateY(-1px);
-}
 
 .main-content {
   width: 100%;
@@ -132,13 +90,20 @@
     padding: 12px 14px;
     flex-direction: row;
     align-items: center;
+    display: flex;
   }
 
-  .site-nav {
-    gap: 12px;
-  }
 
   .brand-name {
     font-size: 15px;
   }
+}
+
+.container {
+  height: 80vh;
+}
+
+.center {
+  display: grid;
+  place-content: center;
 }

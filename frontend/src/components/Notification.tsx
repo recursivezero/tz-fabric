@@ -1,4 +1,4 @@
-import "../styles/Notification.css";
+import "@/assets/styles/Notification.css";
 
 interface NotificationProps {
   message: string;
