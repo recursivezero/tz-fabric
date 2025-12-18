@@ -1,4 +1,5 @@
 import re
+from unittest import result
 import cv2
 import numpy as np
 from fastapi import APIRouter, UploadFile, File, HTTPException
@@ -8,7 +9,7 @@ import easyocr
 router = APIRouter()
 
 # EasyOCR reader
-reader = easyocr.Reader(["en"], gpu=False)
+reader = easyocr.Reader(["en","hi"], gpu=False)
 
 PAN_REGEX = r"[A-Z]{5}[0-9]{4}[A-Z]"
 AADHAAR_REGEX = r"\d{12}"
@@ -22,6 +23,7 @@ def extract_text(image: Image.Image) -> str:
     """
     img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
     results = reader.readtext(img, detail=0, paragraph=True)
+    print(results)
     return " ".join(results)
 
 
