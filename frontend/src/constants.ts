@@ -12,6 +12,8 @@ export const NAVBAR_MENU = [
   { name: "chat", path: "/chat" },
   { name: "generate", path: "/generate" },
   { name: "fabric-gen", path: "/fabric-gen" },
+  { name: "card-reader", path: "/card-reader" },
   { name: "about", path: "/about", enable: false },
+
 ];
 
