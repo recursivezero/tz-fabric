@@ -1,13 +1,21 @@
 import { useState } from "react";
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
+type PanResult = {
+  type: string;
+  name: string;
+  father_name: string;
+  dob: string;
+  pan_number: string;
+};
 
 const CardReader = () => {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<PanResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
 
   const handleFile = (f: File | null) => {
     setFile(f);
@@ -180,9 +188,6 @@ const CardReader = () => {
               <p style={styles.uploadText}>
                 Drag and drop or click to browse
               </p>
-              <div style={styles.uploadHint}>
-                Supports JPG, PNG, WEBP
-              </div>
             </label>
           </div>
         ) : (
@@ -267,7 +272,8 @@ const CardReader = () => {
   );
 };
 
-const CardPreview = ({ data }: { data: any }) => (
+
+const CardPreview = ({ data }: { data: PanResult }) => (
   <div id="card-preview" style={styles.card}>
     <div style={styles.cardHeader}>
       <div style={styles.cardType}>{data.type} CARD</div>
@@ -280,14 +286,19 @@ const CardPreview = ({ data }: { data: any }) => (
 
     <div style={styles.cardBody}>
       <div style={styles.cardField}>
-        <div style={styles.fieldLabel}>Full Name</div>
+        <div style={styles.fieldLabel}>Name</div>
         <div style={styles.fieldValue}>{data.name || "—"}</div>
+      </div>
+
+      <div style={styles.cardField}>
+        <div style={styles.fieldLabel}>Father’s Name</div>
+        <div style={styles.fieldValue}>{data.father_name || "—"}</div>
       </div>
 
       <div style={styles.cardRow}>
         <div style={styles.cardField}>
-          <div style={styles.fieldLabel}>ID Number</div>
-          <div style={styles.fieldValue}>{data.id_number || "—"}</div>
+          <div style={styles.fieldLabel}>PAN Number</div>
+          <div style={styles.fieldValue}>{data.pan_number || "—"}</div>
         </div>
 
         <div style={styles.cardField}>
@@ -302,6 +313,7 @@ const CardPreview = ({ data }: { data: any }) => (
     </div>
   </div>
 );
+
 
 const styles: any = {
   wrapper: {
