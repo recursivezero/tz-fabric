@@ -99,9 +99,6 @@ const CardReader = () => {
           box-shadow: 0 20px 60px rgba(255, 107, 53, 0.2);
         }
         
-        .card-float {
-          animation: float 6s ease-in-out infinite;
-        }
         
         .btn-primary {
           position: relative;
@@ -149,7 +146,25 @@ const CardReader = () => {
           </div>
           <h1 style={styles.title}>Card Reader</h1>
           <p style={styles.subtitle}>Extract information instantly from ID cards</p>
+          <div style={styles.privacyNote}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span>
+              Your image is processed only in memory during this session.
+              We do <strong>not</strong> store or save images or extracted data.
+            </span>
+          </div>
         </div>
+        
 
         {/* Upload Zone */}
         {!preview ? (
@@ -173,6 +188,7 @@ const CardReader = () => {
               style={styles.fileInput}
               id="file-upload"
             />
+            
 
             <label htmlFor="file-upload" style={styles.uploadLabel}>
               <div style={styles.uploadIcon}>
@@ -193,22 +209,26 @@ const CardReader = () => {
         ) : (
           <div className="result-enter">
             {/* Preview Card */}
-            <div className="card-float" style={styles.previewCard}>
-              <img src={preview} style={styles.previewImage} alt="Card preview" />
-              <button
-                onClick={() => {
-                  setFile(null);
-                  setPreview(null);
-                  setResult(null);
-                }}
-                style={styles.removeBtn}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
+              <div style={styles.previewCard}>
+                <img
+                  src={preview}
+                  style={styles.previewImage}
+                  alt="Card preview"
+                />
+
+                <button
+                  onClick={() => {
+                    setFile(null);
+                    setPreview(null);
+                    setResult(null);
+                  }}
+                  style={styles.closeBtn}
+                  aria-label="Remove image"
+                >
+                  ✕
+                </button>
+              </div>
+
 
             {/* Extract Button */}
             {!result && (
@@ -429,6 +449,8 @@ const styles: any = {
     justifyContent: "center",
     transition: "all 0.2s ease",
   },
+
+
   extractBtn: {
     width: "100%",
     padding: "18px 32px",
@@ -484,6 +506,24 @@ const styles: any = {
     letterSpacing: "0.1em",
     color: "#FF6B35",
     textTransform: "uppercase" as const,
+  },
+  closeBtn: {
+    position: "absolute",
+    top: "12px",
+    right: "12px",
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    border: "none",
+    background: "rgba(0,0,0,0.7)",
+    color: "#fff",
+    fontSize: "18px",
+    fontWeight: 600,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background 0.2s ease, transform 0.2s ease",
   },
   cardChip: {
     display: "flex",
