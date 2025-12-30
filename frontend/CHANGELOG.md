@@ -18,4 +18,10 @@ All notable changes to this repository will be documented in this file.
 - update env variables
 - added logo and favicons
 
-[Unreleased]  
+## [1.1.0] Fri, Dec 05, 2025
+
+- Contact Us page Added
+- 404 error handling
+- NavBar CSS fixed
+
+[Unreleased]

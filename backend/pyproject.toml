@@ -1,6 +1,6 @@
 [project]
 name = "tz-fabric"
-version = "1.0.1"
+version = "1.1.0"
 description = "This is fabric analyzer backend"
 authors = [{ name = "recursivezero", email = "recursivezero@outlook.com" }]
 readme = "README.md"
@@ -41,7 +41,8 @@ dependencies = [
   "ultralytics (>=8.3.235,<9.0.0)",
   "easyocr (>=1.7.2,<2.0.0)",
   "pandas (>=2.3.3,<3.0.0)",
-  "pillow (>=12.0.0,<13.0.0)"
+  "pillow (>=12.0.0,<13.0.0)",
+  "streamlit (>=1.52.2,<2.0.0)"
 ]
 
 
@@ -106,8 +107,8 @@ include = "*"
 from = "."
 
 
-[tool.poetry.requires-plugins]
-poetry-plugin-export = "^1.9"
+#[tool.poetry.requires-plugins]
+#poetry-plugin-export = "^1.9"
 
 [tool.poetry-auto-export]
 output = "requirements.txt"
