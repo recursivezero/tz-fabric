@@ -16,7 +16,11 @@ All notable changes to this repository will be documented in this file.
 
 - Added build and deployment script
 
-## [1.1.0] Tue, Dec 30, 2025
+## [1.2.0] Sat, Dec 13, 2025
+
+- Replace Gemini API with GROQ API
+
+## [1.3.0] Tue, Dec 30, 2025
 
 - PAN Card OCR added
 
