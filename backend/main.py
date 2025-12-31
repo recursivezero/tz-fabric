@@ -7,11 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pymongo import MongoClient, errors, uri_parser
+from pymongo import MongoClient, errors
 from pymongo.database import Database
 from typing import Collection, Optional
 from routes.chat_ws import router as chat_router
-from routes.card_reader import router as card_router
 
 from constants import (
     API_PREFIX,
@@ -47,8 +46,8 @@ load_dotenv()
 logger = get_logger(__name__)
 
 origins = [
-    "http://localhost:4173",
-    "http://localhost:5173",  # Allow requests from your frontend origin
+    "http://localhost:4173/",
+    "http://localhost:5173/",  # Allow requests from your frontend origin
     # You can add more origins here if needed
 ]
 
@@ -111,7 +110,6 @@ app.include_router(chat.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 app.include_router(contact.router, prefix=API_PREFIX)
 app.include_router(chat_router, prefix=API_PREFIX)
-app.include_router(card_router, prefix=API_PREFIX)
 app.include_router(generate.router, prefix=API_PREFIX)
 
 

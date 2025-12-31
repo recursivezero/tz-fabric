@@ -1,6 +1,6 @@
 export const BASE_URL = import.meta.env.VITE_API_URL;
 export const API_PREFIX = import.meta.env.VITE_API_PREFIX; // New environment variable
-export const FULL_API_URL = `${BASE_URL}${API_PREFIX}`
+export const FULL_API_URL = `${BASE_URL}/${API_PREFIX}`
 
 
 if (import.meta.env.DEV) {
@@ -19,7 +19,6 @@ export const NAVBAR_MENU = [
   { name: "chat", path: "/chat" },
   { name: "generate", path: "/generate" },
   { name: "fabric-gen", path: "/fabric-gen" },
-  { name: "card-reader", path: "/card-reader" },
   { name: "about", path: "/about", enable: false },
 
 ];

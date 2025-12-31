@@ -23,7 +23,7 @@ export async function fetchContent(
   limit = 4,
 ): Promise<ContentResponse> {
   let res: Response;
-
+  console.log({FULL_API_URL});
   try {
     res = await fetch(
       `${FULL_API_URL}/media/content?page=${page}&limit=${limit}`,
