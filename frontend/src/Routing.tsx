@@ -11,6 +11,7 @@ import {ContactUs} from './pages/Contact';
 import Generate from "./pages/generate";
 import FabricGen from "./pages/fabricgen";
 import CardReader from "./pages/CardReader";
+import AadhaarCardReader from "./pages/adhaar";
 
 
 export const Routing = () => {
@@ -32,6 +33,7 @@ export const Routing = () => {
       <Route path="/generate" element={<Generate/>} />
       <Route path="/fabric-gen" element={<FabricGen />} />
       <Route path="/card-reader" element={<CardReader />} />
+      <Route path="/adhaar-reader" element={<AadhaarCardReader />} />
     </Routes>
   );
 };

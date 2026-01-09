@@ -20,6 +20,7 @@ export const NAVBAR_MENU = [
   { name: "generate", path: "/generate" },
   { name: "fabric-gen", path: "/fabric-gen" },
   { name: "card-reader", path: "/card-reader" },
+  { name: "adhaar-reader", path: "/adhaar-reader" },
   { name: "about", path: "/about", enable: false },
 
 ];
