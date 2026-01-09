@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import Cropper from "react-easy-crop";
+
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
+
 type PanResult = {
   type: string;
   name: string;
@@ -8,19 +11,35 @@ type PanResult = {
   dob: string;
   pan_number: string;
 };
-
+type Point = { x: number; y: number };
+type Area = { x: number; y: number; width: number; height: number };
 const CardReader = () => {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<PanResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<string | null>(null);
 
+  // react-easy-crop state
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
   const handleFile = (f: File | null) => {
     setFile(f);
     setResult(null);
-    if (f) setPreview(URL.createObjectURL(f));
+    setCroppedImage(null);
+    if (f) {
+      const url = URL.createObjectURL(f);
+      setPreview(url);
+      setShowCropper(true);
+      // Reset crop state
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setCroppedAreaPixels(null);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -32,20 +51,106 @@ const CardReader = () => {
     }
   };
 
+  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const createCroppedImage = async (): Promise<string | null> => {
+    if (!preview || !croppedAreaPixels) return null;
+
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+
+        // Set canvas size to the cropped area
+        canvas.width = croppedAreaPixels.width;
+        canvas.height = croppedAreaPixels.height;
+
+        // Draw the cropped image
+        ctx.drawImage(
+          image,
+          croppedAreaPixels.x,
+          croppedAreaPixels.y,
+          croppedAreaPixels.width,
+          croppedAreaPixels.height,
+          0,
+          0,
+          croppedAreaPixels.width,
+          croppedAreaPixels.height
+        );
+
+        // Convert to data URL
+        const croppedDataUrl = canvas.toDataURL("image/jpeg");
+        resolve(croppedDataUrl);
+      };
+      image.src = preview;
+    });
+  };
+
+  const handleApplyCrop = async () => {
+    const croppedDataUrl = await createCroppedImage();
+    if (croppedDataUrl) {
+      setCroppedImage(croppedDataUrl);
+      setShowCropper(false);
+    }
+  };
+
+  const handleRecrop = () => {
+    setShowCropper(true);
+    setCroppedImage(null);
+  };
+
+  const dataURLtoFile = (dataUrl: string, filename: string): File => {
+    const arr = dataUrl.split(",");
+    const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
+
   const submit = async () => {
-    if (!file) return;
+    if (!croppedImage && !file) return;
     setLoading(true);
 
     const fd = new FormData();
-    fd.append("file", file);
 
-    const res = await fetch(`${FULL_API_URL}/read-card`, {
-      method: "POST",
-      body: fd,
-    });
+    // Use cropped image if available, otherwise use original file
+    if (croppedImage) {
+      const croppedFile = dataURLtoFile(croppedImage, "pan-card.png");
+      fd.append("file", croppedFile);
+    } else if (file) {
+      fd.append("file", file);
+    }
 
-    setResult(await res.json());
-    setLoading(false);
+    try {
+      const res = await fetch(`${FULL_API_URL}/read-card`, {
+        method: "POST",
+        body: fd,
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setResult(data);
+    } catch (error) {
+      console.error("Error processing card:", error);
+      alert("Failed to process card. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const downloadCard = async () => {
@@ -57,6 +162,17 @@ const CardReader = () => {
     link.download = "generated-card.png";
     link.href = dataUrl;
     link.click();
+  };
+
+  const resetUpload = () => {
+    setFile(null);
+    setPreview(null);
+    setCroppedImage(null);
+    setResult(null);
+    setShowCropper(false);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
   };
 
   return (
@@ -90,6 +206,35 @@ const CardReader = () => {
           }
         }
         
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes watermarkFlow {
+          0% { 
+            transform: translateX(-100%) rotate(-5deg);
+            opacity: 0.1;
+          }
+          50% {
+            opacity: 0.3;
+          }
+          100% { 
+            transform: translateX(100%) rotate(5deg);
+            opacity: 0.1;
+          }
+        }
+        
+        @keyframes watermarkPulse {
+          0%, 100% { 
+            transform: scale(1) rotate(0deg);
+            opacity: 0.15;
+          }
+          50% { 
+            transform: scale(1.05) rotate(2deg);
+            opacity: 0.25;
+          }
+        }
+        
         .upload-zone {
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -98,7 +243,6 @@ const CardReader = () => {
           transform: translateY(-4px);
           box-shadow: 0 20px 60px rgba(255, 107, 53, 0.2);
         }
-        
         
         .btn-primary {
           position: relative;
@@ -130,8 +274,29 @@ const CardReader = () => {
           animation: slideUp 0.6s ease-out;
         }
         
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+        .watermark-animated {
+          animation: watermarkPulse 4s ease-in-out infinite;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #FF6B35;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #FF6B35;
+          cursor: pointer;
+          border: none;
+          box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
         }
       `}</style>
 
@@ -164,7 +329,6 @@ const CardReader = () => {
             </span>
           </div>
         </div>
-        
 
         {/* Upload Zone */}
         {!preview ? (
@@ -188,7 +352,6 @@ const CardReader = () => {
               style={styles.fileInput}
               id="file-upload"
             />
-            
 
             <label htmlFor="file-upload" style={styles.uploadLabel}>
               <div style={styles.uploadIcon}>
@@ -207,57 +370,109 @@ const CardReader = () => {
             </label>
           </div>
         ) : (
-          <div className="result-enter">
-            {/* Preview Card */}
-              <div style={styles.previewCard}>
-                <img
-                  src={preview}
-                  style={styles.previewImage}
-                  alt="Card preview"
-                />
+          <>
+            {/* IMAGE CROPPER */}
+            {showCropper && (
+              <div style={styles.cropperOverlay}>
+                <div style={styles.cropperContainer}>
+                  <h3 style={styles.cropperTitle}>✂️ Crop Your Card</h3>
+                  <p style={styles.cropperSubtitle}>
+                    Pan • Pinch to zoom • Drag to reposition
+                  </p>
 
-                <button
-                  onClick={() => {
-                    setFile(null);
-                    setPreview(null);
-                    setResult(null);
-                  }}
-                  style={styles.closeBtn}
-                  aria-label="Remove image"
-                >
-                  ✕
-                </button>
+                  <div style={styles.cropperWrapper}>
+                    <Cropper
+                      image={preview}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={16 / 10}
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={onCropComplete}
+                      style={{
+                        containerStyle: styles.reactEasyCropContainer,
+                        mediaStyle: styles.reactEasyCropMedia,
+                        cropAreaStyle: styles.reactEasyCropArea,
+                      }}
+                    />
+                  </div>
+
+                  {/* Zoom Control */}
+                  <div style={styles.zoomControl}>
+                    <label style={styles.zoomLabel}>Zoom</label>
+                    <input
+                      type="range"
+                      min={1}
+                      max={3}
+                      step={0.1}
+                      value={zoom}
+                      onChange={(e) => setZoom(Number(e.target.value))}
+                      style={styles.zoomSlider}
+                    />
+                    <span style={styles.zoomValue}>{zoom.toFixed(1)}x</span>
+                  </div>
+
+                  <div style={styles.cropperActions}>
+                    <button onClick={resetUpload} style={styles.cancelBtn}>
+                      ❌ Cancel
+                    </button>
+                    <button onClick={handleApplyCrop} style={styles.cropBtn}>
+                      ✓ Apply Crop
+                    </button>
+                  </div>
+                </div>
               </div>
-
-
-            {/* Extract Button */}
-            {!result && (
-              <button
-                className="btn-primary"
-                onClick={submit}
-                disabled={loading}
-                style={styles.extractBtn}
-              >
-                {loading ? (
-                  <span style={styles.loadingContent}>
-                    <span style={styles.spinner}></span>
-                    Processing...
-                  </span>
-                ) : (
-                  <>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                      <polyline points="10 9 9 9 8 9" />
-                    </svg>
-                    Extract Information
-                  </>
-                )}
-              </button>
             )}
-          </div>
+
+            {/* CROPPED IMAGE PREVIEW */}
+            {croppedImage && !showCropper && (
+              <div className="result-enter">
+                <div style={styles.previewCard}>
+                  <img
+                    src={croppedImage}
+                    style={styles.previewImage}
+                    alt="Cropped card"
+                  />
+                  <div style={styles.actionButtons}>
+                    <button onClick={handleRecrop} style={styles.recropBtn}>
+                      ✂️ Re-crop
+                    </button>
+                    <button onClick={resetUpload} style={styles.removeBtn}>
+                      🗑️ Remove
+                    </button>
+                  </div>
+                </div>
+
+                {/* Extract Button */}
+                {!result && (
+                  <button
+                    className="btn-primary"
+                    onClick={submit}
+                    disabled={loading}
+                    style={styles.extractBtn}
+                  >
+                    {loading ? (
+                      <span style={styles.loadingContent}>
+                        <span style={styles.spinner}></span>
+                        Processing...
+                      </span>
+                    ) : (
+                      <>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="16" y1="13" x2="8" y2="13" />
+                          <line x1="16" y1="17" x2="8" y2="17" />
+                          <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        Extract Information
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {/* Results */}
@@ -278,6 +493,13 @@ const CardReader = () => {
               Download Card Image
             </button>
 
+            <button
+              onClick={resetUpload}
+              style={styles.newUploadBtn}
+            >
+              📤 Upload New Card
+            </button>
+
             <div style={styles.privacyNote}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -292,9 +514,45 @@ const CardReader = () => {
   );
 };
 
-
 const CardPreview = ({ data }: { data: PanResult }) => (
   <div id="card-preview" style={styles.card}>
+    {/* Creative Animated Watermark */}
+    <div style={styles.watermarkContainer}>
+      <div className="watermark-animated" style={styles.watermark}>
+        <svg width="120" height="120" viewBox="0 0 100 100" style={styles.watermarkSvg}>
+          <defs>
+            <linearGradient id="watermarkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FF6B35" stopOpacity="0.1" />
+              <stop offset="50%" stopColor="#F7931E" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#FF6B35" stopOpacity="0.1" />
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" r="45" fill="none" stroke="url(#watermarkGradient)" strokeWidth="2" opacity="0.3" />
+          <circle cx="50" cy="50" r="35" fill="none" stroke="url(#watermarkGradient)" strokeWidth="1.5" opacity="0.2" />
+          <path
+            d="M 50 20 L 55 35 L 70 35 L 58 45 L 63 60 L 50 50 L 37 60 L 42 45 L 30 35 L 45 35 Z"
+            fill="url(#watermarkGradient)"
+            opacity="0.25"
+          />
+          <text
+            x="50"
+            y="80"
+            textAnchor="middle"
+            fontFamily="DM Sans, sans-serif"
+            fontSize="8"
+            fontWeight="700"
+            fill="url(#watermarkGradient)"
+            letterSpacing="1"
+          >
+            VERIFIED
+          </text>
+        </svg>
+      </div>
+      <div style={styles.watermarkText}>
+        Recursive Zero
+      </div>
+    </div>
+
     <div style={styles.cardHeader}>
       <div style={styles.cardType}>{data.type} CARD</div>
       <div style={styles.cardChip}>
@@ -311,7 +569,7 @@ const CardPreview = ({ data }: { data: PanResult }) => (
       </div>
 
       <div style={styles.cardField}>
-        <div style={styles.fieldLabel}>Father’s Name</div>
+        <div style={styles.fieldLabel}>Father's Name</div>
         <div style={styles.fieldValue}>{data.father_name || "—"}</div>
       </div>
 
@@ -333,7 +591,6 @@ const CardPreview = ({ data }: { data: PanResult }) => (
     </div>
   </div>
 );
-
 
 const styles: any = {
   wrapper: {
@@ -411,17 +668,7 @@ const styles: any = {
     color: "#999",
     margin: "0 0 20px 0",
   },
-  uploadHint: {
-    display: "inline-block",
-    padding: "6px 16px",
-    background: "rgba(255, 107, 53, 0.1)",
-    borderRadius: 20,
-    fontSize: 13,
-    color: "#FF6B35",
-    fontWeight: 500,
-  },
   previewCard: {
-    position: "relative" as const,
     marginBottom: 24,
     borderRadius: 20,
     overflow: "hidden",
@@ -432,25 +679,35 @@ const styles: any = {
     width: "100%",
     display: "block",
   },
-  removeBtn: {
-    position: "absolute" as const,
-    top: 16,
-    right: 16,
-    width: 40,
-    height: 40,
-    borderRadius: "50%",
-    background: "rgba(0, 0, 0, 0.7)",
-    backdropFilter: "blur(10px)",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
-    color: "#fff",
-    cursor: "pointer",
+  actionButtons: {
     display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    gap: 12,
+    padding: 16,
+  },
+  recropBtn: {
+    flex: 1,
+    padding: "12px 20px",
+    background: "rgba(255, 107, 53, 0.1)",
+    color: "#FF6B35",
+    border: "1px solid rgba(255, 107, 53, 0.3)",
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
     transition: "all 0.2s ease",
   },
-
-
+  removeBtn: {
+    flex: 1,
+    padding: "12px 20px",
+    background: "rgba(255, 255, 255, 0.05)",
+    color: "#fff",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  },
   extractBtn: {
     width: "100%",
     padding: "18px 32px",
@@ -492,6 +749,37 @@ const styles: any = {
     position: "relative" as const,
     overflow: "hidden",
   },
+  watermarkContainer: {
+    position: "absolute" as const,
+    top: 0,
+    right: 0,
+    width: "100%",
+    height: "100%",
+    pointerEvents: "none" as const,
+    overflow: "hidden",
+  },
+  watermark: {
+    position: "absolute" as const,
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    opacity: 0.15,
+  },
+  watermarkSvg: {
+    display: "block",
+    filter: "drop-shadow(0 0 10px rgba(255, 107, 53, 0.2))",
+  },
+  watermarkText: {
+    position: "absolute" as const,
+    top: 16,
+    right: 16,
+    fontSize: 9,
+    fontWeight: 700,
+    letterSpacing: "0.15em",
+    color: "rgba(255, 107, 53, 0.3)",
+    textTransform: "uppercase" as const,
+    fontFamily: "'DM Sans', sans-serif",
+  },
   cardHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -499,6 +787,8 @@ const styles: any = {
     marginBottom: 32,
     paddingBottom: 20,
     borderBottom: "1px solid rgba(255, 107, 53, 0.2)",
+    position: "relative" as const,
+    zIndex: 1,
   },
   cardType: {
     fontSize: 13,
@@ -506,24 +796,6 @@ const styles: any = {
     letterSpacing: "0.1em",
     color: "#FF6B35",
     textTransform: "uppercase" as const,
-  },
-  closeBtn: {
-    position: "absolute",
-    top: "12px",
-    right: "12px",
-    width: "32px",
-    height: "32px",
-    borderRadius: "50%",
-    border: "none",
-    background: "rgba(0,0,0,0.7)",
-    color: "#fff",
-    fontSize: "18px",
-    fontWeight: 600,
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "background 0.2s ease, transform 0.2s ease",
   },
   cardChip: {
     display: "flex",
@@ -538,6 +810,8 @@ const styles: any = {
   },
   cardBody: {
     marginBottom: 24,
+    position: "relative" as const,
+    zIndex: 1,
   },
   cardRow: {
     display: "grid",
@@ -592,6 +866,20 @@ const styles: any = {
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
+    marginBottom: 12,
+    transition: "all 0.2s ease",
+  },
+  newUploadBtn: {
+    width: "100%",
+    padding: "16px 32px",
+    background: "rgba(255, 255, 255, 0.05)",
+    color: "#fff",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    borderRadius: 16,
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
     marginBottom: 20,
   },
   privacyNote: {
@@ -606,6 +894,118 @@ const styles: any = {
     background: "rgba(255, 255, 255, 0.02)",
     borderRadius: 12,
     border: "1px solid rgba(255, 255, 255, 0.05)",
+  },
+
+  // Cropper styles
+  cropperOverlay: {
+    position: "fixed" as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0, 0, 0, 0.95)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    padding: 20,
+  },
+  cropperContainer: {
+    background: "#1a1a1a",
+    borderRadius: 20,
+    padding: 24,
+    maxWidth: 600,
+    width: "100%",
+  },
+  cropperTitle: {
+    fontSize: 24,
+    fontFamily: "'Instrument Serif', serif",
+    color: "#fff",
+    margin: "0 0 8px 0",
+    textAlign: "center",
+  },
+  cropperSubtitle: {
+    fontSize: 14,
+    color: "#888",
+    margin: "0 0 24px 0",
+    textAlign: "center",
+  },
+  cropperWrapper: {
+    position: "relative" as const,
+    width: "100%",
+    height: 400,
+    background: "#000",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 20,
+  },
+  reactEasyCropContainer: {
+    background: "#000",
+  },
+  reactEasyCropMedia: {},
+  reactEasyCropArea: {
+    border: "2px solid #FF6B35",
+    boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+  },
+  zoomControl: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+    padding: "12px 16px",
+    background: "rgba(255, 255, 255, 0.03)",
+    borderRadius: 12,
+  },
+  zoomLabel: {
+    fontSize: 14,
+    color: "#888",
+    fontWeight: 600,
+    minWidth: 50,
+  },
+  zoomSlider: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    background: "rgba(255, 255, 255, 0.1)",
+    outline: "none",
+    appearance: "none" as const,
+    WebkitAppearance: "none",
+    cursor: "pointer",
+  },
+  zoomValue: {
+    fontSize: 14,
+    color: "#FF6B35",
+    fontWeight: 600,
+    minWidth: 45,
+    textAlign: "right" as const,
+  },
+  cropperActions: {
+    display: "flex",
+    gap: 12,
+  },
+  cancelBtn: {
+    flex: 1,
+    padding: "14px 24px",
+    background: "rgba(255, 255, 255, 0.05)",
+    color: "#fff",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  },
+  cropBtn: {
+    flex: 1,
+    padding: "14px 24px",
+    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
+    color: "#fff",
+    border: "none",
+    borderRadius: 12,
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
   },
 };
 

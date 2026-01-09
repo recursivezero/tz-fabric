@@ -2,7 +2,7 @@ import re
 from typing import Dict, List, Tuple, Optional
 import easyocr # type: ignore
 from itertools import product
-
+from PIL import Image
 
 class PANCardExtractor:
     """Extract structured data from PAN card images using pure regex and pattern matching."""
@@ -314,6 +314,7 @@ class PANCardExtractor:
         
         try:
             # Perform OCR with detail=1 (text, bbox, confidence)
+            print("IS PIL:", isinstance(image_path, Image.Image))
             ocr_results = self.reader.readtext(image_path, detail=1)
             
             if not ocr_results:

@@ -1,7 +1,7 @@
 import re
 from typing import Optional
 import easyocr
-
+from PIL import Image
 
 
 class AadhaarCardExtractor:
@@ -233,6 +233,7 @@ class AadhaarCardExtractor:
         }
 
         # RAW OCR (always safe: 3-tuples)
+        print("IS aaPIL:", isinstance(image_path, Image.Image))
         raw_ocr = self.reader.readtext(image_path, detail=1)
         cleaned = self.clean_ocr_results(raw_ocr)
 

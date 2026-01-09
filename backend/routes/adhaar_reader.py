@@ -11,10 +11,11 @@ router = APIRouter()
 extracter=AadhaarCardExtractor()
 
 
-@router.post("/adhaar_card")
+@router.post("/read-aadhaar")
 async def read_card(file: UploadFile = File(...), side: str = Form(...)):
     try:
         image = Image.open(file.file)
+        side=str(side)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
 

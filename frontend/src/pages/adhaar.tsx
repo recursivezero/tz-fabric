@@ -1,4 +1,8 @@
-import { useState, useRef } from "react";
+"use client";
+
+import { useState, useCallback } from "react";
+import Cropper from "react-easy-crop";
+
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
 
@@ -7,6 +11,8 @@ import { FULL_API_URL } from "@/constants";
 ======================= */
 
 type AadhaarSide = "front" | "back";
+type Point = { x: number; y: number };
+type Area = { x: number; y: number; width: number; height: number };
 
 type AadhaarFrontResult = {
   type: "AADHAAR";
@@ -28,13 +34,6 @@ type AadhaarBackResult = {
 
 type AadhaarResult = AadhaarFrontResult | AadhaarBackResult;
 
-type CropArea = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 /* =======================
    COMPONENT
 ======================= */
@@ -47,8 +46,14 @@ const AadhaarCardReader = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [side, setSide] = useState<AadhaarSide>("front");
   const [showCropper, setShowCropper] = useState(false);
-  const [cropArea, setCropArea] = useState<CropArea | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
+  const [originalPreview, setOriginalPreview] = useState<string | null>(null);
+
+
+  // react-easy-crop state
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
   const handleFile = (f: File | null) => {
     setFile(f);
@@ -56,6 +61,7 @@ const AadhaarCardReader = () => {
     setCroppedImage(null);
     if (f) {
       const url = URL.createObjectURL(f);
+      setOriginalPreview(url);   // 🔥 ADD
       setPreview(url);
       setShowCropper(true);
     }
@@ -69,6 +75,62 @@ const AadhaarCardReader = () => {
       handleFile(droppedFile);
     }
   };
+
+  const onCropComplete = useCallback(
+    (_: Area, croppedPixels: Area) => {
+      setCroppedAreaPixels(croppedPixels);
+    },
+    []
+  );
+
+
+  const createCroppedImage = async (): Promise<string | null> => {
+    if (!originalPreview || !croppedAreaPixels) return null;
+
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.src = originalPreview!; 
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(null);
+
+        canvas.width = Math.round(croppedAreaPixels.width);
+        canvas.height = Math.round(croppedAreaPixels.height);
+
+        ctx.drawImage(
+          image,
+          croppedAreaPixels.x,
+          croppedAreaPixels.y,
+          croppedAreaPixels.width,
+          croppedAreaPixels.height,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+        resolve(canvas.toDataURL("image/jpeg"));
+      };
+      image.src = originalPreview;
+    });
+  };
+
+
+  const handleApplyCrop = async () => {
+    const croppedDataUrl = await createCroppedImage();
+    if (croppedDataUrl) {
+      setCroppedImage(croppedDataUrl);
+      setShowCropper(false);
+    }
+  };
+
+  const handleRecrop = () => {
+    setPreview(originalPreview); // 🔥 restore original
+    setCroppedImage(null);
+    setShowCropper(true);
+  };
+
 
   const dataURLtoFile = (dataUrl: string, filename: string): File => {
     const arr = dataUrl.split(",");
@@ -136,7 +198,9 @@ const AadhaarCardReader = () => {
     setCroppedImage(null);
     setResult(null);
     setShowCropper(false);
-    setCropArea(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
   };
 
   return (
@@ -190,7 +254,6 @@ const AadhaarCardReader = () => {
               id="file-upload"
             />
 
-
             <label htmlFor="file-upload" style={styles.uploadLabel}>
               <div style={styles.uploadIcon}>
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -210,25 +273,64 @@ const AadhaarCardReader = () => {
         ) : (
           <>
             {/* IMAGE CROPPER */}
-            {showCropper && !croppedImage && (
-              <ImageCropper
-                imageUrl={preview}
-                onCropComplete={(croppedDataUrl) => {
-                  setCroppedImage(croppedDataUrl);
-                  setShowCropper(false);
-                }}
-                onCancel={() => {
-                  resetUpload();
-                }}
-              />
+            {showCropper && (
+              <div style={styles.cropperOverlay}>
+                <div style={styles.cropperContainer}>
+                  <h3 style={styles.cropperTitle}>✂️ Crop Your Aadhaar Card</h3>
+                  <p style={styles.cropperSubtitle}>
+                    Pan • Pinch to zoom • Drag to reposition
+                  </p>
+
+                  <div style={styles.cropperWrapper}>
+                    <Cropper
+                      image={preview}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={16 / 10}
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={onCropComplete}
+                      style={{
+                        containerStyle: styles.reactEasyCropContainer,
+                        mediaStyle: styles.reactEasyCropMedia,
+                        cropAreaStyle: styles.reactEasyCropArea,
+                      }}
+                    />
+                  </div>
+
+                  {/* Zoom Control */}
+                  <div style={styles.zoomControl}>
+                    <label style={styles.zoomLabel}>Zoom</label>
+                    <input
+                      type="range"
+                      min={1}
+                      max={3}
+                      step={0.1}
+                      value={zoom}
+                      onChange={(e) => setZoom(Number(e.target.value))}
+                      style={styles.zoomSlider}
+                    />
+                    <span style={styles.zoomValue}>{zoom.toFixed(1)}x</span>
+                  </div>
+
+                  <div style={styles.cropperActions}>
+                    <button onClick={resetUpload} style={styles.cancelBtn}>
+                      ❌ Cancel
+                    </button>
+                    <button onClick={handleApplyCrop} style={styles.cropBtn}>
+                      ✓ Apply Crop
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* CROPPED IMAGE PREVIEW */}
-            {croppedImage && (
+            {croppedImage && !showCropper && (
               <div style={styles.previewCard}>
                 <img src={croppedImage} style={styles.previewImage} alt="Cropped Aadhaar" />
                 <div style={styles.actionButtons}>
-                  <button onClick={() => setShowCropper(true)} style={styles.recropBtn}>
+                  <button onClick={handleRecrop} style={styles.recropBtn}>
                     ✂️ Re-crop
                   </button>
                   <button onClick={resetUpload} style={styles.removeBtn}>
@@ -256,211 +358,6 @@ const AadhaarCardReader = () => {
           </>
         )}
       </div>
-    </div>
-  );
-};
-
-/* =======================
-   IMAGE CROPPER
-======================= */
-
-const ImageCropper = ({
-  imageUrl,
-  onCropComplete,
-  onCancel,
-}: {
-  imageUrl: string;
-  onCropComplete: (croppedDataUrl: string) => void;
-  onCancel: () => void;
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
-  const [cropArea, setCropArea] = useState<CropArea>({ x: 0, y: 0, width: 0, height: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isResizing, setIsResizing] = useState<string | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  const loadImage = () => {
-    const img = new Image();
-    img.onload = () => {
-      const maxWidth = 480;
-      const scale = maxWidth / img.width;
-      const displayWidth = maxWidth;
-      const displayHeight = img.height * scale;
-
-      setImageDimensions({ width: displayWidth, height: displayHeight });
-
-      // Initialize crop area (80% of image, centered)
-      const cropWidth = displayWidth * 0.8;
-      const cropHeight = displayHeight * 0.8;
-      setCropArea({
-        x: (displayWidth - cropWidth) / 2,
-        y: (displayHeight - cropHeight) / 2,
-        width: cropWidth,
-        height: cropHeight,
-      });
-
-      if (imgRef.current) {
-        imgRef.current.src = imageUrl;
-      }
-    };
-    img.src = imageUrl;
-  };
-
-  useState(() => {
-    loadImage();
-  });
-
-  const handleMouseDown = (e: React.MouseEvent, action: string) => {
-    e.preventDefault();
-    if (action === "move") {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - cropArea.x, y: e.clientY - cropArea.y });
-    } else {
-      setIsResizing(action);
-      setDragStart({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      const newX = Math.max(0, Math.min(e.clientX - dragStart.x, imageDimensions.width - cropArea.width));
-      const newY = Math.max(0, Math.min(e.clientY - dragStart.y, imageDimensions.height - cropArea.height));
-      setCropArea({ ...cropArea, x: newX, y: newY });
-    } else if (isResizing) {
-      const deltaX = e.clientX - dragStart.x;
-      const deltaY = e.clientY - dragStart.y;
-
-      let newArea = { ...cropArea };
-
-      if (isResizing.includes("e")) {
-        newArea.width = Math.max(50, Math.min(cropArea.width + deltaX, imageDimensions.width - cropArea.x));
-      }
-      if (isResizing.includes("w")) {
-        const newWidth = Math.max(50, cropArea.width - deltaX);
-        const newX = Math.max(0, cropArea.x + (cropArea.width - newWidth));
-        newArea.x = newX;
-        newArea.width = newWidth;
-      }
-      if (isResizing.includes("s")) {
-        newArea.height = Math.max(50, Math.min(cropArea.height + deltaY, imageDimensions.height - cropArea.y));
-      }
-      if (isResizing.includes("n")) {
-        const newHeight = Math.max(50, cropArea.height - deltaY);
-        const newY = Math.max(0, cropArea.y + (cropArea.height - newHeight));
-        newArea.y = newY;
-        newArea.height = newHeight;
-      }
-
-      setCropArea(newArea);
-      setDragStart({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsResizing(null);
-  };
-
-  const cropImage = () => {
-    const img = imgRef.current;
-    if (!img || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Calculate scale factor between display size and actual image size
-    const scaleX = img.naturalWidth / imageDimensions.width;
-    const scaleY = img.naturalHeight / imageDimensions.height;
-
-    // Set canvas size to cropped dimensions
-    canvas.width = cropArea.width * scaleX;
-    canvas.height = cropArea.height * scaleY;
-
-    // Draw cropped image
-    ctx.drawImage(
-      img,
-      cropArea.x * scaleX,
-      cropArea.y * scaleY,
-      cropArea.width * scaleX,
-      cropArea.height * scaleY,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-    const croppedDataUrl = canvas.toDataURL("image/png");
-    onCropComplete(croppedDataUrl);
-  };
-
-  return (
-    <div style={styles.cropperOverlay}>
-      <div style={styles.cropperContainer}>
-        <h3 style={styles.cropperTitle}>✂️ Crop Your Aadhaar Card</h3>
-        <p style={styles.cropperSubtitle}>Drag to move • Resize from corners/edges</p>
-
-        <div
-          style={{
-            ...styles.cropperImageContainer,
-            width: imageDimensions.width,
-            height: imageDimensions.height,
-          }}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          <img
-            ref={imgRef}
-            style={styles.cropperImage}
-            alt="Original"
-          />
-
-          {/* Overlay (darkened area outside crop) */}
-          <div style={styles.cropperOverlayDark} />
-
-          {/* Crop area */}
-          <div
-            style={{
-              ...styles.cropBox,
-              left: cropArea.x,
-              top: cropArea.y,
-              width: cropArea.width,
-              height: cropArea.height,
-            }}
-            onMouseDown={(e) => handleMouseDown(e, "move")}
-          >
-            {/* Resize handles */}
-            {["nw", "ne", "sw", "se", "n", "s", "e", "w"].map((pos) => (
-              <div
-                key={pos}
-                style={{
-                  ...styles.resizeHandle,
-                  ...styles[`handle${pos.toUpperCase()}`],
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  handleMouseDown(e, pos);
-                }}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div style={styles.cropperActions}>
-          <button onClick={onCancel} style={styles.cancelBtn}>
-            ❌ Cancel
-          </button>
-          <button onClick={cropImage} style={styles.cropBtn}>
-            ✓ Apply Crop
-          </button>
-        </div>
-      </div>
-
-      {/* Hidden canvas for cropping */}
-      <canvas ref={canvasRef} style={{ display: "none" }} />
     </div>
   );
 };
@@ -576,6 +473,7 @@ const styles: any = {
     cursor: "pointer",
     textAlign: "center",
     marginBottom: 20,
+    transition: "all 0.3s ease",
   },
   uploadZoneDragging: {
     borderColor: "#FF6B35",
@@ -588,6 +486,16 @@ const styles: any = {
   uploadLabel: {
     cursor: "pointer",
     display: "block",
+  },
+  uploadIcon: {
+    color: "#FF6B35",
+    marginBottom: 16,
+  },
+  uploadTitle: {
+    fontSize: 20,
+    color: "#fff",
+    margin: "0 0 8px 0",
+    fontWeight: 600,
   },
   uploadText: {
     fontSize: 16,
@@ -620,6 +528,7 @@ const styles: any = {
     fontSize: 14,
     fontWeight: 600,
     cursor: "pointer",
+    transition: "all 0.2s ease",
   },
   removeBtn: {
     flex: 1,
@@ -631,6 +540,7 @@ const styles: any = {
     fontSize: 14,
     fontWeight: 600,
     cursor: "pointer",
+    transition: "all 0.2s ease",
   },
   extractBtn: {
     width: "100%",
@@ -643,6 +553,7 @@ const styles: any = {
     fontWeight: 600,
     cursor: "pointer",
     marginTop: 16,
+    transition: "all 0.2s ease",
   },
   card: {
     padding: 32,
@@ -706,6 +617,7 @@ const styles: any = {
     fontWeight: 600,
     cursor: "pointer",
     marginBottom: 12,
+    transition: "all 0.2s ease",
   },
   newUploadBtn: {
     width: "100%",
@@ -717,6 +629,7 @@ const styles: any = {
     fontSize: 15,
     fontWeight: 600,
     cursor: "pointer",
+    transition: "all 0.2s ease",
   },
 
   // Cropper styles
@@ -753,45 +666,55 @@ const styles: any = {
     margin: "0 0 24px 0",
     textAlign: "center",
   },
-  cropperImageContainer: {
+  cropperWrapper: {
     position: "relative" as const,
-    margin: "0 auto 24px",
-    userSelect: "none" as const,
-  },
-  cropperImage: {
     width: "100%",
-    height: "100%",
-    display: "block",
-    pointerEvents: "none" as const,
+    height: 400,
+    background: "#000",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 20,
   },
-  cropperOverlayDark: {
-    position: "absolute" as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(0, 0, 0, 0.5)",
-    pointerEvents: "none" as const,
+  reactEasyCropContainer: {
+    background: "#000",
   },
-  cropBox: {
-    position: "absolute" as const,
+  reactEasyCropMedia: {},
+  reactEasyCropArea: {
     border: "2px solid #FF6B35",
     boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
-    cursor: "move",
   },
-  resizeHandle: {
-    position: "absolute" as const,
-    background: "#FF6B35",
-    border: "2px solid #fff",
+  zoomControl: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+    padding: "12px 16px",
+    background: "rgba(255, 255, 255, 0.03)",
+    borderRadius: 12,
   },
-  handleNW: { width: 12, height: 12, top: -6, left: -6, cursor: "nw-resize", borderRadius: "50%" },
-  handleNE: { width: 12, height: 12, top: -6, right: -6, cursor: "ne-resize", borderRadius: "50%" },
-  handleSW: { width: 12, height: 12, bottom: -6, left: -6, cursor: "sw-resize", borderRadius: "50%" },
-  handleSE: { width: 12, height: 12, bottom: -6, right: -6, cursor: "se-resize", borderRadius: "50%" },
-  handleN: { width: 40, height: 6, top: -3, left: "50%", transform: "translateX(-50%)", cursor: "n-resize", borderRadius: 3 },
-  handleS: { width: 40, height: 6, bottom: -3, left: "50%", transform: "translateX(-50%)", cursor: "s-resize", borderRadius: 3 },
-  handleE: { width: 6, height: 40, right: -3, top: "50%", transform: "translateY(-50%)", cursor: "e-resize", borderRadius: 3 },
-  handleW: { width: 6, height: 40, left: -3, top: "50%", transform: "translateY(-50%)", cursor: "w-resize", borderRadius: 3 },
+  zoomLabel: {
+    fontSize: 14,
+    color: "#888",
+    fontWeight: 600,
+    minWidth: 50,
+  },
+  zoomSlider: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    background: "rgba(255, 255, 255, 0.1)",
+    outline: "none",
+    appearance: "none" as const,
+    WebkitAppearance: "none",
+    cursor: "pointer",
+  },
+  zoomValue: {
+    fontSize: 14,
+    color: "#FF6B35",
+    fontWeight: 600,
+    minWidth: 45,
+    textAlign: "right" as const,
+  },
   cropperActions: {
     display: "flex",
     gap: 12,
@@ -806,6 +729,7 @@ const styles: any = {
     fontSize: 15,
     fontWeight: 600,
     cursor: "pointer",
+    transition: "all 0.2s ease",
   },
   cropBtn: {
     flex: 1,
@@ -817,6 +741,7 @@ const styles: any = {
     fontSize: 15,
     fontWeight: 600,
     cursor: "pointer",
+    transition: "all 0.2s ease",
   },
 };
 
