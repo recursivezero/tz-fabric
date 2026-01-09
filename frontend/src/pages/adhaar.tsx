@@ -208,6 +208,23 @@ const AadhaarCardReader = () => {
       <div style={styles.container}>
         <h1 style={styles.title}>Aadhaar Card Reader</h1>
         <p style={styles.subtitle}>Choose side → upload → crop → extract</p>
+        <div style={styles.privacyNote}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span>
+            Your image is processed only in memory during this session.
+            We do <strong>not</strong> store or save images or extracted data.
+          </span>
+        </div>
 
         {/* SIDE SELECTOR */}
         <div style={styles.sideSelector}>
@@ -697,6 +714,20 @@ const styles: any = {
     color: "#888",
     fontWeight: 600,
     minWidth: 50,
+  },
+  privacyNote: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    fontSize: 13,
+    color: "#666",
+    textAlign: "center",
+    padding: "16px 20px",
+    background: "rgba(255, 255, 255, 0.02)",
+    borderRadius: 12,
+    border: "1px solid rgba(255, 255, 255, 0.05)",
+    marginBottom: 24,
   },
   zoomSlider: {
     flex: 1,

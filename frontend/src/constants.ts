@@ -17,8 +17,6 @@ export const NAVBAR_MENU = [
   { name: "list", path: "/view" },
   { name: "search", path: "/search" },
   { name: "chat", path: "/chat" },
-  { name: "generate", path: "/generate" },
-  { name: "fabric-gen", path: "/fabric-gen" },
   { name: "card-reader", path: "/card-reader" },
   { name: "adhaar-reader", path: "/adhaar-reader" },
   { name: "about", path: "/about", enable: false },

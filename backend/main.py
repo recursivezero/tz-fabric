@@ -10,7 +10,6 @@ from fastapi.templating import Jinja2Templates
 from pymongo import MongoClient, errors, uri_parser
 from pymongo.database import Database
 from typing import Collection, Optional
-from routes.chat_ws import router as chat_router
 from routes.card_reader import router as card_router
 from routes.adhaar_reader import router as aadhar_router
 
@@ -26,7 +25,6 @@ from routes import (
     chat,
     media,
     regenerate,
-    generate,
     search,
     submit,
     uploads,
@@ -111,9 +109,9 @@ app.include_router(media.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 app.include_router(contact.router, prefix=API_PREFIX)
-app.include_router(chat_router, prefix=API_PREFIX)
+
 app.include_router(card_router, prefix=API_PREFIX)
-app.include_router(generate.router, prefix=API_PREFIX)
+
 app.include_router(aadhar_router, prefix=API_PREFIX)
 
 
