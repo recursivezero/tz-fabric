@@ -8,7 +8,7 @@ from services.pan_extracter import PANCardExtractor
 
 router = APIRouter()
 
-extracter=PANCardExtractor()
+extracter = PANCardExtractor()
 
 
 @router.post("/read-card")
@@ -19,6 +19,5 @@ async def read_card(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
 
     data = extracter.extract_data(image)
-
 
     return data

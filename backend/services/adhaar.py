@@ -9,42 +9,66 @@ class AadhaarCardExtractor:
     Regex-first Aadhaar extractor with strict front/back separation.
     """
 
-    AADHAAR_PATTERN = re.compile(r'\b\d{4}\s?\d{4}\s?\d{4}\b')
-    AADHAAR_MASKED_PATTERN = re.compile(r'\b[X×*]{4,8}\s?\d{4}\b')
-    DOB_SUBSTRING_PATTERN = re.compile(r'(\d{2})[./-](\d{2})[./-](\d{4})')
-    YEAR_PATTERN = re.compile(r'\b(19|20)\d{2}\b')
-    GENDER_PATTERN = re.compile(r'\b(MALE|FEMALE|TRANSGENDER|M|F|T)\b', re.I)
-    PINCODE_PATTERN = re.compile(r'\b\d{6}\b')
+    AADHAAR_PATTERN = re.compile(r"\b\d{4}\s?\d{4}\s?\d{4}\b")
+    AADHAAR_MASKED_PATTERN = re.compile(r"\b[X×*]{4,8}\s?\d{4}\b")
+    DOB_SUBSTRING_PATTERN = re.compile(r"(\d{2})[./-](\d{2})[./-](\d{4})")
+    YEAR_PATTERN = re.compile(r"\b(19|20)\d{2}\b")
+    GENDER_PATTERN = re.compile(r"\b(MALE|FEMALE|TRANSGENDER|M|F|T)\b", re.I)
+    PINCODE_PATTERN = re.compile(r"\b\d{6}\b")
 
     OCR_CHAR_MAP = {
-        '0': ['O', 'D', 'Q'],
-        '1': ['I', 'L', '|'],
-        '2': ['Z'],
-        '5': ['S'],
-        '8': ['B'],
+        "0": ["O", "D", "Q"],
+        "1": ["I", "L", "|"],
+        "2": ["Z"],
+        "5": ["S"],
+        "8": ["B"],
     }
 
     IGNORE_KEYWORDS = {
-        'GOVERNMENT', 'INDIA', 'AADHAAR', 'AADHAR', 'UNIQUE',
-        'IDENTIFICATION', 'AUTHORITY', 'DOB', 'DATE', 'BIRTH',
-        'HELP', 'SECURE', 'IDENTITY', 'ENROLLMENT', 'ISSUED',
-        'CARD', 'NUMBER',"VID"
+        "GOVERNMENT",
+        "INDIA",
+        "AADHAAR",
+        "AADHAR",
+        "UNIQUE",
+        "IDENTIFICATION",
+        "AUTHORITY",
+        "DOB",
+        "DATE",
+        "BIRTH",
+        "HELP",
+        "SECURE",
+        "IDENTITY",
+        "ENROLLMENT",
+        "ISSUED",
+        "CARD",
+        "NUMBER",
+        "VID",
     }
 
     ADDRESS_INDICATORS = {
-        'S/O', 'D/O', 'C/O', 'W/O', 'H/O', 'HOUSE', 'ROAD',
-        'STREET', 'VILLAGE', 'DISTRICT', 'STATE', 'PIN'
+        "S/O",
+        "D/O",
+        "C/O",
+        "W/O",
+        "H/O",
+        "HOUSE",
+        "ROAD",
+        "STREET",
+        "VILLAGE",
+        "DISTRICT",
+        "STATE",
+        "PIN",
     }
 
     def __init__(self):
-        self.reader = easyocr.Reader(['en'], gpu=False)
+        self.reader = easyocr.Reader(["en"], gpu=False)
 
     # ------------------------------------------------------------------
     # NORMALIZATION
     # ------------------------------------------------------------------
 
     def normalize_text(self, text: str) -> str:
-        return ' '.join(text.upper().split())
+        return " ".join(text.upper().split())
 
     def should_ignore(self, text: str) -> bool:
         return any(k in text for k in self.IGNORE_KEYWORDS)
@@ -63,7 +87,7 @@ class AadhaarCardExtractor:
                 continue
             if self.should_ignore(t):
                 continue
-            if not re.search(r'[AEIOU]', t):
+            if not re.search(r"[AEIOU]", t):
                 continue
             cleaned.append((bbox, t, conf))
         return cleaned
@@ -73,7 +97,7 @@ class AadhaarCardExtractor:
     # ------------------------------------------------------------------
 
     def is_valid_name(self, text: str) -> bool:
-        if not re.fullmatch(r'[A-Z ]+', text):
+        if not re.fullmatch(r"[A-Z ]+", text):
             return False
         words = text.split()
         if not (1 <= len(words) <= 5):
@@ -82,7 +106,7 @@ class AadhaarCardExtractor:
         for w in words:
             if len(w) == 1:
                 continue
-            if not re.search(r'[AEIOU]', w):
+            if not re.search(r"[AEIOU]", w):
                 return False
             has_real = True
         return has_real
@@ -92,7 +116,7 @@ class AadhaarCardExtractor:
             return True
         if self.PINCODE_PATTERN.search(text):
             return True
-        if re.search(r'\d', text) and len(text.split()) > 3:
+        if re.search(r"\d", text) and len(text.split()) > 3:
             return True
         return False
 
@@ -106,9 +130,11 @@ class AadhaarCardExtractor:
             t = self.normalize_text(text)
 
             if self.AADHAAR_PATTERN.search(t):
-                digits = re.sub(r'\D', '', t)
+                digits = re.sub(r"\D", "", t)
                 if len(digits) == 12:
-                    candidates.append((f"{digits[:4]} {digits[4:8]} {digits[8:]}", conf))
+                    candidates.append(
+                        (f"{digits[:4]} {digits[4:8]} {digits[8:]}", conf)
+                    )
 
             elif self.AADHAAR_MASKED_PATTERN.search(t):
                 candidates.append((t, conf * 0.9))
@@ -144,7 +170,7 @@ class AadhaarCardExtractor:
             m = self.GENDER_PATTERN.search(text.upper())
             if m:
                 g = m.group(1).upper()
-                return {'M': 'MALE', 'F': 'FEMALE', 'T': 'TRANSGENDER'}.get(g, g)
+                return {"M": "MALE", "F": "FEMALE", "T": "TRANSGENDER"}.get(g, g)
         return None
 
     def extract_name(self, cleaned_ocr):
@@ -156,13 +182,10 @@ class AadhaarCardExtractor:
         if not lines:
             return None
         lines.sort(key=lambda x: x[1])
-        return ', '.join(l[0] for l in lines[:5])
+        return ", ".join(l[0] for l in lines[:5])
+
     def extract_address_paragraph_easyocr(self, image_path: str) -> Optional[str]:
-        ocr_paragraphs = self.reader.readtext(
-            image_path,
-            detail=1,
-            paragraph=True
-        )
+        ocr_paragraphs = self.reader.readtext(image_path, detail=1, paragraph=True)
 
         for item in ocr_paragraphs:
             if len(item) == 3:
@@ -173,42 +196,35 @@ class AadhaarCardExtractor:
             norm = self.normalize_text(text)
 
             # Look for ADDRESS label
-            addr_match = re.search(
-                r'(ADDRESS[:\-]?\s*)(.+)', norm, re.IGNORECASE
-            )
+            addr_match = re.search(r"(ADDRESS[:\-]?\s*)(.+)", norm, re.IGNORECASE)
             if not addr_match:
                 continue
 
             addr_text = addr_match.group(2)
 
             # Stop at known tail junk
-            addr_text = re.split(
-                r'\b(VID|AADHAAR|HELP|WWW|UIDAI)\b', addr_text
-            )[0]
+            addr_text = re.split(r"\b(VID|AADHAAR|HELP|WWW|UIDAI)\b", addr_text)[0]
 
             # Cleanup OCR noise
-            addr_text = re.sub(r'\s+', ' ', addr_text).strip()
+            addr_text = re.sub(r"\s+", " ", addr_text).strip()
 
             # Must contain digits + state/pincode-like pattern
             if len(addr_text) < 20:
                 continue
-            if not re.search(r'\d{6}', addr_text):
+            if not re.search(r"\d{6}", addr_text):
                 continue
 
             return addr_text
 
         return None
 
-
         best = max(address_candidates, key=lambda x: x[1])[0]
 
         # Cleanup
         best = best.replace("ADDRESS:", "").replace("ADDRESS", "")
-        best = re.sub(r'\s+', ' ', best).strip()
+        best = re.sub(r"\s+", " ", best).strip()
 
         return best
-
-
 
     def extract_pincode(self, ocr_results):
         for _, text, _ in ocr_results:
@@ -229,7 +245,7 @@ class AadhaarCardExtractor:
             "dob": "",
             "gender": "",
             "address": "",
-            "pincode": ""
+            "pincode": "",
         }
 
         # RAW OCR (always safe: 3-tuples)
@@ -251,4 +267,3 @@ class AadhaarCardExtractor:
             result["address"] = self.extract_address_paragraph_easyocr(image_path) or ""
 
         return result
-

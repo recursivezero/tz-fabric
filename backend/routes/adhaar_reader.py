@@ -2,24 +2,23 @@ import re
 from unittest import result
 import cv2
 import numpy as np
-from fastapi import APIRouter, UploadFile, File,Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from PIL import Image
 from services.adhaar import AadhaarCardExtractor
 
 router = APIRouter()
 
-extracter=AadhaarCardExtractor()
+extracter = AadhaarCardExtractor()
 
 
 @router.post("/read-aadhaar")
 async def read_card(file: UploadFile = File(...), side: str = Form(...)):
     try:
         image = Image.open(file.file)
-        side=str(side)
+        side = str(side)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
 
-    data = extracter.extract_data(image,side)
-
+    data = extracter.extract_data(image, side)
 
     return data
