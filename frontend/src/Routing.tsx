@@ -8,7 +8,7 @@ import Chat from "./pages/FabricChat";
 import ComingSoon from "./pages/ComingSoon";
 import { NotFound } from './components/NotFound';
 import {ContactUs} from './pages/Contact';
-
+import Reader from './pages/Reader'
 import CardReader from "./pages/CardReader";
 import AadhaarCardReader from "./pages/adhaar";
 
@@ -29,8 +29,9 @@ export const Routing = () => {
       <Route path="/help" element={ <ComingSoon /> } />
       <Route path="/contact" element={ <ContactUs /> } />
       <Route path="*" element={ <NotFound /> } />
-      <Route path="/card-reader" element={<CardReader />} />
-      <Route path="/adhaar-reader" element={<AadhaarCardReader />} />
+      <Route path="/reader" element={<Reader />} />
+      <Route path="/reader/pan" element={<CardReader />} />
+      <Route path="/reader/adhaar" element={<AadhaarCardReader />} />
     </Routes>
   );
 };

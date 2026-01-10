@@ -162,7 +162,7 @@ const AadhaarCardReader = () => {
     fd.append("side", side);
 
     try {
-      const res = await fetch(`${FULL_API_URL}/read-aadhaar`, {
+      const res = await fetch(`${FULL_API_URL}/adhaar`, {
         method: "POST",
         body: fd,
       });
@@ -207,7 +207,7 @@ const AadhaarCardReader = () => {
     <div style={styles.wrapper}>
       <div style={styles.container}>
         <h1 style={styles.title}>Aadhaar Card Reader</h1>
-        <p style={styles.subtitle}>Choose side → upload → crop → extract</p>
+        <p style={styles.subtitle}>Choose side → upload aadhar card → crop → extract</p>
         <div style={styles.privacyNote}>
           <svg
             width="16"
@@ -222,7 +222,7 @@ const AadhaarCardReader = () => {
           </svg>
           <span>
             Your image is processed only in memory during this session.
-            We do <strong>not</strong> store or save images or extracted data.
+            We do <strong>not</strong> store or save images or share data.
           </span>
         </div>
 
@@ -720,8 +720,8 @@ const styles: any = {
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    fontSize: 13,
-    color: "#666",
+    fontSize: 16,
+    color: "#b70d0dff",
     textAlign: "center",
     padding: "16px 20px",
     background: "rgba(255, 255, 255, 0.02)",

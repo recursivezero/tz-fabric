@@ -102,7 +102,6 @@ class PANCardExtractor:
 
         # Generate combinations
         for combo in product(*options):
-            print(combo)
             pan = "".join(combo)
             if self.PAN_PATTERN.fullmatch(pan):
                 candidates.append(pan)
@@ -205,16 +204,13 @@ class PANCardExtractor:
 
         for bbox, text, conf in ocr_results:
             normalized = self.normalize_text(text)
-            print(normalized)
 
             # Direct match
             if self.PAN_PATTERN.match(normalized):
                 candidates.append((normalized, conf))
             else:
-                print("###")
                 # Try fixing OCR errors
                 variations = self.normalize_pan_ocr_errors(normalized)
-                print(variations)
                 for variation in variations:
                     candidates.append(
                         (variation, conf * 0.9)
@@ -222,10 +218,8 @@ class PANCardExtractor:
 
         if not candidates:
             return None
-        print(candidates)
         # Return candidate with highest confidence
         best_candidate = max(candidates, key=lambda x: x[1])
-        print(best_candidate)
         return best_candidate[0]
 
     def extract_dob(self, ocr_results: List[Tuple]) -> Optional[str]:
@@ -337,7 +331,6 @@ class PANCardExtractor:
 
         try:
             # Perform OCR with detail=1 (text, bbox, confidence)
-            print("IS PIL:", isinstance(image_path, Image.Image))
             ocr_results = self.reader.readtext(image_path, detail=1)
 
             if not ocr_results:
@@ -360,7 +353,6 @@ class PANCardExtractor:
 
         except Exception as e:
             # On any error, return empty result
-            print(f"Error processing image: {e}")
             return result
 
         return result

@@ -11,7 +11,7 @@ router = APIRouter()
 extracter = AadhaarCardExtractor()
 
 
-@router.post("/read-aadhaar")
+@router.post("/adhaar")
 async def read_card(file: UploadFile = File(...), side: str = Form(...)):
     try:
         image = Image.open(file.file)

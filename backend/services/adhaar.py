@@ -218,14 +218,6 @@ class AadhaarCardExtractor:
 
         return None
 
-        best = max(address_candidates, key=lambda x: x[1])[0]
-
-        # Cleanup
-        best = best.replace("ADDRESS:", "").replace("ADDRESS", "")
-        best = re.sub(r"\s+", " ", best).strip()
-
-        return best
-
     def extract_pincode(self, ocr_results):
         for _, text, _ in ocr_results:
             m = self.PINCODE_PATTERN.search(text)
@@ -249,7 +241,6 @@ class AadhaarCardExtractor:
         }
 
         # RAW OCR (always safe: 3-tuples)
-        print("IS aaPIL:", isinstance(image_path, Image.Image))
         raw_ocr = self.reader.readtext(image_path, detail=1)
         cleaned = self.clean_ocr_results(raw_ocr)
 

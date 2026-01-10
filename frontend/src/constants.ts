@@ -17,8 +17,7 @@ export const NAVBAR_MENU = [
   { name: "list", path: "/view" },
   { name: "search", path: "/search" },
   { name: "chat", path: "/chat" },
-  { name: "card-reader", path: "/card-reader" },
-  { name: "adhaar-reader", path: "/adhaar-reader" },
+  { name: "card-reader", path: "/reader" },
   { name: "about", path: "/about", enable: false },
 
 ];

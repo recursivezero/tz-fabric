@@ -11,7 +11,7 @@ router = APIRouter()
 extracter = PANCardExtractor()
 
 
-@router.post("/read-card")
+@router.post("/pan")
 async def read_card(file: UploadFile = File(...)):
     try:
         image = Image.open(file.file)

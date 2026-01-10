@@ -134,7 +134,7 @@ const CardReader = () => {
     }
 
     try {
-      const res = await fetch(`${FULL_API_URL}/read-card`, {
+      const res = await fetch(`${FULL_API_URL}/pan`, {
         method: "POST",
         body: fd,
       });
@@ -309,7 +309,7 @@ const CardReader = () => {
               <line x1="1" y1="10" x2="23" y2="10" />
             </svg>
           </div>
-          <h1 style={styles.title}>Card Reader</h1>
+          <h1 style={styles.title}>PAN Card Reader</h1>
           <p style={styles.subtitle}>Extract information instantly from ID cards</p>
           <div style={styles.privacyNote}>
             <svg
@@ -325,7 +325,7 @@ const CardReader = () => {
             </svg>
             <span>
               Your image is processed only in memory during this session.
-              We do <strong>not</strong> store or save images or extracted data.
+              We do <strong>not</strong> store or save images or share data.
             </span>
           </div>
         </div>
@@ -887,8 +887,8 @@ const styles: any = {
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    fontSize: 13,
-    color: "#666",
+    fontSize: 16,
+    color: "#bb0707ff",
     textAlign: "center",
     padding: "16px 20px",
     background: "rgba(255, 255, 255, 0.02)",
