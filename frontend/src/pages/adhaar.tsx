@@ -389,33 +389,69 @@ const AadhaarCardPreview = ({
 }: {
   data: AadhaarResult;
   side: AadhaarSide;
-}) => (
-  <div id="card-preview" style={styles.card}>
-    <div style={styles.watermark}>Recursive Zero</div>
+}) => {
+  const timestamp = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(new Date());
 
-    <div style={styles.cardHeader}>
-      <div style={styles.cardType}>AADHAAR CARD</div>
-    </div>
+  return (
+    <div id="card-preview" style={styles.card}>
+      <div style={styles.watermark}>Recursive Zero</div>
 
-    <div style={styles.cardBody}>
-      {side === "front" && (
-        <>
-          <Field label="Name" value={(data as AadhaarFrontResult).name} />
-          <Field label="DOB" value={(data as AadhaarFrontResult).dob} />
-          <Field label="Gender" value={(data as AadhaarFrontResult).gender} />
+      <div style={styles.cardHeader}>
+        <div style={styles.cardType}>AADHAAR CARD</div>
+      </div>
+
+      <div style={styles.cardBody}>
+        {side === "front" && (
+          <>
+            <Field
+              label="Name"
+              value={(data as AadhaarFrontResult).name}
+            />
+            <Field
+              label="DOB"
+              value={(data as AadhaarFrontResult).dob}
+            />
+            <Field
+              label="Gender"
+              value={(data as AadhaarFrontResult).gender}
+            />
+            <Field
+              label="Aadhaar Number"
+              value={(data as AadhaarFrontResult).aadhaar_number}
+            />
+          </>
+        )}
+
+        {side === "back" && (
           <Field
-            label="Aadhaar Number"
-            value={(data as AadhaarFrontResult).aadhaar_number}
+            label="Address"
+            value={(data as AadhaarBackResult).address}
           />
-        </>
-      )}
+        )}
+      </div>
 
-      {side === "back" && (
-        <Field label="Address" value={(data as AadhaarBackResult).address} />
-      )}
+      {/* ✅ Timestamp integrated into card */}
+      <div style={styles.timestampRow}>
+        <span style={styles.timestampLabel}>Generated</span>
+        <span style={styles.timestampValue}>{timestamp} IST</span>
+      </div>
+
+      <div style={styles.cardFooter}>
+        <div style={styles.securityPattern} />
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
 
 const Field = ({ label, value }: { label: string; value?: string }) => (
   <div style={styles.cardField}>
@@ -677,6 +713,33 @@ const styles: any = {
     margin: "0 0 8px 0",
     textAlign: "center",
   },
+  timestampRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 8,
+    marginTop: 12,
+    borderTop: "1px dashed rgba(255, 107, 53, 0.25)",
+    fontFamily: "'DM Sans', sans-serif",
+    position: "relative" as const,
+    zIndex: 1,
+  },
+
+  timestampLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    color: "rgba(255, 107, 53, 0.6)",
+  },
+
+  timestampValue: {
+    fontSize: 12,
+    fontWeight: 500,
+    color: "#ddd",
+    letterSpacing: "0.04em",
+  },
+
   cropperSubtitle: {
     fontSize: 14,
     color: "#888",

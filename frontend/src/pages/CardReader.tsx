@@ -514,83 +514,74 @@ const CardReader = () => {
   );
 };
 
-const CardPreview = ({ data }: { data: PanResult }) => (
-  <div id="card-preview" style={styles.card}>
-    {/* Creative Animated Watermark */}
-    <div style={styles.watermarkContainer}>
-      <div className="watermark-animated" style={styles.watermark}>
-        <svg width="120" height="120" viewBox="0 0 100 100" style={styles.watermarkSvg}>
-          <defs>
-            <linearGradient id="watermarkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FF6B35" stopOpacity="0.1" />
-              <stop offset="50%" stopColor="#F7931E" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#FF6B35" stopOpacity="0.1" />
-            </linearGradient>
-          </defs>
-          <circle cx="50" cy="50" r="45" fill="none" stroke="url(#watermarkGradient)" strokeWidth="2" opacity="0.3" />
-          <circle cx="50" cy="50" r="35" fill="none" stroke="url(#watermarkGradient)" strokeWidth="1.5" opacity="0.2" />
-          <path
-            d="M 50 20 L 55 35 L 70 35 L 58 45 L 63 60 L 50 50 L 37 60 L 42 45 L 30 35 L 45 35 Z"
-            fill="url(#watermarkGradient)"
-            opacity="0.25"
-          />
-          <text
-            x="50"
-            y="80"
-            textAnchor="middle"
-            fontFamily="DM Sans, sans-serif"
-            fontSize="8"
-            fontWeight="700"
-            fill="url(#watermarkGradient)"
-            letterSpacing="1"
-          >
-            VERIFIED
-          </text>
-        </svg>
-      </div>
-      <div style={styles.watermarkText}>
-        Recursive Zero
-      </div>
-    </div>
+const CardPreview = ({ data }: { data: PanResult }) => {
+  const timestamp = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(new Date());
 
-    <div style={styles.cardHeader}>
-      <div style={styles.cardType}>{data.type} CARD</div>
-      <div style={styles.cardChip}>
-        <div style={styles.chipLine}></div>
-        <div style={styles.chipLine}></div>
-        <div style={styles.chipLine}></div>
-      </div>
-    </div>
-
-    <div style={styles.cardBody}>
-      <div style={styles.cardField}>
-        <div style={styles.fieldLabel}>Name</div>
-        <div style={styles.fieldValue}>{data.name || "—"}</div>
+  return (
+    <div id="card-preview" style={styles.card}>
+      {/* Creative Animated Watermark */}
+      <div style={styles.watermarkContainer}>
+        <div className="watermark-animated" style={styles.watermark}>
+          {/* SVG unchanged */}
+        </div>
+        <div style={styles.watermarkText}>Recursive Zero</div>
       </div>
 
-      <div style={styles.cardField}>
-        <div style={styles.fieldLabel}>Father's Name</div>
-        <div style={styles.fieldValue}>{data.father_name || "—"}</div>
+      <div style={styles.cardHeader}>
+        <div style={styles.cardType}>{data.type} CARD</div>
+        <div style={styles.cardChip}>
+          <div style={styles.chipLine} />
+          <div style={styles.chipLine} />
+          <div style={styles.chipLine} />
+        </div>
       </div>
 
-      <div style={styles.cardRow}>
+      <div style={styles.cardBody}>
         <div style={styles.cardField}>
-          <div style={styles.fieldLabel}>PAN Number</div>
-          <div style={styles.fieldValue}>{data.pan_number || "—"}</div>
+          <div style={styles.fieldLabel}>Name</div>
+          <div style={styles.fieldValue}>{data.name || "—"}</div>
         </div>
 
         <div style={styles.cardField}>
-          <div style={styles.fieldLabel}>Date of Birth</div>
-          <div style={styles.fieldValue}>{data.dob || "—"}</div>
+          <div style={styles.fieldLabel}>Father's Name</div>
+          <div style={styles.fieldValue}>{data.father_name || "—"}</div>
+        </div>
+
+        <div style={styles.cardRow}>
+          <div style={styles.cardField}>
+            <div style={styles.fieldLabel}>PAN Number</div>
+            <div style={styles.fieldValue}>{data.pan_number || "—"}</div>
+          </div>
+
+          <div style={styles.cardField}>
+            <div style={styles.fieldLabel}>Date of Birth</div>
+            <div style={styles.fieldValue}>{data.dob || "—"}</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div style={styles.cardFooter}>
-      <div style={styles.securityPattern}></div>
+      {/* ✅ Timestamp integrated into card */}
+      <div style={styles.timestampRow}>
+        <span style={styles.timestampLabel}>Generated</span>
+        <span style={styles.timestampValue}>{timestamp} IST</span>
+      </div>
+
+      <div style={styles.cardFooter}>
+        <div style={styles.securityPattern} />
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
 
 const styles: any = {
   wrapper: {
@@ -962,6 +953,33 @@ const styles: any = {
     fontWeight: 600,
     minWidth: 50,
   },
+  timestampRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 8,
+    marginTop: 12,
+    borderTop: "1px dashed rgba(255, 107, 53, 0.25)",
+    fontFamily: "'DM Sans', sans-serif",
+    position: "relative" as const,
+    zIndex: 1,
+  },
+
+  timestampLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    color: "rgba(255, 107, 53, 0.6)",
+  },
+
+  timestampValue: {
+    fontSize: 12,
+    fontWeight: 500,
+    color: "#ddd",
+    letterSpacing: "0.04em",
+  },
+
   zoomSlider: {
     flex: 1,
     height: 4,
