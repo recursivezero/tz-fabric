@@ -552,7 +552,10 @@ const CardPreview = ({ data }: { data: PanResult }) => {
     minute: "2-digit",
     second: "2-digit",
     hour12: true,
-  }).format(new Date());
+  })
+    .format(new Date())
+    .replace(/\b(am|pm)\b/, (m) => m.toUpperCase());
+
 
   return (
     <div id="card-preview" style={styles.card}>
