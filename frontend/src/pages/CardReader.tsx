@@ -1,8 +1,11 @@
 import { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
+import { useNavigate } from "react-router-dom";
 
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
+
+
 
 type PanResult = {
   type: string;
@@ -14,6 +17,9 @@ type PanResult = {
 type Point = { x: number; y: number };
 type Area = { x: number; y: number; width: number; height: number };
 const CardReader = () => {
+  const navigate = useNavigate();
+  const [hovered, setHovered] = useState(false);
+
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<PanResult | null>(null);
@@ -303,12 +309,34 @@ const CardReader = () => {
       <div style={styles.container}>
         {/* Header */}
         <div style={styles.header}>
-          <div style={styles.iconWrapper}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth="2">
+          <div
+            style={{
+              ...styles.iconWrapper,
+              cursor: "pointer",
+              transform: hovered ? "scale(1.06)" : "scale(1)",
+              boxShadow: hovered
+                ? "0 12px 40px rgba(255, 107, 53, 0.35)"
+                : "none",
+            }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onClick={() => navigate("/reader")}
+            title="Back to Reader"
+          >
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FF6B35"
+              strokeWidth="2"
+            >
               <rect x="1" y="4" width="22" height="16" rx="2" />
               <line x1="1" y1="10" x2="23" y2="10" />
             </svg>
           </div>
+
+
           <h1 style={styles.title}>PAN Card Reader</h1>
           <p style={styles.subtitle}>Extract information instantly from ID cards</p>
           <div style={styles.privacyNote}>
@@ -362,7 +390,7 @@ const CardReader = () => {
                 </svg>
               </div>
               <h3 style={styles.uploadTitle}>
-                {isDragging ? "Drop your card here" : "Upload Card Image"}
+                {isDragging ? "Drop your card here" : "Upload PAN Card Image"}
               </h3>
               <p style={styles.uploadText}>
                 Drag and drop or click to browse
@@ -604,8 +632,9 @@ const styles: any = {
     background: "rgba(255, 107, 53, 0.1)",
     borderRadius: 20,
     marginBottom: 24,
-    animation: "pulse 3s ease-in-out infinite",
+    transition: "all 0.2s ease",
   },
+
   title: {
     fontFamily: "'Instrument Serif', serif",
     fontSize: 48,
@@ -1025,6 +1054,7 @@ const styles: any = {
     cursor: "pointer",
     transition: "all 0.2s ease",
   },
+
 };
 
 export default CardReader;

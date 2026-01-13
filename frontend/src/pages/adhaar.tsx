@@ -5,6 +5,7 @@ import Cropper from "react-easy-crop";
 
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
+import { useNavigate } from "react-router-dom";
 
 /* =======================
   TYPES
@@ -39,6 +40,8 @@ type AadhaarResult = AadhaarFrontResult | AadhaarBackResult;
 ======================= */
 
 const AadhaarCardReader = () => {
+  const navigate = useNavigate();
+  const [hovered, setHovered] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<AadhaarResult | null>(null);
@@ -205,7 +208,35 @@ const AadhaarCardReader = () => {
 
   return (
     <div style={styles.wrapper}>
+      
+
       <div style={styles.container}>
+        <div
+          style={{
+            ...styles.iconWrapper,
+            cursor: "pointer",
+            transform: hovered ? "scale(1.06)" : "scale(1)",
+            boxShadow: hovered
+              ? "0 12px 40px rgba(255, 107, 53, 0.35)"
+              : "none",
+          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onClick={() => navigate("/reader")}
+          title="Back to Reader"
+        >
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#FF6B35"
+            strokeWidth="2"
+          >
+            <rect x="1" y="4" width="22" height="16" rx="2" />
+            <line x1="1" y1="10" x2="23" y2="10" />
+          </svg>
+        </div>
         <h1 style={styles.title}>Aadhaar Card Reader</h1>
         <p style={styles.subtitle}>Choose side → upload aadhar card → crop → extract</p>
         <div style={styles.privacyNote}>
@@ -280,7 +311,7 @@ const AadhaarCardReader = () => {
                 </svg>
               </div>
               <h3 style={styles.uploadTitle}>
-                {isDragging ? "Drop your card here" : "Upload Card Image"}
+                {isDragging ? "Drop your card here" : "Upload Adhaar Card Image"}
               </h3>
               <p style={styles.uploadText}>
                 Drag and drop or click to browse
@@ -399,7 +430,10 @@ const AadhaarCardPreview = ({
     minute: "2-digit",
     second: "2-digit",
     hour12: true,
-  }).format(new Date());
+  })
+    .format(new Date())
+    .replace(/\b(am|pm)\b/, (m) => m.toUpperCase());
+
 
   return (
     <div id="card-preview" style={styles.card}>
@@ -470,10 +504,12 @@ const styles: any = {
     background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",
     padding: "60px 20px",
     fontFamily: "'DM Sans', -apple-system, sans-serif",
+    
   },
   container: {
     maxWidth: 520,
     margin: "0 auto",
+    textAlign: "center",
   },
   title: {
     fontFamily: "'Instrument Serif', serif",
@@ -813,6 +849,16 @@ const styles: any = {
     display: "flex",
     gap: 12,
   },
+  iconWrapper: {
+    display: "inline-flex",
+    padding: 16,
+    background: "rgba(255, 107, 53, 0.1)",
+    borderRadius: 20,
+    marginBottom: 24,
+    transition: "all 0.2s ease",
+    textAlign: "center",
+  },
+
   cancelBtn: {
     flex: 1,
     padding: "14px 24px",

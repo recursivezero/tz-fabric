@@ -13,7 +13,7 @@ class AadhaarCardExtractor:
     AADHAAR_MASKED_PATTERN = re.compile(r"\b[X×*]{4,8}\s?\d{4}\b")
     DOB_SUBSTRING_PATTERN = re.compile(r"(\d{2})[./-](\d{2})[./-](\d{4})")
     YEAR_PATTERN = re.compile(r"\b(19|20)\d{2}\b")
-    GENDER_PATTERN = re.compile(r"\b(MALE|FEMALE|TRANSGENDER|M|F|T)\b", re.I)
+    GENDER_PATTERN = re.compile(r"\b(MALE|FEMALE|M|F|T)\b", re.I)
     PINCODE_PATTERN = re.compile(r"\b\d{6}\b")
 
     OCR_CHAR_MAP = {
@@ -170,7 +170,7 @@ class AadhaarCardExtractor:
             m = self.GENDER_PATTERN.search(text.upper())
             if m:
                 g = m.group(1).upper()
-                return {"M": "MALE", "F": "FEMALE", "T": "TRANSGENDER"}.get(g, g)
+                return {"M": "MALE", "F": "FEMALE", "T": "FEMALE"}.get(g, g)
         return None
 
     def extract_name(self, cleaned_ocr):
