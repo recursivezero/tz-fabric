@@ -401,7 +401,7 @@ const AadhaarCardReader = () => {
               💾 Download Card Image
             </button>
             <button onClick={resetUpload} style={styles.newUploadBtn}>
-              📤 Upload New Card
+              📤 Upload New Aadhaar Card
             </button>
           </>
         )}

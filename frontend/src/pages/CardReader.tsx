@@ -525,7 +525,7 @@ const CardReader = () => {
               onClick={resetUpload}
               style={styles.newUploadBtn}
             >
-              📤 Upload New Card
+              📤 Upload New PAN Card
             </button>
 
             <div style={styles.privacyNote}>
