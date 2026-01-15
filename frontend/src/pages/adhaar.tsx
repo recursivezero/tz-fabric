@@ -208,6 +208,28 @@ const AadhaarCardReader = () => {
 
   return (
     <div style={styles.wrapper}>
+      <style>{`
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  .card-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      110deg,
+      rgba(255,255,255,0.08) 25%,
+      rgba(255,255,255,0.25) 37%,
+      rgba(255,255,255,0.08) 63%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+    pointer-events: none;
+    border-radius: 18px;
+  }
+`}</style>
+
       
 
       <div style={styles.container}>
@@ -386,7 +408,7 @@ const AadhaarCardReader = () => {
                   </button>
                 </div>
                 <button onClick={submit} disabled={loading} style={styles.extractBtn}>
-                  {loading ? "Processing..." : "Extract Information"}
+                  {loading ? "Processing..." : "Extract Details"}
                 </button>
               </div>
             )}
@@ -394,15 +416,24 @@ const AadhaarCardReader = () => {
         )}
 
         {/* RESULT */}
-        {result && (
+        {(loading || result) && (
           <>
-            <AadhaarCardPreview data={result} side={side} />
-            <button onClick={downloadCard} style={styles.downloadBtn}>
-              💾 Download Card Image
-            </button>
-            <button onClick={resetUpload} style={styles.newUploadBtn}>
-              📤 Upload New Aadhaar Card
-            </button>
+            <AadhaarCardPreview
+              data={result}
+              side={side}
+              loading={loading}
+            />
+
+            {!loading && (
+              <>
+                <button onClick={downloadCard} style={styles.downloadBtn}>
+                  💾 Download Card Image
+                </button>
+                <button onClick={resetUpload} style={styles.newUploadBtn}>
+                  📤 Upload New Aadhaar Card
+                </button>
+              </>
+            )}
           </>
         )}
       </div>
@@ -414,13 +445,19 @@ const AadhaarCardReader = () => {
    CARD PREVIEW
 ======================= */
 
+type AadhaarPreviewProps = {
+  data?: AadhaarResult | null;
+  side: AadhaarSide;
+  loading: boolean;
+};
+
+const SKELETON = "████████";
+
 const AadhaarCardPreview = ({
   data,
   side,
-}: {
-  data: AadhaarResult;
-  side: AadhaarSide;
-}) => {
+  loading,
+}: AadhaarPreviewProps) => {
   const timestamp = new Intl.DateTimeFormat("en-IN", {
     timeZone: "Asia/Kolkata",
     year: "numeric",
@@ -434,33 +471,35 @@ const AadhaarCardPreview = ({
     .format(new Date())
     .replace(/\b(am|pm)\b/, (m) => m.toUpperCase());
 
-
   return (
-    <div id="card-preview" style={styles.card}>
+    <div
+      id="card-preview"
+      style={{
+        ...styles.card,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* 🌊 Shimmer Overlay */}
+      {loading && <div className="card-shimmer" />}
+
       <div style={styles.watermark}>Recursive Zero</div>
 
       <div style={styles.cardHeader}>
-        <div style={styles.cardType}>AADHAAR CARD</div>
+        <div style={styles.cardType}>
+          {loading ? SKELETON : "AADHAAR CARD"}
+        </div>
       </div>
 
       <div style={styles.cardBody}>
         {side === "front" && (
           <>
-            <Field
-              label="Name"
-              value={(data as AadhaarFrontResult).name}
-            />
-            <Field
-              label="DOB"
-              value={(data as AadhaarFrontResult).dob}
-            />
-            <Field
-              label="Gender"
-              value={(data as AadhaarFrontResult).gender}
-            />
+            <Field label="Name" value={loading ? SKELETON : data?.name} />
+            <Field label="DOB" value={loading ? SKELETON : data?.dob} />
+            <Field label="Gender" value={loading ? SKELETON : data?.gender} />
             <Field
               label="Aadhaar Number"
-              value={(data as AadhaarFrontResult).aadhaar_number}
+              value={loading ? SKELETON : data?.aadhaar_number}
             />
           </>
         )}
@@ -468,15 +507,16 @@ const AadhaarCardPreview = ({
         {side === "back" && (
           <Field
             label="Address"
-            value={(data as AadhaarBackResult).address}
+            value={loading ? SKELETON : data?.address}
           />
         )}
       </div>
 
-      {/* ✅ Timestamp integrated into card */}
       <div style={styles.timestampRow}>
         <span style={styles.timestampLabel}>Generated</span>
-        <span style={styles.timestampValue}>{timestamp} IST</span>
+        <span style={styles.timestampValue}>
+          {loading ? SKELETON : `${timestamp} IST`}
+        </span>
       </div>
 
       <div style={styles.cardFooter}>
