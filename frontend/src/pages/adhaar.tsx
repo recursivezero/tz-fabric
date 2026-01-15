@@ -483,8 +483,6 @@ const AadhaarCardPreview = ({
       {/* 🌊 Shimmer Overlay */}
       {loading && <div className="card-shimmer" />}
 
-      <div style={styles.watermark}>Recursive Zero</div>
-
       <div style={styles.cardHeader}>
         <div style={styles.cardType}>
           {loading ? SKELETON : "AADHAAR CARD"}
@@ -513,7 +511,7 @@ const AadhaarCardPreview = ({
       </div>
 
       <div style={styles.timestampRow}>
-        <span style={styles.timestampLabel}>Generated</span>
+        <span style={styles.timestampLabel}>Recursive Zero</span>
         <span style={styles.timestampValue}>
           {loading ? SKELETON : `${timestamp} IST`}
         </span>

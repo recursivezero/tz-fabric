@@ -615,7 +615,6 @@ const CardPreview = ({ data, loading }: CardPreviewProps) => {
         <div className="watermark-animated" style={styles.watermark}>
           {/* SVG unchanged */}
         </div>
-        <div style={styles.watermarkText}>Recursive Zero</div>
       </div>
 
       {/* Header */}
@@ -666,7 +665,7 @@ const CardPreview = ({ data, loading }: CardPreviewProps) => {
 
       {/* Timestamp */}
       <div style={styles.timestampRow}>
-        <span style={styles.timestampLabel}>Generated</span>
+        <span style={styles.timestampLabel}>Recursive Zero</span>
         <span style={styles.timestampValue}>
           {loading ? SKELETON : `${timestamp} IST`}
         </span>
