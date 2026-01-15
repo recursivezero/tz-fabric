@@ -271,6 +271,21 @@ const CardReader = () => {
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
           transition: left 0.5s;
         }
+        .card-shimmer {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            110deg,
+            rgba(255,255,255,0.08) 25%,
+            rgba(255,255,255,0.25) 37%,
+            rgba(255,255,255,0.08) 63%
+          );
+          background-size: 200% 100%;
+          animation: shimmer 1.4s linear infinite;
+          pointer-events: none;
+          border-radius: 18px;
+        }
+
         
         .btn-primary:hover::before {
           left: 100%;
@@ -282,6 +297,22 @@ const CardReader = () => {
         
         .watermark-animated {
           animation: watermarkPulse 4s ease-in-out infinite;
+        }
+        
+        .title-shimmer {
+          background: linear-gradient(
+            90deg,
+            #1a1a2e 0%,
+            #FF6B35 25%,
+            #FFD700 50%,
+            #FF6B35 75%,
+            #1a1a2e 100%
+          );
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shimmer 2s linear infinite;
         }
         
         input[type="range"]::-webkit-slider-thumb {
@@ -337,8 +368,12 @@ const CardReader = () => {
           </div>
 
 
-          <h1 style={styles.title}>PAN Card Reader</h1>
-          <p style={styles.subtitle}>Extract information instantly from ID cards</p>
+          <h1 className={loading ? "title-shimmer" : ""} style={styles.title}>
+            {loading ? "Processing Your Card..." : "PAN Card Reader"}
+          </h1>
+          <p style={styles.subtitle}>
+            {loading ? "Extracting information with AI..." : "Extract information instantly from ID cards"}
+          </p>
           <div style={styles.privacyNote}>
             <svg
               width="16"
@@ -493,7 +528,7 @@ const CardReader = () => {
                           <line x1="16" y1="17" x2="8" y2="17" />
                           <polyline points="10 9 9 9 8 9" />
                         </svg>
-                        Extract Information
+                        Extract Details
                       </>
                     )}
                   </button>
@@ -504,9 +539,9 @@ const CardReader = () => {
         )}
 
         {/* Results */}
-        {result && (
+        {(loading || result) && (
           <div className="result-enter" style={styles.resultsSection}>
-            <CardPreview data={result} />
+            <CardPreview data={result} loading={loading} />
 
             <button
               className="btn-primary"
@@ -542,7 +577,14 @@ const CardReader = () => {
   );
 };
 
-const CardPreview = ({ data }: { data: PanResult }) => {
+type CardPreviewProps = {
+  data?: PanResult | null;
+  loading: boolean;
+};
+
+const SKELETON = "████████";
+
+const CardPreview = ({ data, loading }: CardPreviewProps) => {
   const timestamp = new Intl.DateTimeFormat("en-IN", {
     timeZone: "Asia/Kolkata",
     year: "numeric",
@@ -556,9 +598,18 @@ const CardPreview = ({ data }: { data: PanResult }) => {
     .format(new Date())
     .replace(/\b(am|pm)\b/, (m) => m.toUpperCase());
 
-
   return (
-    <div id="card-preview" style={styles.card}>
+    <div
+      id="card-preview"
+      style={{
+        ...styles.card,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* 🌊 Shimmer Overlay */}
+      {loading && <div className="card-shimmer" />}
+
       {/* Creative Animated Watermark */}
       <div style={styles.watermarkContainer}>
         <div className="watermark-animated" style={styles.watermark}>
@@ -567,8 +618,12 @@ const CardPreview = ({ data }: { data: PanResult }) => {
         <div style={styles.watermarkText}>Recursive Zero</div>
       </div>
 
+      {/* Header */}
       <div style={styles.cardHeader}>
-        <div style={styles.cardType}>{data.type} CARD</div>
+        <div style={styles.cardType}>
+          {loading ? SKELETON : `${data?.type ?? "PAN"} CARD`}
+        </div>
+
         <div style={styles.cardChip}>
           <div style={styles.chipLine} />
           <div style={styles.chipLine} />
@@ -576,36 +631,48 @@ const CardPreview = ({ data }: { data: PanResult }) => {
         </div>
       </div>
 
+      {/* Body */}
       <div style={styles.cardBody}>
         <div style={styles.cardField}>
           <div style={styles.fieldLabel}>Name</div>
-          <div style={styles.fieldValue}>{data.name || "—"}</div>
+          <div style={styles.fieldValue}>
+            {loading ? SKELETON : data?.name || "—"}
+          </div>
         </div>
 
         <div style={styles.cardField}>
           <div style={styles.fieldLabel}>Father's Name</div>
-          <div style={styles.fieldValue}>{data.father_name || "—"}</div>
+          <div style={styles.fieldValue}>
+            {loading ? SKELETON : data?.father_name || "—"}
+          </div>
         </div>
 
         <div style={styles.cardRow}>
           <div style={styles.cardField}>
             <div style={styles.fieldLabel}>PAN Number</div>
-            <div style={styles.fieldValue}>{data.pan_number || "—"}</div>
+            <div style={styles.fieldValue}>
+              {loading ? SKELETON : data?.pan_number || "—"}
+            </div>
           </div>
 
           <div style={styles.cardField}>
             <div style={styles.fieldLabel}>Date of Birth</div>
-            <div style={styles.fieldValue}>{data.dob || "—"}</div>
+            <div style={styles.fieldValue}>
+              {loading ? SKELETON : data?.dob || "—"}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ✅ Timestamp integrated into card */}
+      {/* Timestamp */}
       <div style={styles.timestampRow}>
         <span style={styles.timestampLabel}>Generated</span>
-        <span style={styles.timestampValue}>{timestamp} IST</span>
+        <span style={styles.timestampValue}>
+          {loading ? SKELETON : `${timestamp} IST`}
+        </span>
       </div>
 
+      {/* Footer */}
       <div style={styles.cardFooter}>
         <div style={styles.securityPattern} />
       </div>
