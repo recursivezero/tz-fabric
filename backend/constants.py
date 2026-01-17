@@ -5,7 +5,7 @@ PROJECT_DIR = Path(__file__).parent
 ASSETS = PROJECT_DIR / "assets"
 IMAGE_DIR = ASSETS / "images"
 AUDIO_DIR = ASSETS / "audios"
-GENERATED_IMAGE_FOLDER = ASSETS / "generated"
+GENERATED_IMAGE_FOLDER = IMAGE_DIR / "generated"
 GROUP_IMAGE_FOLDER = ASSETS / "uploaded" / "group"
 SINGLE_IMAGE_FOLDER = ASSETS / "uploaded" / "single"
 CACHE_DIR = Path.home() / ".cache" / "tz_script"
@@ -25,3 +25,21 @@ MODELS = {
 
 FABRIC_COLLECTION = "fabric_data"
 PROCESSING_TIMES_COLLECTION = "fabric_log"
+
+REQUIRED_DIRS = [
+    ASSETS,
+    IMAGE_DIR,
+    AUDIO_DIR,
+    GENERATED_IMAGE_FOLDER,
+    GROUP_IMAGE_FOLDER,
+    SINGLE_IMAGE_FOLDER,
+    CACHE_DIR,
+]
+def ensure_directories():
+    for path in REQUIRED_DIRS:
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            raise RuntimeError(f"Cannot create directory: {path}") from e
+            
+ensure_directories()
