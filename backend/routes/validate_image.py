@@ -99,16 +99,16 @@ def _resize_to_jpeg(data: bytes) -> bytes:
             if exif is not None and orientation is not None:
                 orientation_value = exif.get(orientation)
                 if orientation_value == 3:
-                    im = im.rotate(180, expand=True)
+                    im = im.rotate(180, expand=True)  # type: ignore[attr-defined,assignment]
                 elif orientation_value == 6:
-                    im = im.rotate(270, expand=True)
+                    im = im.rotate(270, expand=True)  # type: ignore[attr-defined,assignment]
                 elif orientation_value == 8:
-                    im = im.rotate(90, expand=True)
+                    im = im.rotate(90, expand=True)  # type: ignore[attr-defined,assignment]
         except Exception:
             pass
 
-        im = im.convert("RGB")
-        w, h = im.size
+        im = im.convert("RGB")  # type: ignore[attr-defined,assignment]
+        w, h = im.size  # type: ignore[attr-defined]
         if max(w, h) > MAX_SIDE:
             if w >= h:
                 nw = MAX_SIDE
@@ -118,9 +118,9 @@ def _resize_to_jpeg(data: bytes) -> bytes:
                 nw = int(w * (MAX_SIDE / h))
             # Use getattr to avoid mypy complaining about missing LANCZOS symbol in PIL stubs
             resample_filter = getattr(Image, "LANCZOS", getattr(Image, "BICUBIC"))
-            im = im.resize((nw, nh), resample_filter)
+            im = im.resize((nw, nh), resample_filter)  # type: ignore[attr-defined,assignment]
         out = io.BytesIO()
-        im.save(out, format="JPEG", quality=JPEG_QUALITY, optimize=True)
+        im.save(out, format="JPEG", quality=JPEG_QUALITY, optimize=True)  # type: ignore[attr-defined]
         return out.getvalue()
 
 

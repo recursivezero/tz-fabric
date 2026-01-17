@@ -1,25 +1,27 @@
 from datetime import datetime
 import os
-from typing import Optional
+from typing import Optional, Dict
 from constants import FABRIC_COLLECTION, PROCESSING_TIMES_COLLECTION
 from pymongo import MongoClient
 from pymongo.collection import Collection
 import io
 
-MONGO_CONFIG = {
-    "MONGODB_URI": os.getenv("DATABASE_URI"),
+MONGO_CONFIG: Dict[str, Optional[str]] = {
+    "MONGODB_URI": os.getenv("DATABASE_URI", "mongodb://localhost:27017"),
     "DATABASE_NAME": "tz-fabric",
 }
 
 
-mongo_client: Optional[MongoClient]
-collection: Optional[Collection]
-fabric_collection: Optional[Collection]
-processing_times_collection: Optional[Collection]
+mongo_client: Optional[MongoClient] = None
+collection: Optional[Collection] = None
+fabric_collection: Optional[Collection] = None
+processing_times_collection: Optional[Collection] = None
 
 # Initialize MongoDB connections with error handling
-mongo_client = MongoClient(MONGO_CONFIG["MONGODB_URI"])
-db = mongo_client[MONGO_CONFIG["DATABASE_NAME"]]
+mongo_uri: str = MONGO_CONFIG["MONGODB_URI"] or "mongodb://localhost:27017"
+mongo_client = MongoClient(mongo_uri)
+db_name: str = MONGO_CONFIG["DATABASE_NAME"] or "tz-fabric"
+db = mongo_client[db_name]
 fabric_collection = db[FABRIC_COLLECTION]
 processing_times_collection = db[PROCESSING_TIMES_COLLECTION]
 

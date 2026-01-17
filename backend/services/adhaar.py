@@ -1,6 +1,6 @@
 import re
 from typing import Optional
-import easyocr # type: ignore
+import easyocr  # type: ignore
 
 
 class AadhaarCardExtractor:

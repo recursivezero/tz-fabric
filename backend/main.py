@@ -53,13 +53,14 @@ origins = [
 @asynccontextmanager
 async def lifespan(app: MyApp):
     # Attach the client and db to the app so routes can access them
-    app.mongo_client = mongo_client
+    app.mongo_client = mongo_client  # type: ignore[assignment]
     app.database = db
 
     # Startup: perform a simple health check
     try:
-        mongo_client.admin.command("ping")
-        logger.info("successfully connected to MongoDB!")
+        if mongo_client is not None:
+            mongo_client.admin.command("ping")
+            logger.info("successfully connected to MongoDB!")
     except errors.OperationFailure as e:
         # Authentication or operation errors
         logger.error(f"MongoDB operation failed during startup: {e}")
@@ -71,8 +72,9 @@ async def lifespan(app: MyApp):
     yield
 
     try:
-        mongo_client.close()
-        logger.info("MongoDB connection closed")
+        if mongo_client is not None:
+            mongo_client.close()
+            logger.info("MongoDB connection closed")
     except Exception as e:
         logger.warning(f"Error while closing MongoDB client: {e}")
 
