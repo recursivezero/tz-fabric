@@ -1,7 +1,3 @@
-import re
-from unittest import result
-import cv2
-import numpy as np
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from PIL import Image
 from services.pan_extracter import PANCardExtractor

@@ -1,7 +1,6 @@
 import re
 from typing import Optional
-import easyocr
-from PIL import Image
+import easyocr # type: ignore
 
 
 class AadhaarCardExtractor:
@@ -11,6 +10,9 @@ class AadhaarCardExtractor:
 
     AADHAAR_PATTERN = re.compile(r"\b\d{4}\s?\d{4}\s?\d{4}\b")
     AADHAAR_MASKED_PATTERN = re.compile(r"\b[X×*]{4,8}\s?\d{4}\b")
+    AADHAAR_STRICT_PATTERN = re.compile(r"\b(\d{4})[ _-](\d{4})[ _-](\d{4})\b")
+    DOB_PATTERN = re.compile(r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b")
+
     DOB_SUBSTRING_PATTERN = re.compile(r"(\d{2})[./-](\d{2})[./-](\d{4})")
     YEAR_PATTERN = re.compile(r"\b(19|20)\d{2}\b")
     GENDER_PATTERN = re.compile(r"\b(MALE|FEMALE|M|F|T)\b", re.I)
@@ -41,6 +43,8 @@ class AadhaarCardExtractor:
         "ENROLLMENT",
         "ISSUED",
         "CARD",
+        "MALE",
+        "FEMALE",
         "NUMBER",
         "VID",
     }
@@ -124,22 +128,30 @@ class AadhaarCardExtractor:
     # FIELD EXTRACTION
     # ------------------------------------------------------------------
 
-    def extract_aadhaar_number(self, ocr_results):
+    def extract_aadhaar_number(self, ocr_results, previous_result=None):
         candidates = []
+
         for _, text, conf in ocr_results:
             t = self.normalize_text(text)
 
-            if self.AADHAAR_PATTERN.search(t):
-                digits = re.sub(r"\D", "", t)
-                if len(digits) == 12:
-                    candidates.append(
-                        (f"{digits[:4]} {digits[4:8]} {digits[8:]}", conf)
-                    )
+            # 🚫 Explicitly block DOB-like strings
+            if self.DOB_PATTERN.search(t):
+                continue
 
-            elif self.AADHAAR_MASKED_PATTERN.search(t):
-                candidates.append((t, conf * 0.9))
+            match = self.AADHAAR_STRICT_PATTERN.search(t)
+            if match:
+                digits = "".join(match.groups())
+                formatted = f"{digits[:4]} {digits[4:8]} {digits[8:]}"
+                candidates.append((formatted, conf))
 
-        return max(candidates, key=lambda x: x[1])[0] if candidates else None
+        # Preserve previous result (stability)
+        if previous_result:
+            candidates.append((previous_result, 0.4))
+
+        if not candidates:
+            return None
+
+        return max(candidates, key=lambda x: x[1])[0]
 
     def extract_dob(self, ocr_results):
         full_dates = []
@@ -182,7 +194,7 @@ class AadhaarCardExtractor:
         if not lines:
             return None
         lines.sort(key=lambda x: x[1])
-        return ", ".join(l[0] for l in lines[:5])
+        return ", ".join(l[0] for l in lines[:5])  # noqa: E741
 
     def extract_address_paragraph_easyocr(self, image_path: str) -> Optional[str]:
         ocr_paragraphs = self.reader.readtext(image_path, detail=1, paragraph=True)
@@ -243,6 +255,8 @@ class AadhaarCardExtractor:
         # RAW OCR (always safe: 3-tuples)
         raw_ocr = self.reader.readtext(image_path, detail=1)
         cleaned = self.clean_ocr_results(raw_ocr)
+        # for _,text,_ in raw_ocr: #for debugging results can be printed
+        #    print(text)
 
         if side == "front":
             result["aadhaar_number"] = self.extract_aadhaar_number(raw_ocr) or ""

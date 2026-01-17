@@ -3,7 +3,6 @@ import os
 from typing import Optional
 from constants import FABRIC_COLLECTION, PROCESSING_TIMES_COLLECTION
 from pymongo import MongoClient
-from pymongo.database import Database
 from pymongo.collection import Collection
 import io
 
@@ -11,7 +10,7 @@ MONGO_CONFIG = {
     "MONGODB_URI": os.getenv("DATABASE_URI"),
     "DATABASE_NAME": "tz-fabric",
 }
-print("Using MONGO URI =", os.getenv("DATABASE_URI"))
+
 
 mongo_client: Optional[MongoClient]
 collection: Optional[Collection]

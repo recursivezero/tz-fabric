@@ -7,9 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pymongo import MongoClient, errors, uri_parser
+from pymongo import MongoClient, errors
 from pymongo.database import Database
-from typing import Collection, Optional
 from routes.card_reader import router as card_router
 from routes.adhaar_reader import router as aadhar_router
 
@@ -17,7 +16,6 @@ from constants import (
     API_PREFIX,
     ASSETS,
     AUDIO_DIR,
-    GENERATED_IMAGE_FOLDER,
     IMAGE_DIR,
 )
 from routes import (
@@ -95,7 +93,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/mcp/", sse_app())
 app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_images")
 app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audios")
-app.mount("/generated", StaticFiles(directory=GENERATED_IMAGE_FOLDER), name="generated")
 
 templates = Jinja2Templates(directory="templates")
 

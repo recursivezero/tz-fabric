@@ -1,8 +1,8 @@
+import logging
 import re
 from typing import Dict, List, Tuple, Optional
 import easyocr  # type: ignore
 from itertools import product
-from PIL import Image
 
 
 class PANCardExtractor:
@@ -190,11 +190,6 @@ class PANCardExtractor:
         text_upper = text.upper()
         return any(indicator in text_upper for indicator in self.FATHER_INDICATORS)
 
-    def is_father_indicator(self, text: str) -> bool:
-        """Check if text contains father's name indicator."""
-        text_upper = text.upper()
-        return any(indicator in text_upper for indicator in self.FATHER_INDICATORS)
-
     def extract_pan_number(self, ocr_results: List[Tuple]) -> Optional[str]:
         """
         Extract PAN number using regex with OCR error normalization.
@@ -352,6 +347,7 @@ class PANCardExtractor:
                 result["father_name"] = father_name
 
         except Exception as e:
+            logging.error(f"PAN extraction error: {e}")
             # On any error, return empty result
             return result
 
