@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
 # requests stubs often not installed in CI; silence mypy here (or install types-requests).
-import requests  # type: ignore[import-not-found]
+import requests  # type: ignore[import-not-found, import-untyped]
 from dotenv import load_dotenv
 
 from constants import AUDIO_DIR, IMAGE_DIR

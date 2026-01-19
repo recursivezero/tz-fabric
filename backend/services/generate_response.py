@@ -34,7 +34,7 @@ def analyse_fabric_image(image_base64: str, prompt: str, idx: int) -> Dict[str, 
         )
 
         # extract text in a safe, predictable way
-        if response.choices:
+        if response.choices and response.choices[0].message.content:
             text = response.choices[0].message.content.strip()
             print("[Thread] Response received.")
             return {"id": idx, "response": text}

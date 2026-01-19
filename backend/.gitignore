@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 .streamlit/
 .venv
+.mypy_cache*
 min
 # C extensions
 *.so

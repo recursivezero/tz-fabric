@@ -23,8 +23,7 @@
       "titleBar.activeForeground": "#e7e7e7",
       "titleBar.inactiveBackground": "#a13d2299",
       "titleBar.inactiveForeground": "#e7e7e799",
-      "sideBar.border": "#cb4d2b",
-      "tab.activeBorder": "#cb4d2b"
+      "sideBar.border": "#cb4d2b"
     },
     "peacock.color": "#a13d22",
     "cSpell.words": [
@@ -121,6 +120,17 @@
         "folderPath": "tz-fabric/backend/",
         "color": "foldercolorizer.color_66cc66"
       }
-    ]
+    ],
+    "cSpell.customDictionaries": {
+      "project-words": {
+        "name": "project-words",
+        "path": "${workspaceRoot}/.vscode/project-words.txt",
+        "description": "Words used in this project",
+        "addWords": true
+      },
+      "custom": true, // Enable the `custom` dictionary
+      "internal-terms": false // Disable the `internal-terms` dictionary
+    },
+    "explorer.excludeGitIgnore": false
   }
 }
