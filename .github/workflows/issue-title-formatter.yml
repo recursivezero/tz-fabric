@@ -3,6 +3,7 @@ name: "Auto Format Issue Title"
 on:
   issues:
     types: [opened, labeled]
+
 permissions:
   issues: write
 
@@ -14,6 +15,3 @@ jobs:
         uses: recursivezero/template/.github/actions/format-issue-title@v2.5
         with:
           prefix: TZF
-          dry_run: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
