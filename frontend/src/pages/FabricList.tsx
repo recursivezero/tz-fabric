@@ -234,7 +234,7 @@ export default function ContentGrid() {
 
       { err && <div className="grid-error">⚠️ { err }</div> }
       { !loading && visibleItems.length === 0 && !err && (
-        <div className="empty-state">No valid images found.</div>
+        <div className="empty-state">No image found.</div>
       ) }
 
       <div className="media-grid">
