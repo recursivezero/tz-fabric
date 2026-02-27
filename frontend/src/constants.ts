@@ -17,7 +17,7 @@ export const NAVBAR_MENU = [
   { name: "list", path: "/view" },
   { name: "search", path: "/search" },
   { name: "chat", path: "/chat" },
-  { name: "card-reader", path: "/reader" },
+  { name: "reader", path: "/reader" },
   { name: "about", path: "/about", enable: false },
 
 ];
