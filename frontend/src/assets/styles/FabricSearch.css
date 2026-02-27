@@ -802,8 +802,8 @@ input[type="number"] {
   cursor: not-allowed
 }
 
-.btn primary {
-  width: 10px
+.btn.primary {
+  width: max-content;
 }
 
 /* preview wrap & overlay styling (buttons on image) */

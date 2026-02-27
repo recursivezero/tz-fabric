@@ -35,7 +35,7 @@ export default function MessageList({
   useLayoutEffect(() => {
     const el = scrollerRef?.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, scrollerRef]);
+  }, [scrollerRef]);
 
   const waitForSettled = (
     node: HTMLElement,
