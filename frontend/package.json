@@ -1,6 +1,6 @@
 {
   "name": "tz-fabric",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "homepage": "https://threadzip.com",
   "description": "A AI enabled fabric analysis, chatbot integration with image search",
@@ -44,14 +44,18 @@
     "build": "tsc -b && vite build",
     "lint": "biome lint .",
     "fix": " biome format . --write",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean": "rm -rf dist rm -rf build",
+    "nuke": "rm -rf node_modules && rm -f package-lock.json && npm run clean"
   },
   "dependencies": {
     "axios": "^1.11.0",
     "dotenv-expand": "^12.0.3",
+    "html-to-image": "^1.11.13",
     "jspdf": "^3.0.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-easy-crop": "^5.5.6",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.7.1",

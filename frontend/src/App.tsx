@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import "./App.css";
 import { Routing } from "./Routing";
 import Footer from "./components/Footer";
@@ -25,7 +25,7 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="header-center">
-         <NavBar/>
+        <NavBar/>
         </div>
         <div className="header-right action">
             <div id="theme"> <FaRegMoon /></div>

@@ -16,16 +16,16 @@ All notable changes to this repository will be documented in this file.
 
 - Added open graph meta tags
 - update env variables
-- added logo and favicons  
+- added logo and favicons
 
 ## [1.1.0] Fri, Dec 05, 2025
 
 - Added Contact Us page
 - 404 error handling
-- NavBar CSS fixed  
+- NavBar CSS fixed
 
 ## [1.2.0] Sat, Dec 13, 2025
 
 - Update chat screen UI
 
-[Unreleased]  
+[Unreleased]

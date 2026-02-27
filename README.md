@@ -1,8 +1,7 @@
 # 🧵 Fabric Analyzer
 
 ```text
-Fabric Analyzer is an AI-powered web application that analyzes fabric 
-images to provide insightful textual descriptions.
+Fabric Analyzer is an AI-powered web application that analyzes fabric images to provide insightful textual descriptions.
 ```
 
 🚀 Features
