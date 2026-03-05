@@ -7,7 +7,7 @@ __pycache__/
 min
 # C extensions
 *.so
-.env
+.env**
 # Distribution / packaging
 bin/
 build/

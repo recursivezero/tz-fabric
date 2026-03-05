@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 
-from constants import AUDIO_DIR, IMAGE_DIR
+from constants import AUDIO_DIR, IMAGE_DIR, IS_PROD
 from utils.paths import build_audio_url, build_image_url
 
 router = APIRouter(tags=["media"])
@@ -13,14 +13,21 @@ router = APIRouter(tags=["media"])
 
 @router.get("/assets/images/{filename}")
 def get_image(filename: str):
+    if IS_PROD:
+        raise HTTPException(status_code=404)
+
     path = IMAGE_DIR / filename
     if not path.exists():
-        raise HTTPException(status_code=404, detail="Image not found")
+        raise HTTPException(status_code=404)
+
     return FileResponse(path)
 
 
 @router.get("/assets/audios/{filename}")
 def get_audio(filename: str):
+    if IS_PROD:
+        raise HTTPException(status_code=404)
+
     path = AUDIO_DIR / filename
     if not path.exists():
         raise HTTPException(status_code=404, detail="Audio not found")
@@ -28,16 +35,22 @@ def get_audio(filename: str):
 
 
 def _image_exists(filename: Optional[str]) -> bool:
-    # Narrow filename before using Path / filename so mypy knows it's a str
     if not filename:
         return False
+
+    if IS_PROD:
+        return True
+
     return (IMAGE_DIR / filename).exists()
 
 
 def _audio_exists(filename: Optional[str]) -> bool:
-    # Narrow filename before using Path / filename so mypy knows it's a str
     if not filename:
         return False
+
+    if IS_PROD:
+        return True
+
     return (AUDIO_DIR / filename).exists()
 
 
