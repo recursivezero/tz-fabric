@@ -2,6 +2,8 @@
 from pathlib import Path
 from typing import Optional
 
+import requests
+
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 
@@ -39,19 +41,28 @@ def _image_exists(filename: Optional[str]) -> bool:
         return False
 
     if IS_PROD:
-        return True
+        return prod_image_exists(filename)
 
     return (IMAGE_DIR / filename).exists()
 
+def prod_image_exists(filename):
+    url = build_image_url(filename)
+    r = requests.head(url)
+    return r.status_code == 200
 
 def _audio_exists(filename: Optional[str]) -> bool:
     if not filename:
         return False
 
     if IS_PROD:
-        return True
+        return prod_audio_exists(filename)
 
     return (AUDIO_DIR / filename).exists()
+
+def prod_audio_exists(filename):
+    url = build_audio_url(filename)
+    r = requests.head(url)
+    return r.status_code == 200
 
 
 @router.get("/media/content")
@@ -63,64 +74,77 @@ def list_media_content(
 
     db = request.app.database
 
-    total_valid = 0
-    for doc in db.images.find({}, {"filename": 1}):
-        if _image_exists(doc.get("filename")):
-            total_valid += 1
+    images = list(
+        db.images.find(
+            {}, {"_id": 1, "filename": 1, "created_on": 1, "basename": 1}
+        ).sort("created_on", -1)
+    )
 
-    want_start = (page - 1) * limit
+    # build audio map once
+    audio_map = {
+        a["basename"]: a["filename"]
+        for a in db.audios.find({}, {"basename": 1, "filename": 1})
+    }
 
-    q = db.images.find(
-        {}, {"_id": 1, "filename": 1, "created_on": 1, "basename": 1}
-    ).sort("created_on", -1)
+    valid_items = []
 
-    valid_index = 0
-    items: list[dict] = []
+    for img in images:
 
-    for img in q:
         image_filename = img.get("filename")
+        if not image_filename:
+            continue
+
+        basename = img.get("basename") or Path(image_filename).stem
+
+        audio_filename = audio_map.get(basename)
+
+        # fabric must have both image and audio
+        if not audio_filename:
+            continue
+
+        if not audio_filename:
+            continue
+
         if not _image_exists(image_filename):
             continue
 
-        # Tell mypy that image_filename is a str here
-        assert isinstance(image_filename, str)
+        if not _audio_exists(audio_filename):
+            continue
 
-        if valid_index >= want_start and len(items) < limit:
-            basename = img.get("basename") or Path(image_filename).stem
-            created_at = img.get("created_on")
+        valid_items.append((img, image_filename, audio_filename))
 
-            image_url = build_image_url(image_filename)
 
-            audio_doc = db.audios.find_one({"basename": basename}, {"filename": 1})
-            audio_filename = audio_doc["filename"] if audio_doc else None
+    start = (page - 1) * limit
+    page_items = valid_items[start : start + limit]
 
-            # Only call build_audio_url with a real str (narrowed)
-            if audio_filename is not None and _audio_exists(audio_filename):
-                # mypy now knows audio_filename is str
-                audio_url = build_audio_url(audio_filename)
-            else:
-                audio_url = None
+    items = []
 
-            items.append(
-                {
-                    "_id": str(img["_id"]),
-                    "imageUrl": image_url,
-                    "audioUrl": audio_url,
-                    "createdAt": created_at,
-                    "basename": basename,
-                    "imageFilename": image_filename,
-                    "audioFilename": audio_filename if audio_url else None,
-                }
-            )
+    for img, image_filename, audio_filename in page_items:
 
-        valid_index += 1
-        if len(items) >= limit:
-            break
+        basename = img.get("basename") or Path(image_filename).stem
+        created_at = img.get("created_on")
+
+        items.append(
+            {
+                "_id": str(img["_id"]),
+                "imageUrl": build_image_url(image_filename),
+                "audioUrl": build_audio_url(audio_filename),
+                "createdAt": created_at,
+                "basename": basename,
+                "imageFilename": image_filename,
+                "audioFilename": audio_filename,
+            }
+        )
+    import math
+
+    total = len(valid_items)
+    total_pages = math.ceil(total / limit)
 
     return {
         "items": items,
         "page": page,
         "limit": limit,
-        "total": total_valid,
-        "total_pages": (total_valid + limit - 1) // limit,
+        "total": total,
+        "total_pages": total_pages,
     }
+
