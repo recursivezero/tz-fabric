@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import Optional
 
-from constants import API_PREFIX, AUDIO_DIR, IMAGE_DIR, PROJECT_DIR
+from constants import API_PREFIX, AUDIO_DIR, CDN_URL, IMAGE_DIR, IS_PROD, PROJECT_DIR
 
 
 def _url_from_path(
@@ -18,8 +18,18 @@ def _url_from_path(
 
 
 def build_image_url(filename: str) -> Optional[str]:
+    if not filename:
+        return None
+
+    if IS_PROD:
+        return f"{CDN_URL}/uploaded/images/{filename}"
     return _url_from_path(IMAGE_DIR, filename, api_prefix=API_PREFIX)
 
 
 def build_audio_url(filename: str) -> Optional[str]:
+    if not filename:
+        return None
+
+    if IS_PROD:
+        return f"{CDN_URL}/uploaded/audios/{filename}"
     return _url_from_path(AUDIO_DIR, filename, api_prefix=API_PREFIX)

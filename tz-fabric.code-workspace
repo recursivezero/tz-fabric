@@ -23,8 +23,7 @@
       "titleBar.activeForeground": "#e7e7e7",
       "titleBar.inactiveBackground": "#ff008799",
       "titleBar.inactiveForeground": "#e7e7e799",
-      "sideBar.border": "#ff339f",
-      "tab.activeBorder": "#ff339f"
+      "sideBar.border": "#ff339f"
     },
     "peacock.color": "#FF0087",
     "cSpell.words": [
