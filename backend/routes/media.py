@@ -36,34 +36,38 @@ def get_audio(filename: str):
     return FileResponse(path)
 
 
-def _image_exists(filename: Optional[str]) -> bool:
+def _image_exists(filename: Optional[str], is_prod: bool) -> bool:
     if not filename:
         return False
 
-    if IS_PROD:
-        return prod_image_exists(filename)
+    # environment mismatch → reject
+    if IS_PROD and not is_prod:
+        return False
 
-    return (IMAGE_DIR / filename).exists()
+    if not IS_PROD and is_prod:
+        return False
 
-def prod_image_exists(filename):
-    url = build_image_url(filename)
-    r = requests.head(url)
-    return r.status_code == 200
+    # dev environment → verify local file
+    if not IS_PROD:
+        return (IMAGE_DIR / filename).exists()
 
-def _audio_exists(filename: Optional[str]) -> bool:
+    # production → trust metadata
+    return True
+
+def _audio_exists(filename: Optional[str], is_prod: bool) -> bool:
     if not filename:
         return False
 
-    if IS_PROD:
-        return prod_audio_exists(filename)
+    if IS_PROD and not is_prod:
+        return False
 
-    return (AUDIO_DIR / filename).exists()
+    if not IS_PROD and is_prod:
+        return False
 
-def prod_audio_exists(filename):
-    url = build_audio_url(filename)
-    r = requests.head(url)
-    return r.status_code == 200
+    if not IS_PROD:
+        return (AUDIO_DIR / filename).exists()
 
+    return True
 
 @router.get("/media/content")
 def list_media_content(
@@ -75,15 +79,22 @@ def list_media_content(
     db = request.app.database
 
     images = list(
-        db.images.find(
-            {}, {"_id": 1, "filename": 1, "created_on": 1, "basename": 1}
-        ).sort("created_on", -1)
-    )
+    db.images.find(
+        {},
+        {
+            "_id": 1,
+            "filename": 1,
+            "created_on": 1,
+            "basename": 1,
+            "is_prod": 1
+        }
+    ).sort("created_on", -1)
+)
 
     # build audio map once
     audio_map = {
         a["basename"]: a["filename"]
-        for a in db.audios.find({}, {"basename": 1, "filename": 1})
+        for a in db.audios.find({}, {"basename": 1, "filename": 1,"is_prod": 1})
     }
 
     valid_items = []
@@ -94,25 +105,25 @@ def list_media_content(
         if not image_filename:
             continue
 
+        is_prod = img.get("is_prod")
+        print(is_prod)
+
         basename = img.get("basename") or Path(image_filename).stem
 
         audio_filename = audio_map.get(basename)
 
-        # fabric must have both image and audio
+        # fabric must have audio
         if not audio_filename:
             continue
 
-        if not audio_filename:
+        if not _image_exists(image_filename, is_prod):
             continue
 
-        if not _image_exists(image_filename):
-            continue
-
-        if not _audio_exists(audio_filename):
+        if not _audio_exists(audio_filename, is_prod):
             continue
 
         valid_items.append((img, image_filename, audio_filename))
-
+    print(f"Found {len(valid_items)} valid media items")
 
     start = (page - 1) * limit
     page_items = valid_items[start : start + limit]

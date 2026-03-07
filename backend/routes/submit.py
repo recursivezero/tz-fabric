@@ -130,6 +130,7 @@ async def submit_file(
             "filename": image_filename,
             "created_on": created_on,
             "file_type": image.content_type,
+            "is_prod": IS_PROD,
             "status": "queued",
             "indexedAt": None,
             "errorMessage": None,
@@ -141,6 +142,7 @@ async def submit_file(
             "basename": base_name,
             "filename": audio_filename,
             "created_on": created_on,
+            "is_prod": IS_PROD,
             "file_type": audio.content_type,
         }
     )
