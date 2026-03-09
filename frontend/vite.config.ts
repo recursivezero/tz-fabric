@@ -6,23 +6,25 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const TARGET_URL = `${process.env.VITE_API_URL}:${process.env.VITE_API_PORT}`;
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api/v1': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-    },
+      "/api/v1": {
+        target: TARGET_URL,
+        changeOrigin: true
+      }
+    }
   },
   build: {
-    chunkSizeWarningLimit: 2000, 
+    chunkSizeWarningLimit: 2000
   },
   preview: {
-    allowedHosts: ['pro.threadzip.com'],
-    host: true   
+    allowedHosts: ["pro.threadzip.com"],
+    host: true
   },
 
   resolve: {
@@ -31,5 +33,4 @@ export default defineConfig({
       "@assets": path.resolve(__dirname, "src/assets")
     }
   }
-
-})
+});

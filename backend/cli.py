@@ -45,9 +45,11 @@ def serve(host, port, reload):
 # dev command (legacy behavior)
 # ------------------------------------------------------------
 @main.command()
-def dev():
+@click.option("--host", default=DEFAULT_HOST, help="Host to bind.")
+@click.option("--port", default=DEFAULT_PORT, help="Port to run on.")
+def dev(host, port):
     """Run the development server with reload enabled."""
-    uvicorn.run("main:app", host=DEFAULT_HOST, port=DEFAULT_PORT, reload=True)
+    uvicorn.run("main:app", host=host, port=port, reload=True)
 
 
 # ------------------------------------------------------------
