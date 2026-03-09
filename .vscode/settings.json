@@ -3,5 +3,15 @@
     "levelname",
     "recursivezero",
     "uvicorn"
+  ],
+  "folder-color.pathColors": [
+    {
+      "folderPath": "tz-fabric/backend/",
+      "color": "foldercolorizer.color_33cc66"
+    },
+    {
+      "folderPath": "tz-fabric/frontend/",
+      "color": "foldercolorizer.color_cc66ff"
+    }
   ]
 }

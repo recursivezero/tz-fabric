@@ -1,5 +1,6 @@
 {
   "recommendations": [
-    "sergeyegorov.folder-color"
+    "sergeyegorov.folder-color",
+    "charliermarsh.ruff"
   ]
 }

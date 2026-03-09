@@ -20,4 +20,8 @@ All notable changes to this repository will be documented in this file.
 
 - Replace Gemini API with GROQ API
 
+## [1.3.0] Tue, Dec 30, 2025
+
+- PAN Card OCR added
+
 [Unreleased]

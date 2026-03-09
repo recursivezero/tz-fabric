@@ -1,5 +1,4 @@
 # utils/groq_client.py
-import base64
 import os
 from typing import Any, Optional
 
