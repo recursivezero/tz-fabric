@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DEFAULT_HOST = os.getenv("HOST", "127.0.0.1")
-DEFAULT_PORT = int(os.getenv("PORT", "8000"))
+DEFAULT_PORT = int(os.getenv("PORT", "8001"))
 
 
 # ------------------------------------------------------------
