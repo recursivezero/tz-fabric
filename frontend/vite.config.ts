@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const TARGET_URL = `${process.env.VITE_API_URL}:${process.env.VITE_API_PORT}`;
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,7 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api/v1": {
-        target: TARGET_URL,
+        target: process.env.VITE_API_URL,
         changeOrigin: true
       }
     }
