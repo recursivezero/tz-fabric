@@ -40,3 +40,4 @@ def ensure_directories():
 
 
 ensure_directories()
+MCP_URL = "http://localhost:8001/mcp/sse?transport=sse"
