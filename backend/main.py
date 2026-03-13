@@ -11,7 +11,8 @@ from pymongo import MongoClient, errors
 from pymongo.database import Database
 from routes.card_reader import router as card_router
 from routes.adhaar_reader import router as aadhar_router
-
+from routes.upload_category import router as uploads_router
+from routes.database import router as database_router
 from constants import (
     API_PREFIX,
     ASSETS,
@@ -108,10 +109,12 @@ app.include_router(media.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 app.include_router(contact.router, prefix=API_PREFIX)
+app.include_router(uploads_router, prefix=API_PREFIX)
 
 app.include_router(card_router, prefix=API_PREFIX)
 
 app.include_router(aadhar_router, prefix=API_PREFIX)
+app.include_router(database_router, prefix=API_PREFIX)
 
 
 @app.get("/__routes")
