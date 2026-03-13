@@ -1,0 +1,31 @@
+name: "Comment on Issue"
+run-name: "Comment under an Issue"
+
+on:
+  issues:
+    types: [opened]
+
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number"
+        required: true
+        type: number
+      comment_body:
+        description: "Comment text"
+        required: true
+        type: string
+
+permissions:
+  issues: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Comment Action
+        uses: recursivezero/action-club/.github/actions/comment-on-issue@main
+        with:
+          issue_number: ${{ github.event.inputs.issue_number }}
+          comment_body: ${{ github.event.inputs.comment_body }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}

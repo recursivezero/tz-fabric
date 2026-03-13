@@ -1,0 +1,40 @@
+name: Sync Main to Release
+run-name: Create Release PR
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to compare branches
+
+      - name: Check for Code Differences
+        id: diff_check
+        run: |
+          DIFF=$(git diff origin/release...origin/main --name-only)
+          if [ -z "$DIFF" ]; then
+            echo "No changes found between main and release. Skipping."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "## ⏭️ Sync Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Main and Release are already in sync." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run PR Logic
+        if: steps.diff_check.outputs.has_changes == 'true'
+        uses: recursivezero/action-club/.github/actions/release-pr@main
+        with:
+          github_token: ${{ secrets.TZ_PROJECT_PAT }}

@@ -27,7 +27,7 @@ export default function Footer() {
               className="footer__github"
               href="https://github.com/recursivezero/tz-fabric"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               aria-label="tz-fabric on GitHub"
             >
               {/* GitHub icon */}
@@ -61,7 +61,7 @@ export default function Footer() {
 
       <hr className="footer__rule" />
       <div className="footer__copyright">
-        © {new Date().getFullYear()} ·  <a href="https://recursivezero.com" target="_blank"> Recursive Zero Pvt Ltd </a>.  All Rights Reserved.
+        © { new Date().getFullYear() } ·  <a href="https://recursivezero.com" target="_blank" rel="noopener noreferrer"> RecursiveZero Private Limited </a>.  All Rights Reserved.
       </div>
     </footer>
   );

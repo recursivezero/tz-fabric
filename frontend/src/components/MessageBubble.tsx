@@ -47,7 +47,7 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
     return () => window.removeEventListener("fabricai:stop-typing", onStop);
   }, []);
   // reset stopped flag when content changes (new message)
-  useEffect(() => { setExternallyStopped(false); }, [normalized]);
+  useEffect(() => { setExternallyStopped(false); }, []);
 
   const isTyping = shouldType && typed !== normalized && !externallyStopped;
 
@@ -56,7 +56,7 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
   useEffect(() => {
     // reset copied flag on new content
     setCopied(false);
-  }, [normalized]);
+  }, []);
 
   const doCopy = async (text: string) => {
     try {
