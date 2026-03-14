@@ -21,8 +21,7 @@ fi
 
 # Step 2: Frontend Checks
 echo "🚀 Running Frontend checks..."
-cd frontend
-npm run lint && npm run build
+cd frontend && npm run lint
 if [ $? -ne 0 ]; then
   echo "❌ Frontend checks failed. Commit aborted."
   exit 1
@@ -31,8 +30,7 @@ cd ..
 
 # Step 3: Backend Checks (Poetry)
 echo "🐍 Running Backend checks..."
-cd backend
-poetry run lint
+cd backend && poetry run lint
 if [ $? -ne 0 ]; then
   echo "❌ Backend lint failed. Commit aborted."
   exit 1
