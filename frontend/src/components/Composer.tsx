@@ -386,7 +386,7 @@ export default function Composer({
           setError("Failed to process recording.");
         } finally {
           if (streamRef.current) {
-            streamRef.current.getTracks().forEach((t) => t.stop());
+            streamRef.current.getTracks().forEach((t) => { t.stop(); });
             streamRef.current = null;
           }
           if (timerRef.current) {
@@ -445,7 +445,7 @@ export default function Composer({
         try { mediaRecorderRef.current.stop(); } catch (e) { console.log(e)}
       }
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current.getTracks().forEach((t) => { t.stop(); });
         streamRef.current = null;
       }
       startTimeRef.current = null;
@@ -454,7 +454,7 @@ export default function Composer({
       if (pendingAudio) try { URL.revokeObjectURL(pendingAudio.url); } catch (e) { console.log(e) }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pendingImage, pendingAudio]);
 
   useEffect(() => {
     const onDoc = (ev: MouseEvent) => {

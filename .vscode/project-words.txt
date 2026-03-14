@@ -1,2 +1,3 @@
 aadhaar
+analyse
 easyocr
