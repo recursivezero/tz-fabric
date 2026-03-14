@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import lancedb
 import pandas as pd
 from image_search.schema import Fabric
-from utils.aws_helper import  generate_cdn_url, s3
+from utils.aws_helper import  generate_cdn_url, s3_client as s3
 from constants import ALLOWED_EXTENSIONS
 from utils.messages import TABLE_MESSAGES
 
