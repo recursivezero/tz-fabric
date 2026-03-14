@@ -1,5 +1,5 @@
-
 from box import Box
+
 TABLE_MESSAGES = Box(
     {
         "info": {

@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import lancedb
 import pandas as pd
 from image_search.schema import Fabric
-from utils.aws_helper import  generate_cdn_url, s3_client as s3
+from utils.aws_helper import generate_cdn_url, s3_client as s3
 from constants import ALLOWED_EXTENSIONS
 from utils.messages import TABLE_MESSAGES
 
@@ -19,7 +19,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
 
 
 def validate_file_path(file_path: str) -> bool:
@@ -73,6 +72,7 @@ def get_file_info(image_path: str) -> Optional[Dict[Any, Any]]:
 
 ALLOWED_ROOTS = {"stock", "fabric", "design", "single", "group"}
 
+
 def collect_image_data(root_folder: str) -> list:
     """Collect image info from local or S3, supports nested folders."""
     image_data = []
@@ -95,12 +95,14 @@ def collect_image_data(root_folder: str) -> list:
                     key = obj["Key"]
 
                     if key.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
-                        image_data.append({
-                            "image_uri": generate_cdn_url(key),
-                            "tag": category,
-                            "hash": obj["ETag"].strip('"'),
-                            "mtime": obj["LastModified"].timestamp(),
-                        })
+                        image_data.append(
+                            {
+                                "image_uri": generate_cdn_url(key),
+                                "tag": category,
+                                "hash": obj["ETag"].strip('"'),
+                                "mtime": obj["LastModified"].timestamp(),
+                            }
+                        )
 
     else:
         root_path = Path(root_folder).expanduser()
@@ -113,13 +115,16 @@ def collect_image_data(root_folder: str) -> list:
             for img_path in root_path.rglob(f"*.{ext}"):
                 file_info = get_file_info(str(img_path))
                 if file_info:
-                    image_data.append({
-                        "image_uri": str(img_path),
-                        "hash": file_info["hash"],
-                        "mtime": file_info["mtime"],
-                    })
+                    image_data.append(
+                        {
+                            "image_uri": str(img_path),
+                            "hash": file_info["hash"],
+                            "mtime": file_info["mtime"],
+                        }
+                    )
 
     return image_data
+
 
 def deduplicate_table_by_hash(table):
     """Remove duplicate entries in the table based on the 'hash' column.
@@ -196,10 +201,12 @@ def create_table(db, table_name: str, schema: Type[Fabric], image_data: list):
 
     return table
 
+
 def normalize_key(uri: str) -> str:
     if "uploaded/" in uri:
         return uri.split("uploaded/")[1]
     return uri
+
 
 def update_existing_table(table, current_images: list):
     """Update an existing table with new or modified image data.
@@ -222,17 +229,13 @@ def update_existing_table(table, current_images: list):
             existing_data["image_uri"].apply(normalize_key) == row_key
         ]
 
-
         if existing_row.empty or (
             not existing_row.empty and existing_row.iloc[0]["hash"] != row["hash"]
         ):
             new_or_modified.append(row.to_dict())
             if not existing_row.empty:
                 # Delete the old entry if it exists
-                table.delete(
-    f"hash == '{row['hash']}'"
-)
-
+                table.delete(f"hash == '{row['hash']}'")
 
     # Add new or modified images
     if new_or_modified:

@@ -20,7 +20,7 @@ class Fabric(LanceModel):
 
     vector: Vector(siglip.ndims()) = siglip.VectorField()  # type: ignore
     image_uri: str = siglip.SourceField()
-    tag:str
+    tag: str
     hash: str  # Add the hash field
     mtime: float
 

@@ -22,7 +22,6 @@ from utils.profanity import ProfanityError, filter_profanity_from_query
 from werkzeug.utils import secure_filename
 
 
-
 router = APIRouter(
     prefix="/search",
 )
@@ -38,7 +37,6 @@ async def image_search(
     page: Optional[int] = Form(None),
     per_page: Optional[int] = Form(None),
 ):
-
     """
     Unified search endpoint.
     - Supports JSON requests (MCP tools)
@@ -103,7 +101,9 @@ async def image_search(
 
             search_start = time.time()
             limit = limit or 20
-            _, image_paths = run_vector_search(table, Fabric, image, limit=limit,category=category)
+            _, image_paths = run_vector_search(
+                table, Fabric, image, limit=limit, category=category
+            )
             search_time = time.time() - search_start
             logThis.info(
                 f"Vector search took {search_time:.4f}s", extra={"color": "green"}
@@ -156,12 +156,8 @@ async def image_search(
             search_start = time.time()
             limit = limit or 20
             _, all_results = run_vector_search(
-    table,
-    Fabric,
-    search_term,
-    limit=limit,
-    category=category
-)
+                table, Fabric, search_term, limit=limit, category=category
+            )
 
             search_time = time.time() - search_start
             logThis.info(

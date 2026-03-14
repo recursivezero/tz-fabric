@@ -16,7 +16,6 @@ from constants import (
 from utils.logger import logThis
 
 
-
 router = APIRouter(
     prefix="/database",
 )

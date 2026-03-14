@@ -1,9 +1,6 @@
-import os
-import sys
-
 import lancedb
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from constants import DATABASE_PATH
 
 

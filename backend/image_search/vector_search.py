@@ -4,11 +4,7 @@ from typing import Any, List, Tuple
 
 
 def run_vector_search(
-    table,
-    schema,
-    search_query: Any,
-    limit: int = 6,
-    category: str | None = None
+    table, schema, search_query: Any, limit: int = 6, category: str | None = None
 ) -> Tuple[List[Any], List[str]]:
     """Optimized vector search with same interface but faster performance.
 
@@ -35,12 +31,7 @@ def run_vector_search(
             .to_pydantic(schema)
         )
     else:
-        rs = (
-            table.search(search_query)
-            .limit(limit)
-            .to_pydantic(schema)
-        )
-
+        rs = table.search(search_query).limit(limit).to_pydantic(schema)
 
     # Process results with optimized path handling
     image_uris = []

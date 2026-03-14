@@ -6,7 +6,6 @@ from constants import ALLOWED_EXTENSIONS
 from pydantic import BaseModel, Field
 
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 from image_search.db.connection import get_table
 
 
@@ -66,5 +65,3 @@ def table_exists(database_path: str, table_name: str) -> bool:
         return table is not None
     except Exception:
         return False
-
-

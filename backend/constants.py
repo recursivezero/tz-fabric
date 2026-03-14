@@ -8,7 +8,7 @@ load_env()
 ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "avif", "bmp"]
 TABLE_NAME = "tz-fabric-table"
 PROJECT_DIR = Path(__file__).parent
-STORAGE_OPTIONS={}
+STORAGE_OPTIONS = {}
 RELATIVE_GENERATED_FOLDER = "s3://threadzip-bucket/uploaded/"
 ASSETS = PROJECT_DIR / "assets"
 UPLOAD_FOLDER_FABRIC = ASSETS / "search"

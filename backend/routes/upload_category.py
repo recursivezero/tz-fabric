@@ -17,12 +17,11 @@ class Category(str, Enum):
 
 
 @router.post("/upload-image")
-async def upload_image(
-    category: Category = Form(...),
-    image: UploadFile = File(...)
-):
+async def upload_image(category: Category = Form(...), image: UploadFile = File(...)):
     if not IS_PROD:
-        raise HTTPException(status_code=403, detail="Uploads allowed only in production")
+        raise HTTPException(
+            status_code=403, detail="Uploads allowed only in production"
+        )
 
     ext = os.path.splitext(image.filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
@@ -31,8 +30,4 @@ async def upload_image(
 
     upload_file(image.file, image_key)
 
-    return {
-        "success": True,
-        "category": category,
-        "image_key": image_key
-    }
+    return {"success": True, "category": category, "image_key": image_key}
