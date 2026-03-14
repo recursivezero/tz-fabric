@@ -1,3 +1,5 @@
 aadhaar
 analyse
 easyocr
+pipx
+pyproject
