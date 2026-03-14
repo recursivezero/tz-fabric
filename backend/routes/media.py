@@ -53,6 +53,7 @@ def _image_exists(filename: Optional[str], is_prod: bool) -> bool:
     # production → trust metadata
     return True
 
+
 def _audio_exists(filename: Optional[str], is_prod: bool) -> bool:
     if not filename:
         return False
@@ -68,6 +69,7 @@ def _audio_exists(filename: Optional[str], is_prod: bool) -> bool:
 
     return True
 
+
 @router.get("/media/content")
 def list_media_content(
     request: Request,
@@ -78,22 +80,15 @@ def list_media_content(
     db = request.app.database
 
     images = list(
-    db.images.find(
-        {},
-        {
-            "_id": 1,
-            "filename": 1,
-            "created_on": 1,
-            "basename": 1,
-            "is_prod": 1
-        }
-    ).sort("created_on", -1)
-)
+        db.images.find(
+            {}, {"_id": 1, "filename": 1, "created_on": 1, "basename": 1, "is_prod": 1}
+        ).sort("created_on", -1)
+    )
 
     # build audio map once
     audio_map = {
         a["basename"]: a["filename"]
-        for a in db.audios.find({}, {"basename": 1, "filename": 1,"is_prod": 1})
+        for a in db.audios.find({}, {"basename": 1, "filename": 1, "is_prod": 1})
     }
 
     valid_items = []
@@ -157,4 +152,3 @@ def list_media_content(
         "total": total,
         "total_pages": total_pages,
     }
-

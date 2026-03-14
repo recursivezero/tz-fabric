@@ -82,7 +82,6 @@
       "./src"
     ],
     "files.exclude": {
-      ".git": true,
       ".poetry/**": true,
       "**/__pycache__": true,
       "**/node_modules": true

@@ -1,4 +1,5 @@
 import os
+from xmlrpc.client import Boolean
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
@@ -14,8 +15,8 @@ AWS_PUBLIC_URL = os.getenv("AWS_PUBLIC_URL")  # optional CDN/domain
 
 s3_client = boto3.client("s3", region_name=AWS_REGION)
 
-s3=s3_client
-def upload_file(file_obj, key: str) -> str:
+
+def upload_file(file_obj, key: str) -> Boolean:
     """
     Upload a file-like object to S3.
 
