@@ -2,10 +2,12 @@
 from pathlib import Path
 from typing import Optional
 
+import requests
+
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 
-from constants import AUDIO_DIR, IMAGE_DIR
+from constants import AUDIO_DIR, IMAGE_DIR, IS_PROD
 from utils.paths import build_audio_url, build_image_url
 
 router = APIRouter(tags=["media"])
@@ -13,33 +15,59 @@ router = APIRouter(tags=["media"])
 
 @router.get("/assets/images/{filename}")
 def get_image(filename: str):
+    if IS_PROD:
+        raise HTTPException(status_code=404)
+
     path = IMAGE_DIR / filename
     if not path.exists():
-        raise HTTPException(status_code=404, detail="Image not found")
+        raise HTTPException(status_code=404)
+
     return FileResponse(path)
 
 
 @router.get("/assets/audios/{filename}")
 def get_audio(filename: str):
+    if IS_PROD:
+        raise HTTPException(status_code=404)
+
     path = AUDIO_DIR / filename
     if not path.exists():
         raise HTTPException(status_code=404, detail="Audio not found")
     return FileResponse(path)
 
 
-def _image_exists(filename: Optional[str]) -> bool:
-    # Narrow filename before using Path / filename so mypy knows it's a str
+def _image_exists(filename: Optional[str], is_prod: bool) -> bool:
     if not filename:
         return False
-    return (IMAGE_DIR / filename).exists()
 
+    # environment mismatch → reject
+    if IS_PROD and not is_prod:
+        return False
 
-def _audio_exists(filename: Optional[str]) -> bool:
-    # Narrow filename before using Path / filename so mypy knows it's a str
+    if not IS_PROD and is_prod:
+        return False
+
+    # dev environment → verify local file
+    if not IS_PROD:
+        return (IMAGE_DIR / filename).exists()
+
+    # production → trust metadata
+    return True
+
+def _audio_exists(filename: Optional[str], is_prod: bool) -> bool:
     if not filename:
         return False
-    return (AUDIO_DIR / filename).exists()
 
+    if IS_PROD and not is_prod:
+        return False
+
+    if not IS_PROD and is_prod:
+        return False
+
+    if not IS_PROD:
+        return (AUDIO_DIR / filename).exists()
+
+    return True
 
 @router.get("/media/content")
 def list_media_content(
@@ -50,64 +78,84 @@ def list_media_content(
 
     db = request.app.database
 
-    total_valid = 0
-    for doc in db.images.find({}, {"filename": 1}):
-        if _image_exists(doc.get("filename")):
-            total_valid += 1
-
-    want_start = (page - 1) * limit
-
-    q = db.images.find(
-        {}, {"_id": 1, "filename": 1, "created_on": 1, "basename": 1}
+    images = list(
+    db.images.find(
+        {},
+        {
+            "_id": 1,
+            "filename": 1,
+            "created_on": 1,
+            "basename": 1,
+            "is_prod": 1
+        }
     ).sort("created_on", -1)
+)
 
-    valid_index = 0
-    items: list[dict] = []
+    # build audio map once
+    audio_map = {
+        a["basename"]: a["filename"]
+        for a in db.audios.find({}, {"basename": 1, "filename": 1,"is_prod": 1})
+    }
 
-    for img in q:
+    valid_items = []
+
+    for img in images:
+
         image_filename = img.get("filename")
-        if not _image_exists(image_filename):
+        if not image_filename:
             continue
 
-        # Tell mypy that image_filename is a str here
-        assert isinstance(image_filename, str)
+        is_prod = img.get("is_prod")
+        print(is_prod)
 
-        if valid_index >= want_start and len(items) < limit:
-            basename = img.get("basename") or Path(image_filename).stem
-            created_at = img.get("created_on")
+        basename = img.get("basename") or Path(image_filename).stem
 
-            image_url = build_image_url(image_filename)
+        audio_filename = audio_map.get(basename)
 
-            audio_doc = db.audios.find_one({"basename": basename}, {"filename": 1})
-            audio_filename = audio_doc["filename"] if audio_doc else None
+        # fabric must have audio
+        if not audio_filename:
+            continue
 
-            # Only call build_audio_url with a real str (narrowed)
-            if audio_filename is not None and _audio_exists(audio_filename):
-                # mypy now knows audio_filename is str
-                audio_url = build_audio_url(audio_filename)
-            else:
-                audio_url = None
+        if not _image_exists(image_filename, is_prod):
+            continue
 
-            items.append(
-                {
-                    "_id": str(img["_id"]),
-                    "imageUrl": image_url,
-                    "audioUrl": audio_url,
-                    "createdAt": created_at,
-                    "basename": basename,
-                    "imageFilename": image_filename,
-                    "audioFilename": audio_filename if audio_url else None,
-                }
-            )
+        if not _audio_exists(audio_filename, is_prod):
+            continue
 
-        valid_index += 1
-        if len(items) >= limit:
-            break
+        valid_items.append((img, image_filename, audio_filename))
+    print(f"Found {len(valid_items)} valid media items")
+
+    start = (page - 1) * limit
+    page_items = valid_items[start : start + limit]
+
+    items = []
+
+    for img, image_filename, audio_filename in page_items:
+
+        basename = img.get("basename") or Path(image_filename).stem
+        created_at = img.get("created_on")
+
+        items.append(
+            {
+                "_id": str(img["_id"]),
+                "imageUrl": build_image_url(image_filename),
+                "audioUrl": build_audio_url(audio_filename),
+                "createdAt": created_at,
+                "basename": basename,
+                "imageFilename": image_filename,
+                "audioFilename": audio_filename,
+            }
+        )
+    import math
+
+    total = len(valid_items)
+    total_pages = math.ceil(total / limit)
 
     return {
         "items": items,
         "page": page,
         "limit": limit,
-        "total": total_valid,
-        "total_pages": (total_valid + limit - 1) // limit,
+        "total": total,
+        "total_pages": total_pages,
     }
+

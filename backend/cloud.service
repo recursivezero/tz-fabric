@@ -8,7 +8,7 @@ WorkingDirectory=/opt/project/path/tz-fabric/backend
 Environment="HOME=/root"
 Environment="PYTHONUNBUFFERED=1"
 Environment="PATH=/root/.local/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/root/.local/bin/poetry run threadzip dev
+ExecStart=/usr/bin/env bash -lc '/root/.local/bin/poetry run tzfabric dev --port 8002'
 Restart=always
 RestartSec=5
 

@@ -200,7 +200,7 @@ export default function Composer({
       ac.close().catch(() => { });
       return trimmedFile;
     } catch (err) {
-      try { ac.close().catch(() => { }); } catch { }
+      try { ac.close().catch(() => { }); } catch (e) { console.log(e) }
       throw err;
     }
   };
@@ -236,13 +236,13 @@ export default function Composer({
     onUpload?.(file);
     setImageMeta({ name: file.name, size: formatSize(file.size) });
     // parent probably sets previewUrl; we still revoke local URL to avoid leak
-    try { URL.revokeObjectURL(url); } catch { }
+    try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
     setPendingImage(null);
   };
 
   const cancelImageUpload = () => {
     if (pendingImage) {
-      try { URL.revokeObjectURL(pendingImage.url); } catch { }
+      try { URL.revokeObjectURL(pendingImage.url); } catch (e) { console.log(e) }
     }
     setPendingImage(null);
   };
@@ -259,7 +259,7 @@ export default function Composer({
     audioEl.onloadedmetadata = async () => {
       try {
         const duration = audioEl.duration;
-        try { URL.revokeObjectURL(url); } catch { }
+        try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
         if (duration > MAX_SECONDS + 0.1) {
           // attempt to trim
           try {
@@ -290,7 +290,7 @@ export default function Composer({
     };
 
     audioEl.onerror = () => {
-      try { URL.revokeObjectURL(url); } catch { }
+      try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
       setError("Could not read audio file. Try again with a supported format.");
       setPendingAudio(null);
     };
@@ -298,7 +298,7 @@ export default function Composer({
 
   const cancelAudioUpload = () => {
     if (pendingAudio) {
-      try { URL.revokeObjectURL(pendingAudio.url); } catch { }
+      try { URL.revokeObjectURL(pendingAudio.url); } catch (e) { console.log(e) }
     }
     setPendingAudio(null);
   };
@@ -386,7 +386,7 @@ export default function Composer({
           setError("Failed to process recording.");
         } finally {
           if (streamRef.current) {
-            streamRef.current.getTracks().forEach((t) => t.stop());
+            streamRef.current.getTracks().forEach((t) => { t.stop(); });
             streamRef.current = null;
           }
           if (timerRef.current) {
@@ -442,19 +442,19 @@ export default function Composer({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        try { mediaRecorderRef.current.stop(); } catch { }
+        try { mediaRecorderRef.current.stop(); } catch (e) { console.log(e)}
       }
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current.getTracks().forEach((t) => { t.stop(); });
         streamRef.current = null;
       }
       startTimeRef.current = null;
       // revoke any pending object URLs on unmount
-      if (pendingImage) try { URL.revokeObjectURL(pendingImage.url); } catch { }
-      if (pendingAudio) try { URL.revokeObjectURL(pendingAudio.url); } catch { }
+      if (pendingImage) try { URL.revokeObjectURL(pendingImage.url); } catch (e) { console.log(e) }
+      if (pendingAudio) try { URL.revokeObjectURL(pendingAudio.url); } catch (e) { console.log(e) }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pendingImage, pendingAudio]);
 
   useEffect(() => {
     const onDoc = (ev: MouseEvent) => {

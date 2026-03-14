@@ -1,11 +1,12 @@
 import shutil
-from datetime import datetime
+import datetime
 from pathlib import Path
 from typing import Any, Optional, cast
 
+from utils.aws_helper import upload_file
 from fastapi import APIRouter, BackgroundTasks, File, Form, Request, UploadFile
 
-from constants import AUDIO_DIR, IMAGE_DIR
+from constants import AUDIO_DIR, IMAGE_DIR, IS_PROD
 from core.embedder import embed_image_bytes
 from core.store import get_index
 from utils.filename import sanitize_filename
@@ -82,8 +83,6 @@ async def submit_file(
         # UploadFile.filename may be typed Optional[str] in some stubs — narrow for mypy
         assert image.filename is not None
         base_name = sanitize_filename(image.filename)
-
-    # narrow filenames before using Path(...) so mypy knows they're str
     assert image.filename is not None
     assert audio.filename is not None
 
@@ -93,19 +92,36 @@ async def submit_file(
     image_filename = f"{base_name}.{image_ext}"
     audio_filename = f"{base_name}.{audio_ext}"
 
-    image_path = IMAGE_DIR / image_filename
-    audio_path = AUDIO_DIR / audio_filename
+    if IS_PROD:
+        # upload to S3
 
-    # save files
-    image.file.seek(0)
-    with image_path.open("wb") as out:
-        shutil.copyfileobj(image.file, out)
+        image.file.seek(0)
+        image_key = f"uploaded/images/{image_filename}"
+        if upload_file(image.file, image_key):
+            print(f"Uploaded {image_filename} to S3")
+        image_path = None
 
-    audio.file.seek(0)
-    with audio_path.open("wb") as out:
-        shutil.copyfileobj(audio.file, out)
+        audio.file.seek(0)
+        audio_key = f"uploaded/audios/{audio_filename}"
+        if upload_file(audio.file, audio_key):
+            print(f"Uploaded {audio_filename} to S3")
+        audio_path = None
 
-    created_on = datetime.utcnow().isoformat()
+    else:
+        # save locally
+
+        image_path = IMAGE_DIR / image_filename
+        audio_path = AUDIO_DIR / audio_filename
+
+        image.file.seek(0)
+        with image_path.open("wb") as out:
+            shutil.copyfileobj(image.file, out)
+
+        audio.file.seek(0)
+        with audio_path.open("wb") as out:
+            shutil.copyfileobj(audio.file, out)
+
+    created_on = datetime.datetime.now(datetime.UTC)
 
     # store only clean metadata in DB
     db.images.insert_one(
@@ -114,6 +130,7 @@ async def submit_file(
             "filename": image_filename,
             "created_on": created_on,
             "file_type": image.content_type,
+            "is_prod": IS_PROD,
             "status": "queued",
             "indexedAt": None,
             "errorMessage": None,
@@ -125,6 +142,7 @@ async def submit_file(
             "basename": base_name,
             "filename": audio_filename,
             "created_on": created_on,
+            "is_prod": IS_PROD,
             "file_type": audio.content_type,
         }
     )

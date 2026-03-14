@@ -1,15 +1,23 @@
 import os
 from pathlib import Path
 
+from utils.env_config import load_env
+
+
+load_env()
+
 PROJECT_DIR = Path(__file__).parent
 ASSETS = PROJECT_DIR / "assets"
 IMAGE_DIR = ASSETS / "images"
 AUDIO_DIR = ASSETS / "audios"
 CACHE_DIR = Path.home() / ".cache" / "tz_script"
-API_PREFIX = "/api/v1"
+API_PREFIX = os.getenv("API_PREFIX", "/api/v1")
+CDN_URL = os.getenv("CDN_URL")
 MCP_URL = "http://localhost:8000/mcp/sse?transport=sse"
-
-ENVIRONMENT = "development"
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+print(f"Running in {ENVIRONMENT} environment")
+IS_PROD = ENVIRONMENT == "production"
+print(IS_PROD)
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "avif", "bmp"}
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
@@ -40,3 +48,4 @@ def ensure_directories():
 
 
 ensure_directories()
+MCP_URL = "http://localhost:8002/mcp/sse?transport=sse"

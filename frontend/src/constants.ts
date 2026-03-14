@@ -1,6 +1,8 @@
 export const BASE_URL = import.meta.env.VITE_API_URL;
 export const API_PREFIX = import.meta.env.VITE_API_PREFIX; // New environment variable
-export const FULL_API_URL = `${BASE_URL}/${API_PREFIX}`
+export const FULL_API_URL = `${BASE_URL}${API_PREFIX}`
+
+console.log({ FULL_API_URL });
 
 
 if (import.meta.env.DEV) {
