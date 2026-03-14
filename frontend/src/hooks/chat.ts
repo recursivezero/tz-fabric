@@ -315,13 +315,14 @@ const handleResponse = useCallback((res: ChatResponse) => {
               return `[tool result: ${Object.keys(obj).join(", ")}]`;
             }
           } catch (e) {
+            console.warn("Failed to parse JSON from bot message:", e);
             // not parseable JSON - try TextContent extraction below
           }
         }
 
         // TextContent(text='...') pattern
         const tc = s.match(/TextContent\([^)]*text\s*=\s*(['"])([\s\S]*?)\1/);
-        if (tc && tc[2]) {
+        if (tc?.[2]) {
           const inner = tc[2];
           try {
             const innerObj = JSON.parse(inner);
@@ -331,13 +332,14 @@ const handleResponse = useCallback((res: ChatResponse) => {
               return `[tool result: ${Object.keys(innerObj).join(", ")}]`;
             }
           } catch (e) {
+            console.warn("Failed to parse JSON from TextContent:", e);
             return normalizeLLMText(inner);
           }
         }
 
         // If looks like raw JSON blob and action indicates upload, return friendly canned message
         if (s.includes("{") && s.includes("}")) {
-          if (action && action.params && action.type && ["redirect_to_analysis", "redirect_to_media_analysis", "search"].includes(action.type)) {
+          if(action?.params && action.type && ["redirect_to_analysis", "redirect_to_media_analysis", "search"].includes(action.type)){
             if (Array.isArray(analysis_resps) && analysis_resps.length > 0) {
               const first = analysis_resps[0];
               if (first && typeof first === "object" && typeof first.text === "string") return normalizeLLMText(first.text);
@@ -350,6 +352,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
         // otherwise: normal text
         return normalizeLLMText(s);
       } catch (e) {
+        console.error("Error in sanitizeBotString:", e);
         return "[tool returned non-displayable result]";
       }
     };
@@ -360,7 +363,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
       assistantText = sanitizeBotString(bots[0], rc.action as ToolAction | undefined, rc.analysis_responses as any[] | undefined);
       // if sanitized result is summary token, avoid leaking raw JSON-like strings
       if (!assistantText) assistantText = "[tool returned non-displayable result]";
-    } else if (rc.reply && rc.reply.content) {
+    } else if (rc.reply?.content) {
       assistantText = normalizeLLMText(rc.reply.content);
     }
 
@@ -405,7 +408,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
             !low.includes("want to know more") &&
             !low.includes("would you like more")
           ) {
-            finalText = finalText + "\n\nWould you like to know more?";
+            finalText = `${finalText}\n\nWould you like to know more?`;
           }
         }
         next.push({ role: "assistant", content: finalText });
@@ -811,7 +814,7 @@ if (!forceApi) setPendingAction(null);
 }, [
   input, messages, uploadedImageFile, uploadedAudioFile, status,
   handleResponse, clearImage, clearAudio, createAbort, withAbort,
-  getModeFromText, searchSimilar, errorMsg, setFileName
+  getModeFromText, searchSimilar, errorMsg, morePrompt
 ]);
   const onAssistantRendered = useCallback((lastAssistant: Message) => {
     try {

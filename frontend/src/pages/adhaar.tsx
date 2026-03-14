@@ -92,7 +92,7 @@ const AadhaarCardReader = () => {
 
     return new Promise((resolve) => {
       const image = new Image();
-      image.src = originalPreview!; 
+      image.src = originalPreview; 
       image.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");

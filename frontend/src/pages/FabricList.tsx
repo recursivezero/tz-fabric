@@ -137,6 +137,7 @@ export default function ContentGrid() {
     document.body.style.overflow = "";
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-render loop.
   useEffect(() => {
     if (!lightboxOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -152,6 +153,7 @@ export default function ContentGrid() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lightboxOpen]);
 
   const onWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {

@@ -60,7 +60,7 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
 
   const doCopy = async (text: string) => {
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
       } else {
         // fallback
