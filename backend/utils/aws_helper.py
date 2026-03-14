@@ -44,4 +44,4 @@ def upload_file(file_obj, key: str) -> str:
     except (BotoCoreError, ClientError) as e:
         raise RuntimeError(f"S3 upload failed: {e}")
 def generate_cdn_url(object_key: str) -> str:
-    return f"{"https://cdn.threadzip.com"}/{object_key}"
+    return f"{AWS_PUBLIC_URL}/{object_key}"

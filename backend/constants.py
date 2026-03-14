@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from re import A, U
 
 from utils.env_config import load_env
 
@@ -41,6 +40,7 @@ REQUIRED_DIRS = [
     IMAGE_DIR,
     AUDIO_DIR,
     CACHE_DIR,
+    UPLOAD_FOLDER_FABRIC,
 ]
 
 
