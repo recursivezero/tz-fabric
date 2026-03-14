@@ -1,7 +1,8 @@
 import shutil
-import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional, cast
+
 
 from utils.aws_helper import upload_file
 from fastapi import APIRouter, BackgroundTasks, File, Form, Request, UploadFile
@@ -54,7 +55,7 @@ def _process_index_job(
             {
                 "$set": {
                     "status": "indexed",
-                    "indexedAt": datetime.utcnow().isoformat(),
+                    "indexedAt": datetime.now(timezone.utc).isoformat(),
                 },
                 "$unset": {"errorMessage": ""},
             },
@@ -121,7 +122,7 @@ async def submit_file(
         with audio_path.open("wb") as out:
             shutil.copyfileobj(audio.file, out)
 
-    created_on = datetime.datetime.now(datetime.UTC)
+    created_on = datetime.now(timezone.utc).isoformat()
 
     # store only clean metadata in DB
     db.images.insert_one(
@@ -151,7 +152,7 @@ async def submit_file(
     background.add_task(
         _process_index_job,
         db=db,
-        image_path=image_path,
+        image_path=cast(Path, image_path),
         basename=base_name,
         image_filename=image_filename,
         audio_filename=audio_filename,
