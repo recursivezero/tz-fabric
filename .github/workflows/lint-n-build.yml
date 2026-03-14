@@ -4,7 +4,7 @@ run-name: Lint and Build when push or raise PR
 on:
   push:
     branches: ["main", "develop", "feature/*", "!task/*"]
-    paths: &filters # reference syntax
+    paths: &filters
       - "frontend/**"
 
   pull_request:
@@ -13,12 +13,17 @@ on:
     paths: *filters
 
 concurrency:
-  group: build-${{ github.ref }} # group by branch
-  cancel-in-progress: true # cancel older runs
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
-defaults: 
-  run: 
+defaults:
+  run:
     working-directory: frontend
+
+# YAML anchor defined once
+x-node-cache: &node-cache
+  cache: "npm"
+  cache-dependency-path: frontend/package-lock.json
 
 jobs:
   lint:
@@ -31,8 +36,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          <<: *node-cache
 
       - name: Install dependencies
         run: npm ci
@@ -52,7 +56,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "npm"
+          <<: *node-cache
 
       - name: Install dependencies
         run: npm ci
