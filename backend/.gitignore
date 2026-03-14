@@ -8,6 +8,7 @@ min
 # C extensions
 *.so
 .env**
+!.env.local
 # Distribution / packaging
 bin/
 build/
