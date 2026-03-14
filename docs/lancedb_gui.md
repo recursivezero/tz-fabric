@@ -6,7 +6,7 @@ Docker is assumed to already be installed.
 
 ---
 
-# 1. Pull the Data Viewer Image
+## 1. Pull the Data Viewer Image
 
 ```bash
 docker pull ghcr.io/gordonmurray/lance-data-viewer:lancedb-0.24.3
@@ -16,7 +16,7 @@ This version supports modern LanceDB datasets.
 
 ---
 
-# 2. Prepare Your LanceDB Folder
+## 2. Prepare Your LanceDB Folder
 
 Your LanceDB directory should contain table folders.
 
@@ -46,7 +46,7 @@ chmod -R o+rx ~/lancedb
 
 ---
 
-# 3. Run the Viewer
+## 3. Run the Viewer
 
 Replace the path with your LanceDB directory.
 
@@ -66,7 +66,7 @@ ghcr.io/gordonmurray/lance-data-viewer:lancedb-0.24.3
 
 ---
 
-# 4. Open the Web Interface
+## 4. Open the Web Interface
 
 Open your browser and go to:
 
@@ -84,7 +84,7 @@ The UI will display:
 
 ---
 
-# 5. Optional: API Endpoints
+## 5. Optional: API Endpoints
 
 Health check:
 
@@ -100,7 +100,7 @@ curl http://localhost:8080/datasets
 
 ---
 
-# 6. Stop the Viewer
+## 6. Stop the Viewer
 
 Press:
 
@@ -112,7 +112,7 @@ The container stops automatically because `--rm` removes it after exit.
 
 ---
 
-# Notes
+## Notes
 
 If your dataset was created with an older Lance version, use a compatible container tag:
 
