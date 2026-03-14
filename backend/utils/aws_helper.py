@@ -9,7 +9,7 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
 )
 AWS_REGION = os.getenv("AWS_REGION")
-AWS_BUCKET = os.getenv("AWS_BUCKET")
+AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
 AWS_PUBLIC_URL = os.getenv("AWS_PUBLIC_URL")  # optional CDN/domain
 
 s3_client = boto3.client("s3", region_name=AWS_REGION)
@@ -32,7 +32,7 @@ def upload_file(file_obj, key: str) -> str:
 
         s3_client.upload_fileobj(
             file_obj,
-            AWS_BUCKET,
+            AWS_BUCKET_NAME,
             key,
             ExtraArgs={
                 "ContentType": "application/octet-stream",

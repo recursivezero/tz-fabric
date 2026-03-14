@@ -403,17 +403,14 @@ export default function Search() {
     []
   );
 
-  const urlToFile = useCallback(
-    async (url: string, filename = "query.jpg"): Promise<File> => {
-      const res = await fetch(url, { credentials: "omit" });
-      if (!res.ok) throw new Error(`Failed to fetch image_url: ${res.status}`);
-      const blob = await res.blob();
-      const ext = (blob.type && blob.type.split("/")[1]) || "jpg";
-      const name = filename.endsWith(`.${ext}`) ? filename : `${filename}.${ext}`;
-      return new File([blob], name, { type: blob.type || "image/jpeg" });
-    },
-    []
-  );
+  const urlToFile = useCallback(async (url: string, filename = "query.jpg"): Promise<File> => {
+    const res = await fetch(url, { credentials: "omit" });
+    if (!res.ok) throw new Error(`Failed to fetch image_url: ${res.status}`);
+    const blob = await res.blob();
+    const ext = (blob.type && blob.type.split("/")[1]) || "jpg";
+    const name = filename.endsWith(`.${ext}`) ? filename : `${filename}.${ext}`;
+    return new File([blob], name, { type: blob.type || "image/jpeg" });
+  }, []);
 
   const didAutoRun = useRef(false);
   useEffect(() => {
@@ -475,19 +472,7 @@ export default function Search() {
     try {
       await runImageSearch(file);
       setPage(1);
-    } catch {
-      setNotification({ message: "Search failed.", type: "error" });
-    }
-  };
-
-  const handleTextSearch = async () => {
-    const q = textQuery.trim();
-    if (!q) return;
-    setNotification(null);
-    try {
-      await runTextSearch(q);
-      setPage(1);
-    } catch {
+    } catch (err) {
       setNotification({ message: "Search failed.", type: "error" });
     }
   };
@@ -759,7 +744,7 @@ export default function Search() {
       const h = Math.min(Math.max(40, prev.h), dispH - y);
       return { x, y, w, h };
     });
-  }, [rawImageUrl, drawerOpen, imgRef.current?.clientWidth, imgRef.current?.clientHeight]);
+  }, []);
 
   useEffect(
     () => () => {

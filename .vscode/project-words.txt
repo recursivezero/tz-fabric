@@ -1,3 +1,4 @@
 aadhaar
+analyse
 easyocr
 lancedb
