@@ -1,5 +1,5 @@
 name: Lint and Build Frontend
-run-name: Lint and Build when push or raise PR
+run-name: Nodejs Lint and Build - ${{ github.ref_name }}
 
 on:
   push:

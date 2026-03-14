@@ -1,5 +1,5 @@
-name: Backend CI
-run-name: Backend Lint and Build - ${{ github.ref_name }}
+name: Lint and Build Backend 
+run-name: Python Lint and Build - ${{ github.ref_name }}
 
 on:
   push:
