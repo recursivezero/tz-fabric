@@ -44,3 +44,7 @@ def upload_file(file_obj, key: str) -> Boolean:
 
     except (BotoCoreError, ClientError) as e:
         raise RuntimeError(f"S3 upload failed: {e}")
+
+
+def generate_cdn_url(object_key: str) -> str:
+    return f"{AWS_PUBLIC_URL}/{object_key}"
