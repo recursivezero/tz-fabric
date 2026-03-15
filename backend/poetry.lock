@@ -8327,4 +8327,4 @@ extra = ["chromadb", "pymongo", "sentencepiece", "transformers"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "ea69005bdbc233edda84984348b956587e7feef6d1c845029941ee9af0fb512e"
+content-hash = "30088abf34e498debebfe92e1b24de95098e0dfd495169174542afcd2e920fe1"
