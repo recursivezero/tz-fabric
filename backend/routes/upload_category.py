@@ -23,7 +23,7 @@ async def upload_image(category: Category = Form(...), image: UploadFile = File(
             status_code=403, detail="Uploads allowed only in production"
         )
 
-    ext = os.path.splitext(image.filename)[1]
+    ext = os.path.splitext(image.filename or "")[1]
     filename = f"{uuid.uuid4()}{ext}"
 
     image_key = f"uploaded/{category.value}/{filename}"

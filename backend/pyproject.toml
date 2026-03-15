@@ -96,3 +96,6 @@ botocore-stubs = "^1.42.41"
 
 [tool.flake8]
 max_line_length = 190
+
+[tool.mypy]
+ignore_missing_imports = true

@@ -129,7 +129,7 @@ async def image_search(
                     f"File saved locally at {file_path}", extra={"color": "green"}
                 )
             else:
-                s3_key = f"{"uploaded/search/"}{filename}"
+                s3_key = f"uploaded/search/{filename}"
                 await file.seek(0)
                 upload_success = upload_file(await file.read(), s3_key)
                 if upload_success:

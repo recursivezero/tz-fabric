@@ -5,10 +5,8 @@ from utils.env_config import load_env
 
 
 load_env()
-ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "avif", "bmp"]
 TABLE_NAME = "tz-fabric-table"
 PROJECT_DIR = Path(__file__).parent
-STORAGE_OPTIONS = {}
 RELATIVE_GENERATED_FOLDER = "s3://threadzip-bucket/uploaded/"
 ASSETS = PROJECT_DIR / "assets"
 UPLOAD_FOLDER_FABRIC = ASSETS / "search"
@@ -21,8 +19,7 @@ MCP_URL = "http://localhost:8000/mcp/sse?transport=sse"
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 print(f"Running in {ENVIRONMENT} environment")
 IS_PROD = ENVIRONMENT == "production"
-print(IS_PROD)
-ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "avif", "bmp"}
+ALLOWED_EXTENSIONS: set[str] = {"jpg", "jpeg", "png", "webp", "avif", "bmp"}
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 MODELS = {
