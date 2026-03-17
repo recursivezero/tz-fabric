@@ -24,4 +24,8 @@ All notable changes to this repository will be documented in this file.
 
 - PAN Card OCR added
 
+## [1.4.0] Sat, Mar 14, 2026
+
+- Integrate AWS S3
+
 [Unreleased]

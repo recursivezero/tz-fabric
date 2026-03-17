@@ -8,7 +8,7 @@ import io
 
 MONGO_CONFIG: Dict[str, Optional[str]] = {
     "MONGODB_URI": os.getenv("DATABASE_URI", "mongodb://localhost:27017"),
-    "DATABASE_NAME": "tz-fabric",
+    "DATABASE_NAME": os.getenv("DATABASE", "tz-fabric"),
 }
 
 

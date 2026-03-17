@@ -9,8 +9,8 @@ export const extractFilenameFromText = (
   const clean = (v: string) => {
     const out = v
       .replace(/^[\s"'“”‘’]+|[\s"'“”‘’]+$/g, "")
-      .replace(/\s*[\(\[\{]\s*\d+\s*[\)\]\}]\s*$/g, "")
-      .replace(/\s*[-–]\s*Copy(?:\s*[\(\[]\s*\d+\s*[\)\]])?\s*$/i, "")
+      .replace(/\s*[([{]\s*\d+\s*[)\]}]\s*$/g, "")
+      .replace(/\s*[--]\s*Copy(?:\s*[([]\s*\d+\s*[)\]])?\s*$/i, "")
       .replace(/\s*copy\s*\d+\s*$/i, "")
       .replace(/(?:\s+|\b)(\d{1,3})\s*$/g, "")
       .trim();

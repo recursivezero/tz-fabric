@@ -23,8 +23,7 @@
       "titleBar.activeForeground": "#e7e7e7",
       "titleBar.inactiveBackground": "#ff008799",
       "titleBar.inactiveForeground": "#e7e7e799",
-      "sideBar.border": "#ff339f",
-      "tab.activeBorder": "#ff339f"
+      "sideBar.border": "#ff339f"
     },
     "peacock.color": "#FF0087",
     "cSpell.words": [
@@ -83,7 +82,6 @@
       "./src"
     ],
     "files.exclude": {
-      ".git": true,
       ".poetry/**": true,
       "**/__pycache__": true,
       "**/node_modules": true
@@ -132,6 +130,7 @@
       "custom": true, // Enable the `custom` dictionary
       "internal-terms": false // Disable the `internal-terms` dictionary
     },
-    "explorer.excludeGitIgnore": false
+    "explorer.excludeGitIgnore": false,
+    "git.branchPrefix": "feature/TZF-2600XX"
   }
 }

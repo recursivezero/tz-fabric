@@ -26,7 +26,6 @@ def main():
     tzfabric command-line interface.
     Use subcommands like: tzfabric serve, tzfabric dev.
     """
-    pass
 
 
 # ------------------------------------------------------------

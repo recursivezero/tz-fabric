@@ -27,7 +27,8 @@ export async function analyzeImage(file, analysisType) {
 
     return await res.json();
 
-  } catch (err) {
+  } catch (err: any) {
+    console.error("Error analyzing image:", err);
     throw new Error("Cannot reach the server. Check your network");
   }
 }
@@ -68,6 +69,7 @@ export async function validateImageAPI(imageFile) {
     return await res.json();
 
   } catch (err) {
+    console.error("Error validating image:", err);
     throw new Error("Cannot reach the server. Check your network.");
   }
 }
