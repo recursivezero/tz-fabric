@@ -136,8 +136,8 @@ function useSearch() {
 async function callDbEndpoint(op: "create" | "update"): Promise<string> {
   const url =
     op === "create"
-      ? `${API_BASE}/api/database/create/table`
-      : `${API_BASE}/api/database/update/table`;
+      ? `${API_BASE}/database/create/table`
+      : `${API_BASE}/database/update/table`;
   const res = await fetch(url, { method: "PUT" });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.detail ?? `Request failed (${res.status})`);
