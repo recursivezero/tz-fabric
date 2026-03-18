@@ -57,8 +57,7 @@ async def image_search(
         invalid = [c for c in parsed_categories if c not in ALLOWED_CATEGORIES]
         if invalid:
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid categories: {invalid}"
+                status_code=400, detail=f"Invalid categories: {invalid}"
             )
 
         if "application/json" in content_type:

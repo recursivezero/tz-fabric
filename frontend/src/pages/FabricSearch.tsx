@@ -76,7 +76,7 @@ function useSearch() {
         form.append("file", file);
         form.append("limit", String(limit));
         if (category?.length) {
-          category.forEach((c) => form.append("category", c));
+          category.forEach((c) => { form.append("category[]", c); });
         }
         const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
         if (!res.ok) {
@@ -104,7 +104,7 @@ function useSearch() {
         form.append("search_term", term);
         form.append("limit", String(limit));
         if (category?.length) {
-          category.forEach((c) => form.append("category", c));
+          category.forEach((c) => { form.append("category[]", c); });
         }
         const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
         if (!res.ok) {
@@ -472,7 +472,7 @@ export default function Search() {
         }
       })();
     } catch {}
-  }, [runImageSearch, dataUrlToFile, urlToFile, setOriginalObjectUrl]);
+  }, [runImageSearch, dataUrlToFile, urlToFile, setOriginalObjectUrl, searchLimit]);
 
   // ── Search handlers ────────────────────────────────────────────────────────
 

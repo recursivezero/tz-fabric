@@ -23,7 +23,7 @@ def run_vector_search(
     start_time = time.perf_counter()
 
     # Perform the vector search
-    where_clause = " OR ".join([f"tag == '{c}'" for c in category])
+    where_clause = " OR ".join(f"tag == '{c}'" for c in (category or []))
 
     query = table.search(search_query)
 
