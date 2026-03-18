@@ -3,6 +3,8 @@ from xmlrpc.client import Boolean
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
+from constants import CDN_URL
+
 s3_client = boto3.client(
     "s3",
     region_name=os.getenv("AWS_REGION"),
@@ -11,7 +13,7 @@ s3_client = boto3.client(
 )
 AWS_REGION = os.getenv("AWS_REGION")
 AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
-AWS_PUBLIC_URL = os.getenv("AWS_PUBLIC_URL")  # optional CDN/domain
+# optional CDN/domain
 
 s3_client = boto3.client("s3", region_name=AWS_REGION)
 
@@ -47,4 +49,4 @@ def upload_file(file_obj, key: str) -> Boolean:
 
 
 def generate_cdn_url(object_key: str) -> str:
-    return f"{AWS_PUBLIC_URL}/{object_key}"
+    return f"{CDN_URL}/{object_key}"

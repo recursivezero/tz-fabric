@@ -2,3 +2,4 @@ aadhaar
 analyse
 easyocr
 lancedb
+tzfabric

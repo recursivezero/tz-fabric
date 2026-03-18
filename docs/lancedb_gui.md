@@ -22,7 +22,7 @@ Your LanceDB directory should contain table folders.
 
 Example structure:
 
-```
+```plaintext
 lancedb/
    images/
       data/
@@ -52,7 +52,7 @@ Replace the path with your LanceDB directory.
 
 ```bash
 docker run --rm -p 8080:8080 \
--v /path/to/your/lancedb:/data:ro \
+-v /home/zero/projects/recursivezero/tz-fabric/backend/database:/data:ro \
 ghcr.io/gordonmurray/lance-data-viewer:lancedb-0.24.3
 ```
 
@@ -76,11 +76,11 @@ http://localhost:8080
 
 The UI will display:
 
-* Available LanceDB tables
-* Table schema
-* Stored rows
-* Vector columns
-* Pagination and filtering
+- Available LanceDB tables
+- Table schema
+- Stored rows
+- Vector columns
+- Pagination and filtering
 
 ---
 
