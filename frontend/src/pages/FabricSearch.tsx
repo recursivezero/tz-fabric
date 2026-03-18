@@ -68,14 +68,16 @@ function useSearch() {
   const [results, setResults] = useState<ResultItem[]>([]);
 
   const runImageSearch = useCallback(
-    async (file: File, category?: string, limit = 40) => {
+    async (file: File, category?: string[], limit = 40) => {
       setLoading(true);
       setError(null);
       try {
         const form = new FormData();
         form.append("file", file);
         form.append("limit", String(limit));
-        if (category) form.append("category", category);
+        if (category?.length) {
+          category.forEach((c) => form.append("category", c));
+        }
         const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -94,14 +96,16 @@ function useSearch() {
   );
 
   const runTextSearch = useCallback(
-    async (term: string, category?: string, limit = 40) => {
+    async (term: string, category?: string[], limit = 40) => {
       setLoading(true);
       setError(null);
       try {
         const form = new FormData();
         form.append("search_term", term);
         form.append("limit", String(limit));
-        if (category) form.append("category", category);
+        if (category?.length) {
+          category.forEach((c) => form.append("category", c));
+        }
         const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -347,8 +351,8 @@ export default function Search() {
   const [searchLimit, setSearchLimit]           = useState(40);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Derive category param — comma-joined or undefined (= no filter)
-  const categoryParam = selectedCategories.length > 0 ? selectedCategories.join(",") : undefined;
+  // Derive category param — array or undefined (= no filter)
+  const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
 
   const pageSize = 4;
   const [page, setPage] = useState(1);
@@ -435,7 +439,7 @@ export default function Search() {
           originalFileRef.current = f;
           setOriginalObjectUrl(f);
           setFile(f);
-          await runImageSearch(f, categoryParam, searchLimit);
+          await runImageSearch(f, undefined, searchLimit);
         } catch {
           setNotification({ message: "Could not auto-run search from URL.", type: "error" });
         } finally {
@@ -459,7 +463,7 @@ export default function Search() {
           originalFileRef.current = f;
           setOriginalObjectUrl(f);
           setFile(f);
-          await runImageSearch(f, categoryParam, searchLimit);
+          await runImageSearch(f, undefined, searchLimit);
         } catch {
           setNotification({ message: "Could not auto-run search payload.", type: "error" });
         } finally {
@@ -678,7 +682,7 @@ export default function Search() {
     // Auto-run image search immediately after crop
     setNotification(null);
     try {
-      await runImageSearch(croppedFile, categoryParam, searchLimit);
+      await runImageSearch(croppedFile, undefined, searchLimit);
     } catch {
       setNotification({ message: "Search failed.", type: "error" });
     }

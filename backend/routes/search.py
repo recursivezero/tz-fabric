@@ -1,7 +1,7 @@
 import io
 import time
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from PIL import Image
@@ -32,7 +32,7 @@ async def image_search(
     request: Request,
     file: Optional[UploadFile] = File(None),
     search_term: Optional[str] = Form(None),
-    category: Optional[str] = Form(None),
+    category: Optional[List[str]] = Form(None),
     limit: Optional[int] = Form(None),
     page: Optional[int] = Form(None),
     per_page: Optional[int] = Form(None),
@@ -50,8 +50,16 @@ async def image_search(
         content_type = request.headers.get("content-type", "")
         ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
 
-        if category and category not in ALLOWED_CATEGORIES:
-            raise HTTPException(status_code=400, detail="Invalid category")
+        parsed_categories = category or []
+
+        ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
+
+        invalid = [c for c in parsed_categories if c not in ALLOWED_CATEGORIES]
+        if invalid:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid categories: {invalid}"
+            )
 
         if "application/json" in content_type:
             body = await request.json()
@@ -102,7 +110,7 @@ async def image_search(
             search_start = time.time()
             limit = limit or 20
             _, image_paths = run_vector_search(
-                table, Fabric, image, limit=limit, category=category
+                table, Fabric, image, limit=limit, category=parsed_categories
             )
             search_time = time.time() - search_start
             logThis.info(
@@ -156,7 +164,7 @@ async def image_search(
             search_start = time.time()
             limit = limit or 20
             _, all_results = run_vector_search(
-                table, Fabric, search_term, limit=limit, category=category
+                table, Fabric, search_term, limit=limit, category=parsed_categories
             )
 
             search_time = time.time() - search_start
