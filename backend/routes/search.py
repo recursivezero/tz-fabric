@@ -1,126 +1,205 @@
-import os
-from datetime import datetime, timezone
-from typing import List
+import io
+import time
+from pathlib import Path
+from typing import List, Optional
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
-from pydantic import BaseModel
-
-from core.embedder import embed_image_bytes
-from core.db_search import topk_search
-from core.store import get_index
-from utils.paths import build_audio_url, build_image_url
-
-router = APIRouter(tags=["search"])
-
-
-class SearchItem(BaseModel):
-    score: float
-    metadata: dict
-
-
-class SearchResponse(BaseModel):
-    count: int
-    results: List[SearchItem]
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from PIL import Image
+from routes.routes_helper import SearchResponse
+from image_search.db.connection import get_table, warm_up_table_model
+from image_search.schema import Fabric
+from image_search.vector_search import run_vector_search
+from utils.aws_helper import generate_cdn_url, upload_file
+from constants import (
+    DATABASE_PATH,
+    ENVIRONMENT,
+    TABLE_NAME,
+    UPLOAD_FOLDER_FABRIC,
+)
+from routes.routes_helper import allowed_file
+from utils.logger import logThis
+from utils.profanity import ProfanityError, filter_profanity_from_query
+from werkzeug.utils import secure_filename
 
 
-ISO_FORMATS = (
-    "%Y-%m-%dT%H:%M:%S.%fZ",
-    "%Y-%m-%dT%H:%M:%S.%f%z",
-    "%Y-%m-%dT%H:%M:%S.%f",
-    "%Y-%m-%dT%H:%M:%S%z",
-    "%Y-%m-%dT%H:%M:%S",
+router = APIRouter(
+    prefix="/search",
 )
 
 
-def _to_ts(dt: datetime) -> float:
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.timestamp()
-
-
-def _parse_any_iso(s: str) -> float:
-    s = s.strip()
-    for fmt in ISO_FORMATS:
-        try:
-            return _to_ts(datetime.strptime(s, fmt))
-        except Exception:
-            pass
-    try:
-        return _to_ts(datetime.fromisoformat(s.replace("Z", "+00:00")))
-    except Exception:
-        return 0.0
-
-
-def _created_ts(meta: dict) -> float:
-    for key in ("createdAt", "created_at", "timestamp"):
-        if key in meta:
-            val = meta[key]
-            if isinstance(val, (int, float)):
-                return float(val)
-            if isinstance(val, str):
-                ts = _parse_any_iso(val)
-                if ts:
-                    return ts
-
-    abs_path = meta.get("absPath")
-    if abs_path and os.path.exists(abs_path):
-        try:
-            return os.path.getmtime(abs_path)
-        except Exception:
-            pass
-
-    # fallback: try to parse from filename if you had a helper
-    return 0.0
-
-
-@router.post("/search", response_model=SearchResponse)
-async def search_similar(
-    file: UploadFile = File(...),
-    order: str = Query("recent", pattern="^(recent|score)$"),
-    debug_ts: bool = Query(
-        False, description="Include computed _ts in metadata for debugging"
-    ),
-    min_sim: float = Query(0.5, ge=0.0, le=1.0),
-    require_audio: bool = Query(True),
+@router.post("", response_model=SearchResponse)
+async def image_search(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+    search_term: Optional[str] = Form(None),
+    category: Optional[List[str]] = Form(None),
+    limit: Optional[int] = Form(None),
+    page: Optional[int] = Form(None),
+    per_page: Optional[int] = Form(None),
 ):
+    """
+    Unified search endpoint.
+    - Supports JSON requests (MCP tools)
+    - Supports multipart form-data (file upload + search_term)
+
+    Rate limited to 30 searches per minute per IP.
+    """
+
     try:
-        embedding = embed_image_bytes(await file.read())
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid image file.")
+        # Handle JSON vs Form
+        content_type = request.headers.get("content-type", "")
+        ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
 
-    collection = get_index()
+        parsed_categories = category or []
 
-    # We don't accept k anymore. Search with a large pool and then filter.
-    pool_k = 2000  # big pool to catch all plausible matches
-    results = topk_search(collection, embedding, pool_k)
+        ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
 
-    metadatas = results.get("metadatas", [[]])[0]
-    similarities = results.get("similarities", [[]])[0]
+        invalid = [c for c in parsed_categories if c not in ALLOWED_CATEGORIES]
+        if invalid:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid categories: {invalid}"
+            )
 
-    items: List[SearchItem] = []
-    for meta, sim in zip(metadatas, similarities):
-        if sim < min_sim:
-            continue
+        if "application/json" in content_type:
+            body = await request.json()
+            search_term = body.get("search_term")
+            limit = body.get("limit", 5)
+            page = body.get("page", 1)
+            per_page = body.get("per_page", 10)
+            file = body.get("file")
+        else:
+            # Normalize empty file from Swagger UI
+            if file is not None and getattr(file, "filename", "") == "":
+                file = None
 
-        image_fn = meta.get("imageFilename")
-        audio_fn = meta.get("audioFilename")
+            # Use form defaults
+            limit = limit or 20
+            page = page or 1
+            per_page = per_page or 10
 
-        meta["imageUrl"] = build_image_url(image_fn)
-        meta["audioUrl"] = build_audio_url(audio_fn)
+        # Ensure per_page is never None for arithmetic operations
+        per_page = per_page or 10
+        page = page or 1
 
-        if require_audio and not audio_fn:
-            continue
+        # Profanity filter
+        if search_term:
+            try:
+                search_term = filter_profanity_from_query(search_term, mode="api")
+            except ProfanityError as e:
+                raise HTTPException(status_code=400, detail=str(e))
 
-        ts = _created_ts(meta)
-        if debug_ts:
-            meta["_ts"] = ts
+        # Validate pagination
+        if per_page < 1 or per_page > 50:
+            per_page = 10
+        if page < 1:
+            page = 1
 
-        items.append(SearchItem(score=sim, metadata=meta))
+        table = get_table(DATABASE_PATH, TABLE_NAME)
+        warm_up_table_model(table)
 
-    if order == "recent":
-        items.sort(key=lambda it: (it.score, _created_ts(it.metadata)), reverse=True)
-    else:
-        items.sort(key=lambda it: it.score, reverse=True)
+        # IMAGE SEARCH
+        if file and file.filename:
+            if not allowed_file(file.filename):
+                raise HTTPException(status_code=400, detail="Unsupported file type.")
 
-    # No truncation by k — return all that passed filters
-    return SearchResponse(count=len(items), results=items)
+            filename = secure_filename(file.filename)
+            image_bytes = await file.read()
+            image = Image.open(io.BytesIO(image_bytes))
+
+            search_start = time.time()
+            limit = limit or 20
+            _, image_paths = run_vector_search(
+                table, Fabric, image, limit=limit, category=parsed_categories
+            )
+            search_time = time.time() - search_start
+            logThis.info(
+                f"Vector search took {search_time:.4f}s", extra={"color": "green"}
+            )
+
+            # Pagination
+            total_results = len(image_paths)
+            total_pages: int = max(1, (total_results + per_page - 1) // per_page)
+            if page is None:
+                page = 1
+            if page > total_pages:
+                page = total_pages
+
+            offset = (page - 1) * per_page
+            paginated_results = image_paths[offset : offset + per_page]
+
+            # Save file (local vs S3)
+            if ENVIRONMENT == "development":
+                file_path = Path(UPLOAD_FOLDER_FABRIC) / filename
+                with file_path.open("wb") as f:
+                    f.write(image_bytes)
+                logThis.info(
+                    f"File saved locally at {file_path}", extra={"color": "green"}
+                )
+            else:
+                s3_key = f"uploaded/search/{filename}"
+                await file.seek(0)
+                upload_success = upload_file(await file.read(), s3_key)
+                if upload_success:
+                    file_url = generate_cdn_url(s3_key)
+                    logThis.info(
+                        f"File saved to S3 at {file_url}", extra={"color": "green"}
+                    )
+
+            return {
+                "message": "File uploaded successfully after search",
+                "results": paginated_results,
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total_results": total_results,
+                    "total_pages": total_pages,
+                    "has_next": page < total_pages,
+                    "has_prev": page > 1,
+                },
+            }
+
+        # TEXT SEARCH
+        elif search_term:
+            search_start = time.time()
+            limit = limit or 20
+            _, all_results = run_vector_search(
+                table, Fabric, search_term, limit=limit, category=parsed_categories
+            )
+
+            search_time = time.time() - search_start
+            logThis.info(
+                f"Text search took {search_time:.4f}s", extra={"color": "green"}
+            )
+
+            total_results = len(all_results)
+            total_pages = max(1, (total_results + per_page - 1) // per_page)
+            if page is None:
+                page = 1
+            if page > total_pages:
+                page = total_pages
+
+            offset = (page - 1) * per_page
+            paginated_results = all_results[offset : offset + per_page]
+
+            return {
+                "message": "success",
+                "results": paginated_results,
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total_results": total_results,
+                    "total_pages": total_pages,
+                    "has_next": page < total_pages,
+                    "has_prev": page > 1,
+                },
+            }
+
+        # Invalid request
+        else:
+            raise HTTPException(status_code=400, detail="Missing search term or file.")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logThis.error(f"Search failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

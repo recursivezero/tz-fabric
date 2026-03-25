@@ -97,7 +97,7 @@ async def submit_file(
         # upload to S3
 
         image.file.seek(0)
-        image_key = f"uploaded/images/{image_filename}"
+        image_key = f"uploaded/fabric/{image_filename}"
         if upload_file(image.file, image_key):
             print(f"Uploaded {image_filename} to S3")
         image_path = None
