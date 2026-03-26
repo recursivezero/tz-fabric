@@ -57,6 +57,33 @@ def allowed_file(filename):
     name = str(filename)
     return "." in name and name.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
+
+
+def sanitize(arr: Optional[List[str]]) -> List[str]:
+    if not arr:
+        return []
+
+    parsed = []
+
+    # Normalize (handles comma-separated + repeated fields)
+    for c in arr:
+        if not c:
+            continue
+        parsed.extend([x.strip().lower() for x in c.split(",") if x.strip()])
+
+    # Deduplicate (preserve order)
+    seen = set()
+    unique = []
+    for c in parsed:
+        if c not in seen:
+            seen.add(c)
+            unique.append(c)
+
+    # Keep only valid categories
+    valid = [c for c in unique if c in ALLOWED_CATEGORIES]
+
+    return valid
 
 def table_exists(database_path: str, table_name: str) -> bool:
     """Check if the table exists in the database."""

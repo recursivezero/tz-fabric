@@ -1,11 +1,25 @@
-body {
-  font-family: sans-serif;
-  background: #1e0606;
+body { font-family: sans-serif; background: #1e0606; color: white; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; height: 100vh; place-content: center; padding: 2rem; }
+
+button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ff4d4d, #ff1a1a);
   color: white;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr auto;
-  height: 100vh;
-  place-content: center;
-  padding: 2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 0, 0, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+

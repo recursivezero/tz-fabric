@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from PIL import Image
-from routes.routes_helper import SearchResponse
+from routes.routes_helper import SearchResponse, sanitize
 from image_search.db.connection import get_table, warm_up_table_model
 from image_search.schema import Fabric
 from image_search.vector_search import run_vector_search
@@ -25,6 +25,8 @@ from werkzeug.utils import secure_filename
 router = APIRouter(
     prefix="/search",
 )
+
+
 
 
 @router.post("", response_model=SearchResponse)
@@ -50,11 +52,8 @@ async def image_search(
         content_type = request.headers.get("content-type", "")
         parsed_categories = category or []
 
-        ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
+        parsed_categories = sanitize(category)
 
-        invalid = [c for c in parsed_categories if c not in ALLOWED_CATEGORIES]
-        if invalid:
-            parsed_categories = category or []
             
 
         if "application/json" in content_type:
