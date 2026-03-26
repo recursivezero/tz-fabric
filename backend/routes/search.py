@@ -27,8 +27,6 @@ router = APIRouter(
 )
 
 
-
-
 @router.post("", response_model=SearchResponse)
 async def image_search(
     request: Request,
@@ -53,8 +51,6 @@ async def image_search(
         parsed_categories = category or []
 
         parsed_categories = sanitize(category)
-
-            
 
         if "application/json" in content_type:
             body = await request.json()

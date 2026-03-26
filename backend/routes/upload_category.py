@@ -20,7 +20,7 @@ async def upload_image(category: Category = Form(...), image: UploadFile = File(
         raise HTTPException(
             status_code=403, detail="Uploads allowed only in production"
         )
-    #there is no product category
+    # there is no product category
     ext = os.path.splitext(image.filename or "")[1]
     filename = f"{uuid.uuid4()}{ext}"
 
