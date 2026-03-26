@@ -242,8 +242,31 @@ function DbControlPanel() {
   );
 }
 
-// ─── Ambient Canvas background ───────────────────────────────────────────────
+// ─── Settings Panel ───────────────────────────────────────────────────────────
 
+function SettingsPanel() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="tz-settings-panel">
+      <button
+        className="tz-settings-toggle tz-btn tz-btn-ghost"
+        onClick={() => setOpen((v) => !v)}
+        type="button"
+        aria-expanded={open}
+        title="Settings"
+      >
+        ⚙️ &nbsp;Settings
+        <span className="tz-settings-chevron">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="tz-settings-content tz-glass">
+          <DbControlPanel />
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Main Search Page ─────────────────────────────────────────────────────────
 
@@ -259,6 +282,9 @@ export default function Search() {
   // User-defined search settings
   const [searchLimit, setSearchLimit]           = useState(40);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Track whether the last search was a text search (to show category picker in results)
+  const [isTextSearch, setIsTextSearch] = useState(false);
 
   // Derive category param — array or undefined (= no filter)
   const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
@@ -330,6 +356,7 @@ export default function Search() {
     // Clear any previous cropped state
     setCroppedPreviewUrl(null);
     setFile(null);
+    setIsTextSearch(false);
     try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch {}
   };
 
@@ -348,6 +375,7 @@ export default function Search() {
           originalFileRef.current = f;
           setOriginalObjectUrl(f);
           setFile(f);
+          setIsTextSearch(false);
           await runImageSearch(f, undefined, searchLimit);
         } catch {
           setNotification({ message: "Could not auto-run search from URL.", type: "error" });
@@ -372,6 +400,7 @@ export default function Search() {
           originalFileRef.current = f;
           setOriginalObjectUrl(f);
           setFile(f);
+          setIsTextSearch(false);
           await runImageSearch(f, undefined, searchLimit);
         } catch {
           setNotification({ message: "Could not auto-run search payload.", type: "error" });
@@ -391,6 +420,7 @@ export default function Search() {
   const handleSearch = async () => {
     if (!file) return;
     setNotification(null);
+    setIsTextSearch(false);
     try {
       await runImageSearch(file, categoryParam, searchLimit);
       setPage(1);
@@ -402,6 +432,7 @@ export default function Search() {
   const handleTextSearch = async () => {
     if (!textQuery.trim()) return;
     setNotification(null);
+    setIsTextSearch(true);
     try {
       await runTextSearch(textQuery.trim(), categoryParam, searchLimit);
       setPage(1);
@@ -417,6 +448,7 @@ export default function Search() {
     setPage(1);
     setNotification(null);
     setBadImages(new Set());
+    setIsTextSearch(false);
     if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch {} setRawImageUrl(null); }
     if (previewUrlOriginal) { try { URL.revokeObjectURL(previewUrlOriginal); } catch {} setPreviewUrlOriginal(null); }
     try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch {}
@@ -587,6 +619,7 @@ export default function Search() {
     setDrawerOpen(false);
     setPage(1);
     setBadImages(new Set());
+    setIsTextSearch(false);
 
     // Auto-run image search immediately after crop
     setNotification(null);
@@ -711,12 +744,13 @@ export default function Search() {
                   alt="original"
                 />
                 <div className="original-img-actions">
+                  {/* ── Clear Search button ── */}
                   <button
-                    className="tz-btn tz-btn-ghost"
-                    style={{ padding: "6px 12px", fontSize: "12px" }}
+                    className="tz-btn tz-btn-primary"
+                    style={{ padding: "6px 14px", fontSize: "12px" }}
                     onClick={handleClear}
                   >
-                    ✕ Clear
+                    🗑️ Clear Search
                   </button>
                 </div>
                 <div className="preview-img-actions">
@@ -842,6 +876,13 @@ export default function Search() {
                 </div>
               )}
             </div>
+
+            {/* ── Category picker visible after text search ── */}
+            {isTextSearch && (
+              <div style={{ maxWidth: 560, margin: "0 auto 20px" }}>
+                <CategoryPicker selected={selectedCategories} onChange={setSelectedCategories} />
+              </div>
+            )}
 
             <div className="pagination-controls">
               <button onClick={safePrev} disabled={page === 1}>← Prev</button>
@@ -993,8 +1034,8 @@ export default function Search() {
         </div>
       )}
 
-      {/* ── DB Control Panel ── */}
-      <div className="db__control"><DbControlPanel /></div>
+      {/* ── Settings Panel (replaces inline DB Control Panel) ── */}
+      <div className="db__control"><SettingsPanel /></div>
     </main>
   );
 }
