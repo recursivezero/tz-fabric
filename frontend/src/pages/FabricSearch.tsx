@@ -47,12 +47,12 @@ const API_BASE =
   (import.meta.env.VITE_API_URL ?? "") +
   (import.meta.env.VITE_API_PREFIX ?? "");
 
-const CDN_BASE = "https://cdn.threadzip.com/uploaded/";
+const CDN_BASE = import.meta.env.VITE_AWS_PUBLIC_URL ?? "";
 
 function toCdnUrl(src: string | undefined): string {
   if (!src) return "";
   if (/^https?:\/\//i.test(src)) return src;
-  return `${CDN_BASE}${src.replace(/^\/+/, "")}`;
+  return `${CDN_BASE}/images/${src.replace(/^\/+/, "")}`;
 }
 
 function toResultItem(raw: string): ResultItem {

@@ -48,17 +48,14 @@ async def image_search(
     try:
         # Handle JSON vs Form
         content_type = request.headers.get("content-type", "")
-        ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
-
         parsed_categories = category or []
 
         ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
 
         invalid = [c for c in parsed_categories if c not in ALLOWED_CATEGORIES]
         if invalid:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid categories: {invalid}"
-            )
+            parsed_categories = category or []
+            
 
         if "application/json" in content_type:
             body = await request.json()
