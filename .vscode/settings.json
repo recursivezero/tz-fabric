@@ -13,5 +13,6 @@
       "folderPath": "tz-fabric/frontend/",
       "color": "foldercolorizer.color_cc66ff"
     }
-  ]
+  ],
+  "kiroAgent.configureMCP": "Disabled"
 }

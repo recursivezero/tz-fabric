@@ -2,7 +2,6 @@
    FabricSearch.css  —  ThreadZip visual search styles
    ───────────────────────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
 /* ── CSS variables ─────────────────────────────────────────────────────────── */
 :root {
@@ -247,7 +246,7 @@
 
 /* Active filter badges in results */
 .tz-af     { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
-.tz-fbadge { font-family: var(--fm); font-size: 10px; padding: 3px 9px; border-radius: 20px; background: rgba(201,169,110,.10); border: 1px solid rgba(201,169,110,.22); color: var(--tz-acc2); letter-spacing: .08em; text-transform: uppercase; }
+.tz-badge { font-family: var(--fm); font-size: 10px; padding: 3px 9px; border-radius: 20px; background: rgba(201,169,110,.10); border: 1px solid rgba(201,169,110,.22); color: var(--tz-acc2); letter-spacing: .08em; text-transform: uppercase; }
 .tz-fin    { font-family: var(--fm); font-size: 10px; color: var(--tz-muted); letter-spacing: .1em; text-transform: uppercase; }
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
@@ -505,3 +504,8 @@
   background: var(--tz-acc); border-radius: 4px 0 4px 0; cursor: se-resize;
 }
 .drawer-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+.db__control {
+  position: relative;
+  top: 1rem;
+}

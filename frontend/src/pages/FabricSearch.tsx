@@ -244,97 +244,6 @@ function DbControlPanel() {
 
 // ─── Ambient Canvas background ───────────────────────────────────────────────
 
-function AmbientCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let W = window.innerWidth, H = window.innerHeight;
-    canvas.width = W; canvas.height = H;
-
-    const onResize = () => {
-      W = window.innerWidth; H = window.innerHeight;
-      canvas.width = W; canvas.height = H;
-    };
-    window.addEventListener("resize", onResize);
-
-    const orbs = Array.from({ length: 7 }, (_, i) => ({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      r: 160 + Math.random() * 240,
-      vx: (Math.random() - 0.5) * 0.15,
-      vy: (Math.random() - 0.5) * 0.15,
-      hue: [38, 38, 28, 28, 195, 195, 15][i],
-      alpha: 0.04 + Math.random() * 0.038,
-    }));
-
-    let raf: number;
-
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-
-      // Warm dark base
-      const bg = ctx.createLinearGradient(0, 0, W, H);
-      bg.addColorStop(0, "#0c0906");
-      bg.addColorStop(0.5, "#080707");
-      bg.addColorStop(1, "#060608");
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, W, H);
-
-      // Drifting colour orbs
-      for (const orb of orbs) {
-        orb.x += orb.vx; orb.y += orb.vy;
-        if (orb.x < -orb.r) orb.x = W + orb.r;
-        if (orb.x > W + orb.r) orb.x = -orb.r;
-        if (orb.y < -orb.r) orb.y = H + orb.r;
-        if (orb.y > H + orb.r) orb.y = -orb.r;
-        const g = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, orb.r);
-        g.addColorStop(0, `hsla(${orb.hue},58%,48%,${orb.alpha})`);
-        g.addColorStop(1, `hsla(${orb.hue},58%,48%,0)`);
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Fine grid
-      ctx.strokeStyle = "rgba(232,213,176,0.028)";
-      ctx.lineWidth = 1;
-      const step = 60;
-      for (let x = 0; x <= W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-      for (let y = 0; y <= H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-
-      // Diagonal weave
-      ctx.strokeStyle = "rgba(201,169,110,0.035)";
-      for (let i = -H; i < W + H; i += 140) {
-        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H, H); ctx.stroke();
-      }
-
-      // Top vignette
-      const vign = ctx.createLinearGradient(0, 0, 0, H * 0.18);
-      vign.addColorStop(0, "rgba(7,6,5,0.55)");
-      vign.addColorStop(1, "rgba(7,6,5,0)");
-      ctx.fillStyle = vign;
-      ctx.fillRect(0, 0, W, H * 0.18);
-
-      raf = requestAnimationFrame(draw);
-    };
-
-    draw();
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", width: "100%", height: "100%" }}
-    />
-  );
-}
 
 // ─── Main Search Page ─────────────────────────────────────────────────────────
 
@@ -706,18 +615,16 @@ export default function Search() {
   const showHero = !file && !drawerOpen && visibleResults.length === 0 && !loading;
 
   return (
-    <div className="tz-root">
+    <main className="tz-root">
       {/* Animated canvas background */}
-      <AmbientCanvas />
 
       <div className="search-container">
         <FabricSearchHeader />
 
-        {/* ── DB Control Panel ── */}
-        <DbControlPanel />
 
         {/* ── Hero / Search entry ── */}
         {showHero && (
+          <div>
           <header className="hero-area">
             <div className="hero-eyebrow">Fabric Intelligence</div>
             <h1 className="hero-title">
@@ -727,6 +634,8 @@ export default function Search() {
             <p className="hero-sub">
               Visual &amp; semantic search — powered by vectors
             </p>
+            </header>
+
 
             <div className="tz-sc">
               {/* Text search row */}
@@ -734,7 +643,7 @@ export default function Search() {
                 <input
                   type="text"
                   className="tz-input"
-                  placeholder="Search by name, fabric, colour…"
+                  placeholder="Search by name, fabric or color"
                   value={textQuery}
                   onChange={(e) => setTextQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleTextSearch()}
@@ -786,7 +695,7 @@ export default function Search() {
             <div style={{ maxWidth: 560, margin: "24px auto 0" }}>
               <CategoryPicker selected={selectedCategories} onChange={setSelectedCategories} />
             </div>
-          </header>
+          </div>
         )}
 
         {/* ── Image preview after crop confirmed ── */}
@@ -834,17 +743,17 @@ export default function Search() {
 
             {/* Cropped preview + controls */}
             {croppedPreviewUrl && (
+              <>
               <div className="cropped-preview">
                 <p className="section-title">Cropped Image</p>
                 <div className="cropped-img-wrap tz-glass">
                   <img className="cropped-img" src={croppedPreviewUrl} alt="cropped" />
                 </div>
+              </div>
 
-                {/* Category picker for re-search */}
-                <div style={{ marginTop: 14 }}>
-                  <CategoryPicker selected={selectedCategories} onChange={setSelectedCategories} />
-                </div>
-
+              <div className="options">
+                <CategoryPicker selected={selectedCategories} onChange={setSelectedCategories} />
+              </div>
                 {/* Limit + re-search button */}
                 <div className="preview-actions-below">
                   <div className="tz-lim" style={{ flex: 1, maxWidth: 220 }}>
@@ -871,7 +780,7 @@ export default function Search() {
                     🔎 Search
                   </button>
                 </div>
-              </div>
+              </>
             )}
           </div>
         )}
@@ -896,7 +805,7 @@ export default function Search() {
                   <div className="tz-af">
                     <span className="tz-fin">in</span>
                     {selectedCategories.map((c) => (
-                      <span key={c} className="tz-fbadge">
+                      <span key={c} className="tz-badge">
                         {CATEGORIES.find((cat) => cat.id === c)?.icon} {c}
                       </span>
                     ))}
@@ -1083,6 +992,9 @@ export default function Search() {
           </div>
         </div>
       )}
-    </div>
+
+      {/* ── DB Control Panel ── */}
+      <div className="db__control"><DbControlPanel /></div>
+    </main>
   );
 }
