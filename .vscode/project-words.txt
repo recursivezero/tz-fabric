@@ -1,6 +1,8 @@
 aadhaar
 analyse
+colour
 easyocr
 lancedb
 prefilter
+Recrop
 tzfabric

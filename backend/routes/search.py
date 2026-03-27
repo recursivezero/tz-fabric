@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from PIL import Image
-from routes.routes_helper import SearchResponse
+from routes.routes_helper import SearchResponse, sanitize
 from image_search.db.connection import get_table, warm_up_table_model
 from image_search.schema import Fabric
 from image_search.vector_search import run_vector_search
@@ -48,17 +48,9 @@ async def image_search(
     try:
         # Handle JSON vs Form
         content_type = request.headers.get("content-type", "")
-        ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
-
         parsed_categories = category or []
 
-        ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
-
-        invalid = [c for c in parsed_categories if c not in ALLOWED_CATEGORIES]
-        if invalid:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid categories: {invalid}"
-            )
+        parsed_categories = sanitize(category)
 
         if "application/json" in content_type:
             body = await request.json()

@@ -7,7 +7,7 @@ from utils.env_config import load_env
 load_env()
 TABLE_NAME = "tz-fabric-table"
 PROJECT_DIR = Path(__file__).parent
-RELATIVE_GENERATED_FOLDER = "s3://threadzip-bucket/uploaded/"
+RELATIVE_GENERATED_FOLDER = "s3://threadzip-bucket/images/"
 ASSETS = PROJECT_DIR / "assets"
 UPLOAD_FOLDER_FABRIC = ASSETS / "search"
 IMAGE_DIR = ASSETS / "images"

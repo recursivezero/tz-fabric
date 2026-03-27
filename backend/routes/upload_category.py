@@ -12,8 +12,6 @@ class Category(str, Enum):
     stocks = "stock"
     fabrics = "fabric"
     design = "design"
-    single = "single"
-    group = "group"
 
 
 @router.post("/upload-image")
@@ -22,11 +20,11 @@ async def upload_image(category: Category = Form(...), image: UploadFile = File(
         raise HTTPException(
             status_code=403, detail="Uploads allowed only in production"
         )
-
+    # there is no product category
     ext = os.path.splitext(image.filename or "")[1]
     filename = f"{uuid.uuid4()}{ext}"
 
-    image_key = f"uploaded/{category.value}/{filename}"
+    image_key = f"images/{category.value}/{filename}"
 
     upload_file(image.file, image_key)
 
