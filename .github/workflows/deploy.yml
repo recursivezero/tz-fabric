@@ -44,7 +44,7 @@ jobs:
             cd ../backend
             # Ensure poetry is in the PATH for the root user
             export PATH="$HOME/.local/bin:$PATH"
-            poetry install --with-extras
+            poetry install --all-extras --no-interaction --no-ansi
             
             # Restart the systemd unit
             systemctl restart mcp-backend.service
