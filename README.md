@@ -1,16 +1,14 @@
 # 🧵 Fabric Analyzer
 
-```text
-Fabric Analyzer is an AI-powered web application that analyzes fabric 
-images to provide insightful textual descriptions.
-```
+> AI-powered web application that analyzes and search fabric images.
+
+live on <https://pro.threadzip.com>
 
 🚀 Features
 
 ```text
 🖼  Upload your own fabric images or use curated sample images
 🔍 Choose between **Short** or **Long** analysis
-🤖 Powered by Google Gemini Vision API for detailed AI responses
 🧠 Response caching for fast navigation (Prev/Next)
 ✅ Validates whether uploaded image is a proper fabric image
 🧭 Drawer and navigation UI for enhanced experience
@@ -35,95 +33,30 @@ Prerequisites to use react
 
 ```text
 Fastapi
-google-generative(gemini-api)
 Langchain agents
 MCP
 Groq
 Pillow
-base64
+CLIP
 ```
 
 🛠️ Tech Stack of Databases
 
 ```text
 -> MongoDB
-```
-
-📁 Folder Structure of Frontend
-
-```text
-frontend/
-├── public/
-│   ├── 20250312_224758__10_45_28_PM.jpeg
-│   ├── 20250323_093907__10_24_31_PM.jpeg
-│   ├── 20250323_094209__10_22_53_PM.jpeg
-│   ├── Gemini_Generated_Image_9m5wh59m5wh59m5w.png
-│   ├── index.html
-│   ├── manifest.json
-│   ├── robots.txt
-│
-├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── hooks/
-│   ├── Pages/
-│   ├── Services/
-│   ├── utils/                       
-│   ├── services/                    
-│
-├── App.css                     
-├── App.js
-├── App.test.js
-├── index.css                    
-├── index.js
-├── logo.svg
-├── reportWebVitals.js
-├── setupTests.js
-│
-```
-
-📁 Folder Structure of Backend
-
-```text
-backend/
-├── main.py
-├── cli.py
-├── LICENSE-PYTHON
-├── .env
-├── agent/
-├── core/
-├── routes/
-├── services/
-├── static/
-├── templates/
-├── tools/
-├── utils/
-├── pyproject.toml/
-├── README.md/
-```
-
-🔄 API Flow
-
-```text
-POST /api/validate-image — Validates if uploaded image is a fabric
-POST /api/analyze-image — Runs Gemini analysis (short or long)
-POST /api/regenerate — Regenerates response set for same image + mode
-POST /api/chat - chatbot
-GET  /api/assets/images/{filename} - for getting the images
-GET  /api/assets/audios/{filename} - for getting the audios
-GET  /api/media/content - for listing the uploaded media
-POST /api/search - for searching the similar images
-POST /api/submit - for uploading the media
-POST /api/uploads/tmp_media - for storing the media in chat 
+-> Vector DB
 ```
 
 ## How to start
 
 Clone the repo
 
+🛋️ Frontend
+
 ```sh
-git clone https://github.com/recursivezero/tz-fabric.git
 cd tz-fabric
+npm install  -> to download the node modules
+npm run dev
 ```
 
 🛋️ Backend
@@ -131,19 +64,8 @@ cd tz-fabric
 ```sh
 cd backend
 curl -sSL https://install.python-poetry.org | python3 -
-poetry install - to install all the dependencies
-poetry run dev
-```
-
-🛋️ Frontend
-
-```sh
-
-cd frontend
-npm install  -> to download the node modules
-npm install axios -> for backend integration
-npm install react-icons // if react-icons is not installed
-npm run dev
+poetry install --all-extras --with dev
+poetry run tzfabric dev
 ```
 
 ## Sample .env
@@ -152,7 +74,6 @@ backend/.env
 
 ```text
 PORT=8000
-GEMINI_API_KEY=""
 GRQ_API_KEY=""
 MONGODB_URI="mongodb://localhost:27017"
 ```
@@ -162,8 +83,6 @@ frontend/.env
 ```text
 VITE_API_URL="http://localhost:8000"
 ```
-
-
 
 🖼️ Screenshots
 
@@ -208,4 +127,4 @@ VITE_API_URL="http://localhost:8000"
 
 ## 📄 License
 
-This project is licensed under the terms of the [MIT License](https://github.com/recursivezero/tz-fabric/blob/main/LICENSE).
+[MIT](https://github.com/recursivezero/tz-fabric/blob/main/LICENSE)

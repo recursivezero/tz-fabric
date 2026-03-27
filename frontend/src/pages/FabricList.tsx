@@ -137,6 +137,7 @@ export default function ContentGrid() {
     document.body.style.overflow = "";
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-render loop.
   useEffect(() => {
     if (!lightboxOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -152,6 +153,7 @@ export default function ContentGrid() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lightboxOpen]);
 
   const onWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
@@ -194,7 +196,7 @@ export default function ContentGrid() {
 
   return (
     <div className="grid-page">
-      <h1 style={ { textAlign: "center", marginBottom: "10px" } }>Fabric List</h1>
+      <h1 style={{ textAlign: "center", marginBlock: "10px", color: "#a455ab" } }>Fabric List</h1>
       <h3 style={ { textAlign: "center", color: "#00000059" } }>List of uploaded fabric with their audio description</h3>
       <div className="upload-wrapper">
         <div className="upload-inner" style={ { display: "flex", gap: 8 } }>
@@ -234,7 +236,7 @@ export default function ContentGrid() {
 
       { err && <div className="grid-error">⚠️ { err }</div> }
       { !loading && visibleItems.length === 0 && !err && (
-        <div className="empty-state">No valid images found.</div>
+        <div className="empty-state">No image found.</div>
       ) }
 
       <div className="media-grid">

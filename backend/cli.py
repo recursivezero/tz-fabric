@@ -26,7 +26,6 @@ def main():
     tzfabric command-line interface.
     Use subcommands like: tzfabric serve, tzfabric dev.
     """
-    pass
 
 
 # ------------------------------------------------------------
@@ -36,7 +35,7 @@ def main():
 @click.option("--host", default=DEFAULT_HOST, help="Host to bind.")
 @click.option("--port", default=DEFAULT_PORT, help="Port to run on.")
 @click.option("--reload", is_flag=True, help="Enable auto-reload.")
-def serve(host, port, reload):
+def api(host, port, reload):
     """Start the FastAPI server."""
     uvicorn.run("main:app", host=host, port=port, reload=reload)
 

@@ -1,0 +1,10 @@
+aadhaar
+analyse
+colour
+easyocr
+pyproject
+lancedb
+pipx
+prefilter
+Recrop
+tzfabric

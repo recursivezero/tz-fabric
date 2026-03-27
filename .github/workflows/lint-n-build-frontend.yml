@@ -1,0 +1,79 @@
+name: Lint and Build Frontend
+run-name: Nodejs Lint and Build - ${{ github.ref_name }}
+
+on:
+  push:
+    branches: ["main", "develop", "feature/*", "!task/*"]
+    paths: &filters
+      - "frontend/**"
+
+  pull_request:
+    branches: ["main", "develop", "release"]
+    types: [opened, synchronize, ready_for_review]
+    paths: *filters
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  check_run:
+        runs-on: ubuntu-latest
+        defaults:
+          run:
+            working-directory: .
+        outputs:
+          should_run: ${{ steps.validate.outputs.should_run }}
+        steps:
+          - id: validate
+            run: |
+              if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.ref }}" == "refs/heads/main" ]]; then
+                echo "should_run=true" >> $GITHUB_OUTPUT
+              else
+                echo "should_run=false" >> $GITHUB_OUTPUT
+              fi
+  lint:
+    needs: check_run
+    if: needs.check_run.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+  build:
+    needs: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run build
+        run: npm run build

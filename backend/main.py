@@ -1,17 +1,25 @@
 import os
 from contextlib import asynccontextmanager
 
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pymongo import MongoClient, errors, uri_parser
+from pymongo import MongoClient, errors
 from pymongo.database import Database
-from typing import Optional
-
-from constants import API_PREFIX, ASSETS, AUDIO_DIR, IMAGE_DIR
+from routes.card_reader import router as card_router
+from routes.adhaar_reader import router as aadhar_router
+from routes.upload_category import router as uploads_router
+from routes.database import router as database_router
+from constants import (
+    API_PREFIX,
+    ASSETS,
+    AUDIO_DIR,
+    IMAGE_DIR,
+)
 from routes import (
     analysis,
     chat,
@@ -25,6 +33,7 @@ from routes import (
 )
 from tools.mcpserver import sse_app
 from utils.emoji_logger import get_logger
+from utils.db_utils import mongo_client, db
 
 
 class MyApp(FastAPI):
@@ -42,42 +51,18 @@ origins = [
     # You can add more origins here if needed
 ]
 
-DATABASE_URI = os.getenv(
-    "DATABASE_URI",
-    "mongodb://127.0.0.1:27017/tz-fabric?authSource=admin&retryWrites=true&w=majority",
-)
-if not DATABASE_URI:
-    raise RuntimeError(
-        "DATABASE_URI is not set in environment variables. Please configure it in .env"
-    )
-# Parse the URI to extract db name
-parsed_uri = uri_parser.parse_uri(DATABASE_URI)
-db_name = parsed_uri.get("database")
-if not db_name:
-    db_name = "tz-fabric"  # Default database name if not specified in URI
-
-# Explicit typing so mypy is happy
-client: MongoClient = MongoClient(DATABASE_URI)
-default_db: Optional[Database] = client.get_default_database()
-if default_db is not None:
-    db: Database = default_db
-elif db_name is not None:
-    db = client[db_name]
-else:
-    raise ValueError("No database specified in URI and no default database available")
-print("Connected to MongoDB, using database:", db.name)
-
 
 @asynccontextmanager
 async def lifespan(app: MyApp):
     # Attach the client and db to the app so routes can access them
-    app.mongo_client = client
+    app.mongo_client = mongo_client  # type: ignore[assignment]
     app.database = db
 
     # Startup: perform a simple health check
     try:
-        client.admin.command("ping")
-        logger.info("successfully connected to MongoDB!")
+        if mongo_client is not None:
+            mongo_client.admin.command("ping")
+            logger.info("successfully connected to MongoDB!")
     except errors.OperationFailure as e:
         # Authentication or operation errors
         logger.error(f"MongoDB operation failed during startup: {e}")
@@ -89,8 +74,9 @@ async def lifespan(app: MyApp):
     yield
 
     try:
-        client.close()
-        logger.info("MongoDB connection closed")
+        if mongo_client is not None:
+            mongo_client.close()
+            logger.info("MongoDB connection closed")
     except Exception as e:
         logger.warning(f"Error while closing MongoDB client: {e}")
 
@@ -114,23 +100,30 @@ app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audio
 
 templates = Jinja2Templates(directory="templates")
 
-# Include routers after app creation
-app.include_router(analysis.router, prefix=API_PREFIX)
-app.include_router(regenerate.router, prefix=API_PREFIX)
-app.include_router(validate_image.router, prefix=API_PREFIX)
-app.include_router(search.router, prefix=API_PREFIX)
-app.include_router(submit.router, prefix=API_PREFIX)
-app.include_router(media.router, prefix=API_PREFIX)
-app.include_router(chat.router, prefix=API_PREFIX)
-app.include_router(uploads.router, prefix=API_PREFIX)
-app.include_router(contact.router, prefix=API_PREFIX)
 
-
-@app.get("/__routes")
+@app.get("/__routes", tags=["Meta"])
 def _routes():
     return [getattr(r, "path", str(r)) for r in app.routes]
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", tags=["Meta"], response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
+
+
+# Include routers after app creation
+app.include_router(analysis.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(regenerate.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(validate_image.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(search.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(submit.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(media.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(chat.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(uploads.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(contact.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(uploads_router, prefix=API_PREFIX, tags=["V1"])
+
+app.include_router(card_router, prefix=API_PREFIX, tags=["V1"])
+
+app.include_router(aadhar_router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(database_router, prefix=API_PREFIX, tags=["V1"])

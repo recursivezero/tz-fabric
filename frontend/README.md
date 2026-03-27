@@ -7,4 +7,6 @@ npm install
 npm run dev
 ```
 
-Note: create `.env` file and set the `VITE_API_URL` and it should be same as _vite.config.ts_
+Note: create `.env` file and put content from `.env.sample` file
+
+NOTE: the `VITE_API_URL` and it should be same as _vite.config.ts_

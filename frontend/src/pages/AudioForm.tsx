@@ -112,6 +112,7 @@ const UploadPage = () => {
           <h2>Upload Image & Audio</h2>
           <p className="sub">Upload audio or switch to recording (max 60s)</p>
         </header>
+    <div >
 
         <div className="grid">
           <section className="preview-col">
@@ -365,6 +366,7 @@ const UploadPage = () => {
         </div>
       )}
 
+    </div>
     </div>
   );
 };

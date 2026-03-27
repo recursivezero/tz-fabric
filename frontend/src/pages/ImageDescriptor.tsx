@@ -44,7 +44,7 @@ const ImageDescription = () => {
       const res = handleRunAnalysis?.(file, mode);
       if (res && typeof res.then === "function") await res;
     } catch (err) {
-      // swallow
+      console.error("Error in wrappedRunAnalysis:", err);
     }
   };
 

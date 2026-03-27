@@ -20,4 +20,16 @@ All notable changes to this repository will be documented in this file.
 
 - Replace Gemini API with GROQ API
 
+## [1.3.0] Tue, Dec 30, 2025
+
+- PAN Card OCR added
+
+## [1.4.0] Sat, Mar 14, 2026
+
+- Integrate AWS S3
+
+## [1.5.0] Fri, Mar 27, 2026
+
+- Added Fabric Search with filter
+
 [Unreleased]

@@ -35,7 +35,7 @@ export default function MessageList({
   useLayoutEffect(() => {
     const el = scrollerRef?.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, scrollerRef]);
+  }, [scrollerRef]);
 
   const waitForSettled = (
     node: HTMLElement,
@@ -105,6 +105,7 @@ export default function MessageList({
   };
 
   // Resolve and observe the last assistant bubble, then call the callback only when settled
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-render loop.
   useEffect(() => {
     if (!onLastAssistantRendered) return;
 
@@ -146,6 +147,7 @@ export default function MessageList({
         rafRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, onLastAssistantRendered, scrollerRef]);
 
   // helper to decide whether a message contains the "ask more" prompt

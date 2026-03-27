@@ -1,0 +1,81 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main, develop, "feature/*"]
+    paths:
+      - "backend/**"
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+concurrency:
+  group: security-audit
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install poetry-plugin-export
+        run: poetry self add poetry-plugin-export
+
+      - name: Check if dependencies changed
+        id: deps
+        run: |
+          git fetch origin main
+          if git diff --quiet origin/main -- pyproject.toml poetry.lock; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        if: steps.deps.outputs.changed == 'true'
+        run: poetry install
+
+      - name: Export requirements
+        if: steps.deps.outputs.changed == 'true'
+        run: poetry export -f requirements.txt --without-hashes -o requirements.txt
+
+      - name: Commit updated requirements.txt
+        if: github.event_name == 'push' && steps.deps.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add requirements.txt
+          git commit -m "chore: update backend requirements.txt [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:${GITHUB_REF#refs/heads/}
+
+      - name: Run pip-audit
+        if: steps.deps.outputs.changed == 'true'
+        run: poetry run pip-audit -r requirements.txt

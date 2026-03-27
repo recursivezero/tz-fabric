@@ -29,6 +29,7 @@ export async function fetchContent(
       `${FULL_API_URL}/media/content?page=${page}&limit=${limit}`,
     );
   } catch (err) {
+    console.error("Error fetching content:", err);
     throw new Error("Cannot reach server — check your network ");
   }
 
@@ -53,6 +54,7 @@ export async function fetchContent(
   try {
     data = await res.json();
   } catch (err) {
+    console.error("Error parsing content response:", err);
     throw new Error("Failed to parse content response.");
   }
 
