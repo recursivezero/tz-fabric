@@ -1,5 +1,9 @@
 aadhaar
 analyse
 easyocr
-pipx
 pyproject
+lancedb
+pipx
+prefilter
+Recrop
+tzfabric
