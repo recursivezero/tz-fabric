@@ -1,0 +1,53 @@
+name: Root Production Deploy
+run-name: Deploy to Production Server
+
+on:
+  push:
+    branches: [ release ]
+  workflow_dispatch:
+
+environment:
+  name: production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Deploy to Cloud via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # The login shell (-l) ensures .bashrc / .profile is sourced for PATHs
+          script_stop: true
+          script: |
+            cd /opt/tz_apps/tz-fabric
+            git pull origin release
+            git reset --hard origin/release
+
+            # 1. Frontend: Build & PM2 Refresh
+            cd frontend
+            npm install
+            npm run build
+            # Check if process exists to restart, otherwise start new
+            pm2 restart tz-fabric --update-env || pm2 start npm --name "tz-fabric" -- start
+
+            # 2. Backend: Poetry & Systemd
+            cd ../backend
+            # Ensure poetry is in the PATH for the root user
+            export PATH="$HOME/.local/bin:$PATH"
+            poetry install --with-extras
+            
+            # Restart the systemd unit
+            systemctl restart mcp-backend.service
+            
+            # 3. Verification
+            systemctl status mcp-backend.service --no-pager
+            pm2 list
+
+            # 4. Cleanup
+            echo "Deployment of tz-fabric successful."

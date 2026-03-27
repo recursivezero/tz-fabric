@@ -1,10 +1,11 @@
 aadhaar
 analyse
+appleboy
 colour
 easyocr
-pyproject
 lancedb
 pipx
 prefilter
+pyproject
 Recrop
 tzfabric
