@@ -25,6 +25,9 @@ defaults:
 jobs:
   check_run:
       runs-on: ubuntu-latest
+      defaults:
+        run:
+          working-directory: .
       outputs:
         should_run: ${{ steps.validate.outputs.should_run }}
       steps:
