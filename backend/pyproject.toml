@@ -34,7 +34,13 @@ dependencies = [
   "groq (<1)",
   "langchain-core (>=1.2.7,<2.0.0)",
   "langchain-groq (>=1.1.1,<2.0.0)",
-  "boto3 (>=1.42.68,<2.0.0)",
+  "lancedb>=0.24.3",
+  "boto3 (>=1.42.66,<2.0.0)",
+  "pandas (>=3.0.1,<4.0.0)",
+  "python-box (>=7.4.1,<8.0.0)",
+  "profanity-hinglish (>=0.1.5,<0.2.0)",
+  "werkzeug (>=3.1.6,<4.0.0)",
+  "diskcache (>=5.6.3,<6.0.0)"
 ]
 
 
@@ -44,6 +50,8 @@ dependencies = [
 extra = [
   "pymongo>=4.13.2,<5.0.0",
   "chromadb>=1.0.17,<2.0.0",
+  "transformers<4.57.0",
+  "sentencepiece>=0.2.0",
 ]
 
 
@@ -65,8 +73,8 @@ include = "*"
 from = "."
 
 
-#[tool.poetry.requires-plugins]
-#poetry-plugin-export = "^1.9"
+[tool.poetry.requires-plugins]
+poetry-plugin-export = "^1.9"
 
 [tool.poetry-auto-export]
 output = "requirements.txt"
@@ -88,3 +96,6 @@ botocore-stubs = "^1.42.41"
 
 [tool.flake8]
 max_line_length = 190
+
+[tool.mypy]
+ignore_missing_imports = true

@@ -11,6 +11,7 @@ router = APIRouter()
 @router.post("/analyse")
 async def analyse(image: UploadFile = File(...), analysis_type: str = Form(...)):
     try:
+        analysis_type = (analysis_type or "").strip().lower() or "short"
         print("📁 Filename:", image.filename)
         print("📦 Content type:", image.content_type)
 

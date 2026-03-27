@@ -5,9 +5,11 @@ from utils.env_config import load_env
 
 
 load_env()
-
+TABLE_NAME = "tz-fabric-table"
 PROJECT_DIR = Path(__file__).parent
+RELATIVE_GENERATED_FOLDER = "s3://threadzip-bucket/images/"
 ASSETS = PROJECT_DIR / "assets"
+UPLOAD_FOLDER_FABRIC = ASSETS / "search"
 IMAGE_DIR = ASSETS / "images"
 AUDIO_DIR = ASSETS / "audios"
 CACHE_DIR = Path.home() / ".cache" / "tz_script"
@@ -17,8 +19,7 @@ MCP_URL = "http://localhost:8000/mcp/sse?transport=sse"
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 print(f"Running in {ENVIRONMENT} environment")
 IS_PROD = ENVIRONMENT == "production"
-print(IS_PROD)
-ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "avif", "bmp"}
+ALLOWED_EXTENSIONS: set[str] = {"jpg", "jpeg", "png", "webp", "avif", "bmp"}
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 MODELS = {
@@ -27,7 +28,7 @@ MODELS = {
         "api_url": "https://api.github.com/repos/recursivezero/tz-script/releases/tags/v3.5.0",
     },
 }
-
+DATABASE_PATH = str(PROJECT_DIR / "database")
 FABRIC_COLLECTION = "fabric_data"
 PROCESSING_TIMES_COLLECTION = "fabric_log"
 
@@ -36,6 +37,7 @@ REQUIRED_DIRS = [
     IMAGE_DIR,
     AUDIO_DIR,
     CACHE_DIR,
+    UPLOAD_FOLDER_FABRIC,
 ]
 
 

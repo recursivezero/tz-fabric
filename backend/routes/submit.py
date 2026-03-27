@@ -97,13 +97,13 @@ async def submit_file(
         # upload to S3
 
         image.file.seek(0)
-        image_key = f"uploaded/images/{image_filename}"
+        image_key = f"images/fabric/{image_filename}"
         if upload_file(image.file, image_key):
             print(f"Uploaded {image_filename} to S3")
         image_path = None
 
         audio.file.seek(0)
-        audio_key = f"uploaded/audios/{audio_filename}"
+        audio_key = f"audios/{audio_filename}"
         if upload_file(audio.file, audio_key):
             print(f"Uploaded {audio_filename} to S3")
         audio_path = None
