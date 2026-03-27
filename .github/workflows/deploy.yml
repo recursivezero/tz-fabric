@@ -6,12 +6,16 @@ on:
     branches: [ release ]
   workflow_dispatch:
 
-environment:
-  name: production
+
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
