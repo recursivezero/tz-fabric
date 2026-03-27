@@ -100,8 +100,6 @@ def list_media_content(
             continue
 
         is_prod = img.get("is_prod")
-        print(is_prod)
-
         basename = img.get("basename") or Path(image_filename).stem
 
         audio_filename = audio_map.get(basename)

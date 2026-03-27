@@ -22,7 +22,7 @@ def build_image_url(filename: str) -> Optional[str]:
         return None
 
     if IS_PROD:
-        return f"{CDN_URL}/uploaded/images/{filename}"
+        return f"{CDN_URL}/images/fabric/{filename}"
     return _url_from_path(IMAGE_DIR, filename, api_prefix=API_PREFIX)
 
 
@@ -31,5 +31,5 @@ def build_audio_url(filename: str) -> Optional[str]:
         return None
 
     if IS_PROD:
-        return f"{CDN_URL}/uploaded/audios/{filename}"
+        return f"{CDN_URL}/audios/{filename}"
     return _url_from_path(AUDIO_DIR, filename, api_prefix=API_PREFIX)
