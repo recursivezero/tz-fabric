@@ -1,7 +1,6 @@
 import os
 from contextlib import asynccontextmanager
 
-from bs4 import Tag
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
@@ -100,31 +99,31 @@ app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_image
 app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audios")
 
 templates = Jinja2Templates(directory="templates")
-@app.get("/__routes",tags=["Meta"])
+
+
+@app.get("/__routes", tags=["Meta"])
 def _routes():
     return [getattr(r, "path", str(r)) for r in app.routes]
 
 
-@app.get("/", tags=["Meta"],response_class=HTMLResponse)
+@app.get("/", tags=["Meta"], response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse(request, "index.html")
 
+
 # Include routers after app creation
-app.include_router(analysis.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(regenerate.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(validate_image.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(search.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(submit.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(media.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(chat.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(uploads.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(contact.router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(uploads_router, prefix=API_PREFIX,tags=["V1"])
+app.include_router(analysis.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(regenerate.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(validate_image.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(search.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(submit.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(media.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(chat.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(uploads.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(contact.router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(uploads_router, prefix=API_PREFIX, tags=["V1"])
 
-app.include_router(card_router, prefix=API_PREFIX,tags=["V1"])
+app.include_router(card_router, prefix=API_PREFIX, tags=["V1"])
 
-app.include_router(aadhar_router, prefix=API_PREFIX,tags=["V1"])
-app.include_router(database_router, prefix=API_PREFIX,tags=["V1"])
-
-
-
+app.include_router(aadhar_router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(database_router, prefix=API_PREFIX, tags=["V1"])

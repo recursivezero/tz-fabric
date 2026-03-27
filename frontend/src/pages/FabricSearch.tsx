@@ -1,8 +1,8 @@
-import { useId, useMemo, useState, useEffect, useRef, useCallback } from "react";
+import "@/assets/styles/FabricSearch.css";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import FabricSearchHeader from "../components/FabricSearchHeader";
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
-import FabricSearchHeader from "../components/FabricSearchHeader";
-import "@/assets/styles/FabricSearch.css";
 import { throttle } from "../utils/throttle";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -38,14 +38,12 @@ const CATEGORIES = [
   { id: "fabric", label: "Fabric", icon: "🧵" },
   { id: "design", label: "Design", icon: "🎨" },
   { id: "single", label: "Single", icon: "🖼️" },
-  { id: "group", label: "Group", icon: "👥" },
+  { id: "group", label: "Group", icon: "👥" }
 ];
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
 
-const API_BASE =
-  (import.meta.env.VITE_API_URL ?? "") +
-  (import.meta.env.VITE_API_PREFIX ?? "");
+const API_BASE = (import.meta.env.VITE_API_URL ?? "") + (import.meta.env.VITE_API_PREFIX ?? "");
 
 const CDN_BASE = import.meta.env.VITE_AWS_PUBLIC_URL ?? "";
 
@@ -67,61 +65,59 @@ function useSearch() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ResultItem[]>([]);
 
-  const runImageSearch = useCallback(
-    async (file: File, category?: string[], limit = 40) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const form = new FormData();
-        form.append("file", file);
-        form.append("limit", String(limit));
-        if (category?.length) {
-          category.forEach((c) => { form.append("category[]", c); });
-        }
-        const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err?.detail ?? `Search failed (${res.status})`);
-        }
-        const data: SearchApiResponse = await res.json();
-        setResults((data.results ?? []).map(toResultItem));
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Search failed.");
-        setResults([]);
-      } finally {
-        setLoading(false);
+  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 40) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("limit", String(limit));
+      if (category?.length) {
+        category.forEach((c) => {
+          form.append("category[]", c);
+        });
       }
-    },
-    []
-  );
+      const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.detail ?? `Search failed (${res.status})`);
+      }
+      const data: SearchApiResponse = await res.json();
+      setResults((data.results ?? []).map(toResultItem));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Search failed.");
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const runTextSearch = useCallback(
-    async (term: string, category?: string[], limit = 40) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const form = new FormData();
-        form.append("search_term", term);
-        form.append("limit", String(limit));
-        if (category?.length) {
-          category.forEach((c) => { form.append("category[]", c); });
-        }
-        const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err?.detail ?? `Search failed (${res.status})`);
-        }
-        const data: SearchApiResponse = await res.json();
-        setResults((data.results ?? []).map(toResultItem));
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Search failed.");
-        setResults([]);
-      } finally {
-        setLoading(false);
+  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 40) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("search_term", term);
+      form.append("limit", String(limit));
+      if (category?.length) {
+        category.forEach((c) => {
+          form.append("category[]", c);
+        });
       }
-    },
-    []
-  );
+      const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.detail ?? `Search failed (${res.status})`);
+      }
+      const data: SearchApiResponse = await res.json();
+      setResults((data.results ?? []).map(toResultItem));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Search failed.");
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const clear = useCallback(() => {
     setResults([]);
@@ -134,10 +130,7 @@ function useSearch() {
 // ─── DB endpoint ─────────────────────────────────────────────────────────────
 
 async function callDbEndpoint(op: "create" | "update"): Promise<string> {
-  const url =
-    op === "create"
-      ? `${API_BASE}/database/create/table`
-      : `${API_BASE}/database/update/table`;
+  const url = op === "create" ? `${API_BASE}/database/create/table` : `${API_BASE}/database/update/table`;
   const res = await fetch(url, { method: "PUT" });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.detail ?? `Request failed (${res.status})`);
@@ -152,10 +145,7 @@ interface CategoryPickerProps {
 }
 
 function CategoryPicker({ selected, onChange }: CategoryPickerProps) {
-  const toggle = (id: string) =>
-    onChange(
-      selected.includes(id) ? selected.filter((c) => c !== id) : [...selected, id]
-    );
+  const toggle = (id: string) => onChange(selected.includes(id) ? selected.filter((c) => c !== id) : [...selected, id]);
   const allOn = selected.length === CATEGORIES.length;
   const toggleAll = () => onChange(allOn ? [] : CATEGORIES.map((c) => c.id));
 
@@ -235,9 +225,7 @@ function DbControlPanel() {
           Update Table
         </button>
       </div>
-      {notification && (
-        <div className={`tz-db-notif ${notification.type}`}>{notification.message}</div>
-      )}
+      {notification && <div className={`tz-db-notif ${notification.type}`}>{notification.message}</div>}
     </div>
   );
 }
@@ -273,14 +261,14 @@ function SettingsPanel() {
 export default function Search() {
   const { loading, error, results, runImageSearch, runTextSearch, clear } = useSearch();
 
-  const [file, setFile]                     = useState<File | null>(null);
-  const [textQuery, setTextQuery]           = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [textQuery, setTextQuery] = useState("");
   const [previewUrlOriginal, setPreviewUrlOriginal] = useState<string | null>(null);
-  const [notification, setNotification]     = useState<NotificationState>(null);
+  const [notification, setNotification] = useState<NotificationState>(null);
   const [selectingImage, setSelectingImage] = useState(false);
 
   // User-defined search settings
-  const [searchLimit, setSearchLimit]           = useState(40);
+  const [searchLimit, setSearchLimit] = useState(40);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Track whether the last search was a text search (to show category picker in results)
@@ -301,23 +289,32 @@ export default function Search() {
   const originalFileRef = useRef<File | null>(null);
 
   // Crop / drawer state
-  const [drawerOpen, setDrawerOpen]       = useState(false);
-  const [cropRect, setCropRect]           = useState({ x: 20, y: 20, w: 160, h: 160 });
-  const imgRef                             = useRef<HTMLImageElement | null>(null);
-  const [rawImageUrl, setRawImageUrl]     = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [cropRect, setCropRect] = useState({ x: 20, y: 20, w: 160, h: 160 });
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const [rawImageUrl, setRawImageUrl] = useState<string | null>(null);
   const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
 
-  const draggingRef   = useRef(false);
-  const resizingRef   = useRef(false);
-  const lastMouseRef  = useRef({ x: 0, y: 0 });
+  const draggingRef = useRef(false);
+  const resizingRef = useRef(false);
+  const lastMouseRef = useRef({ x: 0, y: 0 });
 
   // ── URL helpers ────────────────────────────────────────────────────────────
 
   const setOriginalObjectUrl = useCallback(
     (f: File | null) => {
-      if (previewUrlOriginal) { try { URL.revokeObjectURL(previewUrlOriginal); } catch {} }
-      if (f) { try { setPreviewUrlOriginal(URL.createObjectURL(f)); } catch { setPreviewUrlOriginal(null); } }
-      else setPreviewUrlOriginal(null);
+      if (previewUrlOriginal) {
+        try {
+          URL.revokeObjectURL(previewUrlOriginal);
+        } catch {}
+      }
+      if (f) {
+        try {
+          setPreviewUrlOriginal(URL.createObjectURL(f));
+        } catch {
+          setPreviewUrlOriginal(null);
+        }
+      } else setPreviewUrlOriginal(null);
     },
     [previewUrlOriginal]
   );
@@ -357,7 +354,9 @@ export default function Search() {
     setCroppedPreviewUrl(null);
     setFile(null);
     setIsTextSearch(false);
-    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch {}
+    try {
+      window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
+    } catch {}
   };
 
   // ── Auto-run from URL / localStorage ──────────────────────────────────────
@@ -380,7 +379,9 @@ export default function Search() {
         } catch {
           setNotification({ message: "Could not auto-run search from URL.", type: "error" });
         } finally {
-          try { localStorage.removeItem("mcp_last_search"); } catch {}
+          try {
+            localStorage.removeItem("mcp_last_search");
+          } catch {}
           setPage(1);
         }
       })();
@@ -405,7 +406,9 @@ export default function Search() {
         } catch {
           setNotification({ message: "Could not auto-run search payload.", type: "error" });
         } finally {
-          try { localStorage.removeItem("mcp_last_search"); } catch {}
+          try {
+            localStorage.removeItem("mcp_last_search");
+          } catch {}
           setPage(1);
         }
       })();
@@ -414,8 +417,7 @@ export default function Search() {
 
   // ── Search handlers ────────────────────────────────────────────────────────
 
-  const cleanName = (filename: string) =>
-    filename ? filename.split("_")[0].split(".")[0] : "";
+  const cleanName = (filename: string) => (filename ? filename.split("_")[0].split(".")[0] : "");
 
   const handleSearch = async () => {
     if (!file) return;
@@ -449,9 +451,21 @@ export default function Search() {
     setNotification(null);
     setBadImages(new Set());
     setIsTextSearch(false);
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch {} setRawImageUrl(null); }
-    if (previewUrlOriginal) { try { URL.revokeObjectURL(previewUrlOriginal); } catch {} setPreviewUrlOriginal(null); }
-    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch {}
+    if (rawImageUrl) {
+      try {
+        URL.revokeObjectURL(rawImageUrl);
+      } catch {}
+      setRawImageUrl(null);
+    }
+    if (previewUrlOriginal) {
+      try {
+        URL.revokeObjectURL(previewUrlOriginal);
+      } catch {}
+      setPreviewUrlOriginal(null);
+    }
+    try {
+      window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
+    } catch {}
     originalFileRef.current = null;
     setCroppedPreviewUrl(null);
   };
@@ -476,15 +490,32 @@ export default function Search() {
   useEffect(() => {
     let cur: string | null = null;
     if (file) {
-      try { cur = URL.createObjectURL(file); setPreviewUrl(cur); } catch { setPreviewUrl(null); }
+      try {
+        cur = URL.createObjectURL(file);
+        setPreviewUrl(cur);
+      } catch {
+        setPreviewUrl(null);
+      }
     } else {
       setPreviewUrl(null);
     }
-    return () => { if (cur) { try { URL.revokeObjectURL(cur); } catch {} } };
+    return () => {
+      if (cur) {
+        try {
+          URL.revokeObjectURL(cur);
+        } catch {}
+      }
+    };
   }, [file]);
 
   useEffect(() => {
-    return () => { if (previewUrlOriginal) { try { URL.revokeObjectURL(previewUrlOriginal); } catch {} } };
+    return () => {
+      if (previewUrlOriginal) {
+        try {
+          URL.revokeObjectURL(previewUrlOriginal);
+        } catch {}
+      }
+    };
   }, [previewUrlOriginal]);
 
   useEffect(() => {
@@ -495,22 +526,29 @@ export default function Search() {
 
   // ── Lightbox ───────────────────────────────────────────────────────────────
 
-  const [lightboxOpen, setLightboxOpen]   = useState(false);
-  const [activeSrc, setActiveSrc]         = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [activeCaption, setActiveCaption] = useState<string | null>(null);
-  const [scale, setScale]                 = useState(1);
-  const [offset, setOffset]               = useState({ x: 0, y: 0 });
-  const draggingLightboxRef               = useRef(false);
-  const lastPosRef                         = useRef({ x: 0, y: 0 });
-  const MIN_SCALE = 0.5, MAX_SCALE = 6, ZOOM_STEP = 0.2;
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const draggingLightboxRef = useRef(false);
+  const lastPosRef = useRef({ x: 0, y: 0 });
+  const MIN_SCALE = 0.5,
+    MAX_SCALE = 6,
+    ZOOM_STEP = 0.2;
 
   const openLightbox = (src: string, caption?: string) => {
-    setActiveSrc(src); setActiveCaption(caption ?? null);
-    setScale(1); setOffset({ x: 0, y: 0 });
-    setLightboxOpen(true); document.body.style.overflow = "hidden";
+    setActiveSrc(src);
+    setActiveCaption(caption ?? null);
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
+    setLightboxOpen(true);
+    document.body.style.overflow = "hidden";
   };
   const closeLightbox = () => {
-    setLightboxOpen(false); setActiveSrc(null); setActiveCaption(null);
+    setLightboxOpen(false);
+    setActiveSrc(null);
+    setActiveCaption(null);
     document.body.style.overflow = "";
   };
 
@@ -519,23 +557,24 @@ export default function Search() {
     setScale((s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP))));
   };
   const onLbMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
-    draggingLightboxRef.current = true; lastPosRef.current = { x: e.clientX, y: e.clientY };
+    draggingLightboxRef.current = true;
+    lastPosRef.current = { x: e.clientX, y: e.clientY };
   };
   const onLbMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) => {
     if (!draggingLightboxRef.current) return;
-    const dx = e.clientX - lastPosRef.current.x, dy = e.clientY - lastPosRef.current.y;
+    const dx = e.clientX - lastPosRef.current.x,
+      dy = e.clientY - lastPosRef.current.y;
     lastPosRef.current = { x: e.clientX, y: e.clientY };
     setOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
   };
-  const onLbMouseUpOrLeave = () => { draggingLightboxRef.current = false; };
+  const onLbMouseUpOrLeave = () => {
+    draggingLightboxRef.current = false;
+  };
 
   // ── Pagination throttle ────────────────────────────────────────────────────
 
   const safePrev = useMemo(() => throttle(() => setPage((p) => Math.max(1, p - 1)), 1000), []);
-  const safeNext = useMemo(
-    () => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000),
-    [totalPages]
-  );
+  const safeNext = useMemo(() => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000), [totalPages]);
 
   // ── Crop mouse events ──────────────────────────────────────────────────────
 
@@ -556,7 +595,10 @@ export default function Search() {
         return prev;
       });
     };
-    const onUp = () => { draggingRef.current = false; resizingRef.current = false; };
+    const onUp = () => {
+      draggingRef.current = false;
+      resizingRef.current = false;
+    };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
     return () => {
@@ -569,9 +611,10 @@ export default function Search() {
   const onCropImageLoad = () => {
     const img = imgRef.current;
     if (!img) return;
-    const dispW = img.clientWidth, dispH = img.clientHeight;
+    const dispW = img.clientWidth,
+      dispH = img.clientHeight;
     const short = Math.min(dispW, dispH);
-    const size  = Math.round(short * 0.55);
+    const size = Math.round(short * 0.55);
     const x = Math.round((dispW - size) / 2);
     const y = Math.round((dispH - size) / 2);
     setCropRect({ x, y, w: size, h: size });
@@ -582,35 +625,50 @@ export default function Search() {
   const makeCroppedPreview = async (): Promise<void> => {
     if (!rawImageUrl || !imgRef.current) return;
     const imgEl = imgRef.current;
-    const dispW = imgEl.clientWidth,  dispH = imgEl.clientHeight;
-    const natW  = imgEl.naturalWidth, natH  = imgEl.naturalHeight;
+    const dispW = imgEl.clientWidth,
+      dispH = imgEl.clientHeight;
+    const natW = imgEl.naturalWidth,
+      natH = imgEl.naturalHeight;
     const sx = Math.round((cropRect.x / dispW) * natW);
     const sy = Math.round((cropRect.y / dispH) * natH);
     const sw = Math.max(1, Math.round((cropRect.w / dispW) * natW));
     const sh = Math.max(1, Math.round((cropRect.h / dispH) * natH));
 
     const canvas = document.createElement("canvas");
-    canvas.width = sw; canvas.height = sh;
+    canvas.width = sw;
+    canvas.height = sh;
     const ctx = canvas.getContext("2d");
-    if (!ctx) { setNotification({ message: "Could not crop image.", type: "error" }); return; }
+    if (!ctx) {
+      setNotification({ message: "Could not crop image.", type: "error" });
+      return;
+    }
 
     const imgObj = new Image();
     imgObj.crossOrigin = "anonymous";
     imgObj.src = rawImageUrl;
     try {
-      await new Promise<void>((res, rej) => { imgObj.onload = () => res(); imgObj.onerror = () => rej(); });
+      await new Promise<void>((res, rej) => {
+        imgObj.onload = () => res();
+        imgObj.onerror = () => rej();
+      });
     } catch {
-      setNotification({ message: "Could not load image for cropping.", type: "error" }); return;
+      setNotification({ message: "Could not load image for cropping.", type: "error" });
+      return;
     }
 
     ctx.drawImage(imgObj, sx, sy, sw, sh, 0, 0, sw, sh);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-    if (!blob) { setNotification({ message: "Could not generate cropped image.", type: "error" }); return; }
+    if (!blob) {
+      setNotification({ message: "Could not generate cropped image.", type: "error" });
+      return;
+    }
 
     const croppedFile = new File([blob], `query-cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
 
     // Clean up raw url
-    try { URL.revokeObjectURL(rawImageUrl); } catch {}
+    try {
+      URL.revokeObjectURL(rawImageUrl);
+    } catch {}
     setRawImageUrl(null);
 
     // Store cropped file + preview URL
@@ -631,7 +689,12 @@ export default function Search() {
   };
 
   const cancelCropAndClose = () => {
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch {} setRawImageUrl(null); }
+    if (rawImageUrl) {
+      try {
+        URL.revokeObjectURL(rawImageUrl);
+      } catch {}
+      setRawImageUrl(null);
+    }
     setDrawerOpen(false);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
     setSelectingImage(false);
@@ -639,7 +702,13 @@ export default function Search() {
 
   // Cleanup rawImageUrl on unmount
   useEffect(
-    () => () => { if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch {} } },
+    () => () => {
+      if (rawImageUrl) {
+        try {
+          URL.revokeObjectURL(rawImageUrl);
+        } catch {}
+      }
+    },
     [rawImageUrl]
   );
 
@@ -653,22 +722,23 @@ export default function Search() {
 
       <div className="search-container">
         <FabricSearchHeader />
-
+        {/* ── Settings Panel (replaces inline DB Control Panel) ── */}
+        <div className="db__control">
+          <SettingsPanel />
+        </div>
 
         {/* ── Hero / Search entry ── */}
         {showHero && (
           <div>
-          <header className="hero-area">
-            <div className="hero-eyebrow">Fabric Intelligence</div>
-            <h1 className="hero-title">
-              Find the clothing<br />
-              <span className="tz-gold">you couldn't find.</span>
-            </h1>
-            <p className="hero-sub">
-              Visual &amp; semantic search — powered by vectors
-            </p>
+            <header className="hero-area">
+              <div className="hero-eyebrow">Fabric Intelligence</div>
+              <h1 className="hero-title">
+                Find the clothing
+                <br />
+                <span className="tz-gold">you couldn't find.</span>
+              </h1>
+              <p className="hero-sub">Visual &amp; semantic search — powered by vectors</p>
             </header>
-
 
             <div className="tz-sc">
               {/* Text search row */}
@@ -696,8 +766,11 @@ export default function Search() {
                 <div className="tz-lim-trk">
                   <div className="tz-lim-fill" style={{ width: `${((searchLimit - 5) / 95) * 100}%` }} />
                   <input
-                    type="range" className="tz-lim-inp"
-                    min={5} max={100} step={5}
+                    type="range"
+                    className="tz-lim-inp"
+                    min={5}
+                    max={100}
+                    step={5}
                     value={searchLimit}
                     onChange={(e) => setSearchLimit(Number(e.target.value))}
                   />
@@ -708,13 +781,7 @@ export default function Search() {
               <div className="tz-div">or</div>
 
               {/* Image search trigger */}
-              <input
-                id={fileid}
-                type="file"
-                accept="image/*"
-                onChange={onFileChange}
-                className="file-input-hidden"
-              />
+              <input id={fileid} type="file" accept="image/*" onChange={onFileChange} className="file-input-hidden" />
               <button
                 className="tz-btn tz-btn-ghost"
                 style={{ width: "100%", justifyContent: "center" }}
@@ -725,12 +792,11 @@ export default function Search() {
             </div>
 
             {/* Category filter */}
-            <div style={{ maxWidth: 560, margin: "24px auto 0" }}>
+            <div style={{ marginTop: 32 }}>
               <CategoryPicker selected={selectedCategories} onChange={setSelectedCategories} />
             </div>
           </div>
         )}
-
         {/* ── Image preview after crop confirmed ── */}
         {file && !drawerOpen && (
           <div className="side-by-side-preview">
@@ -738,11 +804,7 @@ export default function Search() {
             <div className="original-preview">
               <p className="section-title">Original Image</p>
               <div className="original-img-wrap tz-glass">
-                <img
-                  className="original-img"
-                  src={previewUrlOriginal || previewUrl || ""}
-                  alt="original"
-                />
+                <img className="original-img" src={previewUrlOriginal || previewUrl || ""} alt="original" />
                 <div className="original-img-actions">
                   {/* ── Clear Search button ── */}
                   <button
@@ -763,7 +825,11 @@ export default function Search() {
                         setNotification({ message: "Original image not available.", type: "error" });
                         return;
                       }
-                      if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch {} }
+                      if (rawImageUrl) {
+                        try {
+                          URL.revokeObjectURL(rawImageUrl);
+                        } catch {}
+                      }
                       setRawImageUrl(URL.createObjectURL(orig));
                       setDrawerOpen(true);
                       setCropRect({ x: 20, y: 20, w: 160, h: 160 });
@@ -778,39 +844,35 @@ export default function Search() {
             {/* Cropped preview + controls */}
             {croppedPreviewUrl && (
               <>
-              <div className="cropped-preview">
-                <p className="section-title">Cropped Image</p>
-                <div className="cropped-img-wrap tz-glass">
-                  <img className="cropped-img" src={croppedPreviewUrl} alt="cropped" />
+                <div className="cropped-preview">
+                  <p className="section-title">Cropped Image</p>
+                  <div className="cropped-img-wrap tz-glass">
+                    <img className="cropped-img" src={croppedPreviewUrl} alt="cropped" />
+                  </div>
                 </div>
-              </div>
 
-              <div className="options">
-                <CategoryPicker selected={selectedCategories} onChange={setSelectedCategories} />
-              </div>
+                <div className="options">
+                  <CategoryPicker selected={selectedCategories} onChange={setSelectedCategories} />
+                </div>
                 {/* Limit + re-search button */}
                 <div className="preview-actions-below">
                   <div className="tz-lim" style={{ flex: 1, maxWidth: 220 }}>
                     <span className="tz-lim-lbl">Limit</span>
                     <div className="tz-lim-trk">
-                      <div
-                        className="tz-lim-fill"
-                        style={{ width: `${((searchLimit - 5) / 95) * 100}%` }}
-                      />
+                      <div className="tz-lim-fill" style={{ width: `${((searchLimit - 5) / 95) * 100}%` }} />
                       <input
-                        type="range" className="tz-lim-inp"
-                        min={5} max={100} step={5}
+                        type="range"
+                        className="tz-lim-inp"
+                        min={5}
+                        max={100}
+                        step={5}
                         value={searchLimit}
                         onChange={(e) => setSearchLimit(Number(e.target.value))}
                       />
                     </div>
                     <span className="tz-lim-val">{searchLimit}</span>
                   </div>
-                  <button
-                    className="tz-btn tz-btn-primary"
-                    onClick={handleSearch}
-                    disabled={loading || !file}
-                  >
+                  <button className="tz-btn tz-btn-primary" onClick={handleSearch} disabled={loading || !file}>
                     🔎 Search
                   </button>
                 </div>
@@ -820,9 +882,7 @@ export default function Search() {
         )}
 
         {/* ── Notifications / Loading / Errors ── */}
-        {notification && (
-          <Notification message={notification.message} type={notification.type} />
-        )}
+        {notification && <Notification message={notification.message} type={notification.type} />}
         {(loading || selectingImage) && <Loader />}
         {error && <p className="search-error">{error}</p>}
 
@@ -866,10 +926,7 @@ export default function Search() {
                     >
                       🔎
                     </button>
-                    <button
-                      className="tz-btn tz-btn-ghost"
-                      onClick={handleClear}
-                    >
+                    <button className="tz-btn tz-btn-ghost" onClick={handleClear}>
                       ✕
                     </button>
                   </div>
@@ -879,24 +936,26 @@ export default function Search() {
 
             {/* ── Category picker visible after text search ── */}
             {isTextSearch && (
-              <div style={{ maxWidth: 560, margin: "0 auto 20px" }}>
+              <div style={{ marginBlock: 20 }}>
                 <CategoryPicker selected={selectedCategories} onChange={setSelectedCategories} />
               </div>
             )}
 
             <div className="pagination-controls">
-              <button onClick={safePrev} disabled={page === 1}>← Prev</button>
-              <span>Page {page} / {totalPages}</span>
-              <button onClick={safeNext} disabled={page === totalPages}>Next →</button>
+              <button onClick={safePrev} disabled={page === 1}>
+                ← Prev
+              </button>
+              <span>
+                Page {page} / {totalPages}
+              </span>
+              <button onClick={safeNext} disabled={page === totalPages}>
+                Next →
+              </button>
             </div>
 
             <div className="result-grid">
               {paginatedResults.map((item, idx) => (
-                <article
-                  className="result-card tz-glass"
-                  key={idx}
-                  style={{ animationDelay: `${idx * 60}ms` }}
-                >
+                <article className="result-card tz-glass" key={idx} style={{ animationDelay: `${idx * 60}ms` }}>
                   <div className="result-thumb">
                     <img
                       src={toCdnUrl(item.imageSrc)}
@@ -941,9 +1000,7 @@ export default function Search() {
           </>
         )}
 
-        {!loading && file && visibleResults.length === 0 && (
-          <p className="empty-hint">— no matches found —</p>
-        )}
+        {!loading && file && visibleResults.length === 0 && <p className="empty-hint">— no matches found —</p>}
       </div>
 
       {/* ── Lightbox ── */}
@@ -972,9 +1029,18 @@ export default function Search() {
             {activeCaption && <div className="lb-caption">{activeCaption}</div>}
             <div className="lb-controls">
               <button onClick={() => setScale((s) => Math.max(MIN_SCALE, s - ZOOM_STEP))}>−</button>
-              <button onClick={() => { setScale(1); setOffset({ x: 0, y: 0 }); }}>Reset</button>
+              <button
+                onClick={() => {
+                  setScale(1);
+                  setOffset({ x: 0, y: 0 });
+                }}
+              >
+                Reset
+              </button>
               <button onClick={() => setScale((s) => Math.min(MAX_SCALE, s + ZOOM_STEP))}>+</button>
-              <button className="lb-close" onClick={closeLightbox}>✕</button>
+              <button className="lb-close" onClick={closeLightbox}>
+                ✕
+              </button>
             </div>
           </div>
         </div>
@@ -999,10 +1065,10 @@ export default function Search() {
                 <div
                   className="crop-rect"
                   style={{
-                    left:   `${cropRect.x}px`,
-                    top:    `${cropRect.y}px`,
-                    width:  `${cropRect.w}px`,
-                    height: `${cropRect.h}px`,
+                    left: `${cropRect.x}px`,
+                    top: `${cropRect.y}px`,
+                    width: `${cropRect.w}px`,
+                    height: `${cropRect.h}px`
                   }}
                   onMouseDown={(e) => {
                     e.preventDefault();
@@ -1033,9 +1099,6 @@ export default function Search() {
           </div>
         </div>
       )}
-
-      {/* ── Settings Panel (replaces inline DB Control Panel) ── */}
-      <div className="db__control"><SettingsPanel /></div>
     </main>
   );
 }
