@@ -196,7 +196,7 @@ export default function ContentGrid() {
 
   return (
     <div className="grid-page">
-      <h1 style={ { textAlign: "center", marginBottom: "10px" } }>Fabric List</h1>
+      <h1 style={{ textAlign: "center", marginBlock: "10px", color: "#a455ab" } }>Fabric List</h1>
       <h3 style={ { textAlign: "center", color: "#00000059" } }>List of uploaded fabric with their audio description</h3>
       <div className="upload-wrapper">
         <div className="upload-inner" style={ { display: "flex", gap: 8 } }>

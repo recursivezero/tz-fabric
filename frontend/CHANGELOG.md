@@ -32,4 +32,9 @@ All notable changes to this repository will be documented in this file.
 
 - Integrate AWS S3
 
+## [1.5.0] Fri, Mar 27, 2026
+
+- Fabric Search UI updated with category filter
+- Added Google Analytics
+
 [Unreleased]

@@ -787,7 +787,7 @@ export default function Search() {
                 style={{ width: "100%", justifyContent: "center" }}
                 onClick={() => document.getElementById(fileid)?.click()}
               >
-                📷 &nbsp;Image Search
+                📷  Drop your Image 
               </button>
             </div>
 

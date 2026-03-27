@@ -288,12 +288,12 @@
   font-weight: 800;
   line-height: 1.06;
   letter-spacing: -.03em;
-  color: var(--tz-txt);
+  color: #636cd6;
   margin: 0 0 12px;
 }
 
 .tz-gold {
-  background: linear-gradient(130deg, #dfc490 0%, #f0dcb8 40%, #c9a96e 80%);
+  background: linear-gradient(130deg, #da4545 0%, #588664 40%, #e15dce 80%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -447,7 +447,7 @@
   width: 100%;
   color: var(--tz-muted);
   font-family: var(--fm);
-  font-size: 10px;
+  font-size: 1rem;
   letter-spacing: .15em;
   text-transform: uppercase;
 }
@@ -625,10 +625,9 @@
 }
 
 .tz-btn-ghost {
-  background: var(--tz-surf);
-  color: var(--tz-txt);
   border: 1px solid var(--tz-bdr2);
   backdrop-filter: blur(10px);
+  font-size: 1rem;
 }
 
 .tz-btn-ghost:not(:disabled):hover {

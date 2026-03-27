@@ -28,4 +28,8 @@ All notable changes to this repository will be documented in this file.
 
 - Integrate AWS S3
 
+## [1.5.0] Fri, Mar 27, 2026
+
+- Added Fabric Search with filter
+
 [Unreleased]
