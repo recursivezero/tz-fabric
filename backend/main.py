@@ -126,4 +126,4 @@ app.include_router(uploads_router, prefix=API_PREFIX, tags=["V1"])
 app.include_router(card_router, prefix=API_PREFIX, tags=["V1"])
 
 app.include_router(aadhar_router, prefix=API_PREFIX, tags=["V1"])
-app.include_router(database_router, prefix=API_PREFIX, tags=["V1"])
+app.include_router(database_router, prefix=API_PREFIX, tags=["V1","Database"])
