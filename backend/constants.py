@@ -14,7 +14,7 @@ IMAGE_DIR = ASSETS / "images"
 AUDIO_DIR = ASSETS / "audios"
 CACHE_DIR = Path.home() / ".cache" / "tz_script"
 API_PREFIX = os.getenv("API_PREFIX", "/api/v1")
-CDN_URL = os.getenv("CDN_URL")
+CDN_URL = os.getenv("AWS_PUBLIC_URL")
 MCP_URL = "http://localhost:8000/mcp/sse?transport=sse"
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 print(f"Running in {ENVIRONMENT} environment")
