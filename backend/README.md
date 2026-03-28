@@ -1,5 +1,8 @@
 # TZ-Fabric: Backend
 
+[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+![Python Version](https://badgen.net/badge/Python/3.11+/blue)
+
 ## How to start
 
 ```sh
@@ -26,7 +29,7 @@ poetry run black .
 poetry run ruff .
 ```
 
-open [http://localhost:8000](http://127.0.0.1:8000)
+open [http://localhost:8002](http://127.0.0.1:8002)
 
 ## Build
 

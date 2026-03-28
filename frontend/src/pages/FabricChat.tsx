@@ -1,4 +1,6 @@
 import { useCallback, useEffect } from "react";
+import { jsPDF } from "jspdf";
+
 import Composer from "../components/Composer";
 import EmptyState from "../components/EmptyState";
 import HandleRedirectAction from "../components/HandleRedirectAction";
@@ -6,7 +8,6 @@ import MessageList from "../components/MessageList";
 import TypingIndicator from "../components/TypingIndicator";
 import useChat from "../hooks/chat";
 import "@/assets/styles/FabricChat.css";
-import { jsPDF } from "jspdf";
 
 type ChatDisplayMessage = { id?: string; role?: string; content?: unknown };
 

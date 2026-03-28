@@ -1,5 +1,10 @@
 # 🧵 Fabric Analyzer
 
+![MIT](https://badgen.net/github/license/recursivezero/tz-fabric)
+![Tag](https://badgen.net/github/tag/recursivezero/tz-fabric)
+![check](https://badgen.net/github/checks/recursivezero/tz-fabric)
+![Release](https://badgen.net/github/releases/recursivezero/tz-fabric)
+
 > AI-powered web application that analyzes and search fabric images.
 
 live on <https://pro.threadzip.com>

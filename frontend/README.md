@@ -1,6 +1,6 @@
 # TZ-Fabric
 
-## How to start frontend
+![Node Version](https://badgen.net/badge/Node/20+/blue)
 
 ```sh
 npm install
