@@ -2,6 +2,9 @@
   "folders": [
     {
       "path": "."
+    },
+    {
+      "path": "../caddy/caddy"
     }
   ],
   "settings": {
@@ -46,9 +49,12 @@
     "window.title": "${rootNameShort}${separator}${activeEditorShort}${separator}${activeFolderMedium}",
     "explorer.fileNesting.expand": false,
     "search.exclude": {
+      ".venv": true,
+      "**/poetry.lock": true,
+      "**/pyproject.toml": true,
+      "**/requirements.txt": true,
       "dist/**": true,
-      "package-lock.json": true,
-      ".venv": true
+      "package-lock.json": true
     },
     "peacock.affectSideBarBorder": true,
     "prettier.quoteProps": "consistent",
