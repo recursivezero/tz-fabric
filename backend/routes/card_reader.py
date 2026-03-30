@@ -6,7 +6,7 @@ import os
 
 router = APIRouter()
 
-extracter = PANCardExtractor()
+extractor = PANCardExtractor()
 
 
 @router.post("/pan")
@@ -21,7 +21,7 @@ async def read_card(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
 
     try:
-        data = extracter.extract_data(tmp_path)
+        data = extractor.extract_data(tmp_path)
     finally:
         # Clean up temporary file
         if os.path.exists(tmp_path):

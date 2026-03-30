@@ -1,9 +1,13 @@
 aadhaar
+aadhar
+adhaar
 analyse
 appleboy
 colour
 easyocr
+embedder
 lancedb
+metadatas
 pipx
 prefilter
 pyproject
