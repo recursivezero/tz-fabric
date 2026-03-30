@@ -6,7 +6,7 @@ import os
 
 router = APIRouter()
 
-extracter = AadhaarCardExtractor()
+extractor = AadhaarCardExtractor()
 
 
 @router.post("/adhaar")
@@ -22,7 +22,7 @@ async def read_card(file: UploadFile = File(...), side: str = Form(" ")):
         raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
 
     try:
-        data = extracter.extract_data(tmp_path, side)
+        data = extractor.extract_data(tmp_path, side)
     finally:
         # Clean up temporary file
         if os.path.exists(tmp_path):

@@ -1,7 +1,6 @@
 import os
 from contextlib import asynccontextmanager
 
-
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +13,7 @@ from routes.card_reader import router as card_router
 from routes.adhaar_reader import router as aadhar_router
 from routes.upload_category import router as uploads_router
 from routes.database import router as database_router
+from routes.resume import router as resume_router
 from constants import (
     API_PREFIX,
     ASSETS,
@@ -122,8 +122,7 @@ app.include_router(chat.router, prefix=API_PREFIX, tags=["V1"])
 app.include_router(uploads.router, prefix=API_PREFIX, tags=["V1"])
 app.include_router(contact.router, prefix=API_PREFIX, tags=["V1"])
 app.include_router(uploads_router, prefix=API_PREFIX, tags=["V1"])
-
 app.include_router(card_router, prefix=API_PREFIX, tags=["V1"])
-
 app.include_router(aadhar_router, prefix=API_PREFIX, tags=["V1"])
-app.include_router(database_router, prefix=API_PREFIX, tags=["V1","Database"])
+app.include_router(database_router, prefix=API_PREFIX, tags=["V1", "Database"])
+app.include_router(resume_router, prefix=API_PREFIX, tags=["V1", "Resume"])

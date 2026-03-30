@@ -1,11 +1,18 @@
 import shutil
+
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional, cast
 
-
 from utils.aws_helper import upload_file
-from fastapi import APIRouter, BackgroundTasks, File, Form, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    File,
+    Form,
+    Request,
+    UploadFile,
+)
 
 from constants import AUDIO_DIR, IMAGE_DIR, IS_PROD
 from core.embedder import embed_image_bytes
