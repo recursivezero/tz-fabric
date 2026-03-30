@@ -7,10 +7,12 @@ colour
 easyocr
 embedder
 lancedb
+mcpserver
 metadatas
 pipx
 prefilter
 pyproject
 Recrop
+redoc
 tzfabric
 venv

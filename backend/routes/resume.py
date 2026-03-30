@@ -81,3 +81,15 @@ async def download_resume(key: str, response_class=StreamingResponse):
     except ClientError as e:
         error_code = e.response.get("Error", {}).get("Code", "Unknown")
         raise HTTPException(404, f"File not found: {error_code}")
+
+
+@router.get("/resume/access")
+async def test_resume_access():
+    """
+    A simple endpoint to verify the API key is working
+    without needing to upload a file.
+    """
+    return {
+        "status": "success",
+        "message": "You have accessed the protected resume router!",
+    }

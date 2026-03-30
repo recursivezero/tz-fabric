@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from utils.env_config import load_env
+from constants import ENVIRONMENT
 
 # Define ANSI color codes
 COLOR_CODES = {
@@ -51,4 +51,4 @@ def get_production_config_logger(env: str) -> logging.Logger:
     return logger
 
 
-logThis = get_production_config_logger(load_env())
+logThis = get_production_config_logger(ENVIRONMENT)
