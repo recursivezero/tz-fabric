@@ -70,7 +70,7 @@ npm run dev
 cd backend
 curl -sSL https://install.python-poetry.org | python3 -
 poetry install --all-extras --with dev
-poetry run tzfabric dev
+poetry run fabric dev
 ```
 
 ## Sample .env
