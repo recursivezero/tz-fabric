@@ -16,7 +16,7 @@ Note: according to your port change the port in `frontend/vite.config.ts` and `V
 
 ```sh
 poetry env activate
-poetry run tzfabric dev
+poetry run fabric dev
 ```
 
 ## Lint
