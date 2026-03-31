@@ -1,0 +1,19 @@
+[Unit]
+Description=tz-fabric MCP Backend (FastMCP + Poetry)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/tz_apps/tz-fabric/backend
+ExecStart=/usr/bin/env bash -lc '/root/.local/bin/poetry run fabric prod --host 127.0.0.1 --port 8002'
+Restart=always
+RestartSec=5
+User=root
+Environment=PYTHONUNBUFFERED=1
+Environment="HOME=/root/"
+
+# Optional: persistent logs
+StandardOutput=append:/var/log/tz-fabric.log
+StandardError=append:/var/log/tz-fabric.error.log
+
+[Install]
+WantedBy=multi-user.target
