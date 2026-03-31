@@ -66,9 +66,12 @@ class MyApp(FastAPI):
 
 logger = get_logger(__name__)
 
+ALLOW_LOCAL = os.getenv("ALLOW_LOCAL_ORIGINS", "false").lower() == "true"
+
 DEV_ORIGINS = [
     "http://localhost:5173",
-    "http://localhost:4173",
+    "http://localhost:8000",
+    "http://localhost:3000",
 ]
 
 PROD_ORIGINS = [
@@ -76,10 +79,15 @@ PROD_ORIGINS = [
     "https://lab.threadzip.com",
     "https://app.threadzip.com",
     "https://threadzip.com",
+    "https://recursivezero.github.io"
 ]
 
 # Select origins based on the environment
-origins = DEV_ORIGINS if IS_DEV else PROD_ORIGINS
+origins = (
+    DEV_ORIGINS
+    if IS_DEV
+    else (PROD_ORIGINS + DEV_ORIGINS if ALLOW_LOCAL else PROD_ORIGINS)
+)
 
 
 @asynccontextmanager
