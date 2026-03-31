@@ -47,7 +47,8 @@ logger = get_logger(__name__)
 
 origins = [
     "http://localhost:4173",
-    "http://localhost:5173",  # Allow requests from your frontend origin
+    "http://localhost:5173",
+    "http://localhost:5174"  # Allow requests from your frontend origin
     # You can add more origins here if needed
 ]
 
