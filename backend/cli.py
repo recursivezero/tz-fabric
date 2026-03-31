@@ -18,13 +18,13 @@ DEFAULT_PORT = int(os.getenv("PORT", "8002"))
     importlib.metadata.version("tz-fabric"),
     "--version",
     "-v",
-    prog_name="tzfabric",
-    message="tzfabric version: %(version)s",
+    prog_name="fabric",
+    message="fabric version: %(version)s",
 )
 def main():
     """
-    tzfabric command-line interface.
-    Use subcommands like: tzfabric serve, tzfabric dev.
+    fabric command-line interface.
+    Use subcommands like: fabric serve, fabric dev.
     """
 
 
@@ -52,7 +52,7 @@ def dev(host, port):
 
 
 # ------------------------------------------------------------
-# Entry point for poetry / `tzfabric` script
+# Entry point for poetry / `fabric` script
 # ------------------------------------------------------------
 if __name__ == "__main__":
     main()
