@@ -1,3 +1,4 @@
+import io
 import os
 import boto3
 from datetime import datetime
@@ -33,10 +34,17 @@ def upload_file(
     Returns:
         Public URL of uploaded object
     """
-
     try:
-        file_obj.seek(0)
+        # ✅ CASE 1: bytes → convert to file-like
+        if isinstance(file_obj, bytes):
+            file_obj = io.BytesIO(file_obj)
 
+        # ✅ CASE 2: UploadFile → use .file (sync object)
+        elif hasattr(file_obj, "file"):
+            file_obj = file_obj.file
+
+        # ❌ DO NOT use seek on async object
+        
         s3_client.upload_fileobj(
             file_obj,
             bucket_name,

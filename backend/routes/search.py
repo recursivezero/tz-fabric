@@ -154,7 +154,7 @@ async def image_search(
         elif search_term:
             search_start = time.time()
             limit = limit or 20
-            _, all_results = run_vector_search(
+            _, all_results = await run_vector_search(
                 table, Fabric, search_term, limit=limit, category=parsed_categories
             )
 
