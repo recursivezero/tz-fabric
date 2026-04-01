@@ -55,3 +55,12 @@ jobs:
 
             # 4. Cleanup
             echo "Deployment of tz-fabric successful."
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** release" >> $GITHUB_STEP_SUMMARY
+          echo "**Live URL:** https://pro.threadzip.com" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed At:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

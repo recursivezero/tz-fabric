@@ -1,8 +1,6 @@
 import os
 from contextlib import asynccontextmanager
 
-
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -14,11 +12,15 @@ from routes.card_reader import router as card_router
 from routes.adhaar_reader import router as aadhar_router
 from routes.upload_category import router as uploads_router
 from routes.database import router as database_router
+from routes.resume import router as resume_router
 from constants import (
+    API_KEY,
     API_PREFIX,
     ASSETS,
     AUDIO_DIR,
     IMAGE_DIR,
+    IS_DEV,
+    IS_PROD,
 )
 from routes import (
     analysis,
@@ -34,6 +36,27 @@ from routes import (
 from tools.mcpserver import sse_app
 from utils.emoji_logger import get_logger
 from utils.db_utils import mongo_client, db
+from fastapi import Security, HTTPException, status
+from fastapi.security.api_key import APIKeyHeader
+
+
+# Default value for testing; should be set in .env for production
+api_key_header = APIKeyHeader(name="X-Internal-Secret", auto_error=False)
+
+print(
+    f"Using API key: {API_KEY[:4]}..."
+)  # Print only the first few characters for verification
+print(f"IS DEV : {IS_DEV}")
+print(f"IS PROD : {IS_PROD}")
+
+
+async def verify_internal_access(api_key: str = Security(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized: Access Restricted",
+        )
+    return api_key
 
 
 class MyApp(FastAPI):
@@ -41,16 +64,32 @@ class MyApp(FastAPI):
     database: Database
 
 
-load_dotenv()
-
 logger = get_logger(__name__)
 
-origins = [
-    "http://localhost:4173",
+ALLOW_LOCAL = os.getenv("ALLOW_LOCAL_ORIGINS", "false").lower() == "true"
+
+DEV_ORIGINS = [
     "http://localhost:5173",
-    "http://localhost:5174"  # Allow requests from your frontend origin
-    # You can add more origins here if needed
+    "http://localhost:8000",
+    "http://localhost:3000",
 ]
+
+PROD_ORIGINS = [
+    "https://pro.threadzip.com",  # Change this to your actual Astro/React URL
+    "https://lab.threadzip.com",
+    "https://app.threadzip.com",
+    "https://threadzip.com",
+    "https://recursivezero.github.io"
+]
+
+# Select origins based on the environment
+origins = (
+    DEV_ORIGINS
+    if IS_DEV
+    else (PROD_ORIGINS + DEV_ORIGINS if ALLOW_LOCAL else PROD_ORIGINS)
+)
+
+print(f"Allowed CORS origins: {origins}")
 
 
 @asynccontextmanager
@@ -83,7 +122,13 @@ async def lifespan(app: MyApp):
 
 
 # Create the app using your MyApp subclass and wire the lifespan manager
-app: MyApp = MyApp(title="TZ Fabric Assistant (with MCP Agent)", lifespan=lifespan)
+app: MyApp = MyApp(
+    title="TZ Fabric Assistant (with MCP Agent)",
+    lifespan=lifespan,
+    docs_url="/docs" if IS_DEV else None,
+    redoc_url="/redoc" if IS_DEV else None,
+    openapi_url="/openapi.json" if IS_DEV else None,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -123,8 +168,12 @@ app.include_router(chat.router, prefix=API_PREFIX, tags=["V1"])
 app.include_router(uploads.router, prefix=API_PREFIX, tags=["V1"])
 app.include_router(contact.router, prefix=API_PREFIX, tags=["V1"])
 app.include_router(uploads_router, prefix=API_PREFIX, tags=["V1"])
-
 app.include_router(card_router, prefix=API_PREFIX, tags=["V1"])
-
 app.include_router(aadhar_router, prefix=API_PREFIX, tags=["V1"])
-app.include_router(database_router, prefix=API_PREFIX, tags=["V1","Database"])
+app.include_router(database_router, prefix=API_PREFIX, tags=["V1", "Database"])
+app.include_router(
+    resume_router,
+    prefix=API_PREFIX,
+    tags=["V1", "Resume"],
+    dependencies=[Security(verify_internal_access)],  # THE SECURITY LOCK
+)

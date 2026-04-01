@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Comment Action
-        uses: recursivezero/action-club/.github/actions/comment-on-issue@main
+        uses: recursivezero/action-club/.github/actions/comment-on-issue@v0.2.58
         with:
           issue_number: ${{ github.event.inputs.issue_number }}
           comment_body: ${{ github.event.inputs.comment_body }}

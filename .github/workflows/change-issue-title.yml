@@ -19,6 +19,6 @@ jobs:
 
     steps:
       - name: Format issue title
-        uses: recursivezero/action-club/.github/actions/format-issue-title@v0.2.57
+        uses: recursivezero/action-club/.github/actions/format-issue-title@v0.2.58
         with:
           prefix: ${{ vars.PROJECT_PREFIX }}

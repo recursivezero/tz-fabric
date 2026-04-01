@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   sync:
-    uses: recursivezero/action-club/.github/workflows/auto-assign-project.yml@main
+    uses: recursivezero/action-club/.github/workflows/auto-assign-project.yml@v0.2.58
     with:
       project_number: 1 # That's it!
     secrets:

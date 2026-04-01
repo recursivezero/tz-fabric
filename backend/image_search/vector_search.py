@@ -26,6 +26,7 @@ def run_vector_search(
     where_clause = " OR ".join(f"tag == '{c}'" for c in (category or []))
 
     query = table.search(search_query)
+    print(f"Initial search query constructed: {query}")  # Debug log
 
     if category:
         query = query.where(where_clause, prefilter=True)

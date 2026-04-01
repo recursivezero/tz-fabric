@@ -1,6 +1,6 @@
 {
   "name": "tz-fabric",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "type": "module",
   "homepage": "https://threadzip.com",
   "description": "A AI enabled fabric analysis, chatbot integration with image search",
@@ -32,12 +32,24 @@
     {
       "name": "Aaditya Saarda",
       "github": "@aadityasarda"
+    },
+    {
+      "name": "Poornachandra A.N.",
+      "github": "@Heisenberg208"
+    },
+    {
+      "name": "Ravindra Yadav",
+      "github": "@Ravindrayadav04"
     }
   ],
   "keywords": [
     "threadzip",
     "client",
-    "tz-fabric"
+    "tz-fabric",
+    "fabric",
+    "analysis",
+    "chatbot",
+    "image-search"
   ],
   "scripts": {
     "dev": "vite",
@@ -52,7 +64,7 @@
     "axios": "^1.11.0",
     "dotenv-expand": "^12.0.3",
     "html-to-image": "^1.11.13",
-    "jspdf": "^3.0.3",
+    "jspdf": "^4.2.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-easy-crop": "^5.5.6",

@@ -1,11 +1,11 @@
 [project]
 name = "tz-fabric"
-version = "1.5.0"
+version = "1.5.1"
 description = "This is fabric analyzer backend"
 authors = [{ name = "recursivezero", email = "recursivezero@outlook.com" }]
 readme = "README.md"
 license = { file = "LICENSE-PYTHON" }
-keywords = ["fabric", "analyzer", "fastapi", "gpt", "genai"]
+keywords = ["fabric", "analyzer", "fastapi", "fabric-search", "vector-db", "mongodb",  "lancedb", "groq", "langchain", "mcp", "fastmcp", "easyocr", "opencv"]
 classifiers = [
   "Programming Language :: Python :: 3.11",
   "License :: OSI Approved :: MIT License",
@@ -56,12 +56,12 @@ extra = [
 
 
 [project.urls]
-homepage = "https://theadzip.com"
+homepage = "https://pro.theadzip.com"
 repository = "https://github.com/recursivezero/tz-fabric"
 documentation = "https://github.com/recursivezero/tz-script/docs"
 
 [project.scripts]
-tzfabric = "cli:main"
+fabric = "cli:main"
 lint = "lint:main"
 
 [build-system]

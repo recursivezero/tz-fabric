@@ -1,4 +1,3 @@
-# routes/validate_image.py (mypy-friendly)
 import asyncio
 import io
 import json
