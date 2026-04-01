@@ -10,13 +10,14 @@ CDN_URL = os.getenv("AWS_PUBLIC_URL", "https://cdn.threadzip.com")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 API_KEY = os.getenv("INTERNAL_API_KEY", "abcd1234")
+BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
 
 IS_PROD = ENVIRONMENT == "production"
 IS_DEV = ENVIRONMENT == "development"
 
 
 PROJECT_DIR = Path(__file__).parent
-RELATIVE_GENERATED_FOLDER = "s3://tz-fabric-upload/uploaded/"
+RELATIVE_GENERATED_FOLDER = f"s3://{BUCKET_NAME}/images/"
 ASSETS = PROJECT_DIR / "assets"
 UPLOAD_FOLDER_FABRIC = ASSETS / "search"
 IMAGE_DIR = ASSETS / "images"
@@ -36,7 +37,7 @@ MODELS = {
         "api_url": "https://api.github.com/repos/recursivezero/tz-script/releases/tags/v3.5.0",
     },
 }
-DATABASE_PATH = str(PROJECT_DIR / "D:\\project\\tz-fabric\\backend\\lancedb")
+DATABASE_PATH = str(PROJECT_DIR / "database")
 FABRIC_COLLECTION = "fabric_data"
 PROCESSING_TIMES_COLLECTION = "fabric_log"
 
