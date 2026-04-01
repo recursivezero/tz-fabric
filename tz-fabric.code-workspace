@@ -134,6 +134,7 @@
       "internal-terms": false // Disable the `internal-terms` dictionary
     },
     "explorer.excludeGitIgnore": false,
-    "git.branchPrefix": "feature/TZF-2600XX"
+    "git.branchPrefix": "feature/TZF-2600XX",
+    "explorer.compactFolders": false
   }
 }
