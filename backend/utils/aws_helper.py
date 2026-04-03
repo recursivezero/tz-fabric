@@ -44,7 +44,7 @@ def upload_file(
             file_obj = file_obj.file
 
         # ❌ DO NOT use seek on async object
-        
+
         s3_client.upload_fileobj(
             file_obj,
             bucket_name,

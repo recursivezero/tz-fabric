@@ -12,15 +12,16 @@ def convert_image_to_base64(image) -> str:
         print("Failed to convert image:", e)
         return ""
 
+
 # return [] or list of strings
-def parse_list(value:str)-> list:
+def parse_list(value: str) -> list:
     parsed_list = []
     if value is None or value == [""] or value == [] or value == "" or value == "null":
-          return []
+        return []
     elif isinstance(value, str):
-          parsed_list = [value]
+        parsed_list = [value]
     elif isinstance(value, list):
-           parsed_list = list(filter(None, value))
+        parsed_list = list(filter(None, value))
     return parsed_list
 
 

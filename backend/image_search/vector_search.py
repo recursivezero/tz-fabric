@@ -46,7 +46,7 @@ def run_vector_search(
             parts = full_path.rsplit("/", 2)
             if len(parts) >= 2:
                 image_paths.append(f"{parts[-2]}/{parts[-1]}")
-        print("TAG VALUE:", getattr(result, "tag", None))        
+        print("TAG VALUE:", getattr(result, "tag", None))
 
     # Debug timing (comment out in production)
     search_time = time.perf_counter() - start_time

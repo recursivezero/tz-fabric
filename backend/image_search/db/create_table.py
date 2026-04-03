@@ -70,7 +70,7 @@ def get_file_info(image_path: str) -> Optional[Dict[Any, Any]]:
         return None
 
 
-ALLOWED_ROOTS = {"stock", "fabric", "design", "product","single","group"}
+ALLOWED_ROOTS = {"stock", "fabric", "design", "product", "single", "group"}
 
 
 def collect_image_data(root_folder: str) -> list:
@@ -281,7 +281,7 @@ def process_table(
 
     db = lancedb.connect(database)
     if not hasattr(db, "list_tables"):
-       db.list_tables = db.table_names
+        db.list_tables = db.table_names
     logger.info(TABLE_MESSAGES.info.available_tables.format(tables=db.list_tables()))
     logger.info(TABLE_MESSAGES.info.looking_for_table.format(table_name=table_name))
     logger.info(

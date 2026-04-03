@@ -52,9 +52,10 @@ async def image_search(
         parsed_categories = parse_list(category)
         sanitized_categories = sanitize(parsed_categories)
         print("DEBUG  sanitized_categories:", sanitized_categories)
-        final_categories= replace_with_multiple(sanitized_categories, target="product", replacements=["single","group"])
+        final_categories = replace_with_multiple(
+            sanitized_categories, target="product", replacements=["single", "group"]
+        )
         print("DEBUG final_categories:", final_categories)
-
 
         if "application/json" in content_type:
             body = await request.json()
