@@ -70,7 +70,7 @@ def get_file_info(image_path: str) -> Optional[Dict[Any, Any]]:
         return None
 
 
-ALLOWED_ROOTS = {"stock", "fabric", "design", "single", "group"}
+ALLOWED_ROOTS = {"stock", "fabric", "design", "product","single","group"}
 
 
 def collect_image_data(root_folder: str) -> list:

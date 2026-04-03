@@ -4,8 +4,9 @@ from typing import Any, List, Tuple
 
 
 def run_vector_search(
-    table, schema, search_query: Any, limit: int = 6, category: List | None = None
+    table, schema, search_query: Any, limit: int = 6, category: List = []
 ) -> Tuple[List[Any], List[str]]:
+    print(category)
     """Optimized vector search with same interface but faster performance.
 
     Args:
@@ -24,7 +25,7 @@ def run_vector_search(
 
     # Perform the vector search
     where_clause = " OR ".join(f"tag == '{c}'" for c in (category or []))
-
+    print("WHERE CLAUSE:", where_clause)
     query = table.search(search_query)
     print(f"Initial search query constructed: {query}")  # Debug log
 
@@ -45,6 +46,7 @@ def run_vector_search(
             parts = full_path.rsplit("/", 2)
             if len(parts) >= 2:
                 image_paths.append(f"{parts[-2]}/{parts[-1]}")
+        print("TAG VALUE:", getattr(result, "tag", None))        
 
     # Debug timing (comment out in production)
     search_time = time.perf_counter() - start_time

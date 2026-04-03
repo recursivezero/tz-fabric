@@ -37,8 +37,8 @@ const CATEGORIES = [
   { id: "stock", label: "Stock", icon: "📦" },
   { id: "fabric", label: "Fabric", icon: "🧵" },
   { id: "design", label: "Design", icon: "🎨" },
-  { id: "single", label: "Single", icon: "🖼️" },
-  { id: "group", label: "Group", icon: "👥" }
+  { id: "product", label: "Product", icon: "🖼️" },
+  // { id: "group", label: "Group", icon: "👥" }
 ];
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
@@ -64,6 +64,7 @@ function useSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ResultItem[]>([]);
+  
 
   const runImageSearch = useCallback(async (file: File, category?: string[], limit = 40) => {
     setLoading(true);
@@ -72,9 +73,13 @@ function useSearch() {
       const form = new FormData();
       form.append("file", file);
       form.append("limit", String(limit));
+      console.log("FORM DATA CATEGORY:", category);
+      console.log("FILE:", file);
+      console.log("RUN IMAGE CATEGORY VALUE:", category);
+      console.log("TYPE:", typeof category);
       if (category?.length) {
         category.forEach((c) => {
-          form.append("category[]", c);
+          form.append("category", c);
         });
       }
       const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
@@ -101,7 +106,7 @@ function useSearch() {
       form.append("limit", String(limit));
       if (category?.length) {
         category.forEach((c) => {
-          form.append("category[]", c);
+          form.append("category", c);
         });
       }
       const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
@@ -375,7 +380,7 @@ export default function Search() {
           setOriginalObjectUrl(f);
           setFile(f);
           setIsTextSearch(false);
-          await runImageSearch(f, undefined, searchLimit);
+          await runImageSearch(f, selectedCategories, searchLimit);
         } catch {
           setNotification({ message: "Could not auto-run search from URL.", type: "error" });
         } finally {
@@ -402,7 +407,7 @@ export default function Search() {
           setOriginalObjectUrl(f);
           setFile(f);
           setIsTextSearch(false);
-          await runImageSearch(f, undefined, searchLimit);
+          await runImageSearch(f, selectedCategories, searchLimit);
         } catch {
           setNotification({ message: "Could not auto-run search payload.", type: "error" });
         } finally {
@@ -682,7 +687,7 @@ export default function Search() {
     // Auto-run image search immediately after crop
     setNotification(null);
     try {
-      await runImageSearch(croppedFile, undefined, searchLimit);
+      await runImageSearch(croppedFile, selectedCategories, searchLimit);
     } catch {
       setNotification({ message: "Search failed.", type: "error" });
     }

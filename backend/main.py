@@ -79,7 +79,7 @@ PROD_ORIGINS = [
     "https://lab.threadzip.com",
     "https://app.threadzip.com",
     "https://threadzip.com",
-    "https://recursivezero.github.io"
+    "https://recursivezero.github.io",
 ]
 
 # Select origins based on the environment

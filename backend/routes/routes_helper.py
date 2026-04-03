@@ -58,7 +58,7 @@ def allowed_file(filename):
     return "." in name and name.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-ALLOWED_CATEGORIES = {"stock", "fabric", "design", "single", "group"}
+ALLOWED_CATEGORIES = {"stock", "fabric", "design", "product", "single", "group"}
 
 
 def sanitize(arr: Optional[List[str]]) -> List[str]:
