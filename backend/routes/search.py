@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 from typing import List, Optional
 
-from utils.image_utils import parse_list, replace_with_multiple
+from utils.image_utils import parse_list
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from PIL import Image
 from routes.routes_helper import SearchResponse, sanitize
@@ -52,12 +52,13 @@ async def image_search(
         parsed_categories = parse_list(category)
         sanitized_categories = sanitize(parsed_categories)
         print("DEBUG  sanitized_categories:", sanitized_categories)
-        final_categories = replace_with_multiple(
-            sanitized_categories, target="product", replacements=["single", "group"]
-        )
-        print("DEBUG final_categories:", final_categories)
+        # final_categories = replace_with_multiple(
+        #     sanitized_categories, target="product", replacements=["single", "group"]
+        # )
+        # print("DEBUG final_categories:", final_categories)
 
-        if "application/json" in content_type:
+
+        if "application/json" in content_type: 
             body = await request.json()
             search_term = body.get("search_term")
             limit = body.get("limit", 5)
@@ -106,10 +107,10 @@ async def image_search(
             search_start = time.time()
             limit = limit or 20
             _, image_paths = run_vector_search(
-                table, Fabric, image, limit=limit, category=final_categories
+                table, Fabric, image, limit=limit, category=sanitized_categories
             )
             print("DEBUG image_paths:", image_paths)
-            print("DEBUG final_categories in image search:", final_categories)
+            print("DEBUG sanitized_categories in image search:", sanitized_categories)
             search_time = time.time() - search_start
             logThis.info(
                 f"Vector search took {search_time:.4f}s", extra={"color": "green"}
@@ -162,9 +163,9 @@ async def image_search(
             search_start = time.time()
             limit = limit or 20
             _, all_results = run_vector_search(
-                table, Fabric, search_term, limit=limit, category=final_categories
+                table, Fabric, search_term, limit=limit, category=sanitized_categories
             )
-            print("final_categories in text search:", final_categories)
+            print("sanitized_categories in text search:", sanitized_categories)
 
             search_time = time.time() - search_start
             logThis.info(
