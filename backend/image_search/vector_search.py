@@ -22,7 +22,7 @@ def run_vector_search(
     """
     # Start timing
     start_time = time.perf_counter()
-    
+
     # Perform the vector search
     where_clause = " OR ".join(f"tag == '{c}'" for c in (category or []))
     print("WHERE CLAUSE:", where_clause)
@@ -43,12 +43,19 @@ def run_vector_search(
             image_uris.append(result.image_uri)
             # Optimized path processing
             full_path = result.image_uri.replace("\\", "/")
-            parts = full_path.rsplit("/", 2)
-            if len(parts) >= 2:
-                image_paths.append(f"{parts[-2]}/{parts[-1]}")
-        
+            # parts = full_path.rsplit("/", 2)
+            parts = full_path.split("/")
+            print(full_path, parts)
+
+            if "product" in parts:
+                idx = parts.index("product")
+                image_paths.append("/".join(parts[idx:]))
+            else:
+                image_paths.append("/".join(parts[-2:]))
+            # if len(parts) >= 2:
+            #     image_paths.append(f"{parts[-2]}/{parts[-1]}")
+
     # Debug timing (comment out in production)
     search_time = time.perf_counter() - start_time
     print(f"Vector search executed in {search_time:.2f}s")
-
     return image_uris, image_paths

@@ -1,5 +1,6 @@
 import base64
 import io
+from typing import Any
 
 
 def convert_image_to_base64(image) -> str:
@@ -14,7 +15,7 @@ def convert_image_to_base64(image) -> str:
 
 
 # return [] or list of strings
-def parse_list(value: str) -> list:
+def parse_list(value: Any) -> list:
     parsed_list = []
     if value is None or value == [""] or value == [] or value == "" or value == "null":
         return []

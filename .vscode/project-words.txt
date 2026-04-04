@@ -6,6 +6,7 @@ appleboy
 colour
 easyocr
 embedder
+fabricai
 lancedb
 mcpserver
 metadatas

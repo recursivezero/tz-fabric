@@ -57,8 +57,7 @@ async def image_search(
         # )
         # print("DEBUG final_categories:", final_categories)
 
-
-        if "application/json" in content_type: 
+        if "application/json" in content_type:
             body = await request.json()
             search_term = body.get("search_term")
             limit = body.get("limit", 5)
