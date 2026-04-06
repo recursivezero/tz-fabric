@@ -11,7 +11,7 @@ import Search from "./pages/FabricSearch";
 import Home from "./pages/Home";
 import ImageDescription from "./pages/ImageDescriptor";
 import Reader from "./pages/Reader";
-import AadhaarCardReader from "./pages/adhaar";
+import AadhaarCardReader from "./pages/Aadhaar";
 
 export const Routing = () => {
   usePageTracking();

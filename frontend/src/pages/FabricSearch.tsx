@@ -1,9 +1,10 @@
-import "@/assets/styles/FabricSearch.css";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+
 import FabricSearchHeader from "../components/FabricSearchHeader";
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import { throttle } from "../utils/throttle";
+import "@/assets/styles/FabricSearch.css";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -279,6 +280,10 @@ interface StickySearchBarProps {
   onRecrop: () => void;
   fileInputId: string;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  selectedCategories: string[];
+  onSetCategories: (cats: string[]) => void;
+  searchLimit: number;
+  onSetLimit: (v: number) => void;
 }
 
 function StickySearchBar({
@@ -297,7 +302,7 @@ function StickySearchBar({
   onSetCategories,
   searchLimit,
   onSetLimit,
-}: any) {
+}: StickySearchBarProps) {
   return (
     <div className="search-bar search-bar--sticky">
       <div className="search-bar__inner">
@@ -476,7 +481,7 @@ function ResultsSection({
   onNext,
   onZoom,
   onBadImage,
-}: any) {
+}: ResultsSectionProps) {
   return (
     <div className="results-section">
 
