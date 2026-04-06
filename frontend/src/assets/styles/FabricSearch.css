@@ -720,6 +720,7 @@
   flex-direction: column;
   gap: 20px;
   animation: anim-fade-in 0.3s ease both;
+  margin-top:1.5rem;
 }
 
 /* Element: meta bar (count + filters + inline pagination) */
@@ -730,6 +731,10 @@
   gap: 12px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--color-border);
+  div {
+        color: #3d4c46;
+        font-size: 1.5rem;
+      }
 }
 
 .results-section__count {

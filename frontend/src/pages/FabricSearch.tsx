@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {  useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import FabricSearchHeader from "../components/FabricSearchHeader";
 import Loader from "../components/Loader";
@@ -142,10 +142,21 @@ interface CategoryPickerProps {
 }
 
 function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerProps) {
-  const toggle = (id: string) =>
-    onChange(selected.includes(id) ? selected.filter((c) => c !== id) : [...selected, id]);
-  const allOn = selected.length === CATEGORIES.length;
-  const toggleAll = () => onChange(allOn ? [] : CATEGORIES.map((c) => c.id));
+  const [tempSelected, setTempSelected] = useState(selected);
+  const toggle = (id: string) => {
+    setTempSelected(tempSelected.includes(id) ? tempSelected.filter((c) => c !== id) : [...tempSelected, id]);
+  }
+  const allOn = tempSelected.length === CATEGORIES.length;
+  const toggleAll = () => {setTempSelected(allOn ? [] : CATEGORIES.map((c) => c.id))};
+
+  const applySearch = () => {
+    console.log("Apply search with categories:", tempSelected);
+    onChange(tempSelected);
+  };
+
+  useEffect(() => {
+    setTempSelected(selected);
+  }, [selected]);
 
   return (
     <div className={`category-picker${compact ? " category-picker--compact" : ""}`}>
@@ -158,7 +169,7 @@ function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerP
 
       <div className="category-picker__grid">
         {CATEGORIES.map((cat) => {
-          const active = selected.includes(cat.id);
+          const active = tempSelected.includes(cat.id);
           return (
             <button
               key={cat.id}
@@ -172,6 +183,11 @@ function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerP
             </button>
           );
         })}
+        {compact && (
+          <button className="btn btn-primary" onClick={()=> applySearch()} type="button">
+            {'Apply filter →'}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -475,8 +491,6 @@ function ResultsSection({
   paginatedResults,
   page,
   totalPages,
-  selectedCategories,
-  onSetCategories,
   onPrev,
   onNext,
   onZoom,
@@ -491,9 +505,9 @@ function ResultsSection({
       </div>
 
       {/* ✅ ALWAYS visible */}
-      <div className="results-section__filters">
+      {/* <div className="results-section__filters one">
         <CategoryPicker selected={selectedCategories} onChange={onSetCategories} compact />
-      </div>
+      </div> */}
 
       <div className="result-grid result-grid--full">
         {paginatedResults.map((item: any, idx: number) => (
@@ -1246,6 +1260,7 @@ export default function Search() {
             onPrev={safePrev}
             onNext={safeNext}
             onZoom={openLightbox}
+            isTextSearch={isTextSearch}
             onBadImage={(src) => setBadImages((prev) => new Set([...prev, src]))}
           />
         )}
