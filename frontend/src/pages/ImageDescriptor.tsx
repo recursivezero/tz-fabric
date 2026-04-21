@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import DescriptionBox from "../components/DescriptionBox";
 import DrawerToggle from "../components/DrawerToggle";
 import Header from "../components/ImageDescriptorHeader";

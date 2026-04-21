@@ -10,13 +10,14 @@ CDN_URL = os.getenv("AWS_PUBLIC_URL", "https://cdn.threadzip.com")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 API_KEY = os.getenv("INTERNAL_API_KEY", "abcd1234")
+BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
 
 IS_PROD = ENVIRONMENT == "production"
 IS_DEV = ENVIRONMENT == "development"
 
 
 PROJECT_DIR = Path(__file__).parent
-RELATIVE_GENERATED_FOLDER = "s3://threadzip-bucket/images/"
+RELATIVE_GENERATED_FOLDER = f"s3://{BUCKET_NAME}/images/"
 ASSETS = PROJECT_DIR / "assets"
 UPLOAD_FOLDER_FABRIC = ASSETS / "search"
 IMAGE_DIR = ASSETS / "images"
