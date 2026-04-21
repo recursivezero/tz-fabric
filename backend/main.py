@@ -79,7 +79,7 @@ PROD_ORIGINS = [
     "https://lab.threadzip.com",
     "https://app.threadzip.com",
     "https://threadzip.com",
-    "https://recursivezero.github.io"
+    "https://recursivezero.github.io",
 ]
 
 # Select origins based on the environment
@@ -88,6 +88,8 @@ origins = (
     if IS_DEV
     else (PROD_ORIGINS + DEV_ORIGINS if ALLOW_LOCAL else PROD_ORIGINS)
 )
+
+print(f"Allowed CORS origins: {origins}")
 
 
 @asynccontextmanager

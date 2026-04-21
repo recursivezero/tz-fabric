@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import { useUploadAndRecord } from "../hooks/useUploadAndRecord";
-import "@/assets/styles/UploadPage.css";
 import { generateFabricName } from "../utils/fabric-name";
+import "@/assets/styles/UploadPage.css";
 
 type AudioMode = "upload" | "record";
 

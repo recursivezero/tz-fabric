@@ -2,7 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import { NotFound } from "./components/NotFound";
 import { usePageTracking } from "./hooks/usePageTracking";
 import UploadPage from "./pages/AudioForm";
-import CardReader from "./pages/CardReader";
+import CardReader from "./pages/PanCardReader";
 import ComingSoon from "./pages/ComingSoon";
 import { ContactUs } from "./pages/Contact";
 import Chat from "./pages/FabricChat";
@@ -11,7 +11,7 @@ import Search from "./pages/FabricSearch";
 import Home from "./pages/Home";
 import ImageDescription from "./pages/ImageDescriptor";
 import Reader from "./pages/Reader";
-import AadhaarCardReader from "./pages/adhaar";
+import AadhaarCardReader from "./pages/AadhaarCardReader";
 
 export const Routing = () => {
   usePageTracking();

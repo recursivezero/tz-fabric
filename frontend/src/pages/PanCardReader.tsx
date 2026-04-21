@@ -6,7 +6,6 @@ import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
 
 
-
 type PanResult = {
   type: string;
   name: string;
@@ -16,7 +15,8 @@ type PanResult = {
 };
 type Point = { x: number; y: number };
 type Area = { x: number; y: number; width: number; height: number };
-const CardReader = () => {
+
+const PanCardReader = () => {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
 
@@ -1126,4 +1126,4 @@ const styles: any = {
 
 };
 
-export default CardReader;
+export default PanCardReader;
