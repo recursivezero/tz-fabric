@@ -70,7 +70,7 @@ def get_file_info(image_path: str) -> Optional[Dict[Any, Any]]:
         return None
 
 
-ALLOWED_ROOTS = {"stock", "fabric", "design", "single", "group"}
+ALLOWED_ROOTS = {"stock", "fabric", "design", "product"}
 
 
 def collect_image_data(root_folder: str) -> list:
@@ -79,6 +79,7 @@ def collect_image_data(root_folder: str) -> list:
 
     if root_folder.startswith("s3://"):
         parsed = urlparse(root_folder)
+        print(f"Parsed S3 URI: {parsed}")
         bucket_name = parsed.netloc
         base_prefix = parsed.path.lstrip("/")
 
@@ -279,6 +280,8 @@ def process_table(
     logger.info(TABLE_MESSAGES.info.connecting)
 
     db = lancedb.connect(database)
+    if not hasattr(db, "list_tables"):
+        db.list_tables = db.table_names
     logger.info(TABLE_MESSAGES.info.available_tables.format(tables=db.list_tables()))
     logger.info(TABLE_MESSAGES.info.looking_for_table.format(table_name=table_name))
     logger.info(

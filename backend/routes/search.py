@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 from typing import List, Optional
 
+from utils.image_utils import parse_list
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from PIL import Image
 from routes.routes_helper import SearchResponse, sanitize
@@ -48,9 +49,13 @@ async def image_search(
     try:
         # Handle JSON vs Form
         content_type = request.headers.get("content-type", "")
-        parsed_categories = category or []
-
-        parsed_categories = sanitize(category)
+        parsed_categories = parse_list(category)
+        sanitized_categories = sanitize(parsed_categories)
+        print("DEBUG  sanitized_categories:", sanitized_categories)
+        # final_categories = replace_with_multiple(
+        #     sanitized_categories, target="product", replacements=["single", "group"]
+        # )
+        # print("DEBUG final_categories:", final_categories)
 
         if "application/json" in content_type:
             body = await request.json()
@@ -101,8 +106,10 @@ async def image_search(
             search_start = time.time()
             limit = limit or 20
             _, image_paths = run_vector_search(
-                table, Fabric, image, limit=limit, category=parsed_categories
+                table, Fabric, image, limit=limit, category=sanitized_categories
             )
+            print("DEBUG image_paths:", image_paths)
+            print("DEBUG sanitized_categories in image search:", sanitized_categories)
             search_time = time.time() - search_start
             logThis.info(
                 f"Vector search took {search_time:.4f}s", extra={"color": "green"}
@@ -155,8 +162,9 @@ async def image_search(
             search_start = time.time()
             limit = limit or 20
             _, all_results = run_vector_search(
-                table, Fabric, search_term, limit=limit, category=parsed_categories
+                table, Fabric, search_term, limit=limit, category=sanitized_categories
             )
+            print("sanitized_categories in text search:", sanitized_categories)
 
             search_time = time.time() - search_start
             logThis.info(

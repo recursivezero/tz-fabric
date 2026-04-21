@@ -1,0 +1,25 @@
+services:
+  api:
+    build: ./backend
+    container_name: tz_backend
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    ports:
+      - "8002:8002" # Opens 8002 on your Ubuntu machine
+    command: poetry run fabric dev
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    container_name: tz_frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173" # Opens 5173 on your Ubuntu machine
+    # Note: Ensure your 'npm run dev' uses --port 5173 
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    depends_on:
+      - api
+    restart: unless-stopped
