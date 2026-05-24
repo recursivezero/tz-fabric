@@ -2,16 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import Loader from "../components/Loader";
-import Notification from "../components/Notification";
+import {Notification} from "../components/FabricSearch/components/Notification";
 import { useUploadAndRecord } from "../hooks/useUploadAndRecord";
 import { generateFabricName } from "../utils/fabric-name";
 import "@/assets/styles/UploadPage.css";
 
 type AudioMode = "upload" | "record";
 
-
-
-;
 const UploadPage = () => {
   const location = useLocation();
   const prefill = location.state?.prefill;

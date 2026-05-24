@@ -5,6 +5,6 @@ interface NotificationProps {
   type: "success" | "error";
 }
 
-export default function Notification({ message, type }: NotificationProps) {
+export const Notification = ({ message, type }: NotificationProps) => {
   return <div className={`notification ${type}`}>{message}</div>;
 }

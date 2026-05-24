@@ -1,837 +1,18 @@
-import {  useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
-import FabricSearchHeader from "../components/FabricSearchHeader";
-import Loader from "../components/Loader";
-import Notification from "../components/Notification";
-import { throttle } from "../utils/throttle";
 import "@/assets/styles/FabricSearch.css";
+import Loader from "@/components/Loader";
+import { useSearch } from '@/hooks/useSearch';
+import type { NotificationState } from '@/types/common';
+import { throttle } from "@/utils/throttle";
+import { CropDrawer, FabricSearchHeader, Hero, ImagePreview, Lightbox, Notification, ResultsSection, SettingsPanel, StickySearchBar } from '@/components/FabricSearch/components';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 
-type NotificationState = { message: string; type: "success" | "error" } | null;
-type DbOp = "create" | "update" | null;
 
-interface ResultItem {
-  imageSrc: string;
-  filename: string;
-  audioSrc?: string;
-}
-
-interface SearchApiResponse {
-  message: string;
-  results: string[];
-  pagination: {
-    page: number;
-    per_page: number;
-    total_results: number;
-    total_pages: number;
-    has_next: boolean;
-    has_prev: boolean;
-  };
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  { id: "stock", label: "Stock", icon: "📦" },
-  { id: "fabric", label: "Fabric", icon: "🧵" },
-  { id: "design", label: "Design", icon: "🎨" },
-  { id: "product", label: "Product", icon: "🖼️" },
-];
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? "") + (import.meta.env.VITE_API_PREFIX ?? "");
-const CDN_BASE = import.meta.env.VITE_AWS_PUBLIC_URL ?? "";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function toCdnUrl(src: string | undefined): string {
-  if (!src) return "";
-  if (/^https?:\/\//i.test(src)) return src;
-  return `${CDN_BASE}/images/${src.replace(/^\/+/, "")}`;
-}
-
-function toResultItem(raw: string): ResultItem {
-  const filename = raw.split("/").pop() ?? raw;
-  return { imageSrc: raw, filename };
-}
-
-function cleanName(filename: string): string {
-  return filename ? filename.split("_")[0].split(".")[0] : "";
-}
-
-// ─── useSearch hook ───────────────────────────────────────────────────────────
-
-function useSearch() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<ResultItem[]>([]);
-
-  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 40) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("limit", String(limit));
-      if (category?.length) category.forEach((c) => { form.append("category", c) });
-      const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail ?? `Search failed (${res.status})`);
-      }
-      const data: SearchApiResponse = await res.json();
-      setResults((data.results ?? []).map(toResultItem));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Search failed.");
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 40) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.append("search_term", term);
-      form.append("limit", String(limit));
-      if (category?.length) category.forEach((c) => { form.append("category", c) });
-      const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail ?? `Search failed (${res.status})`);
-      }
-      const data: SearchApiResponse = await res.json();
-      setResults((data.results ?? []).map(toResultItem));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Search failed.");
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const clear = useCallback(() => {
-    setResults([]);
-    setError(null);
-  }, []);
-
-  return { loading, error, results, runImageSearch, runTextSearch, clear };
-}
-
-// ─── DB endpoint ──────────────────────────────────────────────────────────────
-
-async function callDbEndpoint(op: "create" | "update"): Promise<string> {
-  const url =
-    op === "create"
-      ? `${API_BASE}/database/create/table`
-      : `${API_BASE}/database/update/table`;
-  const res = await fetch(url, { method: "PUT" });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.detail ?? `Request failed (${res.status})`);
-  return data?.message ?? "Done.";
-}
-
-// ─── CategoryPicker ───────────────────────────────────────────────────────────
-
-interface CategoryPickerProps {
-  selected: string[];
-  onChange: (cats: string[]) => void;
-  compact?: boolean;
-}
-
-function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerProps) {
-  const [tempSelected, setTempSelected] = useState(selected);
-  const toggle = (id: string) => {
-    setTempSelected(tempSelected.includes(id) ? tempSelected.filter((c) => c !== id) : [...tempSelected, id]);
-  }
-  const allOn = tempSelected.length === CATEGORIES.length;
-  const toggleAll = () => {setTempSelected(allOn ? [] : CATEGORIES.map((c) => c.id))};
-
-  const applySearch = () => {
-    console.log("Apply search with categories:", tempSelected);
-    onChange(tempSelected);
-  };
-
-  useEffect(() => {
-    setTempSelected(selected);
-  }, [selected]);
-
-  return (
-    <div className={`category-picker${compact ? " category-picker--compact" : ""}`}>
-      <div className="category-picker__header">
-        <span className="category-picker__title">Filter by Category</span>
-        <button className="category-picker__toggle-all" onClick={toggleAll} type="button">
-          {allOn ? "Clear all" : "Select all"}
-        </button>
-      </div>
-
-      <div className="category-picker__grid">
-        {CATEGORIES.map((cat) => {
-          const active = tempSelected.includes(cat.id);
-          return (
-            <button
-              key={cat.id}
-              className={`category-picker__chip${active ? " category-picker__chip--active" : ""}`}
-              onClick={() => toggle(cat.id)}
-              type="button"
-            >
-              <span className="category-picker__chip-check">{active ? "✓" : ""}</span>
-              <span className="category-picker__chip-icon">{cat.icon}</span>
-              <span className="category-picker__chip-label">{cat.label}</span>
-            </button>
-          );
-        })}
-        {compact && (
-          <button className="btn btn-primary" onClick={()=> applySearch()} type="button">
-            {'Apply filter →'}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── DbControlPanel ───────────────────────────────────────────────────────────
-
-function DbControlPanel() {
-  const [activeOp, setActiveOp] = useState<DbOp>(null);
-  const [notification, setNotification] = useState<NotificationState>(null);
-
-  const handleOp = async (op: "create" | "update") => {
-    if (activeOp) return;
-    setActiveOp(op);
-    setNotification(null);
-    try {
-      const msg = await callDbEndpoint(op);
-      setNotification({ message: msg, type: "success" });
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Operation failed.";
-      setNotification({ message: msg, type: "error" });
-    } finally {
-      setActiveOp(null);
-    }
-  };
-
-  return (
-    <div className="db-panel">
-      <div className="db-panel__header">
-        <span className="db-panel__pulse" />
-        <span className="db-panel__label">Vector Database</span>
-      </div>
-
-      <div className="db-panel__actions">
-        <button
-          className={`db-panel__btn db-panel__btn--create${activeOp === "create" ? " db-panel__btn--loading" : ""}`}
-          onClick={() => handleOp("create")}
-          disabled={!!activeOp}
-          title="Rebuild vector table from scratch"
-        >
-          {activeOp === "create"
-            ? <span className="db-panel__spinner" />
-            : <span className="db-panel__btn-icon">⬡</span>}
-          Create Table
-        </button>
-
-        <button
-          className={`db-panel__btn db-panel__btn--update${activeOp === "update" ? " db-panel__btn--loading" : ""}`}
-          onClick={() => handleOp("update")}
-          disabled={!!activeOp}
-          title="Add new images to existing table"
-        >
-          {activeOp === "update"
-            ? <span className="db-panel__spinner" />
-            : <span className="db-panel__btn-icon">↻</span>}
-          Update Table
-        </button>
-      </div>
-
-      {notification && (
-        <div className={`db-panel__notification db-panel__notification--${notification.type}`}>
-          {notification.message}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── SettingsPanel ────────────────────────────────────────────────────────────
-
-function SettingsPanel() {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="settings-panel">
-      <button
-        className="settings-panel__toggle"
-        onClick={() => setOpen((v) => !v)}
-        type="button"
-        aria-expanded={open}
-        title="Settings"
-      >
-        ⚙️ &nbsp;Settings
-        <span className="settings-panel__chevron">{open ? "▲" : "▼"}</span>
-      </button>
-
-      {open && (
-        <div className="settings-panel__content">
-          <DbControlPanel />
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── StickySearchBar ──────────────────────────────────────────────────────────
-
-interface StickySearchBarProps {
-  textQuery: string;
-  setTextQuery: (v: string) => void;
-  onSearch: () => void;
-  onClear: () => void;
-  loading: boolean;
-  isImageMode: boolean;
-  previewUrl: string | null;
-  onRecrop: () => void;
-  fileInputId: string;
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  selectedCategories: string[];
-  onSetCategories: (cats: string[]) => void;
-  searchLimit: number;
-  onSetLimit: (v: number) => void;
-}
-
-function StickySearchBar({
-  textQuery,
-  setTextQuery,
-  onSearch,
-  onClear,
-  loading,
-  isImageMode,
-  previewUrl,
-  onRecrop,
-  fileInputId,
-  onFileChange,
-
-  selectedCategories,
-  onSetCategories,
-  searchLimit,
-  onSetLimit,
-}: StickySearchBarProps) {
-  return (
-    <div className="search-bar search-bar--sticky">
-      <div className="search-bar__inner">
-
-        {isImageMode && previewUrl ? (
-          <div className="search-bar__image-row">
-            <div className="search-bar__thumb-wrap">
-              <img src={previewUrl} alt="query" className="search-bar__thumb" />
-            </div>
-
-            <div className="search-bar__image-actions">
-              <button className="btn btn--outline btn--sm" onClick={onRecrop}>
-                ✂️ Recrop
-              </button>
-
-              <input
-                id={fileInputId}
-                type="file"
-                accept="image/*"
-                onChange={onFileChange}
-                className="search-bar__file-input"
-              />
-
-              <button
-                className="btn btn--ghost btn--sm"
-                onClick={() => document.getElementById(fileInputId)?.click()}
-              >
-                📷 New Image
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="search-bar__text-row">
-            <div className="search-bar__input-wrap">
-              <input
-                type="text"
-                className="search-bar__input"
-                placeholder="Refine search…"
-                value={textQuery}
-                onChange={(e) => setTextQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && onSearch()}
-              />
-            </div>
-
-            <button
-              className="btn btn--primary btn--sm"
-              onClick={onSearch}
-              disabled={loading || !textQuery.trim()}
-            >
-              Search
-            </button>
-          </div>
-        )}
-
-        <button className="btn btn--ghost btn--sm" onClick={onClear}>
-          ✕ Clear
-        </button>
-      </div>
-
-      {/* ✅ NEW: filters always visible */}
-      <div className="search-bar__filters">
-        <CategoryPicker
-          selected={selectedCategories}
-          onChange={onSetCategories}
-          compact
-        />
-
-        <LimitSlider
-          value={searchLimit}
-          onChange={onSetLimit}
-          label="Limit"
-        />
-      </div>
-    </div>
-  );
-}
-// ─── Pagination ───────────────────────────────────────────────────────────────
-
-interface PaginationProps {
-  page: number;
-  totalPages: number;
-  onPrev: () => void;
-  onNext: () => void;
-  variant?: "inline" | "bottom";
-}
-
-function Pagination({ page, totalPages, onPrev, onNext, variant = "bottom" }: PaginationProps) {
-  return (
-    <div className={`pagination pagination--${variant}`}>
-      <button className="pagination__btn" onClick={onPrev} disabled={page === 1}>
-        ← Prev
-      </button>
-      <span className="pagination__label">Page {page} / {totalPages}</span>
-      <button className="pagination__btn" onClick={onNext} disabled={page === totalPages}>
-        Next →
-      </button>
-    </div>
-  );
-}
-
-// ─── ResultCard ───────────────────────────────────────────────────────────────
-
-interface ResultCardProps {
-  item: ResultItem;
-  index: number;
-  onZoom: (src: string, caption: string) => void;
-  onBadImage: (src: string) => void;
-}
-
-function ResultCard({ item, index, onZoom, onBadImage }: ResultCardProps) {
-  const handleClick = () => {
-    if (!item.imageSrc) return;
-    onZoom(toCdnUrl(item.imageSrc), cleanName(item.filename));
-  };
-
-  return (
-    <article
-      className="result-card"
-      style={{ animationDelay: `${index * 40}ms` }}
-    >
-      <div className="result-card__thumb">
-        <img
-          src={toCdnUrl(item.imageSrc)}
-          alt={item.filename}
-          loading="lazy"
-          onError={() => onBadImage(item.imageSrc)}
-          onClick={handleClick}
-        />
-        <button
-          type="button"
-          className="result-card__zoom-btn"
-          aria-label="Zoom"
-          onClick={(e) => { e.stopPropagation(); handleClick(); }}
-        >
-          🔍
-        </button>
-      </div>
-
-      <div className="result-card__name" onClick={handleClick}>
-        {cleanName(item.filename)}
-      </div>
-
-      {item.audioSrc && (
-        <div className="result-card__audio">
-          <audio controls src={item.audioSrc} preload="metadata" controlsList="nodownload" />
-        </div>
-      )}
-    </article>
-  );
-}
-
-// ─── ResultsSection ───────────────────────────────────────────────────────────
-
-interface ResultsSectionProps {
-  results: ResultItem[];
-  paginatedResults: ResultItem[];
-  page: number;
-  totalPages: number;
-  selectedCategories: string[];
-  isTextSearch: boolean;
-  onSetCategories: (cats: string[]) => void;
-  onPrev: () => void;
-  onNext: () => void;
-  onZoom: (src: string, caption: string) => void;
-  onBadImage: (src: string) => void;
-}
-
-function ResultsSection({
-  results,
-  paginatedResults,
-  page,
-  totalPages,
-  onPrev,
-  onNext,
-  onZoom,
-  onBadImage,
-}: ResultsSectionProps) {
-  return (
-    <div className="results-section">
-
-      <div className="results-section__meta">
-        <div>{results.length} results</div>
-        <Pagination page={page} totalPages={totalPages} onPrev={onPrev} onNext={onNext} />
-      </div>
-
-      {/* ✅ ALWAYS visible */}
-      {/* <div className="results-section__filters one">
-        <CategoryPicker selected={selectedCategories} onChange={onSetCategories} compact />
-      </div> */}
-
-      <div className="result-grid result-grid--full">
-        {paginatedResults.map((item: any, idx: number) => (
-          <ResultCard
-            key={idx}
-            item={item}
-            index={idx}
-            onZoom={onZoom}
-            onBadImage={onBadImage}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── LimitSlider ──────────────────────────────────────────────────────────────
-
-interface LimitSliderProps {
-  value: number;
-  onChange: (v: number) => void;
-  label?: string;
-}
-
-function LimitSlider({ value, onChange, label = "Results" }: LimitSliderProps) {
-  return (
-    <div className="limit-slider">
-      <span className="limit-slider__label">{label}</span>
-      <div className="limit-slider__track">
-        <div
-          className="limit-slider__fill"
-          style={{ width: `${((value - 5) / 95) * 100}%` }}
-        />
-        <input
-          type="range"
-          className="limit-slider__input"
-          min={5} max={100} step={5}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-        />
-      </div>
-      <span className="limit-slider__value">{value}</span>
-    </div>
-  );
-}
-
-// ─── Lightbox ─────────────────────────────────────────────────────────────────
-
-interface LightboxProps {
-  src: string;
-  caption: string | null;
-  scale: number;
-  offset: { x: number; y: number };
-  onClose: () => void;
-  onWheel: React.WheelEventHandler<HTMLDivElement>;
-  onMouseDown: React.MouseEventHandler<HTMLDivElement>;
-  onMouseMove: React.MouseEventHandler<HTMLDivElement>;
-  onMouseUp: React.MouseEventHandler<HTMLDivElement>;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onReset: () => void;
-}
-
-function Lightbox({
-  src, caption, scale, offset,
-  onClose, onWheel, onMouseDown, onMouseMove, onMouseUp,
-  onZoomIn, onZoomOut, onReset,
-}: LightboxProps) {
-  return (
-    <div
-      className="lightbox"
-      onClick={(e) => {
-        if ((e.target as HTMLElement).classList.contains("lightbox")) onClose();
-      }}
-    >
-      <div
-        className="lightbox__stage"
-        onWheel={onWheel}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-      >
-        <img
-          src={src}
-          alt={caption ?? "preview"}
-          className="lightbox__image"
-          style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }}
-          draggable={false}
-        />
-
-        {caption && <div className="lightbox__caption">{caption}</div>}
-
-        <div className="lightbox__controls">
-          <button className="lightbox__control-btn" onClick={onZoomOut}>−</button>
-          <button className="lightbox__control-btn" onClick={onReset}>Reset</button>
-          <button className="lightbox__control-btn" onClick={onZoomIn}>+</button>
-          <button className="lightbox__control-btn lightbox__control-btn--close" onClick={onClose}>✕</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── CropDrawer ───────────────────────────────────────────────────────────────
-
-interface CropDrawerProps {
-  rawImageUrl: string;
-  cropRect: { x: number; y: number; w: number; h: number };
-  imgRef: React.RefObject<HTMLImageElement | null>;
-  onImageLoad: () => void;
-  onDragStart: (e: React.MouseEvent) => void;
-  onResizeStart: (e: React.MouseEvent) => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-function CropDrawer({
-  rawImageUrl, cropRect, imgRef,
-  onImageLoad, onDragStart, onResizeStart,
-  onConfirm, onCancel,
-}: CropDrawerProps) {
-  return (
-    <div className="crop-drawer" role="dialog" aria-modal="true">
-      <div className="crop-drawer__inner">
-        <h3 className="crop-drawer__title">Crop &amp; Confirm</h3>
-
-        <div className="crop-drawer__stage">
-          <div className="crop-drawer__image-wrap">
-            <img
-              ref={imgRef}
-              src={rawImageUrl}
-              alt="Select crop area"
-              className="crop-drawer__image"
-              onLoad={onImageLoad}
-              draggable={false}
-            />
-            <div
-              className="crop-drawer__rect"
-              style={{
-                left: `${cropRect.x}px`,
-                top: `${cropRect.y}px`,
-                width: `${cropRect.w}px`,
-                height: `${cropRect.h}px`,
-              }}
-              onMouseDown={(e) => { e.preventDefault(); onDragStart(e); }}
-            >
-              <div
-                className="crop-drawer__handle"
-                onMouseDown={(e) => { e.stopPropagation(); onResizeStart(e); }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="crop-drawer__actions">
-          <button className="btn btn--ghost" onClick={onCancel}>✕ Cancel</button>
-          <button className="btn btn--primary" onClick={onConfirm}>✔ Crop &amp; Search</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── ImagePreview (pre-results, post-crop) ────────────────────────────────────
-
-interface ImagePreviewProps {
-  originalUrl: string;
-  croppedUrl: string | null;
-  searchLimit: number;
-  selectedCategories: string[];
-  loading: boolean;
-  onClear: () => void;
-  onRecrop: () => void;
-  onSetCategories: (cats: string[]) => void;
-  onSetLimit: (v: number) => void;
-  onSearch: () => void;
-}
-
-function ImagePreview({
-  originalUrl, croppedUrl, searchLimit,
-  selectedCategories, loading,
-  onClear, onRecrop, onSetCategories, onSetLimit, onSearch,
-}: ImagePreviewProps) {
-  return (
-    <div className="image-preview">
-      {/* Original */}
-      <div className="image-preview__pane">
-        <p className="image-preview__pane-title">Original Image</p>
-        <div className="image-preview__frame">
-          <img className="image-preview__img" src={originalUrl} alt="original" />
-          <div className="image-preview__frame-actions image-preview__frame-actions--top">
-            <button
-              className="btn btn--primary btn--sm"
-              onClick={onClear}
-            >
-              🗑️ Clear Search
-            </button>
-          </div>
-          <div className="image-preview__frame-actions image-preview__frame-actions--bottom">
-            <button className="btn btn--outline btn--sm" onClick={onRecrop}>
-              ✂️ Recrop
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Cropped */}
-      {croppedUrl && (
-        <>
-          <div className="image-preview__pane">
-            <p className="image-preview__pane-title">Cropped Image</p>
-            <div className="image-preview__frame">
-              <img className="image-preview__img" src={croppedUrl} alt="cropped" />
-            </div>
-          </div>
-
-          <div className="image-preview__options">
-            <CategoryPicker selected={selectedCategories} onChange={onSetCategories} />
-          </div>
-
-          <div className="image-preview__search-row">
-            <LimitSlider value={searchLimit} onChange={onSetLimit} label="Limit" />
-            <button
-              className="btn btn--primary"
-              onClick={onSearch}
-              disabled={loading}
-            >
-              🔎 Search
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-
-interface HeroProps {
-  textQuery: string;
-  setTextQuery: (v: string) => void;
-  onTextSearch: () => void;
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  fileInputId: string;
-  searchLimit: number;
-  onSetLimit: (v: number) => void;
-  selectedCategories: string[];
-  onSetCategories: (cats: string[]) => void;
-  loading: boolean;
-}
-
-function Hero({
-  textQuery, setTextQuery, onTextSearch,
-  onFileChange, fileInputId,
-  searchLimit, onSetLimit,
-  selectedCategories, onSetCategories,
-  loading,
-}: HeroProps) {
-  return (
-    <div className="hero">
-      <header className="hero__header">
-        <div className="hero__eyebrow">Fabric Intelligence</div>
-        <h1 className="hero__title">
-          Find the clothing
-          <br />
-          <span className="hero__title-accent">you couldn't find.</span>
-        </h1>
-        <p className="hero__subtitle">Visual &amp; semantic search — powered by vectors</p>
-      </header>
-
-      <div className="hero__search-controls">
-        {/* Text search */}
-        <div className="hero__search-row">
-          <input
-            type="text"
-            className="hero__search-input"
-            placeholder="Search by name, fabric or color"
-            value={textQuery}
-            onChange={(e) => setTextQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onTextSearch()}
-          />
-          <button
-            className="btn btn--primary"
-            onClick={onTextSearch}
-            disabled={loading || !textQuery.trim()}
-          >
-            Search
-          </button>
-        </div>
-
-        {/* Limit */}
-        <LimitSlider value={searchLimit} onChange={onSetLimit} />
-
-        {/* Divider */}
-        <div className="hero__divider">or</div>
-
-        {/* Image upload */}
-        <input
-          id={fileInputId}
-          type="file"
-          accept="image/*"
-          onChange={onFileChange}
-          className="hero__file-input"
-        />
-        <button
-          className="btn btn--ghost hero__upload-btn"
-          onClick={() => document.getElementById(fileInputId)?.click()}
-        >
-          📷 Drop your Image
-        </button>
-      </div>
-
-      {/* Category filter */}
-      <div className="hero__categories">
-        <CategoryPicker selected={selectedCategories} onChange={onSetCategories} />
-      </div>
-    </div>
-  );
-}
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function Search() {
+const FabricSearch = () => {
   const { loading, error, results, runImageSearch, runTextSearch, clear } = useSearch();
 
   const [file, setFile] = useState<File | null>(null);
@@ -876,7 +57,7 @@ export default function Search() {
   // ── Object URL helpers ─────────────────────────────────────────────────────
 
   const setOriginalObjectUrl = useCallback((f: File | null) => {
-    if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } }
+    if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { console.error("Failed to revoke preview URL."); } }
     setPreviewUrlOrig(f ? (() => { try { return URL.createObjectURL(f); } catch { return null; } })() : null);
   }, [previewUrlOrig]);
 
@@ -913,7 +94,7 @@ export default function Search() {
     setCroppedPreviewUrl(null);
     setFile(null);
     setIsTextSearch(false);
-    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
+    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { console.error("Failed to dispatch clear-pending-action event."); }
   };
 
   // ── Auto-run ───────────────────────────────────────────────────────────────
@@ -924,7 +105,7 @@ export default function Search() {
     const params = new URLSearchParams(window.location.search);
     const urlImage = params.get("image_url");
 
-    const afterRun = () => { try { localStorage.removeItem("mcp_last_search"); } catch { } setPage(1); };
+    const afterRun = () => { try { localStorage.removeItem("mcp_last_search"); } catch { console.error("Failed to remove last search from local storage."); } setPage(1); };
 
     if (urlImage) {
       didAutoRun.current = true;
@@ -936,7 +117,7 @@ export default function Search() {
           setFile(f);
           setIsTextSearch(false);
           await runImageSearch(f, selectedCategories, searchLimit);
-        } catch { setNotification({ message: "Could not auto-run search from URL.", type: "error" }); }
+        } catch { console.error("Failed to auto-run search from URL."); setNotification({ message: "Could not auto-run search from URL.", type: "error" }); }
         finally { afterRun(); }
       })();
       return;
@@ -958,10 +139,10 @@ export default function Search() {
           setFile(f);
           setIsTextSearch(false);
           await runImageSearch(f, selectedCategories, searchLimit);
-        } catch { setNotification({ message: "Could not auto-run search payload.", type: "error" }); }
+        } catch { console.error("Failed to auto-run search payload."); setNotification({ message: "Could not auto-run search payload.", type: "error" }); }
         finally { afterRun(); }
       })();
-    } catch { }
+    } catch { console.error("Failed to parse auto-run search payload."); }
   }, [runImageSearch, dataUrlToFile, urlToFile, setOriginalObjectUrl, searchLimit, selectedCategories]);
 
   // ── Search handlers ────────────────────────────────────────────────────────
@@ -971,7 +152,7 @@ export default function Search() {
     setNotification(null);
     setIsTextSearch(false);
     try { await runImageSearch(file, categoryParam, searchLimit); setPage(1); }
-    catch { setNotification({ message: "Search failed.", type: "error" }); }
+    catch { console.error("Failed to run image search."); setNotification({ message: "Search failed.", type: "error" }); }
   };
 
   const handleTextSearch = async () => {
@@ -979,10 +160,11 @@ export default function Search() {
     setNotification(null);
     setIsTextSearch(true);
     try { await runTextSearch(textQuery.trim(), categoryParam, searchLimit); setPage(1); }
-    catch { setNotification({ message: "Search failed.", type: "error" }); }
+    catch { console.error("Failed to run text search."); setNotification({ message: "Search failed.", type: "error" }); }
   };
 
   const handleCategoryChange = async (cats: string[]) => {
+    console.log("Category change triggered with:", cats);
     setSelectedCategories(cats);
     setPage(1);
 
@@ -1001,9 +183,9 @@ export default function Search() {
     setNotification(null);
     setBadImages(new Set());
     setIsTextSearch(false);
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } setRawImageUrl(null); }
-    if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } setPreviewUrlOrig(null); }
-    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
+    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { console.error("Failed to revoke raw image URL."); } setRawImageUrl(null); }
+    if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { console.error("Failed to revoke preview URL."); } setPreviewUrlOrig(null); }
+    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { console.error("Failed to dispatch clear-pending-action event."); }
     originalFileRef.current = null;
     setCroppedPreviewUrl(null);
   };
@@ -1029,13 +211,13 @@ export default function Search() {
 
   useEffect(() => {
     let cur: string | null = null;
-    if (file) { try { cur = URL.createObjectURL(file); setPreviewUrl(cur); } catch { setPreviewUrl(null); } }
+    if (file) { try { cur = URL.createObjectURL(file); setPreviewUrl(cur); } catch { console.error("Failed to create preview URL."); setPreviewUrl(null); } }
     else setPreviewUrl(null);
-    return () => { if (cur) { try { URL.revokeObjectURL(cur); } catch { } } };
+    return () => { if (cur) { try { URL.revokeObjectURL(cur); } catch { console.error("Failed to revoke preview URL."); } } };
   }, [file]);
 
-  useEffect(() => () => { if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } } }, [previewUrlOrig]);
-  useEffect(() => () => { if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } } }, [rawImageUrl]);
+  useEffect(() => () => { if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { console.error("Failed to revoke preview URL."); } } }, [previewUrlOrig]);
+  useEffect(() => () => { if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { console.error("Failed to revoke raw image URL."); } } }, [rawImageUrl]);
 
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
@@ -1136,7 +318,7 @@ export default function Search() {
     if (!blob) { setNotification({ message: "Could not generate cropped image.", type: "error" }); return; }
 
     const croppedFile = new File([blob], `query-cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
-    try { URL.revokeObjectURL(rawImageUrl); } catch { }
+    try { URL.revokeObjectURL(rawImageUrl); } catch { console.error("Failed to revoke raw image URL."); }
     setRawImageUrl(null);
     setFile(croppedFile);
     setCroppedPreviewUrl(URL.createObjectURL(croppedFile));
@@ -1150,7 +332,7 @@ export default function Search() {
   };
 
   const cancelCropAndClose = () => {
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } setRawImageUrl(null); }
+    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { console.error("Failed to revoke raw image URL."); } setRawImageUrl(null); }
     setDrawerOpen(false);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
     setSelectingImage(false);
@@ -1159,7 +341,7 @@ export default function Search() {
   const openRecrop = () => {
     const orig = originalFileRef.current;
     if (!orig) { setNotification({ message: "Original image not available.", type: "error" }); return; }
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } }
+    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { console.error("Failed to revoke raw image URL."); } }
     setRawImageUrl(URL.createObjectURL(orig));
     setDrawerOpen(true);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
@@ -1190,7 +372,6 @@ export default function Search() {
           onRecrop={openRecrop}
           fileInputId={stickyFileId}
           onFileChange={onFileChange}
-
           selectedCategories={selectedCategories}
           onSetCategories={handleCategoryChange}
           searchLimit={searchLimit}
@@ -1304,3 +485,5 @@ export default function Search() {
     </main>
   );
 }
+
+export default FabricSearch;

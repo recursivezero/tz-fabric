@@ -7,7 +7,7 @@ import ComingSoon from "./pages/ComingSoon";
 import { ContactUs } from "./pages/Contact";
 import Chat from "./pages/FabricChat";
 import ContentGrid from "./pages/FabricList";
-import Search from "./pages/FabricSearch";
+import FabricSearch from "./pages/FabricSearch";
 import Home from "./pages/Home";
 import ImageDescription from "./pages/ImageDescriptor";
 import Reader from "./pages/Reader";
@@ -21,7 +21,7 @@ export const Routing = () => {
       <Route path="/analysis" element={<ImageDescription />} />
       <Route path="/upload" element={<UploadPage />} />
       <Route path="/view" element={<ContentGrid />} />
-      <Route path="/search" element={<Search />} />
+      <Route path="/search" element={<FabricSearch />} />
       <Route path="/chat" element={<Chat />} />
       <Route path="/features" element={<ComingSoon />} />
       <Route path="/pricing" element={<ComingSoon />} />

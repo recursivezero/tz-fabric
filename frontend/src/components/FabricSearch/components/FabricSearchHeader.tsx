@@ -1,6 +1,6 @@
 import "@/assets/styles/ImageDescriptorHeader.css";
 
-const Header = () => {
+export const FabricSearchHeader = () => {
   return (
     <div className="header-wrapper">
       <div className="animated-header">
@@ -10,4 +10,3 @@ const Header = () => {
   );
 };
 
-export default Header;

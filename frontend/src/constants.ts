@@ -2,7 +2,10 @@ export const BASE_URL = import.meta.env.VITE_API_URL;
 export const API_PREFIX = import.meta.env.VITE_API_PREFIX; // New environment variable
 export const FULL_API_URL = `${BASE_URL}${API_PREFIX}`
 
-console.log({ FULL_API_URL });
+export const API_BASE = (import.meta.env.VITE_API_URL ?? "") + (import.meta.env.VITE_API_PREFIX ?? "");
+
+
+console.log("before import meta", { BASE_URL, API_BASE, FULL_API_URL });
 
 
 if (import.meta.env.DEV) {
@@ -22,5 +25,13 @@ export const NAVBAR_MENU = [
   { name: "reader", path: "/reader" },
   { name: "about", path: "/about", enable: false },
 
+];
+
+
+export const CATEGORIES = [
+  { id: "stock", label: "Stock", icon: "📦" },
+  { id: "fabric", label: "Fabric", icon: "🧵" },
+  { id: "design", label: "Design", icon: "🎨" },
+  { id: "product", label: "Product", icon: "🖼️" },
 ];
 

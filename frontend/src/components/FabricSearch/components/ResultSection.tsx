@@ -1,0 +1,55 @@
+import { Pagination } from '@/components/Pagination';
+import { ResultCard } from '@/components/ResultCards';
+import type { ResultItem } from '@/types/common';
+
+interface ResultsSectionProps {
+  results: ResultItem[];
+  paginatedResults: ResultItem[];
+  page: number;
+  totalPages: number;
+  selectedCategories: string[];
+  isTextSearch: boolean;
+  onSetCategories: (cats: string[]) => void;
+  onPrev: () => void;
+  onNext: () => void;
+  onZoom: (src: string, caption: string) => void;
+  onBadImage: (src: string) => void;
+}
+
+export const ResultsSection = ({
+  results,
+  paginatedResults,
+  page,
+  totalPages,
+  onPrev,
+  onNext,
+  onZoom,
+  onBadImage,
+}: ResultsSectionProps) => {
+  return (
+    <div className="results-section">
+
+      <div className="results-section__meta">
+        <div>{results.length} results</div>
+        <Pagination page={page} totalPages={totalPages} onPrev={onPrev} onNext={onNext} />
+      </div>
+
+      {/* ✅ ALWAYS visible */}
+      {/* <div className="results-section__filters one">
+        <CategoryPicker selected={selectedCategories} onChange={onSetCategories} compact />
+      </div> */}
+
+      <div className="result-grid result-grid--full">
+        {paginatedResults.map((item, idx: number) => (
+          <ResultCard
+            key={idx}
+            item={item}
+            index={idx}
+            onZoom={onZoom}
+            onBadImage={onBadImage}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
