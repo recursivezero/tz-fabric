@@ -7,11 +7,11 @@
   "folder-color.pathColors": [
     {
       "folderPath": "tz-fabric/backend/",
-      "color": "foldercolorizer.color_33cc66"
+      "color": "foldercolorizer.color_00afaf"
     },
     {
       "folderPath": "tz-fabric/frontend/",
-      "color": "foldercolorizer.color_cc66ff"
+      "color": "foldercolorizer.color_ff875f"
     }
   ],
   "kiroAgent.configureMCP": "Disabled"
