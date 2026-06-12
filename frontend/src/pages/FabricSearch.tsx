@@ -39,38 +39,47 @@ const CATEGORIES = [
   { id: "product", label: "Product", icon: "🖼️" },
 ];
 
-// ─── Sub-category map (NEW) ───────────────────────────────────────────────────
 const SUB_CATEGORIES: Record<string, { id: string; label: string }[]> = {
   stock: [
-    { id: "deadstock",   label: "Deadstock" },
-    { id: "overstock",   label: "Overstock" },
+    { id: "deadstock", label: "Deadstock" },
+    { id: "overstock", label: "Overstock" },
     { id: "end_of_roll", label: "End of Roll" },
     { id: "new_arrival", label: "New Arrival" },
   ],
   fabric: [
-    { id: "cotton",     label: "Cotton" },
-    { id: "silk",       label: "Silk" },
-    { id: "polyester",  label: "Polyester" },
-    { id: "wool",       label: "Wool" },
-    { id: "linen",      label: "Linen" },
-    { id: "denim",      label: "Denim" },
-    { id: "chiffon",    label: "Chiffon" },
+    { id: "cotton", label: "Cotton" },
+    { id: "silk", label: "Silk" },
+    { id: "polyester", label: "Polyester" },
+    { id: "wool", label: "Wool" },
+    { id: "linen", label: "Linen" },
+    { id: "denim", label: "Denim" },
+    { id: "chiffon", label: "Chiffon" },
   ],
   design: [
-    { id: "floral",      label: "Floral" },
-    { id: "geometric",   label: "Geometric" },
-    { id: "solid",       label: "Solid" },
-    { id: "striped",     label: "Striped" },
-    { id: "printed",     label: "Printed" },
+    { id: "floral", label: "Floral" },
+    { id: "geometric", label: "Geometric" },
+    { id: "solid", label: "Solid" },
+    { id: "striped", label: "Striped" },
+    { id: "printed", label: "Printed" },
     { id: "embroidered", label: "Embroidered" },
   ],
   product: [
-    { id: "garment",      label: "Garment" },
+    { id: "garment", label: "Garment" },
     { id: "home_textile", label: "Home Textile" },
-    { id: "industrial",   label: "Industrial" },
-    { id: "accessories",  label: "Accessories" },
+    { id: "industrial", label: "Industrial" },
+    { id: "accessories", label: "Accessories" },
   ],
 };
+
+const getSubCategoryOptions = (parentCategories: string[]) =>
+  parentCategories.flatMap((parentId) => {
+    const parentLabel = CATEGORIES.find((cat) => cat.id === parentId)?.label ?? parentId;
+    return (SUB_CATEGORIES[parentId] ?? []).map((option) => ({
+      ...option,
+      parentId,
+      parentLabel,
+    }));
+  });
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? "") + (import.meta.env.VITE_API_PREFIX ?? "");
 const CDN_BASE = import.meta.env.VITE_AWS_PUBLIC_URL ?? "";
@@ -172,45 +181,51 @@ async function callDbEndpoint(op: "create" | "update"): Promise<string> {
 
 interface CategoryPickerProps {
   selected: string[];
-  onChange: (cats: string[], subCat?: string) => void;
+  selectedSubCategory: string;
+  onChange: (cats: string[]) => void;
+  onSubCategoryChange: (subCategory: string) => void;
   compact?: boolean;
 }
 
-function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerProps) {
+function CategoryPicker({
+  selected,
+  selectedSubCategory,
+  onChange,
+  onSubCategoryChange,
+  compact = false,
+}: CategoryPickerProps) {
   const [tempSelected, setTempSelected] = useState(selected);
-  const toggle = (id: string) => {
-    const next = tempSelected.includes(id)
-      ? tempSelected.filter((c) => c !== id)
-      : [...tempSelected, id];
-    setTempSelected(next);
-    // reset sub-category when parent selection changes
-    setSubCategory("");
-  };
-  const allOn = tempSelected.length === CATEGORIES.length;
-  const toggleAll = () => { setTempSelected(allOn ? [] : CATEGORIES.map((c) => c.id)); setSubCategory(""); };
-
-  const applySearch = () => {
-    onChange(tempSelected, subCategory || undefined);
-  };
 
   useEffect(() => {
     setTempSelected(selected);
   }, [selected]);
 
-  // Sub-category: only show when exactly one parent is selected
-  const singleParent = tempSelected.length === 1 ? tempSelected[0] : null;
-  const [subCategory, setSubCategory] = useState("");
+  const allOn = tempSelected.length === CATEGORIES.length;
 
-  const handleSubChange = (sub: string) => {
-    setSubCategory(sub);
-    // fire immediately so the filter applies without needing Apply button
-    onChange(tempSelected, sub || undefined);
+  const applyCategories = (next: string[]) => {
+    setTempSelected(next);
+    onChange(next);
+
+    const nextSubOptions = getSubCategoryOptions(next);
+    const selectedStillValid = nextSubOptions.some((option) => option.id === selectedSubCategory);
+    if (selectedSubCategory && !selectedStillValid) onSubCategoryChange("");
+  };
+
+  const toggle = (id: string) => {
+    const next = tempSelected.includes(id)
+      ? tempSelected.filter((c) => c !== id)
+      : [...tempSelected, id];
+    applyCategories(next);
+  };
+
+  const toggleAll = () => {
+    applyCategories(allOn ? [] : CATEGORIES.map((c) => c.id));
   };
 
   return (
     <div className={`category-picker${compact ? " category-picker--compact" : ""}`}>
       <div className="category-picker__header">
-        <span className="category-picker__title">Filter by Category</span>
+        <span className="category-picker__title">Multiple Category Selection</span>
         <button className="category-picker__toggle-all" onClick={toggleAll} type="button">
           {allOn ? "Clear all" : "Select all"}
         </button>
@@ -225,6 +240,7 @@ function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerP
               className={`category-picker__chip${active ? " category-picker__chip--active" : ""}`}
               onClick={() => toggle(cat.id)}
               type="button"
+              aria-pressed={active}
             >
               <span className="category-picker__chip-check">{active ? "✓" : ""}</span>
               <span className="category-picker__chip-icon">{cat.icon}</span>
@@ -232,46 +248,60 @@ function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerP
             </button>
           );
         })}
-        {compact && (
-          <button className="btn btn-primary" onClick={()=> applySearch()} type="button">
-            {'Apply filter →'}
-          </button>
-        )}
       </div>
 
-      {/* Sub-category dropdown — shown when exactly one parent category is active */}
-      {singleParent && (
-        <SubCategoryPicker
-          parentCategory={singleParent}
-          selected={subCategory}
-          onChange={handleSubChange}
-        />
-      )}
+      <SubCategoryPicker
+        parentCategories={tempSelected}
+        selected={selectedSubCategory}
+        onChange={onSubCategoryChange}
+      />
     </div>
   );
 }
 
 interface SubCategoryPickerProps {
-  parentCategory: string;
+  parentCategories: string[];
   selected: string;
-  onChange: (sub: string) => void;
+  onChange: (subCategory: string) => void;
 }
 
-function SubCategoryPicker({ parentCategory, selected, onChange }: SubCategoryPickerProps) {
-  const options = SUB_CATEGORIES[parentCategory];
-  if (!options?.length) return null;
+function SubCategoryPicker({ parentCategories, selected, onChange }: SubCategoryPickerProps) {
+  const hasParents = parentCategories.length > 0;
+
   return (
     <div className="sub-category-picker">
-      <span className="sub-category-picker__label">Sub-category</span>
+      <div className="sub-category-picker__copy">
+        <span className="sub-category-picker__label">Sub-category dropdown</span>
+        <span className="sub-category-picker__hint">
+          {hasParents
+            ? parentCategories.length === 1
+              ? "Refine inside the selected category"
+              : "Refine across all selected categories"
+            : "Select one or more categories to enable sub-category"}
+        </span>
+      </div>
       <select
         className="sub-category-picker__select"
         value={selected}
         onChange={(e) => onChange(e.target.value)}
+        disabled={!hasParents}
+        aria-label="Sub-category selection dropdown"
       >
-        <option value="">All {parentCategory}</option>
-        {options.map((o) => (
-          <option key={o.id} value={o.id}>{o.label}</option>
-        ))}
+        <option value="">
+          {hasParents ? "All selected sub-categories" : "Choose category first"}
+        </option>
+        {parentCategories.map((parentId) => {
+          const parent = CATEGORIES.find((cat) => cat.id === parentId);
+          const options = SUB_CATEGORIES[parentId] ?? [];
+          if (!options.length) return null;
+          return (
+            <optgroup key={parentId} label={parent?.label ?? parentId}>
+              {options.map((option) => (
+                <option key={`${parentId}-${option.id}`} value={option.id}>{option.label}</option>
+              ))}
+            </optgroup>
+          );
+        })}
       </select>
     </div>
   );
@@ -381,7 +411,9 @@ interface StickySearchBarProps {
   fileInputId: string;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   selectedCategories: string[];
+  selectedSubCategory: string;
   onSetCategories: (cats: string[]) => void;
+  onSetSubCategory: (subCategory: string) => void;
   searchLimit: number;
   onSetLimit: (v: number) => void;
 }
@@ -399,7 +431,9 @@ function StickySearchBar({
   onFileChange,
 
   selectedCategories,
+  selectedSubCategory,
   onSetCategories,
+  onSetSubCategory,
   searchLimit,
   onSetLimit,
 }: StickySearchBarProps) {
@@ -466,7 +500,9 @@ function StickySearchBar({
       <div className="search-bar__filters">
         <CategoryPicker
           selected={selectedCategories}
+          selectedSubCategory={selectedSubCategory}
           onChange={onSetCategories}
+          onSubCategoryChange={onSetSubCategory}
           compact
         />
 
@@ -763,18 +799,20 @@ interface ImagePreviewProps {
   croppedUrl: string | null;
   searchLimit: number;
   selectedCategories: string[];
+  selectedSubCategory: string;
   loading: boolean;
   onClear: () => void;
   onRecrop: () => void;
   onSetCategories: (cats: string[]) => void;
+  onSetSubCategory: (subCategory: string) => void;
   onSetLimit: (v: number) => void;
   onSearch: () => void;
 }
 
 function ImagePreview({
   originalUrl, croppedUrl, searchLimit,
-  selectedCategories, loading,
-  onClear, onRecrop, onSetCategories, onSetLimit, onSearch,
+  selectedCategories, selectedSubCategory, loading,
+  onClear, onRecrop, onSetCategories, onSetSubCategory, onSetLimit, onSearch,
 }: ImagePreviewProps) {
   return (
     <div className="image-preview">
@@ -810,7 +848,12 @@ function ImagePreview({
           </div>
 
           <div className="image-preview__options">
-            <CategoryPicker selected={selectedCategories} onChange={onSetCategories} />
+            <CategoryPicker
+                selected={selectedCategories}
+                selectedSubCategory={selectedSubCategory}
+                onChange={onSetCategories}
+                onSubCategoryChange={onSetSubCategory}
+              />
           </div>
 
           <div className="image-preview__search-row">
@@ -840,20 +883,18 @@ interface HeroProps {
   searchLimit: number;
   onSetLimit: (v: number) => void;
   selectedCategories: string[];
+  selectedSubCategory: string;
   onSetCategories: (cats: string[]) => void;
+  onSetSubCategory: (subCategory: string) => void;
   loading: boolean;
-  // NEW
-  thumbnailUrl: string | null;
-  thumbnailName: string | null;
 }
 
 function Hero({
   textQuery, setTextQuery, onTextSearch,
   onFileChange, fileInputId,
   searchLimit, onSetLimit,
-  selectedCategories, onSetCategories,
+  selectedCategories, selectedSubCategory, onSetCategories, onSetSubCategory,
   loading,
-  thumbnailUrl, thumbnailName,
 }: HeroProps) {
   return (
     <div className="hero">
@@ -907,30 +948,16 @@ function Hero({
         >
           📷 Drop your Image
         </button>
-
-        {/* NEW: thumbnail preview — shows immediately after file is picked */}
-        {thumbnailUrl && (
-          <div className="upload-thumb-preview">
-            <img
-              src={thumbnailUrl}
-              alt="Selected fabric"
-              className="upload-thumb-preview__img"
-            />
-            <div className="upload-thumb-preview__info">
-              <div className="upload-thumb-preview__name">
-                {thumbnailName ?? "Selected image"}
-              </div>
-              <div className="upload-thumb-preview__hint">
-                Crop drawer opening — adjust selection below
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Category filter */}
       <div className="hero__categories">
-        <CategoryPicker selected={selectedCategories} onChange={onSetCategories} />
+        <CategoryPicker
+                selected={selectedCategories}
+                selectedSubCategory={selectedSubCategory}
+                onChange={onSetCategories}
+                onSubCategoryChange={onSetSubCategory}
+              />
       </div>
     </div>
   );
@@ -948,13 +975,10 @@ export default function Search() {
   const [selectingImage, setSelectingImage] = useState(false);
   const [searchLimit, setSearchLimit] = useState(40);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string | undefined>(undefined);
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const [isTextSearch, setIsTextSearch] = useState(false);
   const [page, setPage] = useState(1);
   const [badImages, setBadImages] = useState<Set<string>>(new Set());
-  // NEW: immediate thumbnail shown as soon as user picks a file
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
-  const [thumbnailName, setThumbnailName] = useState<string | null>(null);
 
   // Crop / drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -982,6 +1006,7 @@ export default function Search() {
   const heroFileId = useId();
   const stickyFileId = useId();
   const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
+  const subCategoryParam = selectedSubCategory || undefined;
   const PAGE_SIZE = 12;
 
   // ── Object URL helpers ─────────────────────────────────────────────────────
@@ -1024,10 +1049,6 @@ export default function Search() {
     setCroppedPreviewUrl(null);
     setFile(null);
     setIsTextSearch(false);
-    // NEW: set thumbnail immediately so user sees their image right away
-    if (thumbnailUrl) { try { URL.revokeObjectURL(thumbnailUrl); } catch { } }
-    setThumbnailUrl(URL.createObjectURL(f));
-    setThumbnailName(f.name);
     try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
   };
 
@@ -1050,7 +1071,7 @@ export default function Search() {
           setOriginalObjectUrl(f);
           setFile(f);
           setIsTextSearch(false);
-          await runImageSearch(f, selectedCategories, searchLimit);
+          await runImageSearch(f, selectedCategories, searchLimit, selectedSubCategory || undefined);
         } catch { setNotification({ message: "Could not auto-run search from URL.", type: "error" }); }
         finally { afterRun(); }
       })();
@@ -1072,12 +1093,12 @@ export default function Search() {
           setOriginalObjectUrl(f);
           setFile(f);
           setIsTextSearch(false);
-          await runImageSearch(f, selectedCategories, searchLimit);
+          await runImageSearch(f, selectedCategories, searchLimit, selectedSubCategory || undefined);
         } catch { setNotification({ message: "Could not auto-run search payload.", type: "error" }); }
         finally { afterRun(); }
       })();
     } catch { }
-  }, [runImageSearch, dataUrlToFile, urlToFile, setOriginalObjectUrl, searchLimit, selectedCategories]);
+  }, [runImageSearch, dataUrlToFile, urlToFile, setOriginalObjectUrl, searchLimit, selectedCategories, selectedSubCategory]);
 
   // ── Search handlers ────────────────────────────────────────────────────────
 
@@ -1085,7 +1106,7 @@ export default function Search() {
     if (!file) return;
     setNotification(null);
     setIsTextSearch(false);
-    try { await runImageSearch(file, categoryParam, searchLimit, selectedSubCategory); setPage(1); }
+    try { await runImageSearch(file, categoryParam, searchLimit, subCategoryParam); setPage(1); }
     catch { setNotification({ message: "Search failed.", type: "error" }); }
   };
 
@@ -1093,19 +1114,33 @@ export default function Search() {
     if (!textQuery.trim()) return;
     setNotification(null);
     setIsTextSearch(true);
-    try { await runTextSearch(textQuery.trim(), categoryParam, searchLimit, selectedSubCategory); setPage(1); }
+    try { await runTextSearch(textQuery.trim(), categoryParam, searchLimit, subCategoryParam); setPage(1); }
     catch { setNotification({ message: "Search failed.", type: "error" }); }
   };
 
-  const handleCategoryChange = async (cats: string[], subCat?: string) => {
+  const handleCategoryChange = async (cats: string[]) => {
+    const selectedStillValid = getSubCategoryOptions(cats).some((option) => option.id === selectedSubCategory);
+    const nextSubCategory = selectedStillValid ? selectedSubCategory : "";
+
     setSelectedCategories(cats);
-    setSelectedSubCategory(subCat);
+    if (selectedSubCategory !== nextSubCategory) setSelectedSubCategory(nextSubCategory);
     setPage(1);
 
     if (file && !isTextSearch) {
-      await runImageSearch(file, cats, searchLimit, subCat);
+      await runImageSearch(file, cats, searchLimit, nextSubCategory || undefined);
     } else if (textQuery.trim()) {
-      await runTextSearch(textQuery.trim(), cats, searchLimit, subCat);
+      await runTextSearch(textQuery.trim(), cats, searchLimit, nextSubCategory || undefined);
+    }
+  };
+
+  const handleSubCategoryChange = async (subCategory: string) => {
+    setSelectedSubCategory(subCategory);
+    setPage(1);
+
+    if (file && !isTextSearch) {
+      await runImageSearch(file, categoryParam, searchLimit, subCategory || undefined);
+    } else if (textQuery.trim()) {
+      await runTextSearch(textQuery.trim(), categoryParam, searchLimit, subCategory || undefined);
     }
   };
 
@@ -1117,11 +1152,9 @@ export default function Search() {
     setNotification(null);
     setBadImages(new Set());
     setIsTextSearch(false);
+    setSelectedSubCategory("");
     if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } setRawImageUrl(null); }
     if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } setPreviewUrlOrig(null); }
-    // NEW: clear thumbnail
-    if (thumbnailUrl) { try { URL.revokeObjectURL(thumbnailUrl); } catch { } setThumbnailUrl(null); }
-    setThumbnailName(null);
     try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
     originalFileRef.current = null;
     setCroppedPreviewUrl(null);
@@ -1311,7 +1344,9 @@ export default function Search() {
           onFileChange={onFileChange}
 
           selectedCategories={selectedCategories}
+          selectedSubCategory={selectedSubCategory}
           onSetCategories={handleCategoryChange}
+          onSetSubCategory={handleSubCategoryChange}
           searchLimit={searchLimit}
           onSetLimit={setSearchLimit}
         />
@@ -1341,10 +1376,10 @@ export default function Search() {
             searchLimit={searchLimit}
             onSetLimit={setSearchLimit}
             selectedCategories={selectedCategories}
+            selectedSubCategory={selectedSubCategory}
             onSetCategories={handleCategoryChange}
+            onSetSubCategory={handleSubCategoryChange}
             loading={loading}
-            thumbnailUrl={thumbnailUrl}
-            thumbnailName={thumbnailName}
           />
         )}
 
@@ -1355,10 +1390,12 @@ export default function Search() {
             croppedUrl={croppedPreviewUrl}
             searchLimit={searchLimit}
             selectedCategories={selectedCategories}
+            selectedSubCategory={selectedSubCategory}
             loading={loading}
             onClear={handleClear}
             onRecrop={openRecrop}
             onSetCategories={handleCategoryChange}
+            onSetSubCategory={handleSubCategoryChange}
             onSetLimit={setSearchLimit}
             onSearch={handleImageSearch}
           />
