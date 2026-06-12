@@ -16,6 +16,7 @@ const UploadPage = () => {
   const location = useLocation();
   const prefill = location.state?.prefill;
   const {
+    imageFile,
     imageUrl,
     audioUrl,
     isRecording,
@@ -118,20 +119,30 @@ const UploadPage = () => {
         <div className="grid">
           <section className="preview-col">
             {imageUrl ? (
-              <div className="image-preview-wrap">
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="image-preview-plain"
-                />
-                <button
-                  className="chip chip-clear img-clear-btn"
-                  onClick={handleClearClick}
-                  title="Remove image"
-                >
-                  ✕
-                </button>
-              </div>
+              <>
+                <div className="image-preview-wrap">
+                  <img
+                    src={imageUrl}
+                    alt="Preview"
+                    className="image-preview-plain"
+                  />
+                  <button
+                    className="chip chip-clear img-clear-btn"
+                    onClick={handleClearClick}
+                    title="Remove image"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="upload-thumb-preview" aria-live="polite">
+                  <img src={imageUrl} alt="Uploaded thumbnail" className="upload-thumb-preview__img" />
+                  <div className="upload-thumb-preview__info">
+                    <span className="upload-thumb-preview__label">Thumbnail ready</span>
+                    <strong className="upload-thumb-preview__name">{imageFile?.name || "Selected fabric image"}</strong>
+                    <small className="upload-thumb-preview__hint">Visible instantly before submit</small>
+                  </div>
+                </div>
+              </>
             ) : (
               <div
                 className="dropzone"

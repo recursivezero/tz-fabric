@@ -26,6 +26,7 @@ export default function ContentGrid() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [mode, setMode] = useState<"all" | "similar">("all");
+  const [listQuery, setListQuery] = useState("");
 
   // ✅ Track broken images
   const [badImages, setBadImages] = useState<Set<string>>(new Set());
@@ -110,16 +111,34 @@ export default function ContentGrid() {
   const cleanName = (filename: string) =>
     filename?.split("_")[0].split(".")[0] ?? "";
 
-  // ✅ Hide items with missing/broken images
+  // ✅ Hide items with missing/broken images + filter list by text search
   const visibleItems = useMemo(() => {
+    const query = listQuery.trim().toLowerCase();
+
     return items.filter((item) => {
       const src = item.imageUrl?.startsWith("http")
         ? item.imageUrl
         : `${BASE_URL}${item.imageUrl}`;
 
-      return !badImages.has(src);
+      if (badImages.has(src)) return false;
+      if (!query) return true;
+
+      const searchable = [
+        pickDisplayName(item),
+        item.basename,
+        item.imageFilename,
+        item.imageUrl,
+        item.audioUrl,
+        item.audioFilename,
+        item.createdAt,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(query);
     });
-  }, [items, badImages]);
+  }, [items, badImages, listQuery]);
 
   // ---------- Lightbox handlers ----------
   const openLightbox = (src: string, caption?: string) => {
@@ -197,8 +216,35 @@ export default function ContentGrid() {
 
   return (
     <div className="grid-page">
-      <h1 style={{ textAlign: "center", marginBlock: "10px", color: "#a455ab" } }>Fabric List</h1>
-      <h3 style={ { textAlign: "center", color: "#00000059" } }>List of uploaded fabric with their audio description</h3>
+      <div className="grid-page-hero">
+        <p className="grid-page-eyebrow">Fabric Library</p>
+        <h1 className="grid-page-title">Fabric List</h1>
+        <p className="grid-page-subtitle">List of uploaded fabric with their audio description</p>
+      </div>
+
+      <div className="grid-search-panel" role="search" aria-label="Search uploaded fabrics">
+        <div className="grid-search-panel__field">
+          <span className="grid-search-panel__icon" aria-hidden>⌕</span>
+          <input
+            type="search"
+            value={listQuery}
+            onChange={(e) => setListQuery(e.target.value)}
+            placeholder="Search by name, tags, description, or filename…"
+            aria-label="Search uploaded fabrics"
+          />
+          {listQuery && (
+            <button
+              className="grid-search-panel__clear"
+              type="button"
+              onClick={() => setListQuery("")}
+              aria-label="Clear search"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="upload-wrapper">
         <div className="upload-inner" style={ { display: "flex", gap: 8 } }>
           { mode === "similar" && (
@@ -237,7 +283,9 @@ export default function ContentGrid() {
 
       { err && <div className="grid-error">⚠️ { err }</div> }
       { !loading && visibleItems.length === 0 && !err && (
-        <div className="empty-state">No image found.</div>
+        <div className="empty-state">
+          {listQuery ? `No fabric found for "${listQuery}".` : "No image found."}
+        </div>
       ) }
 
       <div className="media-grid">

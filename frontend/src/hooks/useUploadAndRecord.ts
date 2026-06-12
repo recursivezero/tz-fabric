@@ -251,6 +251,7 @@ export const useUploadAndRecord = () => {
   };
 
   return {
+    imageFile,
     imageUrl,
     audioUrl,
     isRecording,

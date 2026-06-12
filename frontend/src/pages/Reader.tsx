@@ -4,9 +4,9 @@ import { useState } from "react";
 const styles: any = {
   wrapper: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",
+    background: "radial-gradient(900px 500px at 50% -10%, rgba(91,127,196,0.14), transparent 62%), var(--tz-bg, #0e1322)",
     padding: "60px 20px",
-    fontFamily: "'DM Sans', -apple-system, sans-serif",
+    fontFamily: "var(--font-body, 'Inter', system-ui, sans-serif)",
   },
   container: {
     maxWidth: 1200,
@@ -17,18 +17,18 @@ const styles: any = {
     marginBottom: 80,
   },
   title: {
-    fontFamily: "'Instrument Serif', serif",
+    fontFamily: "var(--font-display, 'Bricolage Grotesque', system-ui, sans-serif)",
     fontSize: 56,
     fontWeight: 400,
     margin: "0 0 16px 0",
-    background: "linear-gradient(135deg, #fff 0%, #aaa 100%)",
+    background: "linear-gradient(135deg, var(--tz-text, #ece7dd) 0%, var(--tz-accent, #e0a82e) 100%)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
     letterSpacing: "-0.02em",
   },
   subtitle: {
     fontSize: 18,
-    color: "#888",
+    color: "var(--tz-muted, #97a0b5)",
     margin: 0,
   },
   tileGrid: {
@@ -42,8 +42,8 @@ const styles: any = {
   tile: {
     padding: "60px 48px",
     borderRadius: 28,
-    background: "linear-gradient(135deg, rgba(255, 107, 53, 0.06) 0%, rgba(247, 147, 30, 0.03) 100%)",
-    border: "2px solid rgba(255, 107, 53, 0.15)",
+    background: "linear-gradient(135deg, rgba(29,39,64,0.92), rgba(23,31,51,0.92))",
+    border: "1px solid rgba(42,52,80,0.92)",
     cursor: "pointer",
     transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
     position: "relative",
@@ -61,7 +61,7 @@ const styles: any = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "radial-gradient(circle at 50% 50%, rgba(255, 107, 53, 0.12), transparent 70%)",
+    background: "radial-gradient(circle at 50% 50%, rgba(224,168,46,0.14), transparent 70%)",
     opacity: 0,
     transition: "opacity 0.4s ease",
   },
@@ -78,21 +78,21 @@ const styles: any = {
   tileIcon: {
     fontSize: 88,
     marginBottom: 28,
-    filter: "drop-shadow(0 8px 24px rgba(255, 107, 53, 0.4))",
+    filter: "drop-shadow(0 8px 24px rgba(224,168,46,0.24))",
     transition: "all 0.4s ease",
   },
 
   tileTitle: {
     fontSize: 32,
     fontWeight: 700,
-    color: "#fff",
+    color: "var(--tz-text, #ece7dd)",
     marginBottom: 12,
     letterSpacing: "-0.02em",
   },
 
   tileDesc: {
     fontSize: 16,
-    color: "#aaa",
+    color: "var(--tz-muted, #97a0b5)",
     fontWeight: 500,
   },
 
@@ -112,9 +112,9 @@ const Reader = () => {
     ...styles.tile,
     ...(hoveredTile === tileName && {
       transform: "translateY(-12px) scale(1.03)",
-      boxShadow: "0 32px 80px rgba(255, 107, 53, 0.3)",
-      borderColor: "rgba(255, 107, 53, 0.5)",
-      background: "linear-gradient(135deg, rgba(255, 107, 53, 0.12) 0%, rgba(247, 147, 30, 0.08) 100%)",
+      boxShadow: "0 32px 80px rgba(0,0,0,0.34)",
+      borderColor: "rgba(224,168,46,0.58)",
+      background: "linear-gradient(135deg, rgba(224,168,46,0.14) 0%, rgba(91,127,196,0.08) 100%)",
     }),
   });
 
