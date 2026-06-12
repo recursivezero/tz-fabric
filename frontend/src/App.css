@@ -1,22 +1,9 @@
-/* App base + layout */
-:root {
-  --text-color: #0f1724;
-  --muted: #596b7a;
-  --border: rgba(0, 0, 0, 0.904);
-  --accent: #2f6bff;
-  --container-max: 100vw;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ── App shell ──────────────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 #root {
   height: 100%;
-  margin: 0;
-  font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif;
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
 }
 
 .app-wrapper {
@@ -24,32 +11,33 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  background:
+    radial-gradient(1100px 600px at 78% -8%, rgba(91,127,196,0.14), transparent 60%),
+    var(--ink, #0e1322);
 }
 
-.app-wrapper.upload-bg {
-  background-image: url('/fabric_background.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-
+/* ── Site header ────────────────────────────────────────────────── */
 .site-header {
   width: 100%;
   display: grid;
   align-items: center;
-  padding: 4px 20px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 6px 24px rgba(66, 66, 67, 0.767);
-  grid-template-columns: 20% 1fr 20%;
+  padding: 0 24px;
+  height: 56px;
+  background: linear-gradient(90deg, var(--ink-2, #131a2c), var(--ink, #0e1322));
+  border-bottom: 1px solid var(--line, #2a3450);
+  grid-template-columns: 220px 1fr 140px;
   grid-template-areas: 'left center right';
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
 }
 
 .header-left {
   grid-area: left;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .header-center {
@@ -60,50 +48,62 @@
 
 .header-right {
   grid-area: right;
+  justify-self: end;
+  display: flex;
+  align-items: center;
 }
 
+/* ── Brand ──────────────────────────────────────────────────────── */
 .logo-mark {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: rgba(224,168,46,0.12);
+  border-radius: 8px;
+  border: 1px solid rgba(224,168,46,0.22);
 }
+
+/* Override the blue SVG rects in App.tsx logo with turmeric */
+.logo-mark svg rect { fill: var(--turmeric, #e0a82e) !important; }
 
 .brand-name {
+  font-family: var(--font-display, 'Bricolage Grotesque', system-ui);
   font-size: 16px;
   font-weight: 700;
-  color: var(--text-color);
-  letter-spacing: 0.1px;
+  letter-spacing: -0.02em;
+  color: var(--cotton, #ece7dd);
 }
 
+/* Theme toggle */
+#theme {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted, #97a0b5);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 9px);
+  transition: background 0.15s, color 0.15s;
+}
+#theme:hover { background: var(--panel, #171f33); color: var(--turmeric, #e0a82e); }
 
+/* ── Main content ───────────────────────────────────────────────── */
 .main-content {
   width: 100%;
-  max-width: var(--container-max);
+  max-width: 100vw;
   flex: 1;
 }
 
+/* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .site-header {
-    padding: 12px 14px;
-    flex-direction: row;
-    align-items: center;
-    display: flex;
+    padding: 0 14px;
+    grid-template-columns: auto 1fr auto;
+    height: 52px;
   }
-
-
-  .brand-name {
-    font-size: 15px;
-  }
-}
-
-.container {
-  height: 80vh;
-}
-
-.center {
-  display: grid;
-  place-content: center;
+  .brand-name { font-size: 14px; }
 }
