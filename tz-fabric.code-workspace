@@ -116,11 +116,11 @@
     "folder-color.pathColors": [
       {
         "folderPath": "tz-fabric/frontend/",
-        "color": "foldercolorizer.color_ff33cc"
+        "color": "foldercolorizer.color_d700af"
       },
       {
         "folderPath": "tz-fabric/backend/",
-        "color": "foldercolorizer.color_66cc66"
+        "color": "foldercolorizer.color_ffff87"
       }
     ],
     "cSpell.customDictionaries": {
