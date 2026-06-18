@@ -22,6 +22,8 @@ type RichChatResponse = ChatResponse & Partial<{
   action: ToolAction;
   analysis_responses: AnalysisItem[];
   results: unknown[];
+  ask_more: boolean;
+  response: unknown;
 }>;
 
 const normalizeLLMText = (t: unknown): string => {
@@ -132,14 +134,13 @@ useEffect(() => {
     const seen = sessionStorage.getItem("fabricAI_welcome_seen");
     if (messages.length === 0 && !seen) {
       setMessages([{
-        id: "welcome",
         role: "assistant",
         content: normalizeLLMText(`👋 Hi, I’m FabricAI! I can help you with:
 - 📤 Uploading fabric images and audio
 - 📝 Giving short or long analysis
 - 🔍 Searching for similar images
 - 🔁 Regenerating and comparing results`),
-      }as any]);
+      }]);
       sessionStorage.setItem("fabricAI_welcome_seen", "1");
     }
   }, [messages.length]);
@@ -295,7 +296,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
     const bots = getBots(rc);
 
     // helper: normalize a raw bot string (mirrors backend sanitizer)
-    const sanitizeBotString = (rawIn: unknown, action?: ToolAction, analysis_resps?: any[]) => {
+    const sanitizeBotString = (rawIn: unknown, action?: ToolAction, analysis_resps?: AnalysisItem[]) => {
       try {
         let s = typeof rawIn === "string" ? rawIn : String(rawIn || "");
         s = s.trim();
@@ -360,7 +361,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
     // compute assistantText
     let assistantText = "";
     if (Array.isArray(bots) && bots.length > 0) {
-      assistantText = sanitizeBotString(bots[0], rc.action as ToolAction | undefined, rc.analysis_responses as any[] | undefined);
+      assistantText = sanitizeBotString(bots[0], rc.action, rc.analysis_responses);
       // if sanitized result is summary token, avoid leaking raw JSON-like strings
       if (!assistantText) assistantText = "[tool returned non-displayable result]";
     } else if (rc.reply?.content) {
@@ -399,7 +400,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
     } else {
       // Default: push a single assistant message (bot_messages[0] or reply)
       if (assistantText) {
-        const askMore = (rc as any).ask_more === true;
+        const askMore = rc.ask_more === true;
         let finalText = assistantText;
         if (askMore) {
           const low = finalText.toLowerCase();
@@ -412,7 +413,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
           }
         }
         next.push({ role: "assistant", content: finalText });
-        if ((rc as any).ask_more === true) {
+        if (rc.ask_more === true) {
           pendingAskMoreRef.current = finalText;
         }
       }
@@ -444,7 +445,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
 
     const instr = `Regenerate: cache_key=${cacheKey} image_url=${imageUrl} mode=${mode}`;
 
-    const extractTextField = (val: any): string => {
+    const extractTextField = (val: unknown): string => {
       if (!val) return "";
       const s = String(
         (typeof val === "object" && ("text" in val || "response" in val)) ? JSON.stringify(val) : val
@@ -490,7 +491,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
       const regenChatRes = await withAbort(
         chatOnce([...messages, { role: "user", content: instr }])
       );
-      const rc = regenChatRes as any;
+      const rc = regenChatRes as RichChatResponse;
 
       const raw = extractTextField(
         rc?.analysis_responses?.[0] ||
@@ -550,7 +551,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
         throw new Error(`Upload failed: ${upResp.status} ${t}`);
       }
 
-      const upJson = (await upResp.json()) as Record<string, any>;
+      const upJson = (await upResp.json()) as { image_url?: string };
       const imageUrl = upJson.image_url;
       if (!imageUrl) {
         const args = {
@@ -598,7 +599,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
       const chatRes = await withAbort(
         chatOnce([...messages, { role: "user", content: searchInstruction }])
       );
-      const rc = chatRes as any;
+      const rc = chatRes as RichChatResponse;
 
       const results = rc.analysis_responses ?? rc.results ?? rc.bot_messages ?? [];
 

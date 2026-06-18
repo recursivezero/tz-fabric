@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export function throttle<F extends (...args: any[]) => void>(fn: F, delay: number): F {
+export function throttle<F extends (...args: unknown[]) => void>(fn: F, delay: number): F {
   let last = 0;
-  return function(this: any, ...args: any[]) {
+  return function (this: ThisParameterType<F>, ...args: Parameters<F>) {
     const now = Date.now();
     if (now - last >= delay) {
       last = now;

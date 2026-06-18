@@ -176,7 +176,9 @@ export default function Composer({
 
   const trimAudioFile = async (file: File): Promise<File> => {
     const arrayBuffer = await file.arrayBuffer();
-    const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextClass =
+      window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ac = new AudioContextClass();
     try {
       const decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
       const duration = decoded.duration;

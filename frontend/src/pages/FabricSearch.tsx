@@ -564,7 +564,7 @@ function ResultsSection({
       </div> */}
 
       <div className="result-grid result-grid--full">
-        {paginatedResults.map((item: any, idx: number) => (
+        {paginatedResults.map((item, idx: number) => (
           <ResultCard
             key={idx}
             item={item}

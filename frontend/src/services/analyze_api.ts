@@ -27,7 +27,7 @@ export async function analyzeImage(file, analysisType) {
 
     return await res.json();
 
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error analyzing image:", err);
     throw new Error("Cannot reach the server. Check your network");
   }

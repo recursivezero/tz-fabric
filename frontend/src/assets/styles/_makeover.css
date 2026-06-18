@@ -67,7 +67,6 @@ body.app-background,
 .grid-page,
 .upload-page,
 .contact-page {
-  background-image: none !important;
   background:
     radial-gradient(1000px 560px at 70% -10%, rgba(91, 127, 196, 0.13), transparent 60%),
     var(--tz-ink) !important;

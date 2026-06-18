@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { CSSProperties } from "react";
 import Cropper from "react-easy-crop";
 
 import * as htmlToImage from "html-to-image";
@@ -534,7 +535,7 @@ const Field = ({ label, value }: { label: string; value?: string }) => (
    STYLES
 ======================= */
 
-const styles: any = {
+const styles: Record<string, CSSProperties> = {
   wrapper: {
     minHeight: "100vh",
     background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",

@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { CSSProperties } from "react";
 import Cropper from "react-easy-crop";
 import { useNavigate } from "react-router-dom";
 
@@ -680,7 +681,7 @@ const CardPreview = ({ data, loading }: CardPreviewProps) => {
 };
 
 
-const styles: any = {
+const styles: Record<string, CSSProperties> = {
   wrapper: {
     minHeight: "100vh",
     background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",
