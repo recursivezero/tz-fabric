@@ -9,10 +9,13 @@
   color: #222;
   font-weight: 500;
   display: block;
+  padding: 6px 16px;
+  border-radius: 999px;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .header-nav a.active {
-  border-bottom: 2px solid #222;
+  /* pill background is applied by _makeover.css; border-bottom is superseded by pill style */
 }
 
 .nav-toggle {
@@ -31,7 +34,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 1.5rem;
+    gap: 0.25rem;
     background: none;
     padding: 0;
     transform: none;

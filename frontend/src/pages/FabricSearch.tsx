@@ -73,7 +73,7 @@ function useSearch() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ResultItem[]>([]);
 
-  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 40) => {
+  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 40, preserveResultsOnError = false) => {
     setLoading(true);
     setError(null);
     try {
@@ -90,13 +90,13 @@ function useSearch() {
       setResults((data.results ?? []).map(toResultItem));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Search failed.");
-      setResults([]);
+      if (!preserveResultsOnError) setResults([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 40) => {
+  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 40, preserveResultsOnError = false) => {
     setLoading(true);
     setError(null);
     try {
@@ -113,7 +113,7 @@ function useSearch() {
       setResults((data.results ?? []).map(toResultItem));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Search failed.");
-      setResults([]);
+      if (!preserveResultsOnError) setResults([]);
     } finally {
       setLoading(false);
     }
@@ -151,8 +151,16 @@ interface CategoryPickerProps {
 function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerProps) {
   const [tempSelected, setTempSelected] = useState(selected);
   const toggle = (id: string) => {
-    setTempSelected(tempSelected.includes(id) ? tempSelected.filter((c) => c !== id) : [...tempSelected, id]);
-  }
+    const next = tempSelected.includes(id)
+      ? tempSelected.filter((c) => c !== id)
+      : [...tempSelected, id];
+    setTempSelected(next);
+    // Non-compact (Hero / ImagePreview): propagate immediately so the parent's
+    // selectedCategories stays in sync. Compact mode defers to the Apply button.
+    if (!compact) {
+      onChange(next);
+    }
+  };
   const allOn = tempSelected.length === CATEGORIES.length;
   const toggleAll = () => {setTempSelected(allOn ? [] : CATEGORIES.map((c) => c.id))};
 
@@ -1040,10 +1048,14 @@ export default function Search() {
     setSelectedCategories(cats);
     setPage(1);
 
+    // Empty selection = "no filter" — pass undefined so the backend returns all
+    // results rather than an empty-array that could resolve to 0 matches.
+    const effectiveCats = cats.length > 0 ? cats : undefined;
+
     if (file && !isTextSearch) {
-      await runImageSearch(file, cats, searchLimit);
+      await runImageSearch(file, effectiveCats, searchLimit, /* preserveResultsOnError */ true);
     } else if (textQuery.trim()) {
-      await runTextSearch(textQuery.trim(), cats, searchLimit);
+      await runTextSearch(textQuery.trim(), effectiveCats, searchLimit, /* preserveResultsOnError */ true);
     }
   };
 
