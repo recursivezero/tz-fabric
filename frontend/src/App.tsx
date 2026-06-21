@@ -1,5 +1,6 @@
 import type React from "react";
 import { FaRegMoon } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
 
 import "./App.css";
 import { Routing } from "./Routing";
@@ -7,8 +8,17 @@ import Footer from "./components/Footer";
 import { NavBar } from "./components/NavBar";
 
 const App: React.FC = () => {
+  const location = useLocation();
+  const isChatRoute = location.pathname.startsWith("/chat");
+  const isAnalysisRoute = location.pathname.startsWith("/analysis");
+  const isWorkspaceRoute = isChatRoute || isAnalysisRoute;
+
   return (
-    <div className="app-wrapper">
+    <div
+      className={`app-wrapper ${isChatRoute ? "app-wrapper--chat" : ""} ${
+        isAnalysisRoute ? "app-wrapper--analysis" : ""
+      }`}
+    >
       <header className="site-header">
         <div className="header-left">
           <div className="logo-mark" aria-hidden>
@@ -54,7 +64,7 @@ const App: React.FC = () => {
         <Routing />
       </main>
 
-      <Footer />
+      {!isWorkspaceRoute && <Footer />}
     </div>
   );
 };

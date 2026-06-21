@@ -15,3 +15,20 @@
   align-items: center;
   cursor: pointer;
 }
+
+/* Keep the sample drawer handle readable and aligned with the redesigned drawer. */
+.analysis-page .drawer-toggle-wrapper {
+  z-index: 540;
+}
+
+.analysis-page .drawer-toggle-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  background: linear-gradient(135deg, #facc15, #d97706);
+  color: #111827;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}

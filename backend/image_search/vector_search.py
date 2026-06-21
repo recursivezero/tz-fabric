@@ -1,6 +1,25 @@
 # vector_search.py
 import time
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
+
+
+def _display_image_path(image_uri: Optional[str]) -> Optional[str]:
+    if not image_uri:
+        return None
+
+    full_path = str(image_uri).replace("\\", "/")
+
+    # Do not strip CDN URLs. The browser can display these directly.
+    if full_path.startswith(("http://", "https://")):
+        return full_path
+
+    parts = full_path.split("/")
+    for root in ("product", "fabric", "stock", "design", "single", "group"):
+        if root in parts:
+            idx = parts.index(root)
+            return "/".join(parts[idx:])
+
+    return "/".join(parts[-2:])
 
 
 def run_vector_search(
@@ -41,19 +60,9 @@ def run_vector_search(
     for result in rs:
         if hasattr(result, "image_uri"):
             image_uris.append(result.image_uri)
-            # Optimized path processing
-            full_path = result.image_uri.replace("\\", "/")
-            # parts = full_path.rsplit("/", 2)
-            parts = full_path.split("/")
-            print(full_path, parts)
-
-            if "product" in parts:
-                idx = parts.index("product")
-                image_paths.append("/".join(parts[idx:]))
-            else:
-                image_paths.append("/".join(parts[-2:]))
-            # if len(parts) >= 2:
-            #     image_paths.append(f"{parts[-2]}/{parts[-1]}")
+            display_path = _display_image_path(result.image_uri)
+            if display_path:
+                image_paths.append(display_path)
 
     # Debug timing (comment out in production)
     search_time = time.perf_counter() - start_time

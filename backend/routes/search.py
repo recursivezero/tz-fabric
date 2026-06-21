@@ -72,10 +72,10 @@ async def image_search(
             # Use form defaults
             limit = limit or 20
             page = page or 1
-            per_page = per_page or 10
+            per_page = per_page or limit or 10
 
         # Ensure per_page is never None for arithmetic operations
-        per_page = per_page or 10
+        per_page = per_page or limit or 10
         page = page or 1
 
         # Profanity filter

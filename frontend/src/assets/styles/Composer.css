@@ -326,3 +326,122 @@
 .send-btn.inside {
   z-index: 100;
 }
+
+/* Compact bottom composer for chat: no giant white block, correctly aligned send button. */
+.composer {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px 18px 0 0;
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.25);
+  z-index: 20;
+}
+
+.composer-row {
+  gap: 0;
+  align-items: center;
+}
+
+.composer-input-wrapper {
+  margin-inline: 0;
+  align-items: stretch;
+}
+
+.composer-input {
+  min-height: 46px;
+  max-height: 132px;
+  padding: 12px 58px 12px 52px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #f8fafc;
+  color: #0f172a !important;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.attach-btn.inside {
+  top: 7px;
+  left: 8px;
+  transform: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #e2e8f0;
+  color: #334155;
+  z-index: 3;
+}
+
+.send-btn.inside {
+  top: 6px;
+  right: 8px;
+  transform: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  padding: 0;
+  z-index: 4;
+}
+
+.send-icon {
+  width: 19px;
+  height: 19px;
+}
+
+.composer-audio-row {
+  justify-content: flex-end;
+  flex-direction: row;
+  gap: 8px;
+  margin: 8px 0 0;
+  min-height: 34px;
+}
+
+.audio-label {
+  order: 0;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.start-btn {
+  order: 1;
+}
+
+.stop-btn {
+  order: 2;
+}
+
+.record-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: #f8fafc;
+  font-size: 13px;
+}
+
+.upload-previews {
+  margin: 0 0 8px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.stop-overlay {
+  border-radius: 14px;
+}
+
+@media (max-width: 720px) {
+  .composer {
+    padding: 8px 8px 10px;
+  }
+
+  .composer-input {
+    font-size: 15px;
+  }
+
+  .composer-audio-row {
+    flex-wrap: wrap;
+  }
+}

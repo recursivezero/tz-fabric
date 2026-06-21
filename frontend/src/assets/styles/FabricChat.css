@@ -287,3 +287,84 @@
   max-width: 1200px;
   margin: 0 auto;
 }
+
+/* Final chat layout overrides: keep the conversation visible and the composer compact. */
+.page-root {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #081126;
+}
+
+.chat-card-topbar {
+  flex: 0 0 auto;
+  width: min(1120px, calc(100% - 32px));
+  margin: 10px auto 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+}
+
+.chat-card-title .main {
+  color: #f8fafc;
+}
+
+.chat-body {
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0;
+  width: min(1120px, calc(100% - 32px));
+  margin: 10px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.chat-scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 14px 8px 18px !important;
+  scrollbar-width: thin;
+}
+
+.chat-scroll-area::-webkit-scrollbar {
+  display: initial;
+  width: 8px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+.page-root.is-empty .chat-scroll-area {
+  background: transparent !important;
+}
+
+@media (max-width: 720px) {
+  .page-root {
+    padding: 0;
+  }
+
+  .chat-card-topbar,
+  .chat-body {
+    width: calc(100% - 20px);
+  }
+
+  .chat-card-actions {
+    gap: 6px;
+  }
+
+  .page-root .btn {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}

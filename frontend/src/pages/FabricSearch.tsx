@@ -46,15 +46,30 @@ const SUBCATEGORIES: Record<string, string[]> = {
   product: ["shirt", "dress", "trouser", "saree", "scarf"],
 };
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? "") + (import.meta.env.VITE_API_PREFIX ?? "");
-const CDN_BASE = import.meta.env.VITE_AWS_PUBLIC_URL ?? "";
+const API_ORIGIN = (import.meta.env.VITE_API_URL ?? window.location.origin).replace(/\/$/, "");
+const API_BASE = API_ORIGIN + (import.meta.env.VITE_API_PREFIX ?? "");
+const CDN_BASE = (import.meta.env.VITE_AWS_PUBLIC_URL ?? "https://cdn.threadzip.com").replace(/\/$/, "");
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toCdnUrl(src: string | undefined): string {
   if (!src) return "";
-  if (/^https?:\/\//i.test(src)) return src;
-  return `${CDN_BASE}/images/${src.replace(/^\/+/, "")}`;
+
+  const clean = String(src).trim();
+
+  if (/^(https?:|blob:|data:)/i.test(clean)) {
+    return clean;
+  }
+
+  if (clean.startsWith("/api/") || clean.startsWith("/assets/")) {
+    return `${API_ORIGIN}${clean}`;
+  }
+
+  if (clean.startsWith("images/")) {
+    return `${CDN_BASE}/${clean}`;
+  }
+
+  return `${CDN_BASE}/images/${clean.replace(/^\/+/, "")}`;
 }
 
 function toResultItem(raw: string): ResultItem {
@@ -80,6 +95,8 @@ function useSearch() {
       const form = new FormData();
       form.append("file", file);
       form.append("limit", String(limit));
+      form.append("page", "1");
+      form.append("per_page", String(limit));
       if (category?.length) category.forEach((c) => { form.append("category", c) });
       const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
       if (!res.ok) {
@@ -103,6 +120,8 @@ function useSearch() {
       const form = new FormData();
       form.append("search_term", term);
       form.append("limit", String(limit));
+      form.append("page", "1");
+      form.append("per_page", String(limit));
       if (category?.length) category.forEach((c) => { form.append("category", c) });
       const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
       if (!res.ok) {
@@ -832,14 +851,20 @@ function Hero({
   return (
     <div className="hero">
       <header className="hero__header">
-        <div className="hero__eyebrow">Fabric Intelligence</div>
-        <h1 className="hero__title">
-          Find the clothing
-          <br />
-          <span className="hero__title-accent">you couldn't find.</span>
-        </h1>
-        <p className="hero__subtitle">Visual &amp; semantic search — powered by vectors</p>
-      </header>
+  <div className="hero__eyebrow">Fabric Intelligence</div>
+
+  <h1 className="hero__title">
+    Find the clothing
+    <br />
+    <span className="hero__title-accent">
+      you couldn't find.
+    </span>
+  </h1>
+
+  <p className="hero__subtitle">
+    Visual &amp; semantic search — powered by vectors
+  </p>
+</header>
 
       <div className="hero__search-controls">
         {/* Text search */}
@@ -1311,7 +1336,11 @@ export default function Search() {
 
         {/* Notifications / states */}
         {notification && <Notification message={notification.message} type={notification.type} />}
-        {(loading || selectingImage) && <Loader />}
+        {(loading || selectingImage) && (
+          <div className="fabric-search__loading-overlay" role="status" aria-live="polite">
+            <Loader />
+          </div>
+        )}
         {error && <p className="fabric-search__error">{error}</p>}
 
         {/* Results */}

@@ -13,6 +13,9 @@ const ImageDescription = () => {
     const wrapper = document.querySelector(".app-wrapper");
     wrapper?.classList.add("upload-bg");
 
+    return () => {
+      wrapper?.classList.remove("upload-bg");
+    };
   }, []);
 
   const {
@@ -59,7 +62,7 @@ const ImageDescription = () => {
   }, [uploadedImageUrl, sampleImageUrl]);
 
   return (
-    <div className="home-container">
+    <div className={`home-container analysis-page ${showDrawer ? "drawer-open" : ""}`}>
       <Header />
 
       <div className="top-texts">

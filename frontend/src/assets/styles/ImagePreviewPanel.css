@@ -149,3 +149,109 @@
   background: #e53e3e;
   color: #fff;
 }
+/* Analysis page upload card polish. */
+.analysis-page .image-preview-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.analysis-page .preview-visual {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.analysis-page .dropzone.big-drop {
+  width: 100%;
+  min-height: clamp(260px, 42dvh, 440px);
+  height: auto;
+  border: 1.5px dashed rgba(148, 163, 184, 0.48);
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.76);
+  color: #e5e7eb;
+  box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.04), 0 18px 50px rgba(0, 0, 0, 0.24);
+}
+
+.analysis-page .dz-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  margin-bottom: 10px;
+  border-radius: 16px;
+  background: rgba(251, 191, 36, 0.13);
+  font-size: 22px;
+}
+
+.analysis-page .dz-text {
+  font-size: 16px;
+  color: #dbeafe;
+}
+
+.analysis-page .dz-text .link {
+  color: #fbbf24;
+  font-weight: 800;
+}
+
+.analysis-page .preview-wrap,
+.analysis-page .preview-image {
+  width: 100%;
+}
+
+.analysis-page .preview-image {
+  height: clamp(260px, 42dvh, 440px);
+  object-fit: contain;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.analysis-page .filesize-name {
+  min-height: 22px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.analysis-page .filename,
+.analysis-page .validation-text {
+  color: #cbd5e1;
+}
+
+.analysis-page .preview-buttons-container {
+  margin-top: 10px;
+  gap: 10px;
+}
+
+.analysis-page .analysis-btn {
+  min-width: 142px;
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 0 18px;
+  font-weight: 800;
+  transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+}
+
+.analysis-page .analysis-btn:not(.disabled):hover {
+  transform: translateY(-1px);
+}
+
+.analysis-page .analysis-btn.short {
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  background: rgba(30, 41, 59, 0.86);
+  color: #e5e7eb;
+}
+
+.analysis-page .analysis-btn.long {
+  background: linear-gradient(135deg, #facc15, #d97706);
+  color: #111827;
+  box-shadow: 0 14px 34px rgba(217, 119, 6, 0.26);
+}
+
+.analysis-page .analysis-btn.disabled {
+  opacity: 0.48;
+  box-shadow: none;
+}
