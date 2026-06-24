@@ -1,5 +1,6 @@
 import type React from "react";
-import { FaRegMoon } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { FaRegMoon, FaRegSun } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 
 import "./App.css";
@@ -7,11 +8,42 @@ import { Routing } from "./Routing";
 import Footer from "./components/Footer";
 import { NavBar } from "./components/NavBar";
 
+type ThemeMode = "light" | "dark";
+
+const getInitialTheme = (): ThemeMode => {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+
+  const savedTheme = window.localStorage.getItem("theme");
+  if (savedTheme === "light" || savedTheme === "dark") {
+    return savedTheme;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+};
+
 const App: React.FC = () => {
   const location = useLocation();
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const isChatRoute = location.pathname.startsWith("/chat");
   const isAnalysisRoute = location.pathname.startsWith("/analysis");
   const isWorkspaceRoute = isChatRoute || isAnalysisRoute;
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem("theme", theme);
+
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (themeColor) {
+      themeColor.content = theme === "dark" ? "#111111" : "#f7f2e8";
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  };
 
   return (
     <div
@@ -53,10 +85,17 @@ const App: React.FC = () => {
           <NavBar />
         </div>
         <div className="header-right action">
-          <div id="theme">
-            {" "}
-            <FaRegMoon />
-          </div>
+          <button
+            id="theme"
+            type="button"
+            className="theme-toggle"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            aria-pressed={theme === "dark"}
+            onClick={toggleTheme}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          >
+            {theme === "dark" ? <FaRegSun /> : <FaRegMoon />}
+          </button>
         </div>
       </header>
 

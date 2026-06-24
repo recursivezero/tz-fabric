@@ -21,6 +21,19 @@
   <!-- {/* Theme Color */} -->
   <meta name="theme-color" content="#111111" />
   <meta name="color-scheme" content="light dark" />
+  <script>
+    (() => {
+      try {
+        const savedTheme = localStorage.getItem("theme");
+        const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+        const theme = savedTheme === "light" || savedTheme === "dark" ? savedTheme : prefersLight ? "light" : "dark";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      } catch {
+        document.documentElement.dataset.theme = "dark";
+      }
+    })();
+  </script>
   
   <!-- {/* Open Graph / Facebook */} -->
   <meta property="og:type" content="website" />

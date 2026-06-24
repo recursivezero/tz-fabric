@@ -5,7 +5,7 @@ import type { CSSProperties } from "react";
 const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   wrapper: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",
+    background: "var(--reader-page-bg)",
     padding: "60px 20px",
     fontFamily: "'DM Sans', -apple-system, sans-serif",
   },
@@ -22,14 +22,14 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
     fontSize: 56,
     fontWeight: 400,
     margin: "0 0 16px 0",
-    background: "linear-gradient(135deg, #fff 0%, #aaa 100%)",
+    background: "var(--reader-title-gradient)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
     letterSpacing: "-0.02em",
   },
   subtitle: {
     fontSize: 18,
-    color: "#888",
+    color: "var(--reader-muted)",
     margin: 0,
   },
   tileGrid: {
@@ -43,8 +43,8 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   tile: {
     padding: "60px 48px",
     borderRadius: 28,
-    background: "linear-gradient(135deg, rgba(255, 107, 53, 0.06) 0%, rgba(247, 147, 30, 0.03) 100%)",
-    border: "2px solid rgba(255, 107, 53, 0.15)",
+    background: "var(--reader-tile-bg)",
+    border: "2px solid var(--reader-tile-border)",
     cursor: "pointer",
     transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
     position: "relative",
@@ -62,7 +62,7 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "radial-gradient(circle at 50% 50%, rgba(255, 107, 53, 0.12), transparent 70%)",
+    background: "var(--reader-tile-glow)",
     opacity: 0,
     transition: "opacity 0.4s ease",
   },
@@ -86,14 +86,14 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   tileTitle: {
     fontSize: 32,
     fontWeight: 700,
-    color: "#fff",
+    color: "var(--reader-text)",
     marginBottom: 12,
     letterSpacing: "-0.02em",
   },
 
   tileDesc: {
     fontSize: 16,
-    color: "#aaa",
+    color: "var(--reader-text-soft)",
     fontWeight: 500,
   },
 
@@ -113,9 +113,9 @@ const Reader = () => {
     ...styles.tile,
     ...(hoveredTile === tileName && {
       transform: "translateY(-12px) scale(1.03)",
-      boxShadow: "0 32px 80px rgba(255, 107, 53, 0.3)",
-      borderColor: "rgba(255, 107, 53, 0.5)",
-      background: "linear-gradient(135deg, rgba(255, 107, 53, 0.12) 0%, rgba(247, 147, 30, 0.08) 100%)",
+      boxShadow: "var(--reader-tile-hover-shadow)",
+      borderColor: "var(--reader-tile-border-hover)",
+      background: "var(--reader-tile-hover-bg)",
     }),
   });
 

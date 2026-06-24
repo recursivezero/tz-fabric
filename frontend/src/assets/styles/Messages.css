@@ -539,3 +539,100 @@
     bottom: 8px !important;
   }
 }
+/* Chat bubble sizing hardening:
+   Keep generated assistant replies compact while still leaving room for copy controls. */
+.assistant-block--with-copy {
+  padding: 10px 46px 10px 14px !important;
+  min-height: 0 !important;
+}
+
+.assistant-block--with-copy .assistant-block__controls {
+  top: 8px !important;
+  right: 8px !important;
+  bottom: auto !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.msg-row[data-typing="true"] .assistant-block--with-copy .assistant-block__controls {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.assistant-block--with-copy .copy-btn {
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.assistant-block .assistant-content {
+  padding-top: 0 !important;
+}
+
+.assistant-block .assistant-content > :first-child {
+  margin-top: 0 !important;
+}
+
+.assistant-block .assistant-content > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.assistant-block .assistant-content p {
+  margin: 0 0 0.65rem !important;
+}
+
+.assistant-block .assistant-content p:only-child {
+  margin: 0 !important;
+}
+
+.message-wrapper .inline-quick-replies {
+  width: fit-content !important;
+  max-width: calc(100% - 56px) !important;
+  margin: 6px 0 12px 54px !important;
+  padding: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 999px !important;
+}
+
+.message-wrapper .inline-quick-replies .quick-replies-row {
+  width: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.message-wrapper .inline-quick-replies .chip {
+  min-width: 42px !important;
+  width: auto !important;
+  padding: 7px 13px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 640px) {
+  .assistant-block--with-copy {
+    padding: 9px 42px 9px 12px !important;
+  }
+
+  .assistant-block--with-copy .assistant-block__controls {
+    top: 7px !important;
+    right: 7px !important;
+    bottom: auto !important;
+  }
+
+  .assistant-block--with-copy .copy-btn {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+  }
+
+  .message-wrapper .inline-quick-replies {
+    max-width: calc(100% - 46px) !important;
+    margin-left: 46px !important;
+  }
+}
