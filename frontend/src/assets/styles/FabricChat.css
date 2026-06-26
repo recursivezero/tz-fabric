@@ -368,3 +368,25 @@
     font-size: 12px;
   }
 }
+
+.chat-action-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.chat-card-actions .btn span {
+  line-height: 1;
+}
+
+@media (max-width: 420px) {
+  .chat-card-actions .btn span {
+    display: none;
+  }
+
+  .chat-card-actions .btn {
+    width: 36px;
+    justify-content: center;
+    padding: 0 !important;
+  }
+}

@@ -255,6 +255,7 @@ export default function ContentGrid() {
                     src={ src }
                     alt={ caption }
                     loading="lazy"
+                    decoding="async"
                     onError={ () => markBad(src) }
                     onClick={ () => openLightbox(src, caption) }
                   />

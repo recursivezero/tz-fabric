@@ -19,7 +19,7 @@
   <meta name="author" content="threadzip" />
   
   <!-- {/* Theme Color */} -->
-  <meta name="theme-color" content="#111111" />
+  <meta name="theme-color" content="#0e1322" />
   <meta name="color-scheme" content="light dark" />
   <script>
     (() => {
@@ -29,6 +29,8 @@
         const theme = savedTheme === "light" || savedTheme === "dark" ? savedTheme : prefersLight ? "light" : "dark";
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.setAttribute("content", theme === "light" ? "#f8fafc" : "#0e1322");
       } catch {
         document.documentElement.dataset.theme = "dark";
       }
@@ -66,9 +68,7 @@
   <!-- {/* RSS auto-discovery */} -->
   <!-- <link rel="alternate" type="application/rss+xml" title="fabric AI" href="/rss.xml" /> -->
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <meta name="robots" content="index,follow" />
 </head>
 
 <body>

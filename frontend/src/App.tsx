@@ -1,6 +1,5 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { FaRegMoon, FaRegSun } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 
 import "./App.css";
@@ -9,6 +8,30 @@ import Footer from "./components/Footer";
 import { NavBar } from "./components/NavBar";
 
 type ThemeMode = "light" | "dark";
+
+const SunIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.8" />
+    <path
+      d="M12 2.75v2.1M12 19.15v2.1M4.85 4.85l1.5 1.5M17.65 17.65l1.5 1.5M2.75 12h2.1M19.15 12h2.1M4.85 19.15l1.5-1.5M17.65 6.35l1.5-1.5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const MoonIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
+    <path
+      d="M20.2 14.15A7.55 7.55 0 0 1 9.85 3.8 8.7 8.7 0 1 0 20.2 14.15Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 const getInitialTheme = (): ThemeMode => {
   if (typeof window === "undefined") {
@@ -37,7 +60,7 @@ const App: React.FC = () => {
 
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (themeColor) {
-      themeColor.content = theme === "dark" ? "#111111" : "#f7f2e8";
+      themeColor.content = theme === "dark" ? "#0e1322" : "#f8fafc";
     }
   }, [theme]);
 
@@ -94,7 +117,17 @@ const App: React.FC = () => {
             onClick={toggleTheme}
             title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
           >
-            {theme === "dark" ? <FaRegSun /> : <FaRegMoon />}
+            <span className="theme-toggle__track" aria-hidden="true">
+              <span className="theme-toggle__icon theme-toggle__icon--sun">
+                <SunIcon />
+              </span>
+              <span className="theme-toggle__icon theme-toggle__icon--moon">
+                <MoonIcon />
+              </span>
+              <span className="theme-toggle__thumb">
+                {theme === "dark" ? <MoonIcon /> : <SunIcon />}
+              </span>
+            </span>
           </button>
         </div>
       </header>

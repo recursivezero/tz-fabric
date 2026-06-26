@@ -20,7 +20,7 @@ const SampleImageGallery = ({ onAnalyze, loading }) => {
               pointerEvents: loading ? "none" : "auto",
             }}
           >
-            <img src={img.path} alt={img.name} className="sample-img" />
+            <img src={img.path} alt={img.name} className="sample-img" loading="lazy" decoding="async" />
             <button
               className="analyze-button"
               onClick={() => onAnalyze(img.path)}

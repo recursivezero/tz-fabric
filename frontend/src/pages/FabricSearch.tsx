@@ -525,6 +525,7 @@ function ResultCard({ item, index, onZoom, onBadImage }: ResultCardProps) {
           src={toCdnUrl(item.imageSrc)}
           alt={item.filename}
           loading="lazy"
+          decoding="async"
           onError={() => onBadImage(item.imageSrc)}
           onClick={handleClick}
         />

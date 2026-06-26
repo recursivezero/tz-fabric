@@ -30,9 +30,9 @@
   --tz-radius: 16px;
   --tz-radius-sm: 10px;
   --tz-radius-xs: 8px;
-  --tz-font-display: "Bricolage Grotesque", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --tz-font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --tz-font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, ui-monospace, monospace;
+  --tz-font-display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --tz-font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --tz-font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
   --tz-page-bg: radial-gradient(1100px 620px at 78% -10%, rgba(91, 127, 196, 0.16), transparent 62%), radial-gradient(780px 520px at 8% 8%, rgba(224, 168, 46, 0.055), transparent 58%), var(--tz-ink);
   --tz-app-bg: radial-gradient(1000px 560px at 70% -10%, rgba(91, 127, 196, 0.13), transparent 60%), var(--tz-ink);
   --tz-header-bg: rgba(18, 25, 43, 0.94);
@@ -78,66 +78,66 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --text-color: #151a24;
-  --muted: #647085;
-  --border: rgba(115, 92, 55, 0.2);
-  --tz-ink: #f7f2e8;
-  --tz-ink-2: #fffaf2;
-  --tz-ink-3: #efe5d5;
-  --tz-panel: #fffaf2;
-  --tz-panel-2: #f1e7d8;
-  --tz-panel-3: #eadcc8;
-  --tz-line: #ddcdb6;
-  --tz-line-strong: #c9b28f;
-  --tz-cotton: #151a24;
-  --tz-cotton-2: #2f3747;
-  --tz-muted: #647085;
-  --tz-muted-2: #8791a2;
-  --tz-turmeric: #c47b02;
-  --tz-turmeric-soft: #a76500;
-  --tz-indigo: #3f63ad;
+  --text-color: #111827;
+  --muted: #4b5563;
+  --border: rgba(37, 99, 235, 0.14);
+  --tz-ink: #f8fafc;
+  --tz-ink-2: #ffffff;
+  --tz-ink-3: #edf2f8;
+  --tz-panel: #ffffff;
+  --tz-panel-2: #f1f5f9;
+  --tz-panel-3: #e7eef7;
+  --tz-line: #d7e0eb;
+  --tz-line-strong: #b8c6d8;
+  --tz-cotton: #111827;
+  --tz-cotton-2: #253044;
+  --tz-muted: #4b5563;
+  --tz-muted-2: #6b7280;
+  --tz-turmeric: #b7791f;
+  --tz-turmeric-soft: #d09128;
+  --tz-indigo: #365ea8;
   --tz-madder: #b94b36;
-  --tz-green: #2f8b52;
+  --tz-green: #247a49;
   --tz-danger-bg: rgba(185, 75, 54, 0.12);
-  --tz-shadow: 0 18px 48px rgba(79, 62, 35, 0.16);
-  --tz-shadow-soft: 0 12px 30px rgba(79, 62, 35, 0.12);
-  --tz-page-bg: radial-gradient(1100px 620px at 78% -10%, rgba(196, 123, 2, 0.12), transparent 62%), radial-gradient(780px 520px at 8% 8%, rgba(91, 127, 196, 0.09), transparent 58%), var(--tz-ink);
-  --tz-app-bg: radial-gradient(1000px 560px at 70% -10%, rgba(196, 123, 2, 0.10), transparent 60%), var(--tz-ink);
-  --tz-header-bg: rgba(255, 250, 242, 0.94);
-  --tz-header-shadow: 0 1px 0 rgba(115, 92, 55, 0.18), 0 14px 34px rgba(79, 62, 35, 0.08);
-  --tz-button-ghost-bg: rgba(255, 250, 242, 0.86);
-  --tz-button-ghost-hover-bg: #f1e7d8;
-  --tz-dropzone-bg: rgba(255, 250, 242, 0.72);
-  --tz-dropzone-hover-bg: rgba(241, 231, 216, 0.92);
-  --tz-upload-panel-bg: rgba(255, 250, 242, 0.92);
-  --tz-lightbox-bg: rgba(21, 26, 36, 0.56);
-  --reader-page-bg: linear-gradient(135deg, #f7f2e8 0%, #efe5d5 50%, #fffaf2 100%);
-  --reader-title-gradient: linear-gradient(135deg, #151a24 0%, #536071 100%);
-  --reader-muted: #647085;
-  --reader-text: #151a24;
-  --reader-text-soft: #647085;
-  --reader-tile-bg: linear-gradient(135deg, rgba(255, 250, 242, 0.90) 0%, rgba(241, 231, 216, 0.80) 100%);
-  --reader-tile-hover-bg: linear-gradient(135deg, rgba(255, 250, 242, 1) 0%, rgba(234, 220, 200, 0.96) 100%);
-  --reader-tile-border: rgba(196, 123, 2, 0.22);
-  --reader-tile-border-hover: rgba(196, 123, 2, 0.48);
-  --reader-tile-glow: radial-gradient(circle at 50% 50%, rgba(196, 123, 2, 0.16), transparent 70%);
-  --reader-tile-hover-shadow: 0 28px 70px rgba(79, 62, 35, 0.16);
+  --tz-shadow: 0 18px 48px rgba(31, 41, 55, 0.12);
+  --tz-shadow-soft: 0 12px 30px rgba(31, 41, 55, 0.08);
+  --tz-page-bg: radial-gradient(1100px 620px at 78% -10%, rgba(54, 94, 168, 0.12), transparent 62%), radial-gradient(780px 520px at 8% 8%, rgba(183, 121, 31, 0.10), transparent 58%), linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%);
+  --tz-app-bg: radial-gradient(1000px 560px at 70% -10%, rgba(54, 94, 168, 0.10), transparent 60%), linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%);
+  --tz-header-bg: rgba(255, 255, 255, 0.92);
+  --tz-header-shadow: 0 1px 0 rgba(148, 163, 184, 0.20), 0 14px 34px rgba(31, 41, 55, 0.08);
+  --tz-button-ghost-bg: rgba(255, 255, 255, 0.88);
+  --tz-button-ghost-hover-bg: #edf2f8;
+  --tz-dropzone-bg: rgba(255, 255, 255, 0.78);
+  --tz-dropzone-hover-bg: rgba(241, 245, 249, 0.96);
+  --tz-upload-panel-bg: rgba(255, 255, 255, 0.90);
+  --tz-lightbox-bg: rgba(17, 24, 39, 0.54);
+  --reader-page-bg: linear-gradient(135deg, #f8fafc 0%, #eef4fb 50%, #ffffff 100%);
+  --reader-title-gradient: linear-gradient(135deg, #111827 0%, #365ea8 100%);
+  --reader-muted: #4b5563;
+  --reader-text: #111827;
+  --reader-text-soft: #4b5563;
+  --reader-tile-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(241, 245, 249, 0.86) 100%);
+  --reader-tile-hover-bg: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(231, 238, 247, 0.98) 100%);
+  --reader-tile-border: rgba(54, 94, 168, 0.18);
+  --reader-tile-border-hover: rgba(54, 94, 168, 0.42);
+  --reader-tile-glow: radial-gradient(circle at 50% 50%, rgba(54, 94, 168, 0.12), transparent 70%);
+  --reader-tile-hover-shadow: 0 28px 70px rgba(31, 41, 55, 0.12);
   --document-reader-page-bg: var(--reader-page-bg);
   --document-reader-title-gradient: var(--reader-title-gradient);
-  --document-reader-text: #151a24;
-  --document-reader-muted: #647085;
-  --document-reader-muted-strong: #7a8494;
-  --document-reader-surface: #fffaf2;
-  --document-reader-surface-soft: rgba(115, 92, 55, 0.08);
-  --document-reader-surface-subtle: rgba(115, 92, 55, 0.06);
-  --document-reader-surface-faint: rgba(115, 92, 55, 0.04);
-  --document-reader-border: rgba(115, 92, 55, 0.16);
-  --document-reader-border-soft: rgba(115, 92, 55, 0.10);
-  --document-reader-card-bg: linear-gradient(135deg, #fffaf2 0%, #f1e7d8 100%);
-  --document-reader-crop-bg: #151a24;
-  --document-reader-modal-bg: #fffaf2;
-  --document-reader-modal-overlay: rgba(21, 26, 36, 0.62);
-  --document-reader-preview-shadow: 0 20px 54px rgba(79, 62, 35, 0.16);
+  --document-reader-text: #111827;
+  --document-reader-muted: #4b5563;
+  --document-reader-muted-strong: #64748b;
+  --document-reader-surface: #ffffff;
+  --document-reader-surface-soft: rgba(37, 99, 235, 0.07);
+  --document-reader-surface-subtle: rgba(37, 99, 235, 0.05);
+  --document-reader-surface-faint: rgba(37, 99, 235, 0.035);
+  --document-reader-border: rgba(37, 99, 235, 0.14);
+  --document-reader-border-soft: rgba(37, 99, 235, 0.10);
+  --document-reader-card-bg: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  --document-reader-crop-bg: #eef4fb;
+  --document-reader-modal-bg: #ffffff;
+  --document-reader-modal-overlay: rgba(17, 24, 39, 0.58);
+  --document-reader-preview-shadow: 0 20px 54px rgba(31, 41, 55, 0.14);
 }
 
 /* ============================================================
@@ -846,22 +846,84 @@ footer a:hover,
    Runtime light/dark switch consistency fixes
    ============================================================ */
 #theme.theme-toggle {
-  width: 42px;
-  height: 42px;
+  width: 66px;
+  height: 36px;
   padding: 0 !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px !important;
   border: 1px solid var(--tz-line) !important;
-  background: var(--tz-button-ghost-bg) !important;
+  background: linear-gradient(135deg, var(--tz-button-ghost-bg), var(--tz-panel-2)) !important;
   color: var(--tz-cotton) !important;
   box-shadow: var(--tz-shadow-soft) !important;
 }
 
 #theme.theme-toggle:hover {
   border-color: var(--tz-turmeric) !important;
-  background: var(--tz-button-ghost-hover-bg) !important;
+  background: linear-gradient(135deg, var(--tz-button-ghost-hover-bg), var(--tz-panel-3)) !important;
+}
+
+.theme-toggle__track {
+  position: relative;
+  width: 58px;
+  height: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  border-radius: 999px;
+}
+
+.theme-toggle__icon,
+.theme-toggle__thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle__icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.54;
+}
+
+.theme-toggle__icon svg,
+.theme-toggle__thumb svg {
+  width: 15px;
+  height: 15px;
+}
+
+.theme-toggle__icon--sun {
+  color: #d09128;
+}
+
+.theme-toggle__icon--moon {
+  color: var(--tz-indigo);
+}
+
+.theme-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  color: #12192b;
+  background: #ffffff;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.20);
+  transform: translateX(0);
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+:root[data-theme="dark"] .theme-toggle__thumb {
+  color: #f8fafc;
+  background: #24304d;
+  transform: translateX(30px);
+}
+
+:root[data-theme="light"] .theme-toggle__thumb {
+  color: #b7791f;
+  background: #ffffff;
 }
 
 :root[data-theme="light"] img,
@@ -1246,4 +1308,42 @@ footer a:hover,
 
 :root[data-theme="dark"] .composer-input {
   background: rgba(10, 15, 29, 0.86) !important;
+}
+
+/* ============================================================
+   Lighthouse/accessibility polish
+   ============================================================ */
+.route-loading {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  color: var(--tz-muted) !important;
+  background: var(--tz-app-bg) !important;
+  font-weight: 700;
+}
+
+:root[data-theme="light"] .header-nav ul,
+:root[data-theme="light"] .navbar ul,
+:root[data-theme="light"] .mobile-menu {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: var(--tz-line) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* Keep below-the-fold home sections from affecting first paint work. */
+.homeV2__features,
+.homeV2__steps {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 260px;
 }
