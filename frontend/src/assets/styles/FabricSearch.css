@@ -632,10 +632,6 @@
   animation: none;
 }
 
-.search-bar__filters .category-picker__sub {
-  display: none;
-}
-
 /* Element: text search row */
 .search-bar__text-row {
   flex: 1;

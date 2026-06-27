@@ -39,13 +39,6 @@ const CATEGORIES = [
   { id: "product", label: "Product", icon: "🖼️" },
 ];
 
-const SUBCATEGORIES: Record<string, string[]> = {
-  stock: ["new arrival", "dead stock", "overstock"],
-  fabric: ["cotton", "linen", "denim", "silk", "wool", "knit"],
-  design: ["floral", "checked", "striped", "solid", "embroidered"],
-  product: ["shirt", "dress", "trouser", "saree", "scarf"],
-};
-
 const API_ORIGIN = (import.meta.env.VITE_API_URL ?? window.location.origin).replace(/\/$/, "");
 const API_BASE = API_ORIGIN + (import.meta.env.VITE_API_PREFIX ?? "");
 const CDN_BASE = (import.meta.env.VITE_AWS_PUBLIC_URL ?? "https://cdn.threadzip.com").replace(/\/$/, "");
@@ -223,53 +216,6 @@ function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerP
           </button>
         )}
       </div>
-
-      <div className="category-picker__sub">
-        <label className="category-picker__sub-label">Sub-category</label>
-        <select
-          className="category-picker__sub-select"
-          value=""
-          onChange={(e) => {
-            const val = e.target.value;
-            if (!val) return;
-            const next = tempSelected.includes(val) ? tempSelected : [...tempSelected, val];
-            setTempSelected(next);
-            onChange(next);
-          }}
-        >
-          <option value="">Select sub-category…</option>
-          {Object.entries(SUBCATEGORIES)
-            .filter(([cat]) => tempSelected.length === 0 || tempSelected.includes(cat))
-            .map(([cat, subs]) => (
-              <optgroup key={cat} label={cat}>
-                {subs.map((sub) => (
-                  <option key={sub} value={sub}>{sub}</option>
-                ))}
-              </optgroup>
-            ))}
-        </select>
-      </div>
-
-      {tempSelected.some((sel) => !CATEGORIES.some((c) => c.id === sel)) && (
-        <div className="category-picker__subtags">
-          {tempSelected
-            .filter((sel) => !CATEGORIES.some((c) => c.id === sel))
-            .map((sel) => (
-              <button
-                key={sel}
-                type="button"
-                className="category-picker__subtag"
-                onClick={() => {
-                  const next = tempSelected.filter((x) => x !== sel);
-                  setTempSelected(next);
-                  onChange(next);
-                }}
-              >
-                {sel} ✕
-              </button>
-            ))}
-        </div>
-      )}
     </div>
   );
 }

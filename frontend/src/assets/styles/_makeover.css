@@ -439,8 +439,7 @@ textarea:focus,
   box-shadow: 0 0 0 3px rgba(224, 168, 46, 0.14) !important;
 }
 
-select,
-.category-picker__sub-select {
+select {
   min-height: 40px;
   padding: 9px 13px !important;
 }
@@ -524,45 +523,6 @@ select,
 .quick-replies .chip:hover {
   border-color: var(--tz-turmeric) !important;
   color: var(--tz-cotton) !important;
-}
-
-.category-picker__sub {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-
-.category-picker__sub-label {
-  font-family: var(--tz-font-mono) !important;
-  font-size: 12px !important;
-  color: var(--tz-muted) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.category-picker__subtags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.category-picker__subtag {
-  cursor: pointer;
-  font-size: 12px;
-  font-family: var(--tz-font-mono) !important;
-  background: var(--tz-ink-2) !important;
-  border: 1px solid var(--tz-line) !important;
-  color: var(--tz-cotton) !important;
-  border-radius: 999px;
-  padding: 5px 11px;
-}
-
-.category-picker__subtag:hover {
-  border-color: var(--tz-madder) !important;
-  color: #ffb2a4 !important;
 }
 
 /* ============================================================
@@ -827,17 +787,6 @@ footer a:hover,
 
   .search-bar--sticky {
     top: 66px !important;
-  }
-}
-
-@media (max-width: 560px) {
-  .category-picker__sub,
-  .category-picker__sub-select {
-    width: 100%;
-  }
-
-  .category-picker__sub-select {
-    min-width: 0;
   }
 }
 
@@ -1282,10 +1231,16 @@ footer a:hover,
 
 .quick-replies,
 .empty-state-large .chip,
-.empty-state-large .chip:nth-child(odd),
-.empty-state-large .chip:nth-child(even) {
+.empty-state-large .chip:nth-child(odd) {
   background: var(--tz-button-ghost-bg) !important;
   border-color: var(--tz-line) !important;
+  color: var(--tz-cotton) !important;
+}
+
+/* Alternating chip tint so adjacent sample prompts are easy to tell apart */
+.empty-state-large .chip:nth-child(even) {
+  background: var(--tz-panel-3) !important;
+  border-color: var(--tz-line-strong) !important;
   color: var(--tz-cotton) !important;
 }
 
@@ -1301,9 +1256,13 @@ footer a:hover,
 
 :root[data-theme="light"] .composer-input,
 :root[data-theme="light"] .empty-state-large .chip,
-:root[data-theme="light"] .empty-state-large .chip:nth-child(odd),
-:root[data-theme="light"] .empty-state-large .chip:nth-child(even) {
+:root[data-theme="light"] .empty-state-large .chip:nth-child(odd) {
   background: rgba(255, 250, 242, 0.94) !important;
+}
+
+:root[data-theme="light"] .empty-state-large .chip:nth-child(even) {
+  background: var(--tz-panel-3) !important;
+  border-color: var(--tz-line-strong) !important;
 }
 
 :root[data-theme="dark"] .composer-input {
