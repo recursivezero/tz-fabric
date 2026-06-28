@@ -204,7 +204,7 @@ function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerP
               onClick={() => toggle(cat.id)}
               type="button"
             >
-              <span className="category-picker__chip-check">{active ? "✓" : ""}</span>
+              {active && <span className="category-picker__chip-check">✓</span>}
               <span className="category-picker__chip-icon">{cat.icon}</span>
               <span className="category-picker__chip-label">{cat.label}</span>
             </button>
