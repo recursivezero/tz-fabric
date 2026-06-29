@@ -1,6 +1,5 @@
 import {  useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
-import FabricSearchHeader from "../components/FabricSearchHeader";
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import { throttle } from "../utils/throttle";
@@ -1242,7 +1241,6 @@ export default function Search() {
         {/* Header + settings — hidden while results are shown */}
         {!showStickyBar && (
           <div className="fabric-search__top-bar">
-            <FabricSearchHeader />
             <div className="fabric-search__settings">
               <SettingsPanel />
             </div>

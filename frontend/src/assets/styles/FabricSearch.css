@@ -136,7 +136,6 @@
 
 .fabric-search__settings {
   position: relative;
-  top: 1rem;
 }
 
 /* Element: error / empty states */
@@ -1264,13 +1263,18 @@
 
 /* Element: dropdown content */
 .settings-panel__content {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
+  margin-top: 8px;
   z-index: 50;
   border-radius: var(--radius-lg);
   min-width: 340px;
+  width: fit-content;
   animation: anim-fade-up 0.2s ease both;
+}
+
+/* The db-panel inside the dropdown shouldn't carry the bottom margin
+   meant for its full-width, standalone placement elsewhere on the page. */
+.settings-panel__content .db-panel {
+  margin-bottom: 0;
 }
 
 
