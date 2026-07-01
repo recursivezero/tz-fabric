@@ -309,8 +309,15 @@
 }
 
 .upload-page .link-btn {
-  background-color: blue;
-  color: white;
+  background: none;
+  border: none;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 2px;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .upload-page .audio-player {

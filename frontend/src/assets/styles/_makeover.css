@@ -1121,6 +1121,43 @@ footer a:hover,
   color: var(--tz-cotton) !important;
 }
 
+/* ── Upload page: light-theme button polish ─────────────────
+   "Start Recording" (.btn.primary), "Stop" (.btn), "← Upload"
+   (.link-btn) all need readable, on-brand light-mode colours.  */
+
+/* Start Recording — use the turmeric accent so it reads as the
+   primary action against the light card background             */
+:root[data-theme="light"] .upload-page .btn.primary {
+  background: var(--tz-turmeric) !important;
+  color: #fff !important;
+  border: 1px solid var(--tz-turmeric) !important;
+  box-shadow: 0 4px 14px rgba(183, 121, 31, 0.22) !important;
+}
+
+:root[data-theme="light"] .upload-page .btn.primary:hover:not(:disabled) {
+  background: var(--tz-turmeric-soft) !important;
+  border-color: var(--tz-turmeric-soft) !important;
+}
+
+/* Stop — neutral ghost pill, same as other ghost buttons      */
+:root[data-theme="light"] .upload-page .btn:not(.primary):not(.submit) {
+  background: var(--tz-button-ghost-bg) !important;
+  border: 1px solid var(--tz-line) !important;
+  color: var(--tz-cotton) !important;
+  box-shadow: 0 1px 4px rgba(31, 41, 55, 0.07) !important;
+}
+
+:root[data-theme="light"] .upload-page .btn:not(.primary):not(.submit):hover:not(:disabled) {
+  background: var(--tz-button-ghost-hover-bg) !important;
+  border-color: var(--tz-turmeric) !important;
+}
+
+/* ← Upload / or Record instead → — subtle text link           */
+:root[data-theme="light"] .upload-page .link-btn {
+  color: var(--tz-turmeric) !important;
+  text-decoration-color: var(--tz-turmeric) !important;
+}
+
 /* ============================================================
    Theme consistency hardening for remaining workspace surfaces
    ============================================================ */
