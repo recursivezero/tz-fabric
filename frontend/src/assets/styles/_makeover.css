@@ -1318,6 +1318,15 @@ footer a:hover,
   font-weight: 700;
 }
 
+/* Light theme: keep active navbar route pills readable on the
+   turmeric background across Home, Upload, Analysis, Search, Chat, List, and Reader. */
+:root[data-theme="light"] .header-nav a.active,
+:root[data-theme="light"] .navbar a.active,
+:root[data-theme="light"] .nav-link.active,
+:root[data-theme="light"] .active.nav-link {
+  color: #fff !important;
+}
+
 :root[data-theme="light"] .header-nav ul,
 :root[data-theme="light"] .navbar ul,
 :root[data-theme="light"] .mobile-menu {
