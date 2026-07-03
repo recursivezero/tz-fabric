@@ -255,3 +255,55 @@
   opacity: 0.48;
   box-shadow: none;
 }
+
+/* Keep analysis action buttons directly below the preview instead of letting
+   grid stretch push them to the bottom of the page. */
+.analysis-page .image-preview-container {
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-page .preview-visual {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.analysis-page .preview-wrap {
+  flex: 0 0 auto;
+}
+
+.analysis-page .filesize-name,
+.analysis-page .preview-buttons-container {
+  flex: 0 0 auto;
+}
+
+.analysis-page .preview-buttons-container {
+  align-self: center;
+  margin-top: 12px;
+}
+
+/* Final repair: image/drop card height mirrors the Analysis result card. */
+.analysis-page .image-preview-container,
+.analysis-page .preview-visual,
+.analysis-page .preview-wrap {
+  height: auto !important;
+  min-height: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.analysis-page .dropzone.big-drop,
+.analysis-page .preview-image {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: clamp(260px, 42dvh, 440px) !important;
+  min-height: clamp(260px, 42dvh, 440px) !important;
+  max-height: clamp(260px, 42dvh, 440px) !important;
+}
+
+.analysis-page .preview-buttons-container {
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  margin-top: 12px !important;
+}

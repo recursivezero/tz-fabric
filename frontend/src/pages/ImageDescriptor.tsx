@@ -72,8 +72,8 @@ const ImageDescription = () => {
         </span>
       </div>
 
-      <div className="result-wrapper grid">
-        <section className="preview-col">
+      <div className="result-wrapper analysis-grid">
+        <section className="analysis-preview-col">
           <ImagePreview
             uploadedImageUrl={uploadedImageUrl}
             sampleImageUrl={sampleImageUrl}
@@ -99,8 +99,8 @@ const ImageDescription = () => {
           />
         </section>
 
-        <section className="action-col">
-          <div className="description-area slide-in-right">
+        <section className="analysis-action-col">
+          <div className="analysis-description-area slide-in-right">
             <DescriptionBox
               isValidImage={isValidImage}
               validationMessage={validationMessage}

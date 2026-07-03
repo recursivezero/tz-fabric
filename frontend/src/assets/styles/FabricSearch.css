@@ -1517,3 +1517,20 @@
   }
 }
 
+
+/* Do not hide the search UI after a failed request, and keep failures visibly red
+   even when the global theme overlay styles paragraphs/buttons. */
+.fabric-search__error {
+  color: var(--color-red) !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.34) !important;
+}
+
+.result-card__zoom-btn,
+.result-card__zoom-btn:hover,
+.result-card__zoom-btn:focus,
+.result-card__zoom-btn:focus-visible {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}

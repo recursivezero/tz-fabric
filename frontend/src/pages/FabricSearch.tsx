@@ -1205,7 +1205,7 @@ export default function Search() {
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const hasResults = visibleResults.length > 0;
-  const showHero = !file && !drawerOpen && !hasResults && !loading && !isTextSearch;
+  const showHero = !file && !drawerOpen && !hasResults && !loading;
   const showStickyBar = hasResults || (loading && (!!file || isTextSearch));
   const stickyPreview = croppedPreviewUrl || previewUrlOrig || previewUrl;
 
@@ -1247,6 +1247,9 @@ export default function Search() {
           </div>
         )}
 
+        {/* Notifications / states */}
+        {error && <div className="fabric-search__error" role="alert">{error}</div>}
+
         {/* Hero */}
         {showHero && (
           <Hero
@@ -1279,15 +1282,12 @@ export default function Search() {
           />
         )}
 
-        {/* Notifications / states */}
         {notification && <Notification message={notification.message} type={notification.type} />}
         {(loading || selectingImage) && (
           <div className="fabric-search__loading-overlay" role="status" aria-live="polite">
             <Loader />
           </div>
         )}
-        {error && <p className="fabric-search__error">{error}</p>}
-
         {/* Results */}
         {hasResults && (
           <ResultsSection

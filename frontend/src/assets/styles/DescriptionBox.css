@@ -188,3 +188,39 @@
   background: rgba(15, 23, 42, 0.55);
   color: #f8fafc;
 }
+
+/* Match the result card height to the image preview without forcing the whole
+   column to stretch; this keeps both analysis tiles visually aligned. */
+.analysis-page .description-wrapper {
+  height: auto;
+  min-height: 0;
+}
+
+.analysis-page .description-wrapper .description-box {
+  flex: 0 0 auto;
+  height: clamp(260px, 42dvh, 440px);
+  min-height: clamp(260px, 42dvh, 440px);
+}
+
+/* Final repair: keep Analysis result card equal to image/drop card and place Prev/Next below it. */
+.analysis-page .description-wrapper {
+  height: auto !important;
+  min-height: 0 !important;
+  align-self: start !important;
+}
+
+.analysis-page .description-wrapper .description-box {
+  order: 1 !important;
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  height: clamp(260px, 42dvh, 440px) !important;
+  min-height: clamp(260px, 42dvh, 440px) !important;
+  max-height: clamp(260px, 42dvh, 440px) !important;
+}
+
+.analysis-page .description-wrapper .nav-buttons {
+  order: 2 !important;
+  margin: 12px 0 0 !important;
+  flex: 0 0 auto !important;
+}
