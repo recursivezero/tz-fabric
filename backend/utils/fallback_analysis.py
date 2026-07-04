@@ -73,7 +73,7 @@ def _dominant_colour(image: Image.Image) -> tuple[str, int]:
 
     if not buckets:
         stat = ImageStat.Stat(small)
-        mean = tuple(int(v) for v in stat.mean[:3])  # type: ignore[assignment]
+        mean: RGB = (int(stat.mean[0]), int(stat.mean[1]), int(stat.mean[2]))
         return _nearest_colour_name(mean), 1
 
     dominant_rgb, count = buckets.most_common(1)[0]

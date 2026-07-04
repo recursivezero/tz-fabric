@@ -1,13 +1,13 @@
 import { FULL_API_URL } from "../constants";
 
-export async function fetchImageAsFile(path, filename) {
-  const fetchBlob = async (url) => {
+export async function fetchImageAsFile(path: string, filename: string): Promise<File> {
+  const fetchBlob = async (url: string): Promise<Blob> => {
     const res = await fetch(url, { credentials: "omit" });
     if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
     return await res.blob();
   };
 
-  let blob;
+  let blob: Blob;
   try {
     blob = await fetchBlob(path);
   } catch (err) {

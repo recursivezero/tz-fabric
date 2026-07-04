@@ -15,6 +15,23 @@ def _infer_analysis_type(prompt: str) -> str:
     return "short"
 
 
+def _looks_like_model_error(text: str) -> bool:
+    """Return True when the vision model replied with a status/error instead of fabric analysis."""
+    low = (text or "").strip().lower()
+    if not low:
+        return True
+    bad_phrases = [
+        "unparseable response",
+        "uncertain:",
+        "analysis did not return",
+        "no response",
+        "unable to parse",
+        "error from model",
+        "model error",
+    ]
+    return any(phrase in low for phrase in bad_phrases)
+
+
 def _get_client():
     global _client
     if _client is None:
@@ -77,9 +94,12 @@ def analyse_fabric_image(image_base64: str, prompt: str, idx: int) -> Dict[str, 
 
         if response.choices and response.choices[0].message.content:
             text = response.choices[0].message.content.strip()
-            if text:
+            if text and not _looks_like_model_error(text):
                 print("[Thread] Response received.")
                 return {"id": idx, "response": text}
+            if text:
+                print(f"[Thread] Ignoring unusable model text: {text[:80]}")
+                return _fallback(image_base64, prompt, idx, "unusable_model_response")
 
         return _fallback(image_base64, prompt, idx, "empty_model_response")
 

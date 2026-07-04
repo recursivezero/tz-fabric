@@ -1794,3 +1794,52 @@ footer a:hover,
   fill: currentColor !important;
   stroke: currentColor !important;
 }
+
+/* ============================================================
+   Final consistency guard: error boxes + theme button polish
+   ============================================================
+   Keep every visible error state on the same strong red treatment. This block
+   intentionally sits last so older pale Search/Chat overrides cannot win. */
+:root .fabric-search .fabric-search__error,
+:root .fabric-search__error,
+:root .grid-error,
+:root .notification.error,
+:root .db-panel__notification--error,
+:root .description-wrapper .description-box.error,
+:root .error[role="alert"] {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border: 1px solid #991b1b !important;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.24) !important;
+}
+
+:root .fabric-search .fabric-search__error *,
+:root .fabric-search__error *,
+:root .grid-error *,
+:root .notification.error *,
+:root .db-panel__notification--error *,
+:root .description-wrapper .description-box.error *,
+:root .description-wrapper .error-text *,
+:root .error[role="alert"] * {
+  color: #ffffff !important;
+}
+
+/* Search action buttons must remain readable in light theme. */
+:root[data-theme="light"] .fabric-search .btn--primary,
+:root[data-theme="light"] .fabric-search .btn-primary,
+:root[data-theme="light"] .fabric-search .search-btn,
+:root[data-theme="light"] .fabric-search button[type="submit"] {
+  color: #ffffff !important;
+}
+
+/* Dark theme yellow/turmeric buttons should use ink text for contrast; light
+   theme keeps white text as requested. */
+:root[data-theme="dark"] .analysis-page .preview-buttons-container .analysis-btn,
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-buttons .nav-btn,
+:root[data-theme="dark"] .analysis-page .sample-gallery .analyze-button,
+:root[data-theme="dark"] .fabric-search .btn--primary,
+:root[data-theme="dark"] .fabric-search .btn-primary,
+:root[data-theme="dark"] .fabric-search .search-btn {
+  color: #171101 !important;
+  text-shadow: none !important;
+}

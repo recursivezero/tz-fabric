@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
-import requests
+import requests  # type: ignore[import-untyped]
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse, StreamingResponse
 

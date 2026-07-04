@@ -290,6 +290,12 @@ def _reason_mentions_person_like(text: Optional[str]) -> bool:
 
 
 def _contains_face_bytes(image_bytes: bytes) -> bool:
+    """Conservative face check used only to block obvious non-fabric/person photos.
+
+    Haar cascades often mistake embroidery, floral motifs, and repeated print
+    patterns for faces. Treat only one or two reasonably large face detections as
+    a real face; many tiny detections usually mean decorative textile pattern.
+    """
     cv2_local = cv2
     np_local = np
     if cv2_local is None or np_local is None:
@@ -299,15 +305,57 @@ def _contains_face_bytes(image_bytes: bytes) -> bool:
         img = cv2_local.imdecode(arr, cv2_local.IMREAD_GRAYSCALE)
         if img is None:
             return False
+
+        h, w = img.shape[:2]
+        min_side = max(32, int(min(w, h) * 0.10))
         cascade = cv2_local.CascadeClassifier(
             cv2_local.data.haarcascades + "haarcascade_frontalface_default.xml"
         )
         faces = cascade.detectMultiScale(
-            img, scaleFactor=1.1, minNeighbors=4, minSize=(20, 20)
+            img, scaleFactor=1.12, minNeighbors=6, minSize=(min_side, min_side)
         )
-        return len(faces) > 0
+
+        strong_faces = []
+        image_area = float(w * h)
+        for x, y, fw, fh in faces:
+            area_ratio = float(fw * fh) / image_area
+            width_ratio = float(fw) / float(w)
+            height_ratio = float(fh) / float(h)
+            if area_ratio >= 0.015 and width_ratio >= 0.10 and height_ratio >= 0.10:
+                strong_faces.append((x, y, fw, fh))
+
+        # Repeating embroidered/printed motifs can produce many false positives.
+        if len(strong_faces) > 2:
+            return False
+        return len(strong_faces) > 0
     except Exception:
         return False
+
+
+def _allow_unparseable_validator_response(
+    reason: str,
+    response_text: str,
+    metrics: Optional[dict],
+    face_found: bool,
+) -> bool:
+    """Do not block analysis when the validator returns non-JSON/noisy text.
+
+    Validation is only a safety gate. If the local image metrics show visible
+    textile-like detail and no obvious person/face was detected, continue to
+    analysis instead of surfacing technical messages like
+    "uncertain: unparseable response from model" to the UI.
+    """
+    low_reason = (reason or "").lower()
+    low_response = (response_text or "").lower()
+    looks_unparseable = (
+        "unparseable" in low_reason
+        or "unable to parse" in low_reason
+        or "uncertain" in low_reason
+        or (not low_response.strip())
+    )
+    if not looks_unparseable or face_found:
+        return False
+    return _has_enough_local_texture(metrics) or _is_close_up_local(metrics)
 
 
 @router.post("/validate-image")
@@ -460,10 +508,14 @@ async def validate_image(image: UploadFile = File(...)):
         if local_metrics:
             model_meta["metrics"] = local_metrics
 
-        if verdict == "invalid" and not response_text and not _contains_face_bytes(small_jpeg):
+        face_found = _contains_face_bytes(small_jpeg) if cv2 is not None else False
+
+        if verdict == "invalid" and _allow_unparseable_validator_response(
+            reason, response_text, local_metrics or local_metrics_raw, face_found
+        ):
             verdict = "valid"
-            reason = "Validator returned no response; continuing with analysis."
-            model_meta["empty_validator_response_allowed"] = True
+            reason = "Validator response was unclear; continuing with fabric analysis."
+            model_meta["unparseable_validator_response_allowed"] = True
 
         lower_reason = (reason or "").lower()
         model_indicated_not_closeup = any(
@@ -479,7 +531,6 @@ async def validate_image(image: UploadFile = File(...)):
         )
 
         mentions_person = _reason_mentions_person_like(reason)
-        face_found = _contains_face_bytes(small_jpeg) if cv2 is not None else False
 
         if verdict == "invalid":
             if texture_visible_flag is True or (

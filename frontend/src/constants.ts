@@ -4,14 +4,14 @@ const useDirectApiInDev = import.meta.env.VITE_USE_DIRECT_API === "true";
 
 function normalizeBaseUrl(value: unknown): string {
   if (typeof value !== "string") return "";
-  const trimmed = value.trim().replace(/^['\"]|['\"]$/g, "");
+  const trimmed = value.trim().replace(/^['"]|['"]$/g, "");
   if (!trimmed || trimmed === "undefined" || trimmed === "null") return "";
   return trimmed.replace(/\/$/, "");
 }
 
 function normalizeApiPrefix(value: unknown): string {
   if (typeof value !== "string") return "/api/v1";
-  const trimmed = value.trim().replace(/^['\"]|['\"]$/g, "");
+  const trimmed = value.trim().replace(/^['"]|['"]$/g, "");
   if (!trimmed || trimmed === "undefined" || trimmed === "null") return "/api/v1";
   const withSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
   return withSlash.replace(/\/$/, "");
