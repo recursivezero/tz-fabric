@@ -102,3 +102,40 @@
   background: rgba(15, 23, 42, 0.88);
   font-weight: 800;
 }
+
+/* Dark theme: keep the Analysis sample sidebar text readable even when this
+   component stylesheet loads after the global theme overlay. */
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery h2,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery p,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery span {
+  color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card {
+  background: rgba(23, 31, 51, 0.96) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) !important;
+}
+
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
+  background: linear-gradient(135deg, #e0a82e, #f0c463) !important;
+  color: #ffffff !important;
+  border: 1px solid #e0a82e !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.24) !important;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery,
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery h2 {
+  color: #0f172a !important;
+}
+
+/* Final theme polish for sample-drawer Short Analysis buttons. */
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
+  color: #171101 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
+  color: #ffffff !important;
+}

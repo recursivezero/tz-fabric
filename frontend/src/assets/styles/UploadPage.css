@@ -340,3 +340,34 @@
   gap: 2px;
   margin-top: 15px;
 }
+/* Light theme: make the bottom Submit and Cancel actions match the
+   Start Recording button so they never appear as low-contrast white pills. */
+:root[data-theme="light"] .upload-page .name-field .btn.submit,
+:root[data-theme="light"] .upload-page .name-field .cancel {
+  background: var(--tz-turmeric, #b7791f) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--tz-turmeric, #b7791f) !important;
+  box-shadow: 0 4px 14px rgba(183, 121, 31, 0.22) !important;
+}
+
+:root[data-theme="light"] .upload-page .name-field .btn.submit:hover:not(:disabled),
+:root[data-theme="light"] .upload-page .name-field .cancel:hover:not(:disabled) {
+  background: var(--tz-turmeric-soft, #d09128) !important;
+  border-color: var(--tz-turmeric-soft, #d09128) !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="light"] .upload-page .name-field .btn.submit:disabled {
+  background: var(--tz-turmeric, #b7791f) !important;
+  border-color: var(--tz-turmeric, #b7791f) !important;
+  color: #ffffff !important;
+  opacity: 0.58 !important;
+  box-shadow: none !important;
+}
+
+/* Final theme polish: Upload light-theme yellow actions keep white text. */
+:root[data-theme="light"] .upload-page .btn.primary,
+:root[data-theme="light"] .upload-page .btn.submit,
+:root[data-theme="light"] .upload-page .cancel {
+  color: #ffffff !important;
+}

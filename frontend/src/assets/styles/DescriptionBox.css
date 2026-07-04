@@ -224,3 +224,23 @@
   margin: 16px 0 0 !important;
   flex: 0 0 auto !important;
 }
+
+/* Final theme polish: Prev/Next use dark text on yellow in dark theme and
+   white text on yellow in light theme, matching the Analysis action buttons. */
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-btn {
+  color: #171101 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-btn {
+  color: #ffffff !important;
+}
+
+/* Keep the Analysis card clean: show only the copy icon, not "Viewing response X of Y". */
+.analysis-page .description-wrapper .response-copy-only {
+  justify-content: flex-end !important;
+}
+
+.analysis-page .description-wrapper .response-copy-only .copy-btn {
+  margin-left: auto !important;
+}

@@ -1,4 +1,5 @@
 import {  useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { BASE_URL, FULL_API_URL } from "../constants";
 
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
@@ -38,8 +39,8 @@ const CATEGORIES = [
   { id: "product", label: "Product", icon: "🖼️" },
 ];
 
-const API_ORIGIN = (import.meta.env.VITE_API_URL ?? window.location.origin).replace(/\/$/, "");
-const API_BASE = API_ORIGIN + (import.meta.env.VITE_API_PREFIX ?? "");
+const API_BASE = FULL_API_URL;
+const ASSET_BASE = BASE_URL;
 const CDN_BASE = (import.meta.env.VITE_AWS_PUBLIC_URL ?? "https://cdn.threadzip.com").replace(/\/$/, "");
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -54,7 +55,7 @@ function toCdnUrl(src: string | undefined): string {
   }
 
   if (clean.startsWith("/api/") || clean.startsWith("/assets/")) {
-    return `${API_ORIGIN}${clean}`;
+    return `${ASSET_BASE}${clean}`;
   }
 
   if (clean.startsWith("images/")) {

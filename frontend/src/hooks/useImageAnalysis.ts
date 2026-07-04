@@ -61,8 +61,10 @@ const useImageAnalysis = () => {
       } catch (err) {
         if (runId !== latestRunIdRef.current) return;
         console.error(`${mode} analysis failed:`, err);
-        alert(`${mode} analysis failed.`);
+        const message = err instanceof Error ? err.message : `${mode} analysis failed.`;
+        setValidationMessage(message || `${mode} analysis failed.`);
         setIsValidImage(false);
+        setCanUpload(true);
       } finally {
         if (runId === latestRunIdRef.current) setLoading(false);
       }
@@ -104,7 +106,7 @@ const useImageAnalysis = () => {
 
     const simulatePrediction = async () => {
       while (!cancelled && index < tokens.length) {
-        await new Promise((res) => setTimeout(res, 170));
+        await new Promise((res) => setTimeout(res, 35));
         const nextToken = tokens[index];
         currentText = currentText ? `${currentText} ${nextToken}` : nextToken;
         setTypedText(currentText);
@@ -181,19 +183,19 @@ const useImageAnalysis = () => {
         const data = await validateImageAPI(imageFile);
         if (data?.valid) {
           setIsValidImage(true);
+          setValidationMessage("");
         } else {
           setIsValidImage(false);
           setValidationMessage(
-            "This image doesn't focus on fabric. Please upload a close-up fabric image."
+            data?.reason || "This image does not look like usable fabric/textile content."
           );
         }
       } catch (error: unknown) {
-        if (error instanceof Error) {
-          setValidationMessage(error.message);
-        } else {
-          setValidationMessage(String(error ?? "An unknown error occurred during image validation."));
-        }
-        setIsValidImage(false);
+        console.warn("Image validation failed; allowing analysis to continue.", error);
+        // Validation is only a guardrail. Do not block real fabric/product images
+        // when the validator endpoint is slow, unavailable, or overly cautious.
+        setValidationMessage("");
+        setIsValidImage(true);
       } finally {
         setValidationLoading(false);
       }
@@ -272,11 +274,23 @@ const useImageAnalysis = () => {
   };
 
   const clearImage = () => {
+    latestRunIdRef.current += 1;
     setShowUploadedImage(false);
     setUploadedImageUrl(null);
     setCurrentFile(null);
     setSampleImageUrl(null);
     setResponses([]);
+    setDescription("");
+    setTypedText("");
+    setCurrentIndex(0);
+    setCacheKey(null);
+    setCurrentMode(null);
+    setShowResults(false);
+    setLoading(false);
+    setValidationLoading(false);
+    setIsValidImage(null);
+    setValidationMessage("");
+    setCanUpload(true);
   };
 
   return {

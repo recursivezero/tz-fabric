@@ -12,23 +12,45 @@ export async function analyzeImage(file, analysisType) {
     });
 
     if (!res.ok) {
+      let backendMessage = "";
+      try {
+        const data = await res.json();
+        backendMessage = data?.detail || data?.error || data?.message || "";
+      } catch {
+        backendMessage = "";
+      }
+
       if (res.status === 503) {
-        throw new Error("Server unavailable — check your network");
+        throw new Error(backendMessage || "Server unavailable — check your network.");
       }
       if (res.status === 400) {
-        throw new Error("Invalid image — please upload a proper fabric image.");
+        throw new Error(backendMessage || "Invalid image — please upload a proper fabric image.");
       }
       if (res.status === 500) {
-        throw new Error("Server error during analysis — try again later.");
+        throw new Error(backendMessage || "Server error during analysis — try again later.");
       }
 
-      throw new Error(`Unexpected error (${res.status})`);
+      throw new Error(backendMessage || `Unexpected error (${res.status})`);
     }
 
-    return await res.json();
+    const data = await res.json();
+    const text = data?.response?.response;
+    if (!text) {
+      // Keep this message actionable. In normal cases the backend now returns a
+      // local fallback instead of an empty response, so this only appears for a
+      // genuinely malformed server payload.
+      throw new Error("The server returned an empty analysis. Please retry or restart the backend.");
+    }
+    return data;
 
   } catch (err) {
     console.error("Error analyzing image:", err);
+    if (err instanceof TypeError) {
+      throw new Error("Cannot reach the server. Check your network");
+    }
+    if (err instanceof Error) {
+      throw err;
+    }
     throw new Error("Cannot reach the server. Check your network");
   }
 }
@@ -70,6 +92,12 @@ export async function validateImageAPI(imageFile) {
 
   } catch (err) {
     console.error("Error validating image:", err);
+    if (err instanceof TypeError) {
+      throw new Error("Cannot reach the server. Check your network.");
+    }
+    if (err instanceof Error) {
+      throw err;
+    }
     throw new Error("Cannot reach the server. Check your network.");
   }
 }

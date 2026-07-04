@@ -109,13 +109,9 @@ const DescriptionBox = ({
           )}
         </div>
 
-        {/* Bottom counter + copy: only when not loading and not an error and responses exist */}
+        {/* Copy action: keep the UI clean and avoid showing response-count text. */}
         {!loading && !isError && hasResponses && (
-          <div className="response-counter">
-            <span className="response-counter-text">
-              Viewing response {currentIndex + 1} of {responses.length}
-            </span>
-
+          <div className="response-counter response-copy-only">
             <button
               type="button"
               className="copy-btn"

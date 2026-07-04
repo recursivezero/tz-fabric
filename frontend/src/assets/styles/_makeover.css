@@ -1649,3 +1649,148 @@ footer a:hover,
   color: #ffffff !important;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.72) !important;
 }
+
+
+/* ============================================================
+   Follow-up stability patch: chatbot app-help, Analysis colours,
+   and Search error colour consistency
+   ============================================================ */
+
+/* Search page: match the Chat page error colour treatment exactly.
+   Keep the Search component's native spacing/layout, but use Chat's
+   dark-red text, pale red background and soft red border. */
+:root .fabric-search .fabric-search__error {
+  color: #7f1d1d !important;
+  background: #fff6f6 !important;
+  border-color: #fee2e2 !important;
+  box-shadow: none !important;
+}
+
+:root .fabric-search .fabric-search__error * {
+  color: #7f1d1d !important;
+}
+
+/* Analysis page: make all four action buttons visually consistent in both
+   dark and light themes. Disabled buttons stay yellow too, only dimmed. */
+:root .analysis-page .preview-buttons-container .analysis-btn,
+:root .analysis-page .description-wrapper .nav-buttons .nav-btn {
+  background: linear-gradient(135deg, var(--tz-turmeric), var(--tz-turmeric-soft)) !important;
+  border: 1px solid var(--tz-turmeric) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.24) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22) !important;
+}
+
+:root .analysis-page .preview-buttons-container .analysis-btn:hover:not(:disabled):not(.disabled),
+:root .analysis-page .description-wrapper .nav-buttons .nav-btn:hover:not(:disabled):not(.disabled) {
+  background: linear-gradient(135deg, var(--tz-turmeric-soft), var(--tz-turmeric)) !important;
+  border-color: var(--tz-turmeric-soft) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+:root .analysis-page .preview-buttons-container .analysis-btn:disabled,
+:root .analysis-page .preview-buttons-container .analysis-btn.disabled,
+:root .analysis-page .description-wrapper .nav-buttons .nav-btn:disabled,
+:root .analysis-page .description-wrapper .nav-buttons .nav-btn.disabled {
+  background: linear-gradient(135deg, var(--tz-turmeric), var(--tz-turmeric-soft)) !important;
+  border-color: var(--tz-turmeric) !important;
+  color: #ffffff !important;
+  opacity: 0.62 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Keep the four Analysis actions on the same visual baseline after an image is
+   uploaded, without moving the cards or changing analysis behaviour. */
+.analysis-page .preview-buttons-container,
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 8px !important;
+  align-items: center !important;
+}
+
+.analysis-page .analysis-preview-col,
+.analysis-page .analysis-action-col {
+  align-self: start !important;
+}
+
+/* ============================================================
+   Final polish: theme-aware text colour for yellow action buttons
+   ============================================================
+   Yellow/turmeric buttons need different text colours per theme:
+   - Dark theme: dark ink on yellow for stronger contrast.
+   - Light theme: white text on yellow, matching the requested light-mode UI.
+   These are visual-only overrides and do not change button behaviour. */
+:root[data-theme="dark"] .header-nav a.active,
+:root[data-theme="dark"] .navbar a.active,
+:root[data-theme="dark"] .nav-link.active,
+:root[data-theme="dark"] .active.nav-link,
+:root[data-theme="dark"] .btn--primary,
+:root[data-theme="dark"] .btn-primary,
+:root[data-theme="dark"] .analyze-button,
+:root[data-theme="dark"] .upload-button,
+:root[data-theme="dark"] .search-button,
+:root[data-theme="dark"] .chip.primary,
+:root[data-theme="dark"] .chip-primary,
+:root[data-theme="dark"] .category-picker__chip--active,
+:root[data-theme="dark"] .fabric-search .btn-primary,
+:root[data-theme="dark"] .fabric-search .search-btn,
+:root[data-theme="dark"] .analysis-page .preview-buttons-container .analysis-btn,
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-buttons .nav-btn,
+:root[data-theme="dark"] .analysis-page .sample-gallery .analyze-button {
+  color: #171101 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="dark"] .btn--primary svg,
+:root[data-theme="dark"] .btn-primary svg,
+:root[data-theme="dark"] .analyze-button svg,
+:root[data-theme="dark"] .upload-button svg,
+:root[data-theme="dark"] .search-button svg,
+:root[data-theme="dark"] .fabric-search .btn-primary svg,
+:root[data-theme="dark"] .fabric-search .search-btn svg,
+:root[data-theme="dark"] .analysis-page .preview-buttons-container .analysis-btn svg,
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-buttons .nav-btn svg,
+:root[data-theme="dark"] .analysis-page .sample-gallery .analyze-button svg {
+  color: #171101 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme="light"] .btn--primary,
+:root[data-theme="light"] .btn-primary,
+:root[data-theme="light"] .analyze-button,
+:root[data-theme="light"] .upload-button,
+:root[data-theme="light"] .search-button,
+:root[data-theme="light"] .chip.primary,
+:root[data-theme="light"] .chip-primary,
+:root[data-theme="light"] .category-picker__chip--active,
+:root[data-theme="light"] .fabric-search .btn-primary,
+:root[data-theme="light"] .fabric-search .search-btn,
+:root[data-theme="light"] .analysis-page .preview-buttons-container .analysis-btn,
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-buttons .nav-btn,
+:root[data-theme="light"] .analysis-page .sample-gallery .analyze-button,
+:root[data-theme="light"] .upload-page .btn.primary,
+:root[data-theme="light"] .upload-page .btn.submit,
+:root[data-theme="light"] .upload-page .cancel {
+  color: #ffffff !important;
+}
+
+:root[data-theme="light"] .btn--primary svg,
+:root[data-theme="light"] .btn-primary svg,
+:root[data-theme="light"] .analyze-button svg,
+:root[data-theme="light"] .upload-button svg,
+:root[data-theme="light"] .search-button svg,
+:root[data-theme="light"] .fabric-search .btn-primary svg,
+:root[data-theme="light"] .fabric-search .search-btn svg,
+:root[data-theme="light"] .analysis-page .preview-buttons-container .analysis-btn svg,
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-buttons .nav-btn svg,
+:root[data-theme="light"] .analysis-page .sample-gallery .analyze-button svg,
+:root[data-theme="light"] .upload-page .btn.primary svg,
+:root[data-theme="light"] .upload-page .btn.submit svg,
+:root[data-theme="light"] .upload-page .cancel svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
