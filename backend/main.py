@@ -147,6 +147,16 @@ app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audio
 templates = Jinja2Templates(directory="templates")
 
 
+@app.get("/health", tags=["Meta"])
+@app.get(f"{API_PREFIX}/health", tags=["Meta"])
+def health_check():
+    return {
+        "status": "ok",
+        "api_prefix": API_PREFIX,
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "routes": len(app.routes),
+    }
+
 @app.get("/__routes", tags=["Meta"])
 def _routes():
     return [getattr(r, "path", str(r)) for r in app.routes]

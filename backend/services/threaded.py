@@ -7,7 +7,7 @@ from utils.cache import generate_cache_key, store_response
 from utils.image_utils import convert_image_to_base64
 from utils.prompt_generator import generate_prompts
 
-executor = ThreadPoolExecutor(max_workers=6)
+executor = ThreadPoolExecutor(max_workers=2)
 
 
 def process_remaining_prompts(prompts, image_base_64, cache_key, already_stored_idx):
@@ -25,6 +25,9 @@ def process_remaining_prompts(prompts, image_base_64, cache_key, already_stored_
         try:
             result = future.result()
             response_text = result.get("response") if result else None
+            if not response_text:
+                # analyse_fabric_image should now fallback, but keep cache safe.
+                response_text = "Fabric analysis is temporarily unavailable for this variation. Please try again."
             store_response(cache_key, idx, {"id": idx, "response": response_text})
             print(
                 f"Background stored index={idx}, response={response_text[:30] if response_text else 'None'}"
@@ -32,11 +35,22 @@ def process_remaining_prompts(prompts, image_base_64, cache_key, already_stored_
 
         except Exception as e:
             print(f" Exception in background prompt idx={idx}: {e}")
-            store_response(cache_key, idx, {"id": idx, "response": None})
+            store_response(
+                cache_key,
+                idx,
+                {
+                    "id": idx,
+                    "response": "Fabric analysis is temporarily unavailable for this variation. Please try again.",
+                },
+            )
 
 
 def analyse_all_variations(image, analysis_type):
-    print("🧵 Starting analysis with threads...")
+    print("🧵 Starting analysis with fast first response...")
+
+    analysis_type = (analysis_type or "short").strip().lower()
+    if analysis_type not in {"short", "long"}:
+        analysis_type = "short"
 
     prompts = generate_prompts(analysis_type)
 
@@ -46,64 +60,45 @@ def analyse_all_variations(image, analysis_type):
     image_base64 = convert_image_to_base64(image)
     if not image_base64:
         print("Failed to convert image to base64.")
-        return {"cache_key": cache_key, "first": None}
+        fallback_text = "The uploaded image could not be prepared for analysis. Please try a different image file."
+        first = {"id": 1, "response": fallback_text}
+        store_response(cache_key, 1, first)
+        return {"cache_key": cache_key, "first": first}
 
     print("Image converted to base64 (length):", len(image_base64))
 
-    futures = {}
-    for idx, prompt in enumerate(prompts):
-        print(f"[Thread] Prompt {idx + 1}:", prompt[:50])
-        future = executor.submit(analyse_fabric_image, image_base64, prompt, idx + 1)
-        futures[future] = idx + 1
-
+    # Do NOT fire all six Groq requests before returning. The old flow submitted
+    # every variation, returned the first completed one, and then started another
+    # background job for the remaining variations. That duplicated requests,
+    # overloaded the backend, and made normal uploads feel very slow.
     first_response = None
-
-    for future in as_completed(futures):
-        idx = futures[future]
+    for idx, prompt in enumerate(prompts[:2], start=1):
         try:
-            result = future.result()
-            print(f"Future result for idx {idx}:", result)
-
-            if not result:
-                print(f"Empty result for idx {idx}")
+            print(f"[Fast First] Prompt {idx}:", prompt[:50])
+            result = analyse_fabric_image(image_base64, prompt, idx)
+            response_text = result.get("response") if result else None
+            if not response_text:
                 continue
-
-            response_id = result.get("id")
-            response_text = result.get("response")
-
-            print(
-                f"Parsed → id: {response_id}, response_text: {response_text[:40] if response_text else 'None'}"
-            )
-
-            try:
-                store_response(
-                    cache_key,
-                    response_id,
-                    {"id": response_id, "response": response_text},
-                )
-                print(f"Stored response for index {response_id}")
-            except Exception as e:
-                print(f" Failed to store response {response_id}:", e)
-
-            if not first_response:
-                first_response = {"id": response_id, "response": response_text}
-                print(" First response set:", first_response)
-                break
-
+            first_response = {"id": idx, "response": response_text}
+            store_response(cache_key, idx, first_response)
+            break
         except Exception as e:
-            print(f"Exception in future for idx {idx}:", e)
+            print(f"Exception while getting first analysis response idx={idx}:", e)
+            # Keep trying the next prompt; analyse_fabric_image already has a
+            # local fallback, so this is just an extra safety net.
             try:
                 store_response(cache_key, idx, {"id": idx, "response": None})
-            except Exception as e:
-                print(f" Failed to store fallback None for idx {idx}:", e)
-
-            if not first_response:
-                first_response = {"id": idx, "response": None}
-                break
+            except Exception as store_error:
+                print(f"Failed to store empty response idx={idx}:", store_error)
 
     if not first_response or "id" not in first_response:
         print("ERROR: Invalid or missing first_response:", first_response)
-        return {"cache_key": cache_key, "first": {"id": 1, "response": None}}
+        result = analyse_fabric_image(image_base64, prompts[0], 1)
+        response_text = result.get("response") if result else None
+        if not response_text:
+            response_text = "The fabric image is visible, but the analyzer could not generate a detailed response. Please try again."
+        first_response = {"id": 1, "response": response_text}
+        store_response(cache_key, 1, first_response)
 
     try:
         threading.Thread(
