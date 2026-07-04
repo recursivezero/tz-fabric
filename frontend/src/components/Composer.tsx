@@ -606,7 +606,7 @@ export default function Composer({
               <div className="upload-preview image-preview">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={imageMeta.name}>
+                  <div className="upload-preview__meta" title={imageMeta.name}>
                     {formatFileName(imageMeta.name, NAME_MAX)} ({imageMeta.size})
                   </div>
                 )}
@@ -625,7 +625,7 @@ export default function Composer({
               <div className="upload-preview audio-preview">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={audioMeta.name}>
+                  <div className="upload-preview__meta" title={audioMeta.name}>
                     {formatFileName(audioMeta.name, NAME_MAX)} ({audioMeta.size})
                     {audioMeta.trimmed ? " — trimmed to 1min" : ""}
                   </div>

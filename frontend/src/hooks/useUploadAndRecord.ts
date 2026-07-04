@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { FULL_API_URL } from "../constants";
 
+const SUBMIT_SERVER_ERROR = "Unable to connect to the server, please try after some time.";
+
 export const useUploadAndRecord = () => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -219,16 +221,26 @@ export const useUploadAndRecord = () => {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(() => null) as { detail?: unknown; message?: unknown; error?: unknown } | null;
+        const serverDetail =
+          typeof data?.detail === "string"
+            ? data.detail
+            : typeof data?.message === "string"
+              ? data.message
+              : typeof data?.error === "string"
+                ? data.error
+                : "";
+        const message = serverDetail
+          ? `Submit failed (${res.status}): ${serverDetail}`
+          : `Submit failed (${res.status}). ${SUBMIT_SERVER_ERROR}`;
         console.error("Submission failed:", res.status, data);
-        setNotification({
-          message: "Submission failed on the server. Please try again after some time.",
-          type: "error",
-        });
+        setError(message);
+        setNotification({ message, type: "error" });
         return false;
       }
 
       const data = await res.json();
+      setError(null);
       successNotification("success", `Submitted! Saved as ${data.base}`);
       setImageFile(null);
       setAudioFile(null);
@@ -236,8 +248,9 @@ export const useUploadAndRecord = () => {
       setAudioUrl(null);
       return true;
     } catch (error) {
+      setError(SUBMIT_SERVER_ERROR);
       setNotification({
-        message: "Unable to connect to the server, please try after some time.",
+        message: SUBMIT_SERVER_ERROR,
         type: "error",
       });
       console.error("Submission error:", error);

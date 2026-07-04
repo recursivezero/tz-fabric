@@ -112,7 +112,7 @@ const UploadPage = () => {
           <h2>Upload Image & Audio</h2>
           <p className="sub">Upload audio or switch to recording (max 60s)</p>
         </header>
-        {notification && (
+        {notification?.type === "success" && (
           <div className="upload-submit-notification">
             <Notification message={notification.message} type={notification.type} />
           </div>
@@ -324,6 +324,11 @@ const UploadPage = () => {
             aria-label="Optional name for saving files"
           />
         </div>
+        {notification?.type === "error" && (
+          <div className="upload-submit-error-below" role="alert">
+            <Notification message={notification.message} type={notification.type} />
+          </div>
+        )}
         <div className="submit-wrapper">
           <button
             className="btn submit"

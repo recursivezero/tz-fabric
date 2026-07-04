@@ -1547,3 +1547,8 @@
 .fabric-search .settings-panel__toggle {
   border: 1px solid var(--color-border-2) !important;
 }
+
+/* Give the search error breathing room below the category/filter controls. */
+.fabric-search__error {
+  margin-top: 18px !important;
+}

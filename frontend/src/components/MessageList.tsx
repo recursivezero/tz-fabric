@@ -153,7 +153,12 @@ export default function MessageList({
   // helper to decide whether a message contains the "ask more" prompt
   const messageIncludesAskMore = (content: string | undefined) => {
     if (!content) return false;
-    return content.toLowerCase().includes("would you like to know more");
+    const normalized = content.toLowerCase().replace(/\s+/g, " ");
+    return (
+      normalized.includes("would you like to know more") ||
+      normalized.includes("want to know more") ||
+      normalized.includes("would you like more")
+    );
   };
 
   // robust detection whether this assistant bubble should show inline quick replies:

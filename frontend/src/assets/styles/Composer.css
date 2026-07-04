@@ -445,3 +445,15 @@
     flex-wrap: wrap;
   }
 }
+
+/* Keep uploaded attachment filenames readable in both chat themes. */
+.upload-preview__meta {
+  color: #0f172a;
+  font-size: 18px;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+:root[data-theme="dark"] .upload-preview__meta {
+  color: #f8fafc;
+}

@@ -244,3 +244,15 @@
 .analysis-page .description-wrapper .response-copy-only .copy-btn {
   margin-left: auto !important;
 }
+
+/* Keep the Analysis response copy icon visible in light theme. */
+:root[data-theme="light"] .analysis-page .description-wrapper .copy-btn {
+  background: rgba(15, 23, 42, 0.08) !important;
+  border-color: rgba(15, 23, 42, 0.22) !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light"] .analysis-page .description-wrapper .copy-btn svg {
+  color: #0f172a !important;
+  fill: currentColor !important;
+}

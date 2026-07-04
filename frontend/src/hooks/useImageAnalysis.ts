@@ -239,7 +239,7 @@ const useImageAnalysis = () => {
     }
 
     if (!cacheKey) {
-      alert("No more responses available.");
+      setAnalysisPopupMessage("No more responses available.");
       return;
     }
 
@@ -260,7 +260,7 @@ const useImageAnalysis = () => {
         setCurrentIndex(newIndex);
         setDescription(nextText);
       } else {
-        alert("No more responses available.");
+        setAnalysisPopupMessage("No more responses available.");
       }
     } catch (err) {
       console.error("Next response fetch failed:", err);

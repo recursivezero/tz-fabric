@@ -43,6 +43,16 @@ const normalizeLLMText = (t: unknown): string => {
   return s.trim();
 };
 
+const isFabricAIHowToQuestion = (content: unknown): boolean => {
+  const normalized = normalizeLLMText(content).toLowerCase().replace(/\s+/g, " ").trim();
+  return (
+    normalized.includes("how i can use fabricai") ||
+    normalized.includes("how can i use fabricai") ||
+    normalized.includes("how i can use fabric ai") ||
+    normalized.includes("how can i use fabric ai")
+  );
+};
+
 export default function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
@@ -400,9 +410,10 @@ const handleResponse = useCallback((res: ChatResponse) => {
     } else {
       // Default: push a single assistant message (bot_messages[0] or reply)
       if (assistantText) {
-        const askMore = rc.ask_more === true;
+        const lastUserText = next.slice().reverse().find(m => m.role === "user")?.content ?? "";
+        const shouldAskMore = rc.ask_more === true || isFabricAIHowToQuestion(lastUserText);
         let finalText = assistantText;
-        if (askMore) {
+        if (shouldAskMore) {
           const low = finalText.toLowerCase();
           if (
             !low.includes("would you like to know more") &&
@@ -413,7 +424,7 @@ const handleResponse = useCallback((res: ChatResponse) => {
           }
         }
         next.push({ role: "assistant", content: finalText });
-        if (rc.ask_more === true) {
+        if (shouldAskMore) {
           pendingAskMoreRef.current = finalText;
         }
       }

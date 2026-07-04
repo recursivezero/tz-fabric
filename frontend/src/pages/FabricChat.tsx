@@ -239,7 +239,11 @@ export default function Chat() {
             </div>
           )}
 
-          {error && <div className="error">{error} "Please try again"</div>}
+          {error && (
+            <div className="error" role="alert">
+              Unable to connect to the server, please try after some time.
+            </div>
+          )}
         </div>
 
         <Composer

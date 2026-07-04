@@ -407,3 +407,16 @@
   max-width: 640px;
   margin: 0;
 }
+
+.upload-page .upload-submit-error-below {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 8px 0 18px;
+}
+
+.upload-page .upload-submit-error-below .notification {
+  width: min(640px, 100%);
+  max-width: 640px;
+  margin: 0;
+}

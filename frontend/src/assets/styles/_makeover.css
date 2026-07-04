@@ -1843,3 +1843,8 @@ footer a:hover,
   color: #171101 !important;
   text-shadow: none !important;
 }
+
+/* Theme override for chat attachment metadata after removing inline black text. */
+.upload-preview .upload-preview__meta {
+  color: var(--tz-cotton) !important;
+}
