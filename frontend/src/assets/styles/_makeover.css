@@ -1352,3 +1352,206 @@ footer a:hover,
   content-visibility: auto;
   contain-intrinsic-size: 1px 260px;
 }
+
+/* ============================================================
+   Targeted UI fixes: Analysis actions, search speed/readability,
+   consistent red errors, and borderless preview lens
+   ============================================================ */
+
+/* Keep the two Analysis tiles equal and keep all four action buttons on the same visual baseline. */
+.analysis-page .description-wrapper .description-box,
+.analysis-page .dropzone.big-drop,
+.analysis-page .preview-image {
+  height: clamp(260px, 42dvh, 440px) !important;
+  min-height: clamp(260px, 42dvh, 440px) !important;
+  max-height: clamp(260px, 42dvh, 440px) !important;
+  box-sizing: border-box !important;
+}
+
+.analysis-page .preview-buttons-container,
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 16px !important;
+  align-self: center !important;
+}
+
+.analysis-page .description-wrapper .nav-buttons {
+  width: 100% !important;
+}
+
+.analysis-page .analysis-btn,
+.analysis-page .description-wrapper .nav-btn {
+  min-height: 42px !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+}
+
+/* Light theme: make Short, Long, Prev, and Next read like the active navbar pill. */
+:root[data-theme="light"] .analysis-page .analysis-btn.short:not(.disabled),
+:root[data-theme="light"] .analysis-page .analysis-btn.long:not(.disabled),
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-btn:not(.disabled) {
+  background: linear-gradient(135deg, var(--tz-turmeric), var(--tz-turmeric-soft)) !important;
+  border: 1px solid var(--tz-turmeric) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(183, 121, 31, 0.24) !important;
+}
+
+:root[data-theme="light"] .analysis-page .analysis-btn.disabled,
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-btn.disabled {
+  background: rgba(226, 232, 240, 0.9) !important;
+  border: 1px solid var(--tz-line) !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+}
+
+/* Result/placeholder text inside the dark-blue Analysis result card stays readable in every theme. */
+.analysis-page .description-wrapper .description-box,
+.analysis-page .description-wrapper .description-box p,
+.analysis-page .description-wrapper .description-content,
+.analysis-page .description-wrapper .placeholder-title,
+.analysis-page .description-wrapper .placeholder-body,
+.analysis-page .description-wrapper .placeholder-body strong {
+  color: #f8fafc !important;
+}
+
+.analysis-page .description-wrapper .description-box {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.86)) !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+/* Search page: keep primary search actions white in light theme, matching the navbar active state. */
+:root[data-theme="light"] .fabric-search .btn--primary:not(:disabled),
+:root[data-theme="light"] .fabric-search .category-picker .btn-primary:not(:disabled) {
+  color: #ffffff !important;
+}
+
+/* Strong, consistent red error boxes on Upload, Chat, Search, grid, notifications and Analysis errors. */
+.fabric-search__error,
+.grid-error,
+.error,
+.notification.error,
+.db-panel__notification--error,
+.description-wrapper .description-box.error {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border: 1px solid #991b1b !important;
+  border-radius: var(--tz-radius-sm, 10px) !important;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.24) !important;
+}
+
+.fabric-search__error *,
+.grid-error *,
+.error *,
+.notification.error *,
+.db-panel__notification--error *,
+.description-wrapper .description-box.error *,
+.description-wrapper .error-text {
+  color: #ffffff !important;
+}
+
+/* Preview/search lens icon should be only the lens, with no border/box around it. */
+.result-card__zoom-btn,
+.result-card__zoom-btn:hover,
+.result-card__zoom-btn:focus,
+.result-card__zoom-btn:focus-visible {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.result-card__zoom-btn {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65) !important;
+}
+
+
+/* ============================================================
+   Targeted follow-up fixes: Analysis action colors and Search error color
+   ============================================================ */
+
+/* Analysis page: keep Short Analysis, Long Analysis, Prev, and Next as yellow pills with white text. */
+:root .analysis-page .preview-buttons-container .analysis-btn.short:not(.disabled),
+:root .analysis-page .preview-buttons-container .analysis-btn.long:not(.disabled),
+:root .analysis-page .description-wrapper .nav-buttons .nav-btn:not(.disabled) {
+  background: linear-gradient(135deg, var(--tz-turmeric), var(--tz-turmeric-soft)) !important;
+  border: 1px solid var(--tz-turmeric) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.26) !important;
+}
+
+:root .analysis-page .preview-buttons-container .analysis-btn.short:not(.disabled):hover,
+:root .analysis-page .preview-buttons-container .analysis-btn.long:not(.disabled):hover,
+:root .analysis-page .description-wrapper .nav-buttons .nav-btn:not(.disabled):hover {
+  background: linear-gradient(135deg, var(--tz-turmeric-soft), var(--tz-turmeric)) !important;
+  border-color: var(--tz-turmeric) !important;
+  color: #ffffff !important;
+}
+
+/* Search page: match the Chat page error box red treatment. */
+:root .fabric-search .fabric-search__error {
+  padding: 10px 14px !important;
+  color: #7f1d1d !important;
+  background: #fff6f6 !important;
+  border: 1px solid #fee2e2 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+:root .fabric-search .fabric-search__error * {
+  color: #7f1d1d !important;
+}
+
+/* ============================================================
+   Final correction: keep Search error native, only Chat colors; align Analysis actions
+   ============================================================ */
+
+/* Search page: only use the Chat page error colors, without copying Chat spacing/shape. */
+:root .fabric-search .fabric-search__error {
+  background: #fff6f6 !important;
+  color: #7f1d1d !important;
+  border-color: #fee2e2 !important;
+  box-shadow: none !important;
+}
+
+:root .fabric-search .fabric-search__error * {
+  color: #7f1d1d !important;
+}
+
+/* Analysis page: keep Short Analysis, Long Analysis, Prev, and Next on one horizontal row visually. */
+.analysis-page .preview-buttons-container,
+.analysis-page .description-wrapper .nav-buttons {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+  margin-bottom: 0 !important;
+  width: 100% !important;
+}
+
+.analysis-page .description-wrapper .nav-buttons {
+  order: 2 !important;
+}
+
+.analysis-page .analysis-btn,
+.analysis-page .description-wrapper .nav-btn {
+  flex: 0 0 auto !important;
+  min-width: 132px !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 720px) {
+  .analysis-page .preview-buttons-container,
+  .analysis-page .description-wrapper .nav-buttons {
+    flex-wrap: wrap !important;
+  }
+
+  .analysis-page .analysis-btn,
+  .analysis-page .description-wrapper .nav-btn {
+    flex: 1 1 140px !important;
+  }
+}

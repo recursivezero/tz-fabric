@@ -80,7 +80,7 @@ function useSearch() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ResultItem[]>([]);
 
-  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 40, preserveResultsOnError = false) => {
+  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 20, preserveResultsOnError = false) => {
     setLoading(true);
     setError(null);
     try {
@@ -105,7 +105,7 @@ function useSearch() {
     }
   }, []);
 
-  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 40, preserveResultsOnError = false) => {
+  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 20, preserveResultsOnError = false) => {
     setLoading(true);
     setError(null);
     try {
@@ -872,7 +872,7 @@ export default function Search() {
   const [previewUrlOrig, setPreviewUrlOrig] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationState>(null);
   const [selectingImage, setSelectingImage] = useState(false);
-  const [searchLimit, setSearchLimit] = useState(40);
+  const [searchLimit, setSearchLimit] = useState(20);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isTextSearch, setIsTextSearch] = useState(false);
   const [page, setPage] = useState(1);
