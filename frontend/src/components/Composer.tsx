@@ -603,7 +603,7 @@ export default function Composer({
         {(previewUrl || audioUrl) && (
           <div className="upload-previews" role="region" aria-label="Upload previews">
             {previewUrl && (
-              <div className="upload-preview image-preview">
+              <div className="upload-preview upload-preview--image">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
                   <div className="upload-preview__meta" title={imageMeta.name}>
@@ -622,7 +622,7 @@ export default function Composer({
             )}
 
             {audioUrl && (
-              <div className="upload-preview audio-preview">
+              <div className="upload-preview upload-preview--audio">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
                   <div className="upload-preview__meta" title={audioMeta.name}>
@@ -676,7 +676,6 @@ export default function Composer({
                     onSend(value);
                   }
                 }}
-                style={{ color: "black" }}
                 rows={1}
                 readOnly={mode !== "free"}
               />

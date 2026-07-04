@@ -488,3 +488,98 @@
   background: rgba(248, 250, 252, 0.14);
   color: #f8fafc;
 }
+
+/* Professional top-up: attachment menu + composer theme consistency.
+   The previous image/audio preview reused the global `.image-preview` class, which
+   let Search-page CSS bleed into Chat. The component now uses scoped modifiers;
+   keep the menu and previews readable in both runtime themes. */
+.composer .attach-menu {
+  min-width: 190px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.32) !important;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.composer .attach-menu-item {
+  min-height: 42px;
+  justify-content: flex-start;
+  border: 1px solid transparent !important;
+  font-weight: 800;
+  line-height: 1.15;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="light"] .composer .attach-menu {
+  background: rgba(255, 255, 255, 0.96) !important;
+}
+
+:root[data-theme="light"] .composer .attach-menu-item {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+:root[data-theme="light"] .composer .attach-menu-item:hover,
+:root[data-theme="light"] .composer .attach-menu-item:focus-visible {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: rgba(71, 85, 105, 0.28) !important;
+}
+
+:root[data-theme="dark"] .composer .attach-menu {
+  background: rgba(15, 23, 42, 0.96) !important;
+}
+
+:root[data-theme="dark"] .composer .attach-menu-item {
+  background: rgba(30, 41, 59, 0.96) !important;
+  color: #f8fafc !important;
+  border-color: rgba(226, 232, 240, 0.18) !important;
+}
+
+:root[data-theme="dark"] .composer .attach-menu-item:hover,
+:root[data-theme="dark"] .composer .attach-menu-item:focus-visible {
+  background: rgba(51, 65, 85, 0.98) !important;
+  color: #ffffff !important;
+  border-color: rgba(226, 232, 240, 0.38) !important;
+}
+
+.composer .upload-previews {
+  max-width: min(560px, calc(100vw - 32px));
+  border: 1px solid rgba(148, 163, 184, 0.26) !important;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16) !important;
+}
+
+.composer .upload-preview {
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+  color: inherit !important;
+}
+
+.composer .upload-preview__meta {
+  min-width: 0;
+  max-width: 260px;
+  color: inherit !important;
+  opacity: 1 !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-shadow: none !important;
+}
+
+:root[data-theme="dark"] .composer .upload-previews,
+:root[data-theme="dark"] .composer .upload-preview {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(226, 232, 240, 0.24) !important;
+  color: #f8fafc !important;
+}
+
+:root[data-theme="light"] .composer .upload-previews,
+:root[data-theme="light"] .composer .upload-preview {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #0f172a !important;
+}

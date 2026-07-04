@@ -209,3 +209,39 @@
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.72) !important;
 }
+
+/* Professional QA top-up: make the sample selection affordance impossible to miss. */
+.sample-gallery .sample-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.58), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sample-gallery .sample-card__select {
+  bottom: 14px;
+  min-width: 92px;
+  min-height: 36px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card__select,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
+  background: #111827 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32) !important;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card:hover .sample-card__select,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card:hover .sample-card__select,
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card:focus-visible .sample-card__select,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card:focus-visible .sample-card__select {
+  background: linear-gradient(135deg, #e0a82e, #f0c463) !important;
+  color: #171101 !important;
+  border-color: #f0c463 !important;
+}

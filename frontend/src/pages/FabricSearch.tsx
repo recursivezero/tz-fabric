@@ -408,8 +408,9 @@ function StickySearchBar({
           </div>
         )}
 
-        <button className="btn btn--ghost btn--sm" onClick={onClear}>
-          ✕ Clear
+        <button className="btn btn--ghost btn--sm" onClick={onClear} type="button">
+          <span aria-hidden="true">✕</span>
+          <span>Clear</span>
         </button>
       </div>
 
@@ -638,10 +639,39 @@ function Lightbox({
         {caption && <div className="lightbox__caption">{caption}</div>}
 
         <div className="lightbox__controls">
-          <button className="lightbox__control-btn" onClick={onZoomOut}>−</button>
-          <button className="lightbox__control-btn" onClick={onReset}>Reset</button>
-          <button className="lightbox__control-btn" onClick={onZoomIn}>+</button>
-          <button className="lightbox__control-btn lightbox__control-btn--close" onClick={onClose}>✕</button>
+          <button
+            className="lightbox__control-btn"
+            onClick={onZoomOut}
+            type="button"
+            aria-label="Zoom out"
+          >
+            −
+          </button>
+          <button
+            className="lightbox__control-btn lightbox__control-btn--reset"
+            onClick={onReset}
+            type="button"
+            aria-label="Reset zoom"
+          >
+            <span aria-hidden="true">↺</span>
+            <span>Reset</span>
+          </button>
+          <button
+            className="lightbox__control-btn"
+            onClick={onZoomIn}
+            type="button"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+          <button
+            className="lightbox__control-btn lightbox__control-btn--close"
+            onClick={onClose}
+            type="button"
+            aria-label="Close preview"
+          >
+            ✕
+          </button>
         </div>
       </div>
     </div>
@@ -700,8 +730,22 @@ function CropDrawer({
         </div>
 
         <div className="crop-drawer__actions">
-          <button className="btn btn--ghost" onClick={onCancel}>✕ Cancel</button>
-          <button className="btn btn--primary" onClick={onConfirm}>✔ Crop &amp; Search</button>
+          <button
+            className="btn btn--ghost crop-drawer__action-btn"
+            onClick={onCancel}
+            type="button"
+          >
+            <span aria-hidden="true">✕</span>
+            <span>Cancel</span>
+          </button>
+          <button
+            className="btn btn--primary crop-drawer__action-btn"
+            onClick={onConfirm}
+            type="button"
+          >
+            <span aria-hidden="true">✓</span>
+            <span>Crop &amp; Search</span>
+          </button>
         </div>
       </div>
     </div>
@@ -739,13 +783,16 @@ function ImagePreview({
             <button
               className="btn btn--primary btn--sm"
               onClick={onClear}
+              type="button"
             >
-              🗑️ Clear Search
+              <span aria-hidden="true">🗑️</span>
+              <span>Clear Search</span>
             </button>
           </div>
           <div className="image-preview__frame-actions image-preview__frame-actions--bottom">
-            <button className="btn btn--outline btn--sm" onClick={onRecrop}>
-              ✂️ Recrop
+            <button className="btn btn--outline btn--sm" onClick={onRecrop} type="button">
+              <span aria-hidden="true">✂️</span>
+              <span>Recrop</span>
             </button>
           </div>
         </div>
@@ -771,8 +818,10 @@ function ImagePreview({
               className="btn btn--primary"
               onClick={onSearch}
               disabled={loading}
+              type="button"
             >
-              🔎 Search
+              <span aria-hidden="true">🔎</span>
+              <span>Search</span>
             </button>
           </div>
         </>
@@ -836,6 +885,7 @@ function Hero({
             className="btn btn--primary"
             onClick={onTextSearch}
             disabled={loading || !textQuery.trim()}
+            type="button"
           >
             Search
           </button>
@@ -858,8 +908,10 @@ function Hero({
         <button
           className="btn btn--ghost hero__upload-btn"
           onClick={() => document.getElementById(fileInputId)?.click()}
+          type="button"
         >
-          📷 Drop your Image
+          <span aria-hidden="true">📷</span>
+          <span>Drop your Image</span>
         </button>
       </div>
 
@@ -1216,12 +1268,13 @@ export default function Search() {
   const hasResults = visibleResults.length > 0;
   const showHero = !file && !drawerOpen && !hasResults && !loading;
   const showStickyBar = hasResults || (loading && (!!file || isTextSearch));
+  const showImagePreview = !!file && !drawerOpen && !hasResults && !loading;
   const stickyPreview = croppedPreviewUrl || previewUrlOrig || previewUrl;
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <main className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}`}>
+    <main className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}${showImagePreview ? " fabric-search--previewing" : ""}`}>
 
       {/* Sticky search bar */}
       {showStickyBar && (
@@ -1273,7 +1326,7 @@ export default function Search() {
         )}
 
         {/* Image preview (post-crop, pre-results) */}
-        {file && !drawerOpen && !hasResults && !loading && (
+        {showImagePreview && (
           <ImagePreview
             originalUrl={previewUrlOrig || previewUrl || ""}
             croppedUrl={croppedPreviewUrl}

@@ -9,6 +9,9 @@ import "@/assets/styles/UploadPage.css";
 
 type AudioMode = "upload" | "record";
 
+const SUBMIT_ERROR_MESSAGE =
+  "Unable to connect to the server, please try after some time.";
+
 const UploadPage = () => {
   const location = useLocation();
   const prefill = location.state?.prefill;
@@ -53,7 +56,7 @@ const UploadPage = () => {
   );
   const submitStatusMessage =
     notification?.type === "error"
-      ? notification.message
+      ? SUBMIT_ERROR_MESSAGE
       : prefilledWithoutFiles
         ? "Please re-upload the image and audio before submitting this saved preview."
         : "";
