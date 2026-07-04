@@ -42,6 +42,7 @@ const CATEGORIES = [
 const API_BASE = FULL_API_URL;
 const ASSET_BASE = BASE_URL;
 const CDN_BASE = (import.meta.env.VITE_AWS_PUBLIC_URL ?? "https://cdn.threadzip.com").replace(/\/$/, "");
+const USER_FRIENDLY_SERVER_ERROR = "Unable to connect to the server, please try after some time.";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -99,7 +100,8 @@ function useSearch() {
       const data: SearchApiResponse = await res.json();
       setResults((data.results ?? []).map(toResultItem));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Search failed.");
+      console.error("Image search failed:", e);
+      setError(USER_FRIENDLY_SERVER_ERROR);
       if (!preserveResultsOnError) setResults([]);
     } finally {
       setLoading(false);
@@ -124,7 +126,8 @@ function useSearch() {
       const data: SearchApiResponse = await res.json();
       setResults((data.results ?? []).map(toResultItem));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Search failed.");
+      console.error("Text search failed:", e);
+      setError(USER_FRIENDLY_SERVER_ERROR);
       if (!preserveResultsOnError) setResults([]);
     } finally {
       setLoading(false);
@@ -234,8 +237,8 @@ function DbControlPanel() {
       const msg = await callDbEndpoint(op);
       setNotification({ message: msg, type: "success" });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Operation failed.";
-      setNotification({ message: msg, type: "error" });
+      console.error("Database operation failed:", e);
+      setNotification({ message: USER_FRIENDLY_SERVER_ERROR, type: "error" });
     } finally {
       setActiveOp(null);
     }
@@ -1248,9 +1251,6 @@ export default function Search() {
           </div>
         )}
 
-        {/* Notifications / states */}
-        {error && <div className="fabric-search__error" role="alert">{error}</div>}
-
         {/* Hero */}
         {showHero && (
           <Hero
@@ -1306,9 +1306,12 @@ export default function Search() {
           />
         )}
 
-        {!loading && file && visibleResults.length === 0 && (
+        {!loading && file && visibleResults.length === 0 && !error && (
           <p className="fabric-search__empty">— no matches found —</p>
         )}
+
+        {/* Search errors stay below the active search UI instead of jumping above it. */}
+        {error && <div className="fabric-search__error" role="alert">{error}</div>}
       </div>
 
       {/* Lightbox */}

@@ -636,3 +636,21 @@
     margin-left: 46px !important;
   }
 }
+
+/* Add static context before Yes/No so quick replies never appear alone. */
+.message-wrapper .inline-quick-replies {
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+}
+
+.message-wrapper .quick-replies-prompt {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cbd5e1;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+:root[data-theme="light"] .message-wrapper .quick-replies-prompt {
+  color: #334155;
+}

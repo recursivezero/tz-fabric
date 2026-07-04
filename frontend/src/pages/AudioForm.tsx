@@ -104,7 +104,6 @@ const UploadPage = () => {
   };
 
   const navigate = useNavigate();
-  console.log("notification :", notification)
 
   return (
     <div className="upload-page">
@@ -113,6 +112,11 @@ const UploadPage = () => {
           <h2>Upload Image & Audio</h2>
           <p className="sub">Upload audio or switch to recording (max 60s)</p>
         </header>
+        {notification && (
+          <div className="upload-submit-notification">
+            <Notification message={notification.message} type={notification.type} />
+          </div>
+        )}
     <div >
 
         <div className="grid">
@@ -177,6 +181,7 @@ const UploadPage = () => {
                     onClick={stopRecording}
                     disabled={!isRecording}
                   >
+                    <span aria-hidden="true">⏹</span>
                     Stop
                   </button>
                 </div>
@@ -323,8 +328,8 @@ const UploadPage = () => {
           <button
             className="btn submit"
             onClick={async () => {
-              await handleSubmit(name);
-              handleBack();
+              const submitted = await handleSubmit(name);
+              if (submitted) handleBack();
             }}
             disabled={!canSubmit}
           >
@@ -332,14 +337,10 @@ const UploadPage = () => {
           </button>
         </div>
         <div>
-          <button className="cancel" onClick={() => navigate("/")}>cancel</button>
+          <button className="cancel" onClick={() => navigate("/")}>Cancel</button>
         </div>
       </div>
       {loading && <Loader />}
-
-      {notification && (
-        <Notification message={notification.message} type={notification.type} />
-      )}
 
       {showConfirm && (
         <div className="confirm-overlay" role="dialog" aria-modal="true">

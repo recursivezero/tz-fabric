@@ -29,6 +29,7 @@ const useImageAnalysis = () => {
   const [validationLoading, setValidationLoading] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
   const [canUpload, setCanUpload] = useState(true);
+  const [analysisPopupMessage, setAnalysisPopupMessage] = useState<string | null>(null);
 
   const location = useLocation();
   const latestRunIdRef = useRef(0);
@@ -161,7 +162,8 @@ const useImageAnalysis = () => {
       setSampleImageUrl(objUrl);
     } catch (err) {
       console.error("Short analysis failed:", err);
-      alert("Upload a valid fabric image.");
+      setCanUpload(true);
+      setAnalysisPopupMessage("Upload a valid fabric image.");
     } finally {
       setLoading(false);
     }
@@ -291,6 +293,7 @@ const useImageAnalysis = () => {
     setIsValidImage(null);
     setValidationMessage("");
     setCanUpload(true);
+    setAnalysisPopupMessage(null);
   };
 
   return {
@@ -311,13 +314,15 @@ const useImageAnalysis = () => {
     validationLoading,
     validationMessage,
     canUpload,
+    analysisPopupMessage,
     setShowDrawer,
     handleSampleShortAnalysis,
     handleUploadedImage,
     handleRunAnalysis,
     handleNext,
     handlePrev,
-    clearImage
+    clearImage,
+    dismissAnalysisPopup: () => setAnalysisPopupMessage(null)
   };
 };
 

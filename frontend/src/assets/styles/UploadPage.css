@@ -371,3 +371,39 @@
 :root[data-theme="light"] .upload-page .cancel {
   color: #ffffff !important;
 }
+
+/* Button text alignment fixes for Upload actions. */
+.upload-page .rec-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.upload-page .rec-controls .btn,
+.upload-page .btn.submit,
+.upload-page .cancel,
+.upload-page .confirm-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.upload-page .cancel {
+  min-height: 38px;
+}
+.upload-page .upload-submit-notification {
+  display: flex;
+  justify-content: center;
+  margin: -10px 0 20px;
+}
+
+.upload-page .upload-submit-notification .notification {
+  width: min(640px, 100%);
+  max-width: 640px;
+  margin: 0;
+}

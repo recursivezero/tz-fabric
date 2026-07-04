@@ -139,3 +139,30 @@
 :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
   color: #ffffff !important;
 }
+
+/* Sample images are clickable cards now; no overlay button is shown. */
+.sample-gallery .sample-card {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sample-gallery .sample-card:focus-visible {
+  outline: 3px solid rgba(224, 168, 46, 0.55);
+  outline-offset: 3px;
+}
+
+.sample-gallery .sample-card:hover .sample-img {
+  filter: brightness(1.03);
+}
+
+.sample-gallery button.sample-card {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+}
+.sample-gallery button.sample-card:disabled {
+  cursor: not-allowed;
+}

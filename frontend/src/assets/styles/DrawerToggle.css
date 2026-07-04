@@ -32,3 +32,27 @@
   font-weight: 900;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
 }
+
+/* Clearer drawer tab: remove the circular handle and use a slim chevron tab. */
+.analysis-page .drawer-toggle-wrapper {
+  right: 250px;
+}
+
+.analysis-page .drawer-toggle-button {
+  width: 34px;
+  height: 64px;
+  border-radius: 14px 0 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.analysis-page .drawer-toggle-button span {
+  transform: translateX(1px);
+}
+
+.analysis-page:not(.drawer-open) .drawer-toggle-button {
+  border-radius: 14px 0 0 14px;
+}

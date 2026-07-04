@@ -307,3 +307,26 @@ figcaption {
   color: #333;
   text-align: left;
 }
+/* Light-mode list readability fixes for card titles and dates. */
+:root[data-theme="light"] .grid-page .media-name {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-top: 1px solid rgba(15, 23, 42, 0.1) !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+}
+
+:root[data-theme="light"] .grid-page .media-meta,
+:root[data-theme="light"] .grid-page .media-meta time {
+  background: #ffffff !important;
+  color: #334155 !important;
+}
+
+:root[data-theme="dark"] .grid-page .media-name {
+  color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .grid-page .media-meta,
+:root[data-theme="dark"] .grid-page .media-meta time {
+  color: #f1f5f9 !important;
+}

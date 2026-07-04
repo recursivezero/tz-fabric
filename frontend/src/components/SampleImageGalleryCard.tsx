@@ -12,23 +12,17 @@ const SampleImageGallery = ({ onAnalyze, loading }) => {
       <h2>Try with Sample Images</h2>
       <div className="sample-grid">
         {sampleImages.map((img) => (
-          <div
+          <button
             key={img.id}
+            type="button"
             className="sample-card"
-            style={{
-              opacity: loading ? 0.5 : 1,
-              pointerEvents: loading ? "none" : "auto",
-            }}
+            style={{ opacity: loading ? 0.5 : 1 }}
+            disabled={loading}
+            aria-label={`Analyze ${img.name}`}
+            onClick={() => onAnalyze(img.path)}
           >
             <img src={img.path} alt={img.name} className="sample-img" loading="lazy" decoding="async" />
-            <button
-              className="analyze-button"
-              onClick={() => onAnalyze(img.path)}
-              disabled={loading}
-            >
-              Short Analysis
-            </button>
-          </div>
+          </button>
         ))}
       </div>
     </div>

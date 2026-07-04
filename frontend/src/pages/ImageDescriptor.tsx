@@ -31,13 +31,15 @@ const ImageDescription = () => {
     isValidImage,
     validationLoading,
     validationMessage,
+    analysisPopupMessage,
     setShowDrawer,
     handleUploadedImage,
     handleRunAnalysis,
     handleSampleShortAnalysis,
     handlePrev,
     handleNext,
-    clearImage
+    clearImage,
+    dismissAnalysisPopup
   } = useImageAnalysis();
 
   const [, setOpenDescription] = useState(false);
@@ -126,6 +128,21 @@ const ImageDescription = () => {
             }}
             loading={loading}
           />
+        </div>
+      )}
+
+      {analysisPopupMessage && (
+        <div className="analysis-popup" role="alertdialog" aria-modal="true">
+          <div className="analysis-popup__card">
+            <div className="analysis-popup__icon" aria-hidden="true">⚠️</div>
+            <div className="analysis-popup__content">
+              <h3>Invalid image</h3>
+              <p>{analysisPopupMessage}</p>
+            </div>
+            <button type="button" className="analysis-popup__button" onClick={dismissAnalysisPopup}>
+              OK
+            </button>
+          </div>
         </div>
       )}
     </div>

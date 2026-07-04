@@ -202,8 +202,8 @@ export const useUploadAndRecord = () => {
     }
   };
 
-  const handleSubmit = async (name?: string) => {
-    if (!imageFile || !audioFile) return;
+  const handleSubmit = async (name?: string): Promise<boolean> => {
+    if (!imageFile || !audioFile) return false;
 
     const formData = new FormData();
     formData.append("image", imageFile);
@@ -212,28 +212,36 @@ export const useUploadAndRecord = () => {
     if (name?.trim()) formData.append("name", name.trim());
     setLoading(true);
     setNotification(null);
-
-    setLoading(true);
-    setNotification(null);
     try {
       const res = await fetch(`${FULL_API_URL}/submit`, {
         method: "POST",
         body: formData,
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        successNotification("success", `Submitted! Saved as ${data.base}`);
-      } else {
-        errorNotification("error", "Submission failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("Submission failed:", res.status, data);
+        setNotification({
+          message: "Submission failed on the server. Please try again after some time.",
+          type: "error",
+        });
+        return false;
       }
+
+      const data = await res.json();
+      successNotification("success", `Submitted! Saved as ${data.base}`);
       setImageFile(null);
       setAudioFile(null);
       setImageUrl(null);
       setAudioUrl(null);
+      return true;
     } catch (error) {
-      setNotification({ message: "Error submitting files", type: "error" });
+      setNotification({
+        message: "Unable to connect to the server, please try after some time.",
+        type: "error",
+      });
       console.error("Submission error:", error);
+      return false;
     } finally {
       setLoading(false);
     }

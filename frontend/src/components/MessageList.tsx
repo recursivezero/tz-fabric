@@ -215,6 +215,7 @@ export default function MessageList({
               <div className={`ask-more-container ${morePrompt ? "show" : ""}`}>
                 {includesAskMore && morePrompt && (
                   <div className="quick-replies inline-quick-replies" aria-live="polite">
+                    <span className="quick-replies-prompt">Want to know more?</span>
                     <div className="quick-replies-row">
                       <button
                         type="button"

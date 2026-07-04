@@ -1534,3 +1534,16 @@
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* Keep the Search settings button to one visible border: wrapper is layout-only. */
+.fabric-search .settings-panel {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+}
+
+.fabric-search .settings-panel__toggle {
+  border: 1px solid var(--color-border-2) !important;
+}

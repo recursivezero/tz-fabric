@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiZoomIn } from "react-icons/fi";
 
 import { BASE_URL } from "../constants";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "@/assets/styles/ContentGrid.css";
 import { throttle } from "../utils/throttle";
+
+const USER_FRIENDLY_SERVER_ERROR = "Unable to connect to the server, please try after some time.";
 
 const displayTime = (t: string) => {
   return new Date(t).toLocaleString("en-US", {
@@ -48,16 +50,6 @@ export default function ContentGrid() {
   const MAX_SCALE = 6;
   const ZOOM_STEP = 0.2;
 
-  const getErrorMessage = useCallback((e: unknown): string => {
-    if (e instanceof Error) return e.message;
-    if (typeof e === "string") return e;
-    if (typeof e === "object" && e !== null && "message" in e) {
-      const maybeMsg = e.message;
-      if (typeof maybeMsg === "string") return maybeMsg;
-    }
-    return "Failed to load";
-  }, []);
-
   // Add page background
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
@@ -82,7 +74,8 @@ export default function ContentGrid() {
           setTotal(data.total);
         }
       } catch (err) {
-        if (!ignore) setErr(getErrorMessage(err));
+        console.error("Failed to load fabric list:", err);
+        if (!ignore) setErr(USER_FRIENDLY_SERVER_ERROR);
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -90,7 +83,7 @@ export default function ContentGrid() {
     return () => {
       ignore = true;
     };
-  }, [page, limit, mode, getErrorMessage]);
+  }, [page, limit, mode]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 

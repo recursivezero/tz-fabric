@@ -616,3 +616,79 @@
   height: auto !important;
   align-self: start !important;
 }
+
+/* Custom Analysis popup: replaces native browser alerts for invalid sample images. */
+.analysis-page .analysis-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(6px);
+}
+
+.analysis-page .analysis-popup__card {
+  width: min(420px, 100%);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 18px;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+}
+
+.analysis-page .analysis-popup__icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(220, 38, 38, 0.12);
+  font-size: 22px;
+}
+
+.analysis-page .analysis-popup__content h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.analysis-page .analysis-popup__content p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.analysis-page .analysis-popup__button {
+  grid-column: 1 / -1;
+  justify-self: end;
+  min-width: 82px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+:root[data-theme="dark"] .analysis-page .analysis-popup__card {
+  background: #171f33;
+  color: #f8fafc;
+  border-color: rgba(248, 250, 252, 0.14);
+}
+
+:root[data-theme="dark"] .analysis-page .analysis-popup__content h3 {
+  color: #f8fafc;
+}
+
+:root[data-theme="dark"] .analysis-page .analysis-popup__content p {
+  color: #cbd5e1;
+}
