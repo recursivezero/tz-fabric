@@ -22,6 +22,9 @@ const SampleImageGallery = ({ onAnalyze, loading }) => {
             onClick={() => onAnalyze(img.path)}
           >
             <img src={img.path} alt={img.name} className="sample-img" loading="lazy" decoding="async" />
+            <span className="sample-card__select" aria-hidden="true">
+              Select
+            </span>
           </button>
         ))}
       </div>

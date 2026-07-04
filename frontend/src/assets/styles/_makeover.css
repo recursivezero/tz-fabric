@@ -1845,6 +1845,122 @@ footer a:hover,
 }
 
 /* Theme override for chat attachment metadata after removing inline black text. */
-.upload-preview .upload-preview__meta {
+:root[data-theme="dark"] .upload-preview .upload-preview__meta {
   color: var(--tz-cotton) !important;
+}
+
+:root[data-theme="light"] .upload-preview .upload-preview__meta {
+  color: var(--tz-ink) !important;
+}
+
+/* ============================================================
+   Final top-up: Search slider + selected category contrast
+   ============================================================
+   Keep the Results slider neutral grey and visible in both themes, and make
+   selected category chips readable instead of white-on-white/low-contrast. */
+:root .fabric-search .limit-slider__track {
+  height: 4px !important;
+  background: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+:root .fabric-search .limit-slider__fill {
+  background: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+:root .fabric-search .limit-slider__input::-webkit-slider-thumb {
+  width: 17px !important;
+  height: 17px !important;
+  background: #e5e7eb !important;
+  border: 2px solid #4b5563 !important;
+  box-shadow: 0 0 0 3px rgba(75, 85, 99, 0.24) !important;
+}
+
+:root .fabric-search .limit-slider__input::-moz-range-thumb {
+  width: 17px !important;
+  height: 17px !important;
+  background: #e5e7eb !important;
+  border: 2px solid #4b5563 !important;
+  box-shadow: 0 0 0 3px rgba(75, 85, 99, 0.24) !important;
+}
+
+:root[data-theme="light"] .fabric-search .limit-slider__track {
+  background: #d1d5db !important;
+}
+
+:root[data-theme="light"] .fabric-search .limit-slider__fill {
+  background: #6b7280 !important;
+}
+
+:root[data-theme="light"] .fabric-search .limit-slider__input::-webkit-slider-thumb {
+  background: #ffffff !important;
+  border-color: #4b5563 !important;
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.26) !important;
+}
+
+:root[data-theme="light"] .fabric-search .limit-slider__input::-moz-range-thumb {
+  background: #ffffff !important;
+  border-color: #4b5563 !important;
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.26) !important;
+}
+
+:root[data-theme="dark"] .fabric-search .limit-slider__track {
+  background: #4b5563 !important;
+}
+
+:root[data-theme="dark"] .fabric-search .limit-slider__fill {
+  background: #d1d5db !important;
+}
+
+:root[data-theme="dark"] .fabric-search .limit-slider__input::-webkit-slider-thumb {
+  background: #f9fafb !important;
+  border-color: #9ca3af !important;
+  box-shadow: 0 0 0 3px rgba(209, 213, 219, 0.26) !important;
+}
+
+:root[data-theme="dark"] .fabric-search .limit-slider__input::-moz-range-thumb {
+  background: #f9fafb !important;
+  border-color: #9ca3af !important;
+  box-shadow: 0 0 0 3px rgba(209, 213, 219, 0.26) !important;
+}
+
+:root .fabric-search .category-picker__chip--active,
+:root .fabric-search .category-picker__chip--active:hover {
+  color: #111827 !important;
+  background: #d1d5db !important;
+  border-color: #6b7280 !important;
+  box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.24),
+    0 10px 22px rgba(17, 24, 39, 0.12) !important;
+  text-shadow: none !important;
+}
+
+:root .fabric-search .category-picker__chip--active .category-picker__chip-check,
+:root .fabric-search .category-picker__chip--active .category-picker__chip-icon,
+:root .fabric-search .category-picker__chip--active .category-picker__chip-label {
+  color: inherit !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="light"] .fabric-search .category-picker__chip--active,
+:root[data-theme="light"] .fabric-search .category-picker__chip--active:hover {
+  color: #111827 !important;
+  background: #e5e7eb !important;
+  border-color: #6b7280 !important;
+}
+
+:root[data-theme="dark"] .fabric-search .category-picker__chip--active,
+:root[data-theme="dark"] .fabric-search .category-picker__chip--active:hover {
+  color: #ffffff !important;
+  background: #4b5563 !important;
+  border-color: #d1d5db !important;
+  box-shadow: 0 0 0 2px rgba(209, 213, 219, 0.28),
+    0 10px 22px rgba(0, 0, 0, 0.28) !important;
+}
+
+:root[data-theme="dark"] .fabric-search .category-picker__chip--active .category-picker__chip-check,
+:root[data-theme="dark"] .fabric-search .category-picker__chip--active .category-picker__chip-icon,
+:root[data-theme="dark"] .fabric-search .category-picker__chip--active .category-picker__chip-label {
+  color: #ffffff !important;
 }

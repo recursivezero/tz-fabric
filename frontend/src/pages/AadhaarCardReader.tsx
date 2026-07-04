@@ -45,6 +45,7 @@ const AadhaarCardReader = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<AadhaarResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [side, setSide] = useState<AadhaarSide>("front");
   const [showCropper, setShowCropper] = useState(false);
@@ -60,6 +61,7 @@ const AadhaarCardReader = () => {
   const handleFile = (f: File | null) => {
     setFile(f);
     setResult(null);
+    setError(null);
     setCroppedImage(null);
     if (f) {
       const url = URL.createObjectURL(f);
@@ -149,6 +151,7 @@ const AadhaarCardReader = () => {
   const submit = async () => {
     if (!croppedImage && !file) return;
     setLoading(true);
+    setError(null);
 
     const fd = new FormData();
 
@@ -177,7 +180,7 @@ const AadhaarCardReader = () => {
       setResult(data);
     } catch (error) {
       console.error("Error processing Aadhaar:", error);
-      alert("Failed to process Aadhaar card. Please try again.");
+      setError("Failed to process Aadhaar card. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -232,6 +235,11 @@ const AadhaarCardReader = () => {
       
 
       <div style={styles.container}>
+        {error && (
+          <div style={styles.errorBanner} role="alert">
+            {error}
+          </div>
+        )}
         <div
           style={{
             ...styles.iconWrapper,
@@ -919,6 +927,17 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     transition: "all 0.2s ease",
+  },
+  errorBanner: {
+    width: "100%",
+    maxWidth: "720px",
+    margin: "0 auto 18px",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    color: "#991b1b",
+    background: "rgba(254, 226, 226, 0.95)",
+    border: "1px solid rgba(220, 38, 38, 0.35)",
+    fontWeight: 600,
   },
 };
 

@@ -457,3 +457,34 @@
 :root[data-theme="dark"] .upload-preview__meta {
   color: #f8fafc;
 }
+
+/* Theme-safe uploaded attachment chips. Do not rely on one text-color override only. */
+:root[data-theme="light"] .upload-preview {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.2);
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .upload-preview {
+  background: rgba(15, 23, 42, 0.94);
+  border-color: rgba(226, 232, 240, 0.28);
+  color: #f8fafc;
+}
+
+:root[data-theme="light"] .upload-preview__meta {
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .upload-preview__meta {
+  color: #f8fafc;
+}
+
+:root[data-theme="light"] .upload-remove {
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .upload-remove {
+  background: rgba(248, 250, 252, 0.14);
+  color: #f8fafc;
+}

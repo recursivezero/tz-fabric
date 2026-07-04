@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { analyzeImage, regenerateResponse, validateImageAPI } from "../services/analyze_api.ts";
+import {
+  analyzeImage,
+  regenerateResponse,
+  validateImageAPI,
+} from "../services/analyze_api.ts";
 import { fetchImageAsFile } from "../utils/image-helper.ts";
 
 type Mode = "short" | "long";
@@ -29,14 +33,58 @@ const useImageAnalysis = () => {
   const [validationLoading, setValidationLoading] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
   const [canUpload, setCanUpload] = useState(true);
-  const [analysisPopupMessage, setAnalysisPopupMessage] = useState<string | null>(null);
+  const [analysisPopupMessage, setAnalysisPopupMessage] = useState<
+    string | null
+  >(null);
 
   const location = useLocation();
   const latestRunIdRef = useRef(0);
+  const objectUrlsRef = useRef<Set<string>>(new Set());
+
+  const createTrackedObjectUrl = useCallback((file: File) => {
+    const url = URL.createObjectURL(file);
+    objectUrlsRef.current.add(url);
+    return url;
+  }, []);
+
+  const releaseTrackedObjectUrl = useCallback((url: string | null) => {
+    if (!url || !objectUrlsRef.current.has(url)) return;
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      // Ignore already-revoked preview URLs.
+    } finally {
+      objectUrlsRef.current.delete(url);
+    }
+  }, []);
+
+  const replaceUploadedImageUrl = useCallback(
+    (url: string | null) => {
+      setUploadedImageUrl((prev) => {
+        if (prev !== url) releaseTrackedObjectUrl(prev);
+        return url;
+      });
+    },
+    [releaseTrackedObjectUrl],
+  );
+
+  const replaceSampleImageUrl = useCallback(
+    (url: string | null) => {
+      setSampleImageUrl((prev) => {
+        if (prev !== url) releaseTrackedObjectUrl(prev);
+        return url;
+      });
+    },
+    [releaseTrackedObjectUrl],
+  );
 
   const handleRunAnalysis = useCallback(
     async (file: File | null, mode: Mode) => {
-      if (!file) return;
+      if (!file) {
+        setCurrentFile(null);
+        setAnalysisPopupMessage("Upload a valid fabric image.");
+        return;
+      }
       const runId = ++latestRunIdRef.current;
 
       setShowResults(true);
@@ -62,15 +110,19 @@ const useImageAnalysis = () => {
       } catch (err) {
         if (runId !== latestRunIdRef.current) return;
         console.error(`${mode} analysis failed:`, err);
-        const message = err instanceof Error ? err.message : `${mode} analysis failed.`;
+        const message =
+          err instanceof Error ? err.message : `${mode} analysis failed.`;
         setValidationMessage(message || `${mode} analysis failed.`);
         setIsValidImage(false);
+        setAnalysisPopupMessage(
+          "Unable to analyze this image. Upload a valid fabric image or try again later.",
+        );
         setCanUpload(true);
       } finally {
         if (runId === latestRunIdRef.current) setLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Auto-run from query params (?mode=&image_url=)
@@ -124,13 +176,13 @@ const useImageAnalysis = () => {
 
   const handleSampleShortAnalysis = async (imagePath: string) => {
     setShowDrawer(false);
-    setSampleImageUrl(imagePath);
+    replaceSampleImageUrl(imagePath);
     setShowResults(true);
     setLoading(true);
     setCanUpload(false);
     setIsValidImage(null);
     setValidationMessage("");
-    setUploadedImageUrl(null);
+    replaceUploadedImageUrl(null);
     setShowUploadedImage(false);
     setDescription("");
     setTypedText("");
@@ -157,9 +209,9 @@ const useImageAnalysis = () => {
       setCurrentMode("short");
       setShowUploadedImage(true);
 
-      const objUrl = URL.createObjectURL(file);
-      setUploadedImageUrl(objUrl);
-      setSampleImageUrl(objUrl);
+      const objUrl = createTrackedObjectUrl(file);
+      replaceUploadedImageUrl(objUrl);
+      replaceSampleImageUrl(objUrl);
     } catch (err) {
       console.error("Short analysis failed:", err);
       setCanUpload(true);
@@ -189,11 +241,15 @@ const useImageAnalysis = () => {
         } else {
           setIsValidImage(false);
           setValidationMessage(
-            data?.reason || "This image does not look like usable fabric/textile content."
+            data?.reason ||
+              "This image does not look like usable fabric/textile content.",
           );
         }
       } catch (error: unknown) {
-        console.warn("Image validation failed; allowing analysis to continue.", error);
+        console.warn(
+          "Image validation failed; allowing analysis to continue.",
+          error,
+        );
         // Validation is only a guardrail. Do not block real fabric/product images
         // when the validator endpoint is slow, unavailable, or overly cautious.
         setValidationMessage("");
@@ -202,16 +258,16 @@ const useImageAnalysis = () => {
         setValidationLoading(false);
       }
     },
-    []
+    [],
   );
 
   const handleUploadedImage = (file: File) => {
     setShowDrawer(false);
-    setUploadedImageUrl(URL.createObjectURL(file));
+    replaceUploadedImageUrl(createTrackedObjectUrl(file));
     setCurrentFile(file);
     setShowUploadedImage(true);
     setCurrentMode(null);
-    setSampleImageUrl(null);
+    replaceSampleImageUrl(null);
     void validateImage(file);
     setDescription("");
     setShowResults(false);
@@ -223,10 +279,23 @@ const useImageAnalysis = () => {
 
   // Auto-run short analysis after validation passes for uploaded images
   useEffect(() => {
-    if (isValidImage === true && currentFile && !sampleImageUrl && !loading && currentMode === null) {
+    if (
+      isValidImage === true &&
+      currentFile &&
+      !sampleImageUrl &&
+      !loading &&
+      currentMode === null
+    ) {
       void handleRunAnalysis(currentFile, "short");
     }
-  }, [isValidImage, currentFile, loading, currentMode, sampleImageUrl, handleRunAnalysis]);
+  }, [
+    isValidImage,
+    currentFile,
+    loading,
+    currentMode,
+    sampleImageUrl,
+    handleRunAnalysis,
+  ]);
 
   const handleNext = async () => {
     const newIndex = currentIndex + 1;
@@ -264,6 +333,9 @@ const useImageAnalysis = () => {
       }
     } catch (err) {
       console.error("Next response fetch failed:", err);
+      setAnalysisPopupMessage(
+        "Unable to generate another response. Please try after some time.",
+      );
     }
   };
 
@@ -278,9 +350,9 @@ const useImageAnalysis = () => {
   const clearImage = () => {
     latestRunIdRef.current += 1;
     setShowUploadedImage(false);
-    setUploadedImageUrl(null);
+    replaceUploadedImageUrl(null);
     setCurrentFile(null);
-    setSampleImageUrl(null);
+    replaceSampleImageUrl(null);
     setResponses([]);
     setDescription("");
     setTypedText("");
@@ -295,6 +367,19 @@ const useImageAnalysis = () => {
     setCanUpload(true);
     setAnalysisPopupMessage(null);
   };
+
+  useEffect(() => {
+    return () => {
+      for (const url of objectUrlsRef.current) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // Ignore stale preview URLs during teardown.
+        }
+      }
+      objectUrlsRef.current.clear();
+    };
+  }, []);
 
   return {
     showResults,
@@ -322,7 +407,7 @@ const useImageAnalysis = () => {
     handleNext,
     handlePrev,
     clearImage,
-    dismissAnalysisPopup: () => setAnalysisPopupMessage(null)
+    dismissAnalysisPopup: () => setAnalysisPopupMessage(null),
   };
 };
 

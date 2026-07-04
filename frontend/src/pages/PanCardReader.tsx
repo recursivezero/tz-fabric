@@ -25,6 +25,7 @@ const PanCardReader = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<PanResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
@@ -37,6 +38,7 @@ const PanCardReader = () => {
   const handleFile = (f: File | null) => {
     setFile(f);
     setResult(null);
+    setError(null);
     setCroppedImage(null);
     if (f) {
       const url = URL.createObjectURL(f);
@@ -129,6 +131,7 @@ const PanCardReader = () => {
   const submit = async () => {
     if (!croppedImage && !file) return;
     setLoading(true);
+    setError(null);
 
     const fd = new FormData();
 
@@ -154,7 +157,7 @@ const PanCardReader = () => {
       setResult(data);
     } catch (error) {
       console.error("Error processing card:", error);
-      alert("Failed to process card. Please try again.");
+      setError("Failed to process PAN card. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -339,6 +342,11 @@ const PanCardReader = () => {
       `}</style>
 
       <div style={styles.container}>
+        {error && (
+          <div style={styles.errorBanner} role="alert">
+            {error}
+          </div>
+        )}
         {/* Header */}
         <div style={styles.header}>
           <div
@@ -1125,6 +1133,17 @@ const styles: Record<string, CSSProperties> = {
     transition: "all 0.2s ease",
   },
 
+  errorBanner: {
+    width: "100%",
+    maxWidth: "720px",
+    margin: "0 auto 18px",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    color: "#991b1b",
+    background: "rgba(254, 226, 226, 0.95)",
+    border: "1px solid rgba(220, 38, 38, 0.35)",
+    fontWeight: 600,
+  },
 };
 
 export default PanCardReader;

@@ -166,3 +166,46 @@
 .sample-gallery button.sample-card:disabled {
   cursor: not-allowed;
 }
+
+/* Clear sample-image action affordance. The whole card remains clickable, but
+   users now see an explicit Select button near the bottom of each sample. */
+.sample-gallery .sample-card__select {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  background: rgba(15, 23, 42, 0.84);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.sample-gallery .sample-card:hover .sample-card__select,
+.sample-gallery .sample-card:focus-visible .sample-card__select {
+  background: linear-gradient(135deg, #e0a82e, #f0c463);
+  border-color: #f0c463;
+  color: #171101;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
+  background: rgba(15, 23, 42, 0.86) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
+  background: rgba(15, 23, 42, 0.9) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+}

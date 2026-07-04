@@ -240,7 +240,7 @@ export default function Chat() {
           )}
 
           {error && (
-            <div className="error" role="alert">
+            <div className="error" role="alert" data-error-detail={error} title={error}>
               Unable to connect to the server, please try after some time.
             </div>
           )}

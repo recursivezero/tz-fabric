@@ -24,8 +24,8 @@ export default function MessageList({
   scrollerRef,
   onLastAssistantRendered,
   morePrompt = null,
-  confirmMoreYes = () => { },
-  confirmMoreNo = () => { },
+  confirmMoreYes = () => {},
+  confirmMoreNo = () => {},
 }: Props) {
   const lastAssistantRef = useRef<HTMLDivElement | null>(null);
   const lastAssistantMsgRef = useRef<Message | null>(null);
@@ -41,7 +41,7 @@ export default function MessageList({
     node: HTMLElement,
     container: HTMLElement,
     msgIndex: number,
-    onSettled: () => void
+    onSettled: () => void,
   ) => {
     const imgs = Array.from(node.querySelectorAll("img"));
     const pendingImgs = imgs.filter((im) => !im.complete);
@@ -50,10 +50,11 @@ export default function MessageList({
     let sameCount = 0;
 
     const atBottom = () =>
-      Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) <= 2;
+      Math.abs(
+        container.scrollHeight - container.scrollTop - container.clientHeight,
+      ) <= 2;
 
-    const isStillTyping = () =>
-      !!node.querySelector('[data-typing="true"]');
+    const isStillTyping = () => !!node.querySelector('[data-typing="true"]');
 
     const cleanup = () => {
       if (rafRef.current) {
@@ -118,7 +119,7 @@ export default function MessageList({
       if (!container) return;
 
       const wrappers = container.querySelectorAll<HTMLDivElement>(
-        '.message-wrapper[data-role="assistant"]'
+        '.message-wrapper[data-role="assistant"]',
       );
       const lastWrapper = wrappers[wrappers.length - 1] || null;
       lastAssistantRef.current = lastWrapper;
@@ -157,7 +158,9 @@ export default function MessageList({
     return (
       normalized.includes("would you like to know more") ||
       normalized.includes("want to know more") ||
-      normalized.includes("would you like more")
+      normalized.includes("would you like more") ||
+      normalized.includes("want more details") ||
+      normalized.includes("know more about this")
     );
   };
 
@@ -168,8 +171,14 @@ export default function MessageList({
     const rawContent = content.replace(/\s+/g, " ").trim().toLowerCase();
 
     // 1) If the backend provided a prompt string to match, try substring match (not strict equality)
-    if (typeof morePrompt.prompt === "string" && morePrompt.prompt.trim().length > 0) {
-      const normalizedPrompt = morePrompt.prompt.replace(/\s+/g, " ").trim().toLowerCase();
+    if (
+      typeof morePrompt.prompt === "string" &&
+      morePrompt.prompt.trim().length > 0
+    ) {
+      const normalizedPrompt = morePrompt.prompt
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
       if (normalizedPrompt && rawContent.includes(normalizedPrompt)) {
         return true;
       }
@@ -200,7 +209,8 @@ export default function MessageList({
           if ("filename" in m) filename = (m as { filename?: string }).filename;
 
           const isAssistant = role === "assistant";
-          const includesAskMore = isAssistant && shouldShowQuickRepliesFor(content);
+          const includesAskMore =
+            isAssistant && shouldShowQuickRepliesFor(content);
 
           return (
             <div
@@ -219,8 +229,13 @@ export default function MessageList({
 
               <div className={`ask-more-container ${morePrompt ? "show" : ""}`}>
                 {includesAskMore && morePrompt && (
-                  <div className="quick-replies inline-quick-replies" aria-live="polite">
-                    <span className="quick-replies-prompt">Want to know more?</span>
+                  <div
+                    className="quick-replies inline-quick-replies"
+                    aria-live="polite"
+                  >
+                    <span className="quick-replies-prompt">
+                      Want to know more?
+                    </span>
                     <div className="quick-replies-row">
                       <button
                         type="button"

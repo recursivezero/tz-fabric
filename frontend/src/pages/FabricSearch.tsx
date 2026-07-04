@@ -177,10 +177,15 @@ function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerP
     }
   };
   const allOn = tempSelected.length === CATEGORIES.length;
-  const toggleAll = () => {setTempSelected(allOn ? [] : CATEGORIES.map((c) => c.id))};
+  const toggleAll = () => {
+    const next = allOn ? [] : CATEGORIES.map((c) => c.id);
+    setTempSelected(next);
+    if (!compact) {
+      onChange(next);
+    }
+  };
 
   const applySearch = () => {
-    console.log("Apply search with categories:", tempSelected);
     onChange(tempSelected);
   };
 
@@ -1284,6 +1289,7 @@ export default function Search() {
         )}
 
         {notification && <Notification message={notification.message} type={notification.type} />}
+        {error && <div className="fabric-search__error" role="alert">{error}</div>}
         {(loading || selectingImage) && (
           <div className="fabric-search__loading-overlay" role="status" aria-live="polite">
             <Loader />
@@ -1310,8 +1316,6 @@ export default function Search() {
           <p className="fabric-search__empty">— no matches found —</p>
         )}
 
-        {/* Search errors stay below the active search UI instead of jumping above it. */}
-        {error && <div className="fabric-search__error" role="alert">{error}</div>}
       </div>
 
       {/* Lightbox */}
