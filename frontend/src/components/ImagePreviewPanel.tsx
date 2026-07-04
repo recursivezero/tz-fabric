@@ -96,7 +96,7 @@ const ImagePreviewPanel = ({
           </div>
         ) }
       </div>
-      <div className="filesize-name">
+      <div className={`filesize-name ${hasImage && currentFile ? "filesize-name--visible" : "filesize-name--empty"}`}>
         { hasImage && currentFile ? (
           <span className="filename">{ giveFileNameAndSize(currentFile) }</span>
         ) : (

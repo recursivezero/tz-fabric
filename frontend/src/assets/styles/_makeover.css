@@ -1555,3 +1555,97 @@ footer a:hover,
     flex: 1 1 140px !important;
   }
 }
+
+/* ============================================================
+   Final requested UI patch: Analysis row alignment, Search error, List zoom icon
+   ============================================================ */
+
+/* Analysis page: collapse the empty file-name spacer so the Short/Long buttons
+   move up and align with Prev/Next directly below the two equal-height cards. */
+.analysis-page .filesize-name--empty {
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.analysis-page .filesize-name--visible {
+  min-height: 20px !important;
+  margin-top: 6px !important;
+}
+
+.analysis-page .preview-buttons-container,
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 8px !important;
+  margin-bottom: 0 !important;
+  align-self: center !important;
+}
+
+.analysis-page .preview-buttons-container {
+  transform: translateY(-2px);
+}
+
+/* Light theme: make Short Analysis, Long Analysis, Prev, and Next match the
+   Start Recording button: yellow background/border with white text. */
+:root[data-theme="light"] .analysis-page .preview-buttons-container .analysis-btn,
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-buttons .nav-btn {
+  background: var(--tz-turmeric) !important;
+  border: 1px solid var(--tz-turmeric) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(183, 121, 31, 0.22) !important;
+}
+
+:root[data-theme="light"] .analysis-page .preview-buttons-container .analysis-btn:hover:not(:disabled),
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-buttons .nav-btn:hover:not(:disabled) {
+  background: var(--tz-turmeric-soft) !important;
+  border-color: var(--tz-turmeric-soft) !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="light"] .analysis-page .preview-buttons-container .analysis-btn:disabled,
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-buttons .nav-btn:disabled,
+:root[data-theme="light"] .analysis-page .preview-buttons-container .analysis-btn.disabled,
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-buttons .nav-btn.disabled {
+  background: var(--tz-turmeric) !important;
+  border-color: var(--tz-turmeric) !important;
+  color: #ffffff !important;
+  opacity: 0.58 !important;
+  box-shadow: none !important;
+}
+
+/* Search page: keep failed-search errors the same strong red treatment as the
+   Chat page error box after the global makeover styles are loaded. */
+:root .fabric-search .fabric-search__error {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #991b1b !important;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.24) !important;
+}
+
+:root .fabric-search .fabric-search__error * {
+  color: #ffffff !important;
+}
+
+/* Search page light theme: ensure every search action keeps white button text. */
+:root[data-theme="light"] .fabric-search .btn--primary,
+:root[data-theme="light"] .fabric-search .btn-primary,
+:root[data-theme="light"] .fabric-search button.btn--primary,
+:root[data-theme="light"] .fabric-search button.btn-primary,
+:root[data-theme="light"] .fabric-search .search-btn {
+  color: #ffffff !important;
+}
+
+/* List page: show only the zoom/lens icon over images, without the black box. */
+.grid-page .zoom-icon,
+.grid-page .zoom-icon:hover,
+.grid-page .zoom-icon:focus,
+.grid-page .zoom-icon:focus-visible {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.72) !important;
+}
