@@ -2232,3 +2232,58 @@ footer a:hover,
   color: inherit !important;
   opacity: 1 !important;
 }
+
+/* ============================================================
+   Shared theme tokens: one source of truth for newly fixed surfaces
+   ============================================================ */
+:root {
+  --tz-ui-surface: var(--tz-panel);
+  --tz-ui-surface-raised: var(--tz-panel-2);
+  --tz-ui-text: var(--tz-cotton);
+  --tz-ui-text-muted: var(--tz-muted);
+  --tz-ui-border: var(--tz-line);
+  --tz-ui-control-bg: var(--tz-button-ghost-bg);
+  --tz-ui-control-hover-bg: var(--tz-button-ghost-hover-bg);
+}
+
+:root[data-theme="light"] {
+  --tz-ui-surface: #ffffff;
+  --tz-ui-surface-raised: #f8fafc;
+  --tz-ui-text: #0f172a;
+  --tz-ui-text-muted: #475569;
+  --tz-ui-border: rgba(15, 23, 42, 0.14);
+  --tz-ui-control-bg: rgba(255, 255, 255, 0.94);
+  --tz-ui-control-hover-bg: #eef2f7;
+}
+
+:root[data-theme="dark"] {
+  --tz-ui-surface: rgba(15, 23, 42, 0.96);
+  --tz-ui-surface-raised: rgba(30, 41, 59, 0.96);
+  --tz-ui-text: #f8fafc;
+  --tz-ui-text-muted: #cbd5e1;
+  --tz-ui-border: rgba(226, 232, 240, 0.24);
+  --tz-ui-control-bg: rgba(30, 41, 59, 0.94);
+  --tz-ui-control-hover-bg: rgba(51, 65, 85, 0.98);
+}
+
+/* Use the shared tokens for common dialogs/media surfaces so future theme
+   changes update all these places together instead of scattered per selector. */
+.composer-modal,
+.upload-previews,
+.upload-preview,
+.audio-box,
+.lb-stage {
+  background: var(--tz-ui-surface) !important;
+  color: var(--tz-ui-text) !important;
+  border-color: var(--tz-ui-border) !important;
+}
+
+.grid-page-title {
+  color: var(--tz-turmeric) !important;
+}
+
+.grid-page-subtitle,
+.grid-count-inline,
+.lb-caption {
+  color: var(--tz-ui-text-muted) !important;
+}

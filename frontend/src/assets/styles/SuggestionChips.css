@@ -52,3 +52,33 @@
   transform: translateY(-1px);
   filter: brightness(1.02);
 }
+/* QA patch: keep quick-action chip labels visible after lazy CSS load order changes. */
+.suggestion-chips .chip,
+.suggestion-chips .chip.selected,
+.suggestion-chips .chip:disabled {
+  color: var(--tz-cotton, #0f172a) !important;
+  background: var(--tz-button-ghost-bg, #f8fafc) !important;
+  border-color: var(--tz-line, #e2e8f0) !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.suggestion-chips .chip.primary {
+  background: var(--tz-turmeric, #e0a82e) !important;
+  border-color: var(--tz-turmeric, #e0a82e) !important;
+  color: #171101 !important;
+}
+
+:root[data-theme="light"] .suggestion-chips .chip:not(.primary),
+:root[data-theme="light"] .suggestion-chips .chip.selected,
+:root[data-theme="light"] .suggestion-chips .chip:disabled {
+  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+}
+
+:root[data-theme="dark"] .suggestion-chips .chip:not(.primary),
+:root[data-theme="dark"] .suggestion-chips .chip.selected,
+:root[data-theme="dark"] .suggestion-chips .chip:disabled {
+  color: #f8fafc !important;
+  background: rgba(30, 41, 59, 0.96) !important;
+}

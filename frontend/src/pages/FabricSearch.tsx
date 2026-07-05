@@ -30,6 +30,28 @@ interface SearchApiResponse {
   };
 }
 
+type CropRect = { x: number; y: number; w: number; h: number };
+
+const MIN_CROP_SIZE = 40;
+
+function clampCropRectToBounds(rect: CropRect, imgWidth: number, imgHeight: number): CropRect {
+  if (imgWidth <= 0 || imgHeight <= 0) return rect;
+
+  const maxW = Math.max(MIN_CROP_SIZE, imgWidth);
+  const maxH = Math.max(MIN_CROP_SIZE, imgHeight);
+  const w = Math.min(Math.max(MIN_CROP_SIZE, rect.w), maxW);
+  const h = Math.min(Math.max(MIN_CROP_SIZE, rect.h), maxH);
+  const x = Math.min(Math.max(0, rect.x), Math.max(0, imgWidth - w));
+  const y = Math.min(Math.max(0, rect.y), Math.max(0, imgHeight - h));
+
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    w: Math.round(w),
+    h: Math.round(h),
+  };
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
@@ -616,6 +638,9 @@ function Lightbox({
   return (
     <div
       className="lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label={caption ? `Preview: ${caption}` : "Image preview"}
       onClick={(e) => {
         if ((e.target as HTMLElement).classList.contains("lightbox")) onClose();
       }}
@@ -638,7 +663,11 @@ function Lightbox({
 
         {caption && <div className="lightbox__caption">{caption}</div>}
 
-        <div className="lightbox__controls">
+        <div
+          className="lightbox__controls"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             className="lightbox__control-btn"
             onClick={onZoomOut}
@@ -941,7 +970,7 @@ export default function Search() {
 
   // Crop / drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [cropRect, setCropRect] = useState({ x: 20, y: 20, w: 160, h: 160 });
+  const [cropRect, setCropRect] = useState<CropRect>({ x: 20, y: 20, w: 160, h: 160 });
   const [rawImageUrl, setRawImageUrl] = useState<string | null>(null);
   const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -1149,15 +1178,50 @@ export default function Search() {
     setLbScale(1);
     setLbOffset({ x: 0, y: 0 });
     setLightboxOpen(true);
-    document.body.style.overflow = "hidden";
   };
 
   const closeLightbox = () => {
     setLightboxOpen(false);
     setActiveSrc(null);
     setActiveCaption(null);
-    document.body.style.overflow = "";
   };
+
+  useEffect(() => {
+    if (!lightboxOpen && !drawerOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "contain";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      if (lightboxOpen) {
+        setLightboxOpen(false);
+        setActiveSrc(null);
+        setActiveCaption(null);
+        return;
+      }
+
+      if (drawerOpen) {
+        if (rawImageUrl) {
+          try { URL.revokeObjectURL(rawImageUrl); } catch { }
+          setRawImageUrl(null);
+        }
+        setDrawerOpen(false);
+        setCropRect({ x: 20, y: 20, w: 160, h: 160 });
+        setSelectingImage(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, [lightboxOpen, drawerOpen, rawImageUrl]);
 
   const onLbWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
@@ -1185,9 +1249,27 @@ export default function Search() {
       const dx = ev.clientX - lastMouseRef.current.x;
       const dy = ev.clientY - lastMouseRef.current.y;
       lastMouseRef.current = { x: ev.clientX, y: ev.clientY };
+      const img = imgRef.current;
+      const imgWidth = img?.clientWidth ?? 0;
+      const imgHeight = img?.clientHeight ?? 0;
+
       setCropRect((prev) => {
-        if (draggingRef.current) return { x: Math.max(0, prev.x + dx), y: Math.max(0, prev.y + dy), w: prev.w, h: prev.h };
-        if (resizingRef.current) return { x: prev.x, y: prev.y, w: Math.max(40, prev.w + dx), h: Math.max(40, prev.h + dy) };
+        if (draggingRef.current) {
+          return clampCropRectToBounds(
+            { ...prev, x: prev.x + dx, y: prev.y + dy },
+            imgWidth,
+            imgHeight
+          );
+        }
+
+        if (resizingRef.current) {
+          return clampCropRectToBounds(
+            { ...prev, w: prev.w + dx, h: prev.h + dy },
+            imgWidth,
+            imgHeight
+          );
+        }
+
         return prev;
       });
     };
@@ -1201,9 +1283,20 @@ export default function Search() {
     const img = imgRef.current;
     if (!img) return;
     const dispW = img.clientWidth, dispH = img.clientHeight;
+    if (dispW <= 0 || dispH <= 0) {
+      setSelectingImage(false);
+      return;
+    }
+
     const short = Math.min(dispW, dispH);
-    const size = Math.round(short * 0.55);
-    setCropRect({ x: Math.round((dispW - size) / 2), y: Math.round((dispH - size) / 2), w: size, h: size });
+    const size = Math.max(MIN_CROP_SIZE, Math.round(short * 0.55));
+    setCropRect(
+      clampCropRectToBounds(
+        { x: Math.round((dispW - size) / 2), y: Math.round((dispH - size) / 2), w: size, h: size },
+        dispW,
+        dispH
+      )
+    );
     setSelectingImage(false);
   };
 
@@ -1212,10 +1305,20 @@ export default function Search() {
     const imgEl = imgRef.current;
     const dispW = imgEl.clientWidth, dispH = imgEl.clientHeight;
     const natW = imgEl.naturalWidth, natH = imgEl.naturalHeight;
-    const sx = Math.round((cropRect.x / dispW) * natW);
-    const sy = Math.round((cropRect.y / dispH) * natH);
-    const sw = Math.max(1, Math.round((cropRect.w / dispW) * natW));
-    const sh = Math.max(1, Math.round((cropRect.h / dispH) * natH));
+    const boundedCropRect = clampCropRectToBounds(cropRect, dispW, dispH);
+    if (
+      boundedCropRect.x !== cropRect.x ||
+      boundedCropRect.y !== cropRect.y ||
+      boundedCropRect.w !== cropRect.w ||
+      boundedCropRect.h !== cropRect.h
+    ) {
+      setCropRect(boundedCropRect);
+    }
+
+    const sx = Math.round((boundedCropRect.x / dispW) * natW);
+    const sy = Math.round((boundedCropRect.y / dispH) * natH);
+    const sw = Math.max(1, Math.round((boundedCropRect.w / dispW) * natW));
+    const sh = Math.max(1, Math.round((boundedCropRect.h / dispH) * natH));
 
     const canvas = document.createElement("canvas");
     canvas.width = sw;

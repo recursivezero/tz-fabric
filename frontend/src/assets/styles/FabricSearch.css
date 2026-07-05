@@ -2099,3 +2099,315 @@
     flex: 1 1 150px !important;
   }
 }
+
+/* ============================================================
+   QA top-up: stable crop modal sizing, padding and borders
+   ============================================================
+   The crop dialog can be opened in both themes and on short laptop screens. Keep
+   the modal inside the viewport, keep actions visible, avoid oversized empty
+   gutters around the selected image, and preserve readable borders in light mode. */
+.fabric-search .crop-drawer {
+  padding: clamp(12px, 2.5vw, 28px) !important;
+  align-items: center !important;
+  overflow: auto !important;
+}
+
+.fabric-search .crop-drawer__inner {
+  width: min(720px, calc(100vw - 32px)) !important;
+  max-height: calc(100dvh - 32px) !important;
+  padding: clamp(18px, 2.6vw, 28px) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.fabric-search .crop-drawer__title {
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.fabric-search .crop-drawer__stage {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: clamp(10px, 2vw, 16px) !important;
+  border: 1px solid var(--tz-ui-border, var(--color-border-2)) !important;
+  border-radius: 16px !important;
+  background: var(--tz-ui-surface-raised, var(--color-surface)) !important;
+  overflow: auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.fabric-search .crop-drawer__image-wrap {
+  flex: 0 0 auto !important;
+  max-width: 100% !important;
+  max-height: min(58vh, calc(100dvh - 230px)) !important;
+  border: 1px solid var(--tz-ui-border, var(--color-border-2)) !important;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18) !important;
+}
+
+.fabric-search .crop-drawer__image {
+  max-width: min(100%, 560px) !important;
+  max-height: min(58vh, calc(100dvh - 230px)) !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+.fabric-search .crop-drawer__rect {
+  border-color: var(--tz-turmeric, var(--color-accent)) !important;
+  box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.44), 0 0 0 1px rgba(255, 255, 255, 0.42) !important;
+}
+
+.fabric-search .crop-drawer__handle {
+  background: var(--tz-turmeric, var(--color-accent)) !important;
+  border: 2px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 5px !important;
+}
+
+.fabric-search .crop-drawer__actions {
+  flex: 0 0 auto !important;
+  margin-top: 0 !important;
+  padding-top: 2px !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+}
+
+@media (max-height: 680px) {
+  .fabric-search .crop-drawer {
+    align-items: flex-start !important;
+  }
+
+  .fabric-search .crop-drawer__inner {
+    max-height: calc(100dvh - 20px) !important;
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+
+  .fabric-search .crop-drawer__image-wrap,
+  .fabric-search .crop-drawer__image {
+    max-height: calc(100dvh - 210px) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .fabric-search .crop-drawer__inner {
+    width: calc(100vw - 20px) !important;
+  }
+
+  .fabric-search .crop-drawer__actions .btn {
+    flex: 1 1 160px !important;
+  }
+}
+
+/* ============================================================
+   Search QA hardening: preview, results and lightbox containment
+   ============================================================
+   Fixes the remaining /search distortions seen on laptop screens:
+   - post-crop preview images were allowed to grow into huge vertical panels;
+   - result thumbnails used cover/crop so fabrics looked cut or misleading;
+   - the lightbox left page scroll active and could let tall images/controls
+     feel outside the viewport at browser zoom levels. */
+.fabric-search,
+.fabric-search * {
+  min-width: 0;
+}
+
+.fabric-search.fabric-search--previewing .fabric-search__body {
+  max-width: min(1180px, calc(100vw - 32px)) !important;
+  padding-top: clamp(18px, 3vh, 34px) !important;
+  padding-bottom: 72px !important;
+}
+
+.fabric-search.fabric-search--previewing .image-preview {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(280px, 1fr)) !important;
+  align-items: start !important;
+  gap: 22px !important;
+  width: 100% !important;
+  margin-top: 0 !important;
+}
+
+.fabric-search.fabric-search--previewing .image-preview__pane {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.fabric-search .image-preview__frame {
+  width: 100% !important;
+  min-height: 260px !important;
+  max-height: min(460px, 52vh) !important;
+  display: grid !important;
+  place-items: center !important;
+  background: var(--tz-ui-surface-raised, var(--color-surface)) !important;
+  border: 1px solid var(--tz-ui-border, var(--color-border)) !important;
+  overflow: hidden !important;
+}
+
+.fabric-search .image-preview__img {
+  width: 100% !important;
+  height: min(460px, 52vh) !important;
+  max-height: min(460px, 52vh) !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  display: block !important;
+  background: rgba(15, 23, 42, 0.04) !important;
+}
+
+:root[data-theme="dark"] .fabric-search .image-preview__img {
+  background: rgba(2, 6, 23, 0.42) !important;
+}
+
+.fabric-search .image-preview__options,
+.fabric-search .image-preview__search-row {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+}
+
+.fabric-search .image-preview__options .category-picker {
+  width: 100% !important;
+}
+
+.fabric-search .image-preview__search-row {
+  display: grid !important;
+  grid-template-columns: minmax(280px, 1fr) auto !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+.fabric-search.fabric-search--has-results .fabric-search__body--results {
+  padding-top: 24px !important;
+}
+
+.fabric-search .result-grid--full {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+  align-items: start !important;
+}
+
+.fabric-search .result-card {
+  background: var(--tz-ui-surface-raised, var(--color-surface)) !important;
+  overflow: hidden !important;
+}
+
+.fabric-search .result-card__thumb {
+  aspect-ratio: 4 / 3 !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(15, 23, 42, 0.04) !important;
+  overflow: hidden !important;
+}
+
+:root[data-theme="dark"] .fabric-search .result-card__thumb {
+  background: rgba(2, 6, 23, 0.42) !important;
+}
+
+.fabric-search .result-card__thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  transform: none !important;
+}
+
+.fabric-search .result-card:hover .result-card__thumb img {
+  transform: none !important;
+}
+
+.fabric-search .result-card__thumb::after {
+  display: none !important;
+}
+
+.fabric-search .result-card__name {
+  min-height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+  color: #334155 !important;
+  background: rgba(255, 255, 255, 0.74) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+}
+
+:root[data-theme="dark"] .fabric-search .result-card__name {
+  color: #e2e8f0 !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+}
+
+.fabric-search .lightbox {
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  padding: clamp(12px, 2vw, 24px) !important;
+}
+
+.fabric-search .lightbox__stage {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100vw !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 20px 20px 94px !important;
+}
+
+.fabric-search .lightbox__image {
+  width: auto !important;
+  height: auto !important;
+  max-width: min(92vw, 1280px) !important;
+  max-height: calc(100dvh - 150px) !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  transform-origin: center center !important;
+}
+
+.fabric-search .lightbox__caption {
+  bottom: 78px !important;
+  max-width: min(86vw, 900px) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.fabric-search .lightbox__controls {
+  position: fixed !important;
+  bottom: max(18px, env(safe-area-inset-bottom)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 1002 !important;
+  max-width: calc(100vw - 28px) !important;
+  flex-wrap: nowrap !important;
+}
+
+@media (max-width: 900px) {
+  .fabric-search.fabric-search--previewing .image-preview {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fabric-search .image-preview__search-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-height: 700px) {
+  .fabric-search .image-preview__frame {
+    min-height: 220px !important;
+    max-height: 42vh !important;
+  }
+
+  .fabric-search .image-preview__img {
+    height: 42vh !important;
+    max-height: 42vh !important;
+  }
+
+  .fabric-search .lightbox__stage {
+    padding-bottom: 82px !important;
+  }
+
+  .fabric-search .lightbox__image {
+    max-height: calc(100dvh - 126px) !important;
+  }
+}

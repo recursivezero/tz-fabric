@@ -330,3 +330,58 @@ figcaption {
 :root[data-theme="dark"] .grid-page .media-meta time {
   color: #f1f5f9 !important;
 }
+
+/* ============================================================
+   QA patch: fabric list title visibility + correct lightbox fit
+   ============================================================ */
+.grid-page-title {
+  text-align: center;
+  margin-block: 10px;
+  color: var(--tz-turmeric, #a455ab) !important;
+  font-weight: 850;
+}
+
+.grid-page-subtitle {
+  text-align: center;
+  color: var(--tz-muted, #475569) !important;
+  font-weight: 650;
+}
+
+.grid-page .grid-count-inline {
+  color: var(--tz-muted, #475569) !important;
+}
+
+.lb-stage {
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.lb-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transform-origin: center center;
+}
+
+.lb-caption {
+  max-width: calc(100% - 160px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .lb-stage {
+    width: 94vw;
+    height: 82vh;
+    padding: 10px;
+  }
+
+  .lb-caption {
+    max-width: calc(100% - 24px);
+    bottom: 58px;
+  }
+}
