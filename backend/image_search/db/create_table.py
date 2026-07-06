@@ -25,6 +25,7 @@ logger.setLevel(logging.DEBUG)
 # Helpers: S3 pre-signed fetch URL  ↔  stable CDN URL
 # ---------------------------------------------------------------------------
 
+
 def _make_fetch_url(key: str) -> str:
     """
     Return a URL the SigLIP/OpenCLIP embedder can actually download.
@@ -63,10 +64,10 @@ def _to_cdn_url(uri: str) -> str:
     parsed = urlparse(uri)
     host = parsed.netloc
 
-    if not host:          # local path — leave unchanged
+    if not host:  # local path — leave unchanged
         return uri
 
-    if "amazonaws.com" not in host:   # CDN URL or unknown — leave unchanged
+    if "amazonaws.com" not in host:  # CDN URL or unknown — leave unchanged
         return uri
 
     # Virtual-hosted: <bucket>.s3[.<region>].amazonaws.com/<key>
@@ -89,6 +90,7 @@ def _to_cdn_url(uri: str) -> str:
 # ---------------------------------------------------------------------------
 # Existing helpers (unchanged)
 # ---------------------------------------------------------------------------
+
 
 def validate_file_path(file_path: str) -> bool:
     """Validate that the file path is a local file or an HTTP/HTTPS URL.

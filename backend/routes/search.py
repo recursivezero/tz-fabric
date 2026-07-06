@@ -35,7 +35,9 @@ SAMPLE_FALLBACK_RESULTS = [
 ]
 
 
-def _fallback_search_results(search_term: Optional[str], limit: Optional[int]) -> List[str]:
+def _fallback_search_results(
+    search_term: Optional[str], limit: Optional[int]
+) -> List[str]:
     """Return safe bundled sample images when the vector DB is unavailable.
 
     Local/dev installs often do not include the LanceDB table or embedding model.
@@ -47,9 +49,20 @@ def _fallback_search_results(search_term: Optional[str], limit: Optional[int]) -
     results = SAMPLE_FALLBACK_RESULTS.copy()
 
     if any(word in query for word in ("red", "maroon", "silk", "satin", "embroider")):
-        results = ["/assets/sample1.jpeg", "/assets/sample3.jpeg", "/assets/sample2.jpeg"]
-    elif any(word in query for word in ("blue", "cotton", "pastel", "floral", "cream", "white")):
-        results = ["/assets/sample2.jpeg", "/assets/sample1.jpeg", "/assets/sample3.jpeg"]
+        results = [
+            "/assets/sample1.jpeg",
+            "/assets/sample3.jpeg",
+            "/assets/sample2.jpeg",
+        ]
+    elif any(
+        word in query
+        for word in ("blue", "cotton", "pastel", "floral", "cream", "white")
+    ):
+        results = [
+            "/assets/sample2.jpeg",
+            "/assets/sample1.jpeg",
+            "/assets/sample3.jpeg",
+        ]
 
     while len(results) < requested:
         results.extend(SAMPLE_FALLBACK_RESULTS)

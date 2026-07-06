@@ -408,10 +408,14 @@ async def validate_image(image: UploadFile = File(...)):
             # Most user-uploaded fabric/product photos should not wait on the
             # vision validator. If the image has enough visible texture and no
             # obvious face, let the analyzer run immediately.
-            if _has_enough_local_texture(local_metrics_raw) and not _contains_face_bytes(raw):
+            if _has_enough_local_texture(
+                local_metrics_raw
+            ) and not _contains_face_bytes(raw):
                 reason = "Local fabric/texture check passed."
                 out_meta = {"metrics": local_metrics_raw, "fast_local_accept": True}
-                _cache_set(img_hash, {"verdict": "valid", "reason": reason, "meta": out_meta})
+                _cache_set(
+                    img_hash, {"verdict": "valid", "reason": reason, "meta": out_meta}
+                )
                 print(
                     f"[validate-image] fast-local-accept total={(time.time()-t0)*1000:.0f}ms meta_metrics={local_metrics_raw}"
                 )
@@ -432,9 +436,15 @@ async def validate_image(image: UploadFile = File(...)):
             # validator took too long.
             reason = "Validation timed out; continuing with analysis."
             out_meta = {"validation_timeout": True, "metrics": local_metrics_raw}
-            _cache_set(img_hash, {"verdict": "valid", "reason": reason, "meta": out_meta})
-            print(f"[validate-image] permissive-timeout total={(time.time()-t0)*1000:.0f}ms")
-            return JSONResponse(content={"valid": True, "reason": reason, "meta": out_meta})
+            _cache_set(
+                img_hash, {"verdict": "valid", "reason": reason, "meta": out_meta}
+            )
+            print(
+                f"[validate-image] permissive-timeout total={(time.time()-t0)*1000:.0f}ms"
+            )
+            return JSONResponse(
+                content={"valid": True, "reason": reason, "meta": out_meta}
+            )
 
         t3 = time.time()
         response_text = (response_text or "").strip()
@@ -558,7 +568,11 @@ async def validate_image(image: UploadFile = File(...)):
                         "metrics": local_metrics,
                     }
 
-            elif _has_enough_local_texture(local_metrics) and not mentions_person and not face_found:
+            elif (
+                _has_enough_local_texture(local_metrics)
+                and not mentions_person
+                and not face_found
+            ):
                 prev_reason = reason
                 verdict = "valid"
                 reason = f"accepted by permissive local texture check (prev_reason='{prev_reason}')"

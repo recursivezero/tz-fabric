@@ -19,7 +19,9 @@ def fetch_remote_image(url: str = Query(..., min_length=8)):
     """Fetch a remote image for the browser when direct fetch is blocked by CORS."""
     parsed = urlparse(url)
     if parsed.scheme not in {"http", "https"}:
-        raise HTTPException(status_code=400, detail="Only http/https image URLs are allowed")
+        raise HTTPException(
+            status_code=400, detail="Only http/https image URLs are allowed"
+        )
 
     try:
         response = requests.get(
@@ -28,14 +30,22 @@ def fetch_remote_image(url: str = Query(..., min_length=8)):
             headers={"User-Agent": "Mozilla/5.0 FabricAI/1.0"},
         )
     except requests.RequestException as exc:
-        raise HTTPException(status_code=502, detail=f"Could not fetch remote image: {exc}") from exc
+        raise HTTPException(
+            status_code=502, detail=f"Could not fetch remote image: {exc}"
+        ) from exc
 
     if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail=f"Remote image returned {response.status_code}")
+        raise HTTPException(
+            status_code=502, detail=f"Remote image returned {response.status_code}"
+        )
 
-    content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+    content_type = (
+        response.headers.get("content-type", "").split(";")[0].strip().lower()
+    )
     if not content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Remote URL did not return an image")
+        raise HTTPException(
+            status_code=400, detail="Remote URL did not return an image"
+        )
 
     content = response.content
     max_bytes = 12 * 1024 * 1024

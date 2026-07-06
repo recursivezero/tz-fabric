@@ -157,6 +157,7 @@ def health_check():
         "routes": len(app.routes),
     }
 
+
 @app.get("/__routes", tags=["Meta"])
 def _routes():
     return [getattr(r, "path", str(r)) for r in app.routes]
