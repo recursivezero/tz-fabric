@@ -418,45 +418,45 @@
 
 /* ensure the bubble is a positioned container */
 .assistant-block--with-copy {
-  position: relative !important;
+  position: relative ;
   /* keep grid layout for content + controls if present */
-  display: block !important;
+  display: block ;
   /* prefer block so absolute controls don't affect layout */
-  padding: 12px 14px 44px 14px !important;
+  padding: 12px 14px 44px 14px ;
   /* leave room at bottom for controls */
-  box-sizing: border-box !important;
+  box-sizing: border-box ;
 }
 
 /* make controls sit absolutely at bottom-right of the bubble and always visible */
 .assistant-block--with-copy .assistant-block__controls {
-  position: absolute !important;
-  right: 10px !important;
-  bottom: 10px !important;
-  top: auto !important;
+  position: absolute ;
+  right: 10px ;
+  bottom: 10px ;
+  top: auto ;
   /* ignore top placement rules */
-  display: flex !important;
-  gap: 6px !important;
-  align-items: center !important;
-  z-index: 5 !important;
-  opacity: 1 !important;
+  display: flex ;
+  gap: 6px ;
+  align-items: center ;
+  z-index: 5 ;
+  opacity: 1 ;
   /* always visible */
-  transform: none !important;
+  transform: none ;
   /* no translate/hidden movement */
-  pointer-events: auto !important;
+  pointer-events: auto ;
   /* ensure buttons clickable */
-  background: transparent !important;
-  padding: 0 !important;
-  white-space: nowrap !important;
+  background: transparent ;
+  padding: 0 ;
+  white-space: nowrap ;
 }
 
 /* ensure the copy button is compact and matches tappable target size */
 .assistant-block--with-copy .copy-btn {
-  min-width: 44px !important;
-  height: 36px !important;
-  padding: 6px 10px !important;
-  font-size: 13px !important;
-  border-radius: 999px !important;
-  background: rgba(0, 0, 0, 0.06) !important;
+  min-width: 44px ;
+  height: 36px ;
+  padding: 6px 10px ;
+  font-size: 13px ;
+  border-radius: 999px ;
+  background: rgba(0, 0, 0, 0.06) ;
 }
 
 /* Remove earlier hover-triggered visibility (override any selector targeting .message-wrapper:hover .assistant-block__controls) */
@@ -464,37 +464,32 @@
 .message-wrapper:focus-within .assistant-block__controls,
 .assistant-block--with-copy:hover .assistant-block__controls,
 .assistant-block--with-copy:focus-within .assistant-block__controls {
-  opacity: 1 !important;
-  transform: none !important;
+  opacity: 1 ;
+  transform: none ;
 }
 
 /* If the bubble contains long code blocks, keep controls visible but avoid overlap: slightly nudge if necessary */
 @media (max-width: 640px) {
   .assistant-block--with-copy {
-    padding-bottom: 48px !important;
+    padding-bottom: 48px ;
   }
 
   .assistant-block--with-copy .copy-btn {
-    min-width: 40px !important;
-    height: 34px !important;
-    font-size: 12px !important;
+    min-width: 40px ;
+    height: 34px ;
+    font-size: 12px ;
   }
 }
 
-/* Optional: Differ slightly for right-aligned bubbles (user messages) if you ever add copy there */
-.msg-row.right .assistant-block--with-copy .assistant-block__controls,
-.msg-row.right .assistant-block--with-copy .copy-btn {
-  /* no-op by default - keeps same look; change if you want right-speech variants */
-}
 
 /* Reveal copy button only after typing completes.
    Place at the END of the CSS file so it overrides earlier hover rules. */
 
 /* Ensure bubble keeps bottom padding so the controls won't shift content */
 .assistant-block--with-copy {
-  padding-bottom: 48px !important;
+  padding-bottom: 48px ;
   /* reserve space for controls */
-  box-sizing: border-box !important;
+  box-sizing: border-box ;
 }
 
 /* Default: controls hidden while typing */
@@ -525,17 +520,133 @@
 }
 
 /* If the user manually stops typing via the global stop event,
-   setExternallyStopped becomes true and isTyping becomes false —
-   the above selector will allow the button to appear immediately. */
+  setExternallyStopped becomes true and isTyping becomes false —
+  the above selector will allow the button to appear immediately. */
 
 /* Small screens: reduce reserved bottom padding */
 @media (max-width: 640px) {
   .assistant-block--with-copy {
-    padding-bottom: 44px !important;
+    padding-bottom: 44px ;
   }
 
   .assistant-block__controls {
-    right: 8px !important;
-    bottom: 8px !important;
+    right: 8px ;
+    bottom: 8px ;
   }
+}
+/* Chat bubble sizing hardening:
+   Keep generated assistant replies compact while still leaving room for copy controls. */
+.assistant-block--with-copy {
+  padding: 10px 46px 10px 14px ;
+  min-height: 0 ;
+}
+
+.assistant-block--with-copy .assistant-block__controls {
+  top: 8px ;
+  right: 8px ;
+  bottom: auto ;
+  opacity: 1 ;
+  transform: none ;
+}
+
+.msg-row[data-typing="true"] .assistant-block--with-copy .assistant-block__controls {
+  opacity: 0 ;
+  pointer-events: none ;
+}
+
+.assistant-block--with-copy .copy-btn {
+  width: 30px ;
+  min-width: 30px ;
+  height: 30px ;
+  padding: 0 ;
+  display: inline-flex ;
+  align-items: center ;
+  justify-content: center ;
+}
+
+.assistant-block .assistant-content {
+  padding-top: 0 ;
+}
+
+.assistant-block .assistant-content > :first-child {
+  margin-top: 0 ;
+}
+
+.assistant-block .assistant-content > :last-child {
+  margin-bottom: 0 ;
+}
+
+.assistant-block .assistant-content p {
+  margin: 0 0 0.65rem ;
+}
+
+.assistant-block .assistant-content p:only-child {
+  margin: 0 ;
+}
+
+.message-wrapper .inline-quick-replies {
+  width: fit-content ;
+  max-width: calc(100% - 56px) ;
+  margin: 6px 0 12px 54px ;
+  padding: 6px ;
+  display: inline-flex ;
+  align-items: center ;
+  border-radius: 999px ;
+}
+
+.message-wrapper .inline-quick-replies .quick-replies-row {
+  width: auto ;
+  display: inline-flex ;
+  align-items: center ;
+  gap: 8px ;
+}
+
+.message-wrapper .inline-quick-replies .chip {
+  min-width: 42px ;
+  width: auto ;
+  padding: 7px 13px ;
+  line-height: 1 ;
+  white-space: nowrap ;
+}
+
+@media (max-width: 640px) {
+  .assistant-block--with-copy {
+    padding: 9px 42px 9px 12px ;
+  }
+
+  .assistant-block--with-copy .assistant-block__controls {
+    top: 7px ;
+    right: 7px ;
+    bottom: auto ;
+  }
+
+  .assistant-block--with-copy .copy-btn {
+    width: 28px ;
+    min-width: 28px ;
+    height: 28px ;
+  }
+
+  .message-wrapper .inline-quick-replies {
+    max-width: calc(100% - 46px) ;
+    margin-left: 46px ;
+  }
+}
+
+/* Add static context before Yes/No so quick replies never appear alone. */
+.message-wrapper .inline-quick-replies {
+  gap: 10px ;
+  flex-wrap: wrap ;
+}
+
+.message-wrapper .quick-replies-prompt {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cbd5e1;
+  line-height: 1;
+  white-space: nowrap;
+  padding-inline: 4px;
+}
+
+:root[data-theme="light"] .message-wrapper .quick-replies-prompt {
+  color: #334155;
 }

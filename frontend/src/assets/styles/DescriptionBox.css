@@ -99,3 +99,203 @@
 .description-wrapper .copy-btn:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
+/* Analysis page result card fixes. */
+.analysis-page .description-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.analysis-page .description-wrapper .nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.analysis-page .description-wrapper .nav-btn {
+  min-width: 106px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(30, 41, 59, 0.82);
+  color: #f8fafc;
+  font-weight: 800;
+}
+
+.analysis-page .description-wrapper .nav-btn.disabled {
+  background: rgba(148, 163, 184, 0.22);
+  color: rgba(248, 250, 252, 0.66);
+}
+
+.analysis-page .description-wrapper .description-box {
+  flex: 1 1 auto;
+  min-height: clamp(260px, 42dvh, 440px);
+  height: auto;
+  max-height: none;
+  overflow: hidden;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.92),
+    rgba(15, 23, 42, 0.78)
+  );
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  color: #f8fafc;
+  line-height: 1.65;
+}
+
+.analysis-page .description-wrapper .description-content {
+  flex: 1 1 auto;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 10px;
+  color: #e5e7eb;
+  scrollbar-width: thin;
+}
+
+.analysis-page .description-wrapper .description-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.analysis-page
+  .description-wrapper
+  .description-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.34);
+}
+
+.analysis-page .description-wrapper .placeholder-title {
+  margin: 0 0 14px;
+  color: #f8fafc;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.analysis-page .description-wrapper .placeholder-body {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: clamp(16px, 1.8vw, 22px);
+  line-height: 1.55;
+}
+
+.analysis-page .description-wrapper .response-counter {
+  color: #cbd5e1;
+}
+
+.analysis-page .description-wrapper .copy-btn {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.55);
+  color: #f8fafc;
+}
+
+/* Match the result card height to the image preview without forcing the whole
+   column to stretch; this keeps both analysis tiles visually aligned. */
+.analysis-page .description-wrapper {
+  height: auto;
+  min-height: 0;
+}
+
+.analysis-page .description-wrapper .description-box {
+  flex: 0 0 auto;
+  height: clamp(260px, 42dvh, 440px);
+  min-height: clamp(260px, 42dvh, 440px);
+}
+
+/* Final repair: keep Analysis result card equal to image/drop card and place Prev/Next below it. */
+.analysis-page .description-wrapper {
+  height: auto ;
+  min-height: 0 ;
+  align-self: start ;
+}
+
+.analysis-page .description-wrapper .description-box {
+  order: 1 ;
+  box-sizing: border-box ;
+  flex: 0 0 auto ;
+  width: 100% ;
+  height: clamp(260px, 42dvh, 440px) ;
+  min-height: clamp(260px, 42dvh, 440px) ;
+  max-height: clamp(260px, 42dvh, 440px) ;
+}
+
+.analysis-page .description-wrapper .nav-buttons {
+  order: 2 ;
+  margin: 16px 0 0 ;
+  flex: 0 0 auto ;
+}
+
+/* Final theme polish: Prev/Next use dark text on yellow in dark theme and
+   white text on yellow in light theme, matching the Analysis action buttons. */
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-btn {
+  color: #171101 ;
+  text-shadow: none ;
+}
+
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-btn {
+  color: #ffffff ;
+}
+
+/* Keep the Analysis card clean: show only the copy icon, not "Viewing response X of Y". */
+.analysis-page .description-wrapper .response-copy-only {
+  justify-content: flex-end ;
+}
+
+.analysis-page .description-wrapper .response-copy-only .copy-btn {
+  margin-left: auto ;
+}
+
+/* Keep the Analysis response copy icon visible in light theme. */
+:root[data-theme="light"] .analysis-page .description-wrapper .copy-btn {
+  background: rgba(15, 23, 42, 0.08) ;
+  border-color: rgba(15, 23, 42, 0.22) ;
+  color: #0f172a ;
+}
+
+:root[data-theme="light"] .analysis-page .description-wrapper .copy-btn svg {
+  color: #0f172a ;
+  fill: currentColor ;
+}
+/* Top-up fix: the Analysis result card stays dark even when the app is in
+   light theme, so keep the copy action high-contrast instead of inheriting
+   the light-theme dark icon color. */
+.analysis-page .description-wrapper .response-copy-only .copy-btn,
+:root[data-theme="light"]
+  .analysis-page
+  .description-wrapper
+  .response-copy-only
+  .copy-btn {
+  min-width: 38px ;
+  min-height: 34px ;
+  display: inline-flex ;
+  align-items: center ;
+  justify-content: center ;
+  background: rgba(15, 23, 42, 0.88) ;
+  border: 1px solid rgba(255, 255, 255, 0.42) ;
+  color: #ffffff ;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28) ;
+  opacity: 1 ;
+  visibility: visible ;
+}
+
+.analysis-page .description-wrapper .response-copy-only .copy-btn svg,
+:root[data-theme="light"]
+  .analysis-page
+  .description-wrapper
+  .response-copy-only
+  .copy-btn
+  svg {
+  width: 18px ;
+  height: 18px ;
+  color: #ffffff ;
+  fill: currentColor ;
+  stroke: currentColor ;
+  opacity: 1 ;
+  visibility: visible ;
+}

@@ -1,38 +1,52 @@
-import { Route, Routes } from "react-router-dom";
-import { NotFound } from "./components/NotFound";
-import { usePageTracking } from "./hooks/usePageTracking";
-import UploadPage from "./pages/AudioForm";
-import CardReader from "./pages/PanCardReader";
-import ComingSoon from "./pages/ComingSoon";
-import { ContactUs } from "./pages/Contact";
-import Chat from "./pages/FabricChat";
-import ContentGrid from "./pages/FabricList";
-import Search from "./pages/FabricSearch";
+import { Suspense, lazy } from "react";
 import Home from "./pages/Home";
-import ImageDescription from "./pages/ImageDescriptor";
-import Reader from "./pages/Reader";
-import AadhaarCardReader from "./pages/AadhaarCardReader";
+import { Route, Routes } from "react-router-dom";
+import { usePageTracking } from "./hooks/usePageTracking";
+
+const ImageDescription = lazy(() => import("./pages/ImageDescriptor"));
+const UploadPage = lazy(() => import("./pages/AudioForm"));
+const ContentGrid = lazy(() => import("./pages/FabricList"));
+const Search = lazy(() => import("./pages/FabricSearch"));
+const Chat = lazy(() => import("./pages/FabricChat"));
+const ComingSoon = lazy(() => import("./pages/ComingSoon"));
+const ContactUs = lazy(() =>
+  import("./pages/Contact").then((module) => ({ default: module.ContactUs })),
+);
+const Reader = lazy(() => import("./pages/Reader"));
+const CardReader = lazy(() => import("./pages/PanCardReader"));
+const AadhaarCardReader = lazy(() => import("./pages/AadhaarCardReader"));
+const NotFound = lazy(() =>
+  import("./components/NotFound").then((module) => ({ default: module.NotFound })),
+);
+
+const RouteFallback = () => (
+  <div className="route-loading" role="status" aria-live="polite">
+    Loading…
+  </div>
+);
 
 export const Routing = () => {
   usePageTracking();
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/analysis" element={<ImageDescription />} />
-      <Route path="/upload" element={<UploadPage />} />
-      <Route path="/view" element={<ContentGrid />} />
-      <Route path="/search" element={<Search />} />
-      <Route path="/chat" element={<Chat />} />
-      <Route path="/features" element={<ComingSoon />} />
-      <Route path="/pricing" element={<ComingSoon />} />
-      <Route path="/api" element={<ComingSoon />} />
-      <Route path="/docs" element={<ComingSoon />} />
-      <Route path="/help" element={<ComingSoon />} />
-      <Route path="/contact" element={<ContactUs />} />
-      <Route path="*" element={<NotFound />} />
-      <Route path="/reader" element={<Reader />} />
-      <Route path="/reader/pan" element={<CardReader />} />
-      <Route path="/reader/adhaar" element={<AadhaarCardReader />} />
-    </Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/analysis" element={<ImageDescription />} />
+        <Route path="/upload" element={<UploadPage />} />
+        <Route path="/view" element={<ContentGrid />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/features" element={<ComingSoon />} />
+        <Route path="/pricing" element={<ComingSoon />} />
+        <Route path="/api" element={<ComingSoon />} />
+        <Route path="/docs" element={<ComingSoon />} />
+        <Route path="/help" element={<ComingSoon />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="*" element={<NotFound />} />
+        <Route path="/reader" element={<Reader />} />
+        <Route path="/reader/pan" element={<CardReader />} />
+        <Route path="/reader/adhaar" element={<AadhaarCardReader />} />
+      </Routes>
+    </Suspense>
   );
 };

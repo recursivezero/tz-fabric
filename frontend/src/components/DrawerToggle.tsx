@@ -10,8 +10,10 @@ const DrawerToggle = ({ showDrawer, setShowDrawer }) => {
         type="button"
         className="drawer-toggle-button"
         onClick={() => setShowDrawer(!showDrawer)}
+        aria-label={showDrawer ? "Collapse sample image drawer" : "Expand sample image drawer"}
+        title={showDrawer ? "Collapse samples" : "Expand samples"}
       >
-        {showDrawer ? ">" : "<"}
+        <span aria-hidden="true">{showDrawer ? "❯" : "❮"}</span>
       </button>
     </div>
   );

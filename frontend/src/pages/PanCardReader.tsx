@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { CSSProperties } from "react";
 import Cropper from "react-easy-crop";
 import { useNavigate } from "react-router-dom";
 
@@ -24,6 +25,7 @@ const PanCardReader = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<PanResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
@@ -36,6 +38,7 @@ const PanCardReader = () => {
   const handleFile = (f: File | null) => {
     setFile(f);
     setResult(null);
+    setError(null);
     setCroppedImage(null);
     if (f) {
       const url = URL.createObjectURL(f);
@@ -128,6 +131,7 @@ const PanCardReader = () => {
   const submit = async () => {
     if (!croppedImage && !file) return;
     setLoading(true);
+    setError(null);
 
     const fd = new FormData();
 
@@ -153,7 +157,7 @@ const PanCardReader = () => {
       setResult(data);
     } catch (error) {
       console.error("Error processing card:", error);
-      alert("Failed to process card. Please try again.");
+      setError("Failed to process PAN card. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -338,6 +342,11 @@ const PanCardReader = () => {
       `}</style>
 
       <div style={styles.container}>
+        {error && (
+          <div style={styles.errorBanner} role="alert">
+            {error}
+          </div>
+        )}
         {/* Header */}
         <div style={styles.header}>
           <div
@@ -680,10 +689,10 @@ const CardPreview = ({ data, loading }: CardPreviewProps) => {
 };
 
 
-const styles: any = {
+const styles: Record<string, CSSProperties> = {
   wrapper: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",
+    background: "var(--document-reader-page-bg)",
     padding: "60px 20px",
     fontFamily: "'DM Sans', -apple-system, sans-serif",
   },
@@ -709,14 +718,14 @@ const styles: any = {
     fontSize: 48,
     fontWeight: 400,
     margin: "0 0 12px 0",
-    background: "linear-gradient(135deg, #fff 0%, #aaa 100%)",
+    background: "var(--document-reader-title-gradient)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
     letterSpacing: "-0.02em",
   },
   subtitle: {
     fontSize: 16,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     margin: 0,
     fontWeight: 400,
   },
@@ -749,20 +758,20 @@ const styles: any = {
     fontSize: 24,
     fontFamily: "'Instrument Serif', serif",
     fontWeight: 400,
-    color: "#fff",
+    color: "var(--document-reader-text)",
     margin: "0 0 8px 0",
   },
   uploadText: {
     fontSize: 15,
-    color: "#999",
+    color: "var(--document-reader-muted-strong)",
     margin: "0 0 20px 0",
   },
   previewCard: {
     marginBottom: 24,
     borderRadius: 20,
     overflow: "hidden",
-    background: "#1a1a1a",
-    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+    background: "var(--document-reader-modal-bg)",
+    boxShadow: "var(--document-reader-preview-shadow)",
   },
   previewImage: {
     width: "100%",
@@ -788,9 +797,9 @@ const styles: any = {
   removeBtn: {
     flex: 1,
     padding: "12px 20px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 12,
     fontSize: 14,
     fontWeight: 600,
@@ -801,7 +810,7 @@ const styles: any = {
     width: "100%",
     padding: "18px 32px",
     background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "#fff",
+    color: "var(--document-reader-text)",
     border: "none",
     borderRadius: 16,
     fontSize: 16,
@@ -832,7 +841,7 @@ const styles: any = {
   card: {
     padding: 32,
     borderRadius: 20,
-    background: "linear-gradient(135deg, #1a1a1a 0%, #252525 100%)",
+    background: "var(--document-reader-card-bg)",
     border: "1px solid rgba(255, 107, 53, 0.2)",
     marginBottom: 24,
     position: "relative" as const,
@@ -914,14 +923,14 @@ const styles: any = {
     fontSize: 11,
     fontWeight: 600,
     letterSpacing: "0.05em",
-    color: "#888",
+    color: "var(--document-reader-muted)",
     textTransform: "uppercase" as const,
     marginBottom: 6,
   },
   fieldValue: {
     fontSize: 18,
     fontFamily: "'Instrument Serif', serif",
-    color: "#fff",
+    color: "var(--document-reader-text)",
     fontWeight: 400,
   },
   cardFooter: {
@@ -961,9 +970,9 @@ const styles: any = {
   newUploadBtn: {
     width: "100%",
     padding: "16px 32px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 16,
     fontSize: 15,
     fontWeight: 600,
@@ -980,9 +989,9 @@ const styles: any = {
     color: "#bb0707ff",
     textAlign: "center",
     padding: "16px 20px",
-    background: "rgba(255, 255, 255, 0.02)",
+    background: "var(--document-reader-surface-faint)",
     borderRadius: 12,
-    border: "1px solid rgba(255, 255, 255, 0.05)",
+    border: "1px solid var(--document-reader-border-soft)",
   },
 
   // Cropper styles
@@ -992,7 +1001,7 @@ const styles: any = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "rgba(0, 0, 0, 0.95)",
+    background: "var(--document-reader-modal-overlay)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1000,7 +1009,7 @@ const styles: any = {
     padding: 20,
   },
   cropperContainer: {
-    background: "#1a1a1a",
+    background: "var(--document-reader-modal-bg)",
     borderRadius: 20,
     padding: 24,
     maxWidth: 600,
@@ -1009,13 +1018,13 @@ const styles: any = {
   cropperTitle: {
     fontSize: 24,
     fontFamily: "'Instrument Serif', serif",
-    color: "#fff",
+    color: "var(--document-reader-text)",
     margin: "0 0 8px 0",
     textAlign: "center",
   },
   cropperSubtitle: {
     fontSize: 14,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     margin: "0 0 24px 0",
     textAlign: "center",
   },
@@ -1023,13 +1032,13 @@ const styles: any = {
     position: "relative" as const,
     width: "100%",
     height: 400,
-    background: "#000",
+    background: "var(--document-reader-crop-bg)",
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: 20,
   },
   reactEasyCropContainer: {
-    background: "#000",
+    background: "var(--document-reader-crop-bg)",
   },
   reactEasyCropMedia: {},
   reactEasyCropArea: {
@@ -1042,12 +1051,12 @@ const styles: any = {
     gap: 12,
     marginBottom: 20,
     padding: "12px 16px",
-    background: "rgba(255, 255, 255, 0.03)",
+    background: "var(--document-reader-surface-subtle)",
     borderRadius: 12,
   },
   zoomLabel: {
     fontSize: 14,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     fontWeight: 600,
     minWidth: 50,
   },
@@ -1074,7 +1083,7 @@ const styles: any = {
   timestampValue: {
     fontSize: 12,
     fontWeight: 500,
-    color: "#ddd",
+    color: "var(--document-reader-text)",
     letterSpacing: "0.04em",
   },
 
@@ -1082,7 +1091,7 @@ const styles: any = {
     flex: 1,
     height: 4,
     borderRadius: 2,
-    background: "rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-border)",
     outline: "none",
     appearance: "none" as const,
     WebkitAppearance: "none",
@@ -1102,9 +1111,9 @@ const styles: any = {
   cancelBtn: {
     flex: 1,
     padding: "14px 24px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 12,
     fontSize: 15,
     fontWeight: 600,
@@ -1115,7 +1124,7 @@ const styles: any = {
     flex: 1,
     padding: "14px 24px",
     background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "#fff",
+    color: "var(--document-reader-text)",
     border: "none",
     borderRadius: 12,
     fontSize: 15,
@@ -1124,6 +1133,17 @@ const styles: any = {
     transition: "all 0.2s ease",
   },
 
+  errorBanner: {
+    width: "100%",
+    maxWidth: "720px",
+    margin: "0 auto 18px",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    color: "#991b1b",
+    background: "rgba(254, 226, 226, 0.95)",
+    border: "1px solid rgba(220, 38, 38, 0.35)",
+    fontWeight: 600,
+  },
 };
 
 export default PanCardReader;

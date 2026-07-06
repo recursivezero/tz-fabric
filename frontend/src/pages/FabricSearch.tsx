@@ -1,6 +1,6 @@
 import {  useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { BASE_URL, FULL_API_URL } from "../constants";
 
-import FabricSearchHeader from "../components/FabricSearchHeader";
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
 import { throttle } from "../utils/throttle";
@@ -30,6 +30,28 @@ interface SearchApiResponse {
   };
 }
 
+type CropRect = { x: number; y: number; w: number; h: number };
+
+const MIN_CROP_SIZE = 40;
+
+function clampCropRectToBounds(rect: CropRect, imgWidth: number, imgHeight: number): CropRect {
+  if (imgWidth <= 0 || imgHeight <= 0) return rect;
+
+  const maxW = Math.max(MIN_CROP_SIZE, imgWidth);
+  const maxH = Math.max(MIN_CROP_SIZE, imgHeight);
+  const w = Math.min(Math.max(MIN_CROP_SIZE, rect.w), maxW);
+  const h = Math.min(Math.max(MIN_CROP_SIZE, rect.h), maxH);
+  const x = Math.min(Math.max(0, rect.x), Math.max(0, imgWidth - w));
+  const y = Math.min(Math.max(0, rect.y), Math.max(0, imgHeight - h));
+
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    w: Math.round(w),
+    h: Math.round(h),
+  };
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
@@ -39,15 +61,31 @@ const CATEGORIES = [
   { id: "product", label: "Product", icon: "🖼️" },
 ];
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? "") + (import.meta.env.VITE_API_PREFIX ?? "");
-const CDN_BASE = import.meta.env.VITE_AWS_PUBLIC_URL ?? "";
+const API_BASE = FULL_API_URL;
+const ASSET_BASE = BASE_URL;
+const CDN_BASE = (import.meta.env.VITE_AWS_PUBLIC_URL ?? "https://cdn.threadzip.com").replace(/\/$/, "");
+const USER_FRIENDLY_SERVER_ERROR = "Unable to connect to the server, please try after some time.";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toCdnUrl(src: string | undefined): string {
   if (!src) return "";
-  if (/^https?:\/\//i.test(src)) return src;
-  return `${CDN_BASE}/images/${src.replace(/^\/+/, "")}`;
+
+  const clean = String(src).trim();
+
+  if (/^(https?:|blob:|data:)/i.test(clean)) {
+    return clean;
+  }
+
+  if (clean.startsWith("/api/") || clean.startsWith("/assets/")) {
+    return `${ASSET_BASE}${clean}`;
+  }
+
+  if (clean.startsWith("images/")) {
+    return `${CDN_BASE}/${clean}`;
+  }
+
+  return `${CDN_BASE}/images/${clean.replace(/^\/+/, "")}`;
 }
 
 function toResultItem(raw: string): ResultItem {
@@ -66,13 +104,15 @@ function useSearch() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ResultItem[]>([]);
 
-  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 40) => {
+  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 20, preserveResultsOnError = false) => {
     setLoading(true);
     setError(null);
     try {
       const form = new FormData();
       form.append("file", file);
       form.append("limit", String(limit));
+      form.append("page", "1");
+      form.append("per_page", String(limit));
       if (category?.length) category.forEach((c) => { form.append("category", c) });
       const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
       if (!res.ok) {
@@ -82,20 +122,23 @@ function useSearch() {
       const data: SearchApiResponse = await res.json();
       setResults((data.results ?? []).map(toResultItem));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Search failed.");
-      setResults([]);
+      console.error("Image search failed:", e);
+      setError(USER_FRIENDLY_SERVER_ERROR);
+      if (!preserveResultsOnError) setResults([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 40) => {
+  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 20, preserveResultsOnError = false) => {
     setLoading(true);
     setError(null);
     try {
       const form = new FormData();
       form.append("search_term", term);
       form.append("limit", String(limit));
+      form.append("page", "1");
+      form.append("per_page", String(limit));
       if (category?.length) category.forEach((c) => { form.append("category", c) });
       const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
       if (!res.ok) {
@@ -105,8 +148,9 @@ function useSearch() {
       const data: SearchApiResponse = await res.json();
       setResults((data.results ?? []).map(toResultItem));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Search failed.");
-      setResults([]);
+      console.error("Text search failed:", e);
+      setError(USER_FRIENDLY_SERVER_ERROR);
+      if (!preserveResultsOnError) setResults([]);
     } finally {
       setLoading(false);
     }
@@ -144,13 +188,26 @@ interface CategoryPickerProps {
 function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerProps) {
   const [tempSelected, setTempSelected] = useState(selected);
   const toggle = (id: string) => {
-    setTempSelected(tempSelected.includes(id) ? tempSelected.filter((c) => c !== id) : [...tempSelected, id]);
-  }
+    const next = tempSelected.includes(id)
+      ? tempSelected.filter((c) => c !== id)
+      : [...tempSelected, id];
+    setTempSelected(next);
+    // Non-compact (Hero / ImagePreview): propagate immediately so the parent's
+    // selectedCategories stays in sync. Compact mode defers to the Apply button.
+    if (!compact) {
+      onChange(next);
+    }
+  };
   const allOn = tempSelected.length === CATEGORIES.length;
-  const toggleAll = () => {setTempSelected(allOn ? [] : CATEGORIES.map((c) => c.id))};
+  const toggleAll = () => {
+    const next = allOn ? [] : CATEGORIES.map((c) => c.id);
+    setTempSelected(next);
+    if (!compact) {
+      onChange(next);
+    }
+  };
 
   const applySearch = () => {
-    console.log("Apply search with categories:", tempSelected);
     onChange(tempSelected);
   };
 
@@ -177,7 +234,7 @@ function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerP
               onClick={() => toggle(cat.id)}
               type="button"
             >
-              <span className="category-picker__chip-check">{active ? "✓" : ""}</span>
+              {active && <span className="category-picker__chip-check">✓</span>}
               <span className="category-picker__chip-icon">{cat.icon}</span>
               <span className="category-picker__chip-label">{cat.label}</span>
             </button>
@@ -207,8 +264,8 @@ function DbControlPanel() {
       const msg = await callDbEndpoint(op);
       setNotification({ message: msg, type: "success" });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Operation failed.";
-      setNotification({ message: msg, type: "error" });
+      console.error("Database operation failed:", e);
+      setNotification({ message: USER_FRIENDLY_SERVER_ERROR, type: "error" });
     } finally {
       setActiveOp(null);
     }
@@ -373,8 +430,9 @@ function StickySearchBar({
           </div>
         )}
 
-        <button className="btn btn--ghost btn--sm" onClick={onClear}>
-          ✕ Clear
+        <button className="btn btn--ghost btn--sm" onClick={onClear} type="button">
+          <span aria-hidden="true">✕</span>
+          <span>Clear</span>
         </button>
       </div>
 
@@ -444,6 +502,7 @@ function ResultCard({ item, index, onZoom, onBadImage }: ResultCardProps) {
           src={toCdnUrl(item.imageSrc)}
           alt={item.filename}
           loading="lazy"
+          decoding="async"
           onError={() => onBadImage(item.imageSrc)}
           onClick={handleClick}
         />
@@ -510,7 +569,7 @@ function ResultsSection({
       </div> */}
 
       <div className="result-grid result-grid--full">
-        {paginatedResults.map((item: any, idx: number) => (
+        {paginatedResults.map((item, idx: number) => (
           <ResultCard
             key={idx}
             item={item}
@@ -579,6 +638,9 @@ function Lightbox({
   return (
     <div
       className="lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label={caption ? `Preview: ${caption}` : "Image preview"}
       onClick={(e) => {
         if ((e.target as HTMLElement).classList.contains("lightbox")) onClose();
       }}
@@ -601,11 +663,44 @@ function Lightbox({
 
         {caption && <div className="lightbox__caption">{caption}</div>}
 
-        <div className="lightbox__controls">
-          <button className="lightbox__control-btn" onClick={onZoomOut}>−</button>
-          <button className="lightbox__control-btn" onClick={onReset}>Reset</button>
-          <button className="lightbox__control-btn" onClick={onZoomIn}>+</button>
-          <button className="lightbox__control-btn lightbox__control-btn--close" onClick={onClose}>✕</button>
+        <div
+          className="lightbox__controls"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="lightbox__control-btn"
+            onClick={onZoomOut}
+            type="button"
+            aria-label="Zoom out"
+          >
+            −
+          </button>
+          <button
+            className="lightbox__control-btn lightbox__control-btn--reset"
+            onClick={onReset}
+            type="button"
+            aria-label="Reset zoom"
+          >
+            <span aria-hidden="true">↺</span>
+            <span>Reset</span>
+          </button>
+          <button
+            className="lightbox__control-btn"
+            onClick={onZoomIn}
+            type="button"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+          <button
+            className="lightbox__control-btn lightbox__control-btn--close"
+            onClick={onClose}
+            type="button"
+            aria-label="Close preview"
+          >
+            ✕
+          </button>
         </div>
       </div>
     </div>
@@ -664,8 +759,22 @@ function CropDrawer({
         </div>
 
         <div className="crop-drawer__actions">
-          <button className="btn btn--ghost" onClick={onCancel}>✕ Cancel</button>
-          <button className="btn btn--primary" onClick={onConfirm}>✔ Crop &amp; Search</button>
+          <button
+            className="btn btn--ghost crop-drawer__action-btn"
+            onClick={onCancel}
+            type="button"
+          >
+            <span aria-hidden="true">✕</span>
+            <span>Cancel</span>
+          </button>
+          <button
+            className="btn btn--primary crop-drawer__action-btn"
+            onClick={onConfirm}
+            type="button"
+          >
+            <span aria-hidden="true">✓</span>
+            <span>Crop &amp; Search</span>
+          </button>
         </div>
       </div>
     </div>
@@ -703,13 +812,16 @@ function ImagePreview({
             <button
               className="btn btn--primary btn--sm"
               onClick={onClear}
+              type="button"
             >
-              🗑️ Clear Search
+              <span aria-hidden="true">🗑️</span>
+              <span>Clear Search</span>
             </button>
           </div>
           <div className="image-preview__frame-actions image-preview__frame-actions--bottom">
-            <button className="btn btn--outline btn--sm" onClick={onRecrop}>
-              ✂️ Recrop
+            <button className="btn btn--outline btn--sm" onClick={onRecrop} type="button">
+              <span aria-hidden="true">✂️</span>
+              <span>Recrop</span>
             </button>
           </div>
         </div>
@@ -735,8 +847,10 @@ function ImagePreview({
               className="btn btn--primary"
               onClick={onSearch}
               disabled={loading}
+              type="button"
             >
-              🔎 Search
+              <span aria-hidden="true">🔎</span>
+              <span>Search</span>
             </button>
           </div>
         </>
@@ -770,14 +884,20 @@ function Hero({
   return (
     <div className="hero">
       <header className="hero__header">
-        <div className="hero__eyebrow">Fabric Intelligence</div>
-        <h1 className="hero__title">
-          Find the clothing
-          <br />
-          <span className="hero__title-accent">you couldn't find.</span>
-        </h1>
-        <p className="hero__subtitle">Visual &amp; semantic search — powered by vectors</p>
-      </header>
+  <div className="hero__eyebrow">Fabric Intelligence</div>
+
+  <h1 className="hero__title">
+    Find the clothing
+    <br />
+    <span className="hero__title-accent">
+      you couldn't find.
+    </span>
+  </h1>
+
+  <p className="hero__subtitle">
+    Visual &amp; semantic search — powered by vectors
+  </p>
+</header>
 
       <div className="hero__search-controls">
         {/* Text search */}
@@ -794,6 +914,7 @@ function Hero({
             className="btn btn--primary"
             onClick={onTextSearch}
             disabled={loading || !textQuery.trim()}
+            type="button"
           >
             Search
           </button>
@@ -816,8 +937,10 @@ function Hero({
         <button
           className="btn btn--ghost hero__upload-btn"
           onClick={() => document.getElementById(fileInputId)?.click()}
+          type="button"
         >
-          📷 Drop your Image
+          <span aria-hidden="true">📷</span>
+          <span>Drop your Image</span>
         </button>
       </div>
 
@@ -839,7 +962,7 @@ export default function Search() {
   const [previewUrlOrig, setPreviewUrlOrig] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationState>(null);
   const [selectingImage, setSelectingImage] = useState(false);
-  const [searchLimit, setSearchLimit] = useState(40);
+  const [searchLimit, setSearchLimit] = useState(20);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isTextSearch, setIsTextSearch] = useState(false);
   const [page, setPage] = useState(1);
@@ -847,7 +970,7 @@ export default function Search() {
 
   // Crop / drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [cropRect, setCropRect] = useState({ x: 20, y: 20, w: 160, h: 160 });
+  const [cropRect, setCropRect] = useState<CropRect>({ x: 20, y: 20, w: 160, h: 160 });
   const [rawImageUrl, setRawImageUrl] = useState<string | null>(null);
   const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -986,10 +1109,14 @@ export default function Search() {
     setSelectedCategories(cats);
     setPage(1);
 
+    // Empty selection = "no filter" — pass undefined so the backend returns all
+    // results rather than an empty-array that could resolve to 0 matches.
+    const effectiveCats = cats.length > 0 ? cats : undefined;
+
     if (file && !isTextSearch) {
-      await runImageSearch(file, cats, searchLimit);
+      await runImageSearch(file, effectiveCats, searchLimit, /* preserveResultsOnError */ true);
     } else if (textQuery.trim()) {
-      await runTextSearch(textQuery.trim(), cats, searchLimit);
+      await runTextSearch(textQuery.trim(), effectiveCats, searchLimit, /* preserveResultsOnError */ true);
     }
   };
 
@@ -1051,15 +1178,50 @@ export default function Search() {
     setLbScale(1);
     setLbOffset({ x: 0, y: 0 });
     setLightboxOpen(true);
-    document.body.style.overflow = "hidden";
   };
 
   const closeLightbox = () => {
     setLightboxOpen(false);
     setActiveSrc(null);
     setActiveCaption(null);
-    document.body.style.overflow = "";
   };
+
+  useEffect(() => {
+    if (!lightboxOpen && !drawerOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "contain";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      if (lightboxOpen) {
+        setLightboxOpen(false);
+        setActiveSrc(null);
+        setActiveCaption(null);
+        return;
+      }
+
+      if (drawerOpen) {
+        if (rawImageUrl) {
+          try { URL.revokeObjectURL(rawImageUrl); } catch { }
+          setRawImageUrl(null);
+        }
+        setDrawerOpen(false);
+        setCropRect({ x: 20, y: 20, w: 160, h: 160 });
+        setSelectingImage(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, [lightboxOpen, drawerOpen, rawImageUrl]);
 
   const onLbWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
@@ -1087,9 +1249,27 @@ export default function Search() {
       const dx = ev.clientX - lastMouseRef.current.x;
       const dy = ev.clientY - lastMouseRef.current.y;
       lastMouseRef.current = { x: ev.clientX, y: ev.clientY };
+      const img = imgRef.current;
+      const imgWidth = img?.clientWidth ?? 0;
+      const imgHeight = img?.clientHeight ?? 0;
+
       setCropRect((prev) => {
-        if (draggingRef.current) return { x: Math.max(0, prev.x + dx), y: Math.max(0, prev.y + dy), w: prev.w, h: prev.h };
-        if (resizingRef.current) return { x: prev.x, y: prev.y, w: Math.max(40, prev.w + dx), h: Math.max(40, prev.h + dy) };
+        if (draggingRef.current) {
+          return clampCropRectToBounds(
+            { ...prev, x: prev.x + dx, y: prev.y + dy },
+            imgWidth,
+            imgHeight
+          );
+        }
+
+        if (resizingRef.current) {
+          return clampCropRectToBounds(
+            { ...prev, w: prev.w + dx, h: prev.h + dy },
+            imgWidth,
+            imgHeight
+          );
+        }
+
         return prev;
       });
     };
@@ -1103,9 +1283,20 @@ export default function Search() {
     const img = imgRef.current;
     if (!img) return;
     const dispW = img.clientWidth, dispH = img.clientHeight;
+    if (dispW <= 0 || dispH <= 0) {
+      setSelectingImage(false);
+      return;
+    }
+
     const short = Math.min(dispW, dispH);
-    const size = Math.round(short * 0.55);
-    setCropRect({ x: Math.round((dispW - size) / 2), y: Math.round((dispH - size) / 2), w: size, h: size });
+    const size = Math.max(MIN_CROP_SIZE, Math.round(short * 0.55));
+    setCropRect(
+      clampCropRectToBounds(
+        { x: Math.round((dispW - size) / 2), y: Math.round((dispH - size) / 2), w: size, h: size },
+        dispW,
+        dispH
+      )
+    );
     setSelectingImage(false);
   };
 
@@ -1114,10 +1305,20 @@ export default function Search() {
     const imgEl = imgRef.current;
     const dispW = imgEl.clientWidth, dispH = imgEl.clientHeight;
     const natW = imgEl.naturalWidth, natH = imgEl.naturalHeight;
-    const sx = Math.round((cropRect.x / dispW) * natW);
-    const sy = Math.round((cropRect.y / dispH) * natH);
-    const sw = Math.max(1, Math.round((cropRect.w / dispW) * natW));
-    const sh = Math.max(1, Math.round((cropRect.h / dispH) * natH));
+    const boundedCropRect = clampCropRectToBounds(cropRect, dispW, dispH);
+    if (
+      boundedCropRect.x !== cropRect.x ||
+      boundedCropRect.y !== cropRect.y ||
+      boundedCropRect.w !== cropRect.w ||
+      boundedCropRect.h !== cropRect.h
+    ) {
+      setCropRect(boundedCropRect);
+    }
+
+    const sx = Math.round((boundedCropRect.x / dispW) * natW);
+    const sy = Math.round((boundedCropRect.y / dispH) * natH);
+    const sw = Math.max(1, Math.round((boundedCropRect.w / dispW) * natW));
+    const sh = Math.max(1, Math.round((boundedCropRect.h / dispH) * natH));
 
     const canvas = document.createElement("canvas");
     canvas.width = sw;
@@ -1168,14 +1369,15 @@ export default function Search() {
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const hasResults = visibleResults.length > 0;
-  const showHero = !file && !drawerOpen && !hasResults && !loading && !isTextSearch;
+  const showHero = !file && !drawerOpen && !hasResults && !loading;
   const showStickyBar = hasResults || (loading && (!!file || isTextSearch));
+  const showImagePreview = !!file && !drawerOpen && !hasResults && !loading;
   const stickyPreview = croppedPreviewUrl || previewUrlOrig || previewUrl;
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <main className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}`}>
+    <main className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}${showImagePreview ? " fabric-search--previewing" : ""}`}>
 
       {/* Sticky search bar */}
       {showStickyBar && (
@@ -1204,7 +1406,6 @@ export default function Search() {
         {/* Header + settings — hidden while results are shown */}
         {!showStickyBar && (
           <div className="fabric-search__top-bar">
-            <FabricSearchHeader />
             <div className="fabric-search__settings">
               <SettingsPanel />
             </div>
@@ -1228,7 +1429,7 @@ export default function Search() {
         )}
 
         {/* Image preview (post-crop, pre-results) */}
-        {file && !drawerOpen && !hasResults && !loading && (
+        {showImagePreview && (
           <ImagePreview
             originalUrl={previewUrlOrig || previewUrl || ""}
             croppedUrl={croppedPreviewUrl}
@@ -1243,11 +1444,13 @@ export default function Search() {
           />
         )}
 
-        {/* Notifications / states */}
         {notification && <Notification message={notification.message} type={notification.type} />}
-        {(loading || selectingImage) && <Loader />}
-        {error && <p className="fabric-search__error">{error}</p>}
-
+        {error && <div className="fabric-search__error" role="alert">{error}</div>}
+        {(loading || selectingImage) && (
+          <div className="fabric-search__loading-overlay" role="status" aria-live="polite">
+            <Loader />
+          </div>
+        )}
         {/* Results */}
         {hasResults && (
           <ResultsSection
@@ -1265,9 +1468,10 @@ export default function Search() {
           />
         )}
 
-        {!loading && file && visibleResults.length === 0 && (
+        {!loading && file && visibleResults.length === 0 && !error && (
           <p className="fabric-search__empty">— no matches found —</p>
         )}
+
       </div>
 
       {/* Lightbox */}

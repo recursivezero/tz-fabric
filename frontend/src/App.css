@@ -5,6 +5,7 @@
   --border: rgba(0, 0, 0, 0.904);
   --accent: #2f6bff;
   --container-max: 100vw;
+  --site-header-height: 56px;
 }
 
 * {
@@ -24,10 +25,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-x: hidden;
 }
 
 .app-wrapper.upload-bg {
   background-image: url('/fabric_background.png');
+  background-image: image-set(url('/fabric_background.webp') type('image/webp'), url('/fabric_background.png') type('image/png'));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -83,6 +86,7 @@
   width: 100%;
   max-width: var(--container-max);
   flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 720px) {
@@ -106,4 +110,38 @@
 .center {
   display: grid;
   place-content: center;
+}
+
+/* Chat is an app-like screen, so it should not scroll into the footer. */
+.app-wrapper--chat {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-wrapper--chat .site-header {
+  min-height: var(--site-header-height, 56px);
+  flex: 0 0 var(--site-header-height, 56px);
+}
+
+.app-wrapper--chat .main-content {
+  height: calc(100dvh - var(--site-header-height, 56px));
+  flex: 0 0 calc(100dvh - var(--site-header-height, 56px));
+  overflow: hidden;
+}
+
+/* Analysis is also an app-like workspace: keep the footer off-screen and prevent double scrollbars. */
+.app-wrapper--analysis {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-wrapper--analysis .site-header {
+  min-height: var(--site-header-height, 56px);
+  flex: 0 0 var(--site-header-height, 56px);
+}
+
+.app-wrapper--analysis .main-content {
+  height: calc(100dvh - var(--site-header-height, 56px));
+  flex: 0 0 calc(100dvh - var(--site-header-height, 56px));
+  overflow: hidden;
 }

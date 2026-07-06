@@ -9,15 +9,16 @@ import "@/assets/styles/UploadPage.css";
 
 type AudioMode = "upload" | "record";
 
+const SUBMIT_ERROR_MESSAGE =
+  "Unable to connect to the server, please try after some time.";
 
-
-;
 const UploadPage = () => {
   const location = useLocation();
   const prefill = location.state?.prefill;
   const {
     imageUrl,
     audioUrl,
+    canSubmitFiles,
     isRecording,
     recordTime,
     loading,
@@ -50,7 +51,16 @@ const UploadPage = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showConfirmAudio, setShowConfirmAudio] = useState(false);
 
-  const canSubmit = !!imageUrl && !!audioUrl && !loading;
+  const prefilledWithoutFiles = Boolean(
+    (prefill?.imageUrl || prefill?.audioUrl) && !canSubmitFiles,
+  );
+  const submitStatusMessage =
+    notification?.type === "error"
+      ? SUBMIT_ERROR_MESSAGE
+      : prefilledWithoutFiles
+        ? "Please re-upload the image and audio before submitting this saved preview."
+        : "";
+  const canSubmit = canSubmitFiles && !loading;
   const showUploadAudio = audioMode === "upload" && !audioUrl;
 
   const recordPct = useMemo(() => {
@@ -91,8 +101,6 @@ const UploadPage = () => {
     setShowConfirm(false);
   };
 
-
-
   const confirmClearAudio = () => {
     setShowConfirmAudio(false);
     // handleBack currently removes/discards audio; call it to remove
@@ -104,7 +112,6 @@ const UploadPage = () => {
   };
 
   const navigate = useNavigate();
-  console.log("notification :", notification)
 
   return (
     <div className="upload-page">
@@ -113,261 +120,313 @@ const UploadPage = () => {
           <h2>Upload Image & Audio</h2>
           <p className="sub">Upload audio or switch to recording (max 60s)</p>
         </header>
-    <div >
-
-        <div className="grid">
-          <section className="preview-col">
-            {imageUrl ? (
-              <div className="image-preview-wrap">
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="image-preview-plain"
-                />
-                <button
-                  className="chip chip-clear img-clear-btn"
-                  onClick={handleClearClick}
-                  title="Remove image"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <div
-                className="dropzone"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={onDropImage}
-                onClick={() => imageInputRef.current?.click()}
-                role="button"
-                aria-label="Upload image"
-              >
-                <div className="dz-icon">🖼️</div>
-                <div className="dz-text">
-                  <strong>Drop image</strong> or{" "}
-                  <span className="link">browse</span>
-                </div>
-              </div>
-            )}
-
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleImageUpload(file);
-              }}
+        {notification?.type === "success" && (
+          <div className="upload-submit-notification">
+            <Notification
+              message={notification.message}
+              type={notification.type}
             />
-          </section>
-
-          <section className="action-col">
-            {audioMode === "record" && !audioUrl && (
-              <>
-                <div className="rec-controls">
+          </div>
+        )}
+        <div>
+          <div className="grid">
+            <section className="preview-col">
+              {imageUrl ? (
+                <div className="image-preview-wrap">
+                  <img
+                    src={imageUrl}
+                    alt="Preview"
+                    className="image-preview-plain"
+                  />
                   <button
-                    className="btn primary"
-                    onClick={startRecording}
-                    disabled={isRecording}
+                    className="chip chip-clear img-clear-btn"
+                    onClick={handleClearClick}
+                    title="Remove image"
                   >
-                    🎙 Start Recording
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={stopRecording}
-                    disabled={!isRecording}
-                  >
-                    Stop
-                  </button>
-                </div>
-                <span className="alt-text">
-                  OR
-                </span>
-                <div className="alt-switch">
-                  <button
-                    className="link-btn"
-                    onClick={() => setAudioMode("upload")}
-                    disabled={isRecording}
-                  >
-                    ← Upload
+                    ✕
                   </button>
                 </div>
+              ) : (
+                <div
+                  className="dropzone"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={onDropImage}
+                  onClick={() => imageInputRef.current?.click()}
+                  role="button"
+                  aria-label="Upload image"
+                >
+                  <div className="dz-icon">🖼️</div>
+                  <div className="dz-text">
+                    <strong>Drop image</strong> or{" "}
+                    <span className="link">browse</span>
+                  </div>
+                </div>
+              )}
 
-                <div className="recording-area">
-                  {isRecording ? (
-                    <div className="record-chip" aria-live="polite">
-                      <span className="dot" />
-                      Recording… {String(recordTime).padStart(2, "0")}/60s
-                      <div className="progress">
-                        <div
-                          className="bar"
-                          style={{ width: `${recordPct}%` }}
-                        />
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file);
+                }}
+              />
+            </section>
+
+            <section className="action-col">
+              {audioMode === "record" && !audioUrl && (
+                <>
+                  <div className="rec-controls">
+                    <button
+                      className="btn primary"
+                      onClick={startRecording}
+                      disabled={isRecording}
+                    >
+                      🎙 Start Recording
+                    </button>
+                    <button
+                      className="btn"
+                      onClick={stopRecording}
+                      disabled={!isRecording}
+                    >
+                      <span aria-hidden="true">⏹</span>
+                      Stop
+                    </button>
+                  </div>
+                  <span className="alt-text">OR</span>
+                  <div className="alt-switch">
+                    <button
+                      className="link-btn"
+                      onClick={() => setAudioMode("upload")}
+                      disabled={isRecording}
+                    >
+                      ← Upload
+                    </button>
+                  </div>
+
+                  <div className="recording-area">
+                    {isRecording ? (
+                      <div className="record-chip" aria-live="polite">
+                        <span className="dot" />
+                        Recording… {String(recordTime).padStart(2, "0")}/60s
+                        <div className="progress">
+                          <div
+                            className="bar"
+                            style={{ width: `${recordPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="hint">
+                        Press Start to begin. Stop to see a preview.
+                      </div>
+                    )}
+                  </div>
+                  {audioNotification && (
+                    <Notification
+                      message={audioNotification.message}
+                      type={audioNotification.type}
+                    />
+                  )}
+                </>
+              )}
+
+              {showUploadAudio && (
+                <>
+                  {audioUrl ? (
+                    <div className="audio-card">
+                      <div className="lock-note">
+                        Start/Stop disabled while preview exists. Clear to
+                        re-record or Submit.
+                      </div>
+                      <div className="audio-clear">
+                        <div className="audio-player">
+                          <audio
+                            controls
+                            src={audioUrl}
+                            controlsList="nodownload"
+                          />
+                        </div>
+
+                        <div className="img-footer">
+                          <button
+                            className="chip chip-clear"
+                            onClick={() => setShowConfirmAudio(true)}
+                            title="Remove audio"
+                          >
+                            ✕ Clear Audio
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="hint">
-                      Press Start to begin. Stop to see a preview.
+                    <div
+                      className="dropzone"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={onDropAudio}
+                      onClick={() => audioInputRef.current?.click()}
+                      role="button"
+                      aria-label="Upload audio"
+                    >
+                      <div className="dz-icon">🎧</div>
+                      <div className="dz-text">
+                        <strong>Drop audio of max 1 min</strong> or{" "}
+                        <span className="link">browse</span>
+                      </div>
+                      {audioNotification && (
+                        <Notification
+                          message={audioNotification.message}
+                          type={audioNotification.type}
+                        />
+                      )}
                     </div>
                   )}
-                </div>
-                {audioNotification && (
-                  <Notification
-                    message={audioNotification.message}
-                    type={audioNotification.type}
-                  />
-                )}
-              </>
-            )}
 
-            {showUploadAudio && (
-              <>
-                {audioUrl ? (
-                  <div className="audio-card">
-                    <div className="lock-note">
-                      Start/Stop disabled while preview exists. Clear to re-record
-                      or Submit.
-                    </div>
-                    <div className="audio-clear">
-                      <div className="audio-player">
-                        <audio controls src={audioUrl} controlsList="nodownload" />
-                      </div>
-
-                      <div className="img-footer">
-                        <button className="chip chip-clear" onClick={() => setShowConfirmAudio(true)} title="Remove audio">✕ Clear Audio</button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="dropzone"
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={onDropAudio}
-                    onClick={() => audioInputRef.current?.click()}
-                    role="button"
-                    aria-label="Upload audio"
-                  >
-                    <div className="dz-icon">🎧</div>
-                    <div className="dz-text">
-                      <strong>Drop audio of max 1 min</strong> or{" "}
-                      <span className="link">browse</span>
-                    </div>
-                    {audioNotification && (
-                      <Notification
-                        message={audioNotification.message}
-                        type={audioNotification.type}
-                      />
-                    )}
-                  </div>
-                )}
-
-                <input
-                  ref={audioInputRef}
-                  type="file"
-                  accept="audio/*"
-                  hidden
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleAudioUpload(file);
-                  }}
-                />
-
-                <div className="alt-switch">
-                  <button
-                    className="link-btn"
-                    onClick={() => {
-                      if (audioInputRef.current)
-                        audioInputRef.current.value = "";
-                      setAudioMode("record");
+                  <input
+                    ref={audioInputRef}
+                    type="file"
+                    accept="audio/*"
+                    hidden
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAudioUpload(file);
                     }}
-                  >
-                    or Record instead →
-                  </button>
-                </div>
-              </>
-            )}
+                  />
 
-            {audioUrl && (
-              <div className="audio-card">
-                <div className="lock-note">
-                  Start/Stop disabled while preview exists. Clear to re-record
-                  or Submit.
-                </div>
-                <div className="audio-clear">
-                  <div className="audio-player">
-                    <audio controls src={audioUrl} controlsList="nodownload" />
+                  <div className="alt-switch">
+                    <button
+                      className="link-btn"
+                      onClick={() => {
+                        if (audioInputRef.current) {
+                          audioInputRef.current.value = "";
+                        }
+                        setAudioMode("record");
+                      }}
+                    >
+                      or Record instead →
+                    </button>
                   </div>
+                </>
+              )}
 
-                  <div className="img-footer">
-                    <button className="chip chip-clear" onClick={() => setShowConfirmAudio(true)} title="Remove audio">✕ Clear Audio</button>
+              {audioUrl && (
+                <div className="audio-card">
+                  <div className="lock-note">
+                    Start/Stop disabled while preview exists. Clear to re-record
+                    or Submit.
+                  </div>
+                  <div className="audio-clear">
+                    <div className="audio-player">
+                      <audio
+                        controls
+                        src={audioUrl}
+                        controlsList="nodownload"
+                      />
+                    </div>
+
+                    <div className="img-footer">
+                      <button
+                        className="chip chip-clear"
+                        onClick={() => setShowConfirmAudio(true)}
+                        title="Remove audio"
+                      >
+                        ✕ Clear Audio
+                      </button>
+                    </div>
                   </div>
                 </div>
+              )}
+            </section>
+          </div>
+
+          {submitStatusMessage && (
+            <div className="upload-submit-status-row" aria-live="polite">
+              <div
+                className="upload-submit-error-below"
+                role={notification?.type === "error" ? "alert" : "status"}
+              >
+                {submitStatusMessage}
               </div>
-            )}
-          </section>
+            </div>
+          )}
         </div>
+        <div className="name-field">
+          <div>
+            <label className="name-label">File Name(optional)</label>
+          </div>
+          <div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              aria-label="Optional name for saving files"
+            />
+          </div>
+          <div className="submit-wrapper">
+            <button
+              className="btn submit"
+              onClick={async () => {
+                const submitted = await handleSubmit(name);
+                if (submitted) handleBack();
+              }}
+              disabled={!canSubmit}
+            >
+              {loading ? "Submitting…" : "Submit"}
+            </button>
+          </div>
+          <div>
+            <button className="cancel" onClick={() => navigate("/")}>
+              Cancel
+            </button>
+          </div>
+        </div>
+        {loading && <Loader />}
       </div>
-      <div className="name-field">
-        <div>
-          <label className="name-label">File Name(optional)</label>
-        </div>
-        <div>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            aria-label="Optional name for saving files"
-          />
-        </div>
-        <div className="submit-wrapper">
-          <button
-            className="btn submit"
-            onClick={async () => {
-              await handleSubmit(name);
-              handleBack();
-            }}
-            disabled={!canSubmit}
-          >
-            {loading ? "Submitting…" : "Submit"}
-          </button>
-        </div>
-        <div>
-          <button className="cancel" onClick={() => navigate("/")}>cancel</button>
-        </div>
-      </div>
-      {loading && <Loader />}
-
-      {notification && (
-        <Notification message={notification.message} type={notification.type} />
-      )}
 
       {showConfirm && (
         <div className="confirm-overlay" role="dialog" aria-modal="true">
           <div className="confirm-modal">
             <div className="confirm-title">Remove Image!</div>
-            <div className="confirm-body">Are you sure you want to remove this image?</div>
+            <div className="confirm-body">
+              Are you sure you want to remove this image?
+            </div>
             <div className="confirm-actions">
-              <button className="btn btn-cancel" onClick={cancelClear}>Cancel</button>
-              <button className="btn btn-confirm" onClick={confirmClear}>Yes, Remove</button>
+              <button className="btn btn-cancel" onClick={cancelClear}>
+                Cancel
+              </button>
+              <button className="btn btn-confirm" onClick={confirmClear}>
+                Yes, Remove
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {showConfirmAudio && (
-        <div className="confirm-overlay" role="dialog" aria-modal="true" aria-label="Remove audio confirmation">
+        <div
+          className="confirm-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Remove audio confirmation"
+        >
           <div className="confirm-modal">
             <div className="confirm-title">Remove Audio!</div>
-            <div className="confirm-body">Are you sure you want to remove this audio?</div>
+            <div className="confirm-body">
+              Are you sure you want to remove this audio?
+            </div>
             <div className="confirm-actions">
-              <button className="btn btn-cancel" onClick={cancelClearAudio}>Cancel</button>
-              <button className="btn btn-confirm" onClick={confirmClearAudio}>Yes, Remove</button>
+              <button className="btn btn-cancel" onClick={cancelClearAudio}>
+                Cancel
+              </button>
+              <button className="btn btn-confirm" onClick={confirmClearAudio}>
+                Yes, Remove
+              </button>
             </div>
           </div>
         </div>
       )}
-
-    </div>
     </div>
   );
 };

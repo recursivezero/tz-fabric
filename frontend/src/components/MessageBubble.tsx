@@ -16,47 +16,65 @@ type Props = {
 
 const looksLikeUrl = (s?: string) => {
   if (!s) return false;
-  try { return !!new URL(s).protocol; } catch { return false; }
+  try {
+    return !!new URL(s).protocol;
+  } catch {
+    return false;
+  }
 };
 
 const isImageUrl = (s?: string) =>
-  !!s && (/\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(s) || s.toLowerCase().startsWith("data:image/"));
+  !!s &&
+  (/\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(s) ||
+    s.toLowerCase().startsWith("data:image/"));
 
 const isAudioUrl = (s?: string) =>
-  !!s && (/\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/i.test(s) || s.toLowerCase().startsWith("data:audio/"));
+  !!s &&
+  (/\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/i.test(s) ||
+    s.toLowerCase().startsWith("data:audio/"));
 
-export default function MessageBubble({ role, content, type, url, filename }: Props) {
+export default function MessageBubble({
+  role,
+  content,
+  type,
+  url,
+  filename,
+}: Props) {
   const explicitType = type;
   const explicitUrl = url;
-  const possibleUrl = explicitUrl ?? (looksLikeUrl(content) ? String(content) : undefined);
+  const possibleUrl =
+    explicitUrl ?? (looksLikeUrl(content) ? String(content) : undefined);
 
   let renderType: "image" | "audio" | "text" = "text";
-  if (explicitType === "image" || (possibleUrl && isImageUrl(possibleUrl))) renderType = "image";
-  else if (explicitType === "audio" || (possibleUrl && isAudioUrl(possibleUrl))) renderType = "audio";
+  if (explicitType === "image" || (possibleUrl && isImageUrl(possibleUrl)))
+    renderType = "image";
+  else if (explicitType === "audio" || (possibleUrl && isAudioUrl(possibleUrl)))
+    renderType = "audio";
 
-  const normalized = useMemo(() => normalizeMarkdown(String(content ?? "")), [content]);
+  const normalized = useMemo(
+    () => normalizeMarkdown(String(content ?? "")),
+    [content],
+  );
 
   const shouldType = renderType === "text" && role !== "user";
   const typed = useTypingEffect(shouldType ? normalized : "", 25);
 
   // NEW: respect global stop so the bubble no longer reports "typing"
-  const [externallyStopped, setExternallyStopped] = useState(false);
+  const [stoppedForContent, setStoppedForContent] = useState<string | null>(
+    null,
+  );
   useEffect(() => {
-    const onStop = () => setExternallyStopped(true);
+    const onStop = () => setStoppedForContent(normalized);
     window.addEventListener("fabricai:stop-typing", onStop);
     return () => window.removeEventListener("fabricai:stop-typing", onStop);
-  }, []);
-  // reset stopped flag when content changes (new message)
-  useEffect(() => { setExternallyStopped(false); }, []);
+  }, [normalized]);
 
-  const isTyping = shouldType && typed !== normalized && !externallyStopped;
+  const isTyping =
+    shouldType && typed !== normalized && stoppedForContent !== normalized;
 
   // COPY BUTTON STATE
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    // reset copied flag on new content
-    setCopied(false);
-  }, []);
+  const [copiedForContent, setCopiedForContent] = useState<string | null>(null);
+  const copied = copiedForContent === normalized;
 
   const doCopy = async (text: string) => {
     try {
@@ -74,9 +92,13 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
         document.execCommand("copy");
         document.body.removeChild(ta);
       }
-      setCopied(true);
-      // auto-clear after a short delay
-      setTimeout(() => setCopied(false), 1300);
+      setCopiedForContent(normalized);
+      // auto-clear after a short delay, but do not clear a newer copied message.
+      setTimeout(() => {
+        setCopiedForContent((current) =>
+          current === normalized ? null : current,
+        );
+      }, 1300);
     } catch (err) {
       console.error("copy failed", err);
     }
@@ -105,7 +127,21 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
               aria-label={copied ? "Copied" : "Copy reply"}
               onClick={() => doCopy(normalized)}
             >
-              {copied ? "Copied!" : <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M433.941 65.941l-51.882-51.882A48 48 0 0 0 348.118 0H176c-26.51 0-48 21.49-48 48v48H48c-26.51 0-48 21.49-48 48v320c0 26.51 21.49 48 48 48h224c26.51 0 48-21.49 48-48v-48h80c26.51 0 48-21.49 48-48V99.882a48 48 0 0 0-14.059-33.941zM266 464H54a6 6 0 0 1-6-6V150a6 6 0 0 1 6-6h74v224c0 26.51 21.49 48 48 48h96v42a6 6 0 0 1-6 6zm128-96H182a6 6 0 0 1-6-6V54a6 6 0 0 1 6-6h106v88c0 13.255 10.745 24 24 24h88v202a6 6 0 0 1-6 6zm6-256h-64V48h9.632c1.591 0 3.117.632 4.243 1.757l48.368 48.368a6 6 0 0 1 1.757 4.243V112z"></path></svg>}
+              {copied ? (
+                "Copied!"
+              ) : (
+                <svg
+                  stroke="currentColor"
+                  fill="currentColor"
+                  strokeWidth="0"
+                  viewBox="0 0 448 512"
+                  height="1em"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M433.941 65.941l-51.882-51.882A48 48 0 0 0 348.118 0H176c-26.51 0-48 21.49-48 48v48H48c-26.51 0-48 21.49-48 48v320c0 26.51 21.49 48 48 48h224c26.51 0 48-21.49 48-48v-48h80c26.51 0 48-21.49 48-48V99.882a48 48 0 0 0-14.059-33.941zM266 464H54a6 6 0 0 1-6-6V150a6 6 0 0 1 6-6h74v224c0 26.51 21.49 48 48 48h96v42a6 6 0 0 1-6 6zm128-96H182a6 6 0 0 1-6-6V54a6 6 0 0 1 6-6h106v88c0 13.255 10.745 24 24 24h88v202a6 6 0 0 1-6 6zm6-256h-64V48h9.632c1.591 0 3.117.632 4.243 1.757l48.368 48.368a6 6 0 0 1 1.757 4.243V112z"></path>
+                </svg>
+              )}
             </button>
           </div>
 
@@ -122,9 +158,14 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
   if (renderType === "image") {
     const src = String(possibleUrl ?? content);
     return (
-      <div className={`msg-row ${role === "user" ? "right" : "left"}`} data-typing="false">
+      <div
+        className={`msg-row ${role === "user" ? "right" : "left"}`}
+        data-typing="false"
+      >
         {role === "assistant" && <div className="assistant-avatar">🤖</div>}
-        <div className={`assistant-block ${role === "user" ? "user-block" : ""}`}>
+        <div
+          className={`assistant-block ${role === "user" ? "user-block" : ""}`}
+        >
           <div className="media-bubble image-bubble">
             <img src={src} alt={filename ?? "image"} className="chat-image" />
             {typeof content === "string" && !looksLikeUrl(content) && (
@@ -138,7 +179,10 @@ export default function MessageBubble({ role, content, type, url, filename }: Pr
 
   const src = String(possibleUrl ?? content);
   return (
-    <div className={`msg-row ${role === "user" ? "right" : "left"}`} data-typing="false">
+    <div
+      className={`msg-row ${role === "user" ? "right" : "left"}`}
+      data-typing="false"
+    >
       {role === "assistant" && <div className="assistant-avatar">🤖</div>}
       <div className="assistant-block">
         <div className="media-bubble audio-bubble">

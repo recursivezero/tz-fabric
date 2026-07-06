@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { usePageTracking } from "./hooks/usePageTracking";
 import "./index.css";
+import "@/assets/styles/_makeover.css";
 
 const rootElement = document.getElementById("root");
 

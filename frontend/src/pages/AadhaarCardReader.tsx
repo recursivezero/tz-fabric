@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { CSSProperties } from "react";
 import Cropper from "react-easy-crop";
 
 import * as htmlToImage from "html-to-image";
@@ -44,6 +45,7 @@ const AadhaarCardReader = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<AadhaarResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [side, setSide] = useState<AadhaarSide>("front");
   const [showCropper, setShowCropper] = useState(false);
@@ -59,6 +61,7 @@ const AadhaarCardReader = () => {
   const handleFile = (f: File | null) => {
     setFile(f);
     setResult(null);
+    setError(null);
     setCroppedImage(null);
     if (f) {
       const url = URL.createObjectURL(f);
@@ -148,6 +151,7 @@ const AadhaarCardReader = () => {
   const submit = async () => {
     if (!croppedImage && !file) return;
     setLoading(true);
+    setError(null);
 
     const fd = new FormData();
 
@@ -176,7 +180,7 @@ const AadhaarCardReader = () => {
       setResult(data);
     } catch (error) {
       console.error("Error processing Aadhaar:", error);
-      alert("Failed to process Aadhaar card. Please try again.");
+      setError("Failed to process Aadhaar card. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -231,6 +235,11 @@ const AadhaarCardReader = () => {
       
 
       <div style={styles.container}>
+        {error && (
+          <div style={styles.errorBanner} role="alert">
+            {error}
+          </div>
+        )}
         <div
           style={{
             ...styles.iconWrapper,
@@ -534,10 +543,10 @@ const Field = ({ label, value }: { label: string; value?: string }) => (
    STYLES
 ======================= */
 
-const styles: any = {
+const styles: Record<string, CSSProperties> = {
   wrapper: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",
+    background: "var(--document-reader-page-bg)",
     padding: "60px 20px",
     fontFamily: "'DM Sans', -apple-system, sans-serif",
     
@@ -552,7 +561,7 @@ const styles: any = {
     fontSize: 48,
     fontWeight: 400,
     margin: "0 0 12px 0",
-    background: "linear-gradient(135deg, #fff 0%, #aaa 100%)",
+    background: "var(--document-reader-title-gradient)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
     letterSpacing: "-0.02em",
@@ -560,7 +569,7 @@ const styles: any = {
   },
   subtitle: {
     fontSize: 16,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     margin: "0 0 32px 0",
     fontWeight: 400,
     textAlign: "center",
@@ -570,14 +579,14 @@ const styles: any = {
     gap: 12,
     marginBottom: 24,
     padding: 4,
-    background: "rgba(255, 255, 255, 0.03)",
+    background: "var(--document-reader-surface-subtle)",
     borderRadius: 16,
   },
   sideBtn: {
     flex: 1,
     padding: "12px 20px",
     background: "transparent",
-    color: "#888",
+    color: "var(--document-reader-muted)",
     border: "none",
     borderRadius: 12,
     fontSize: 14,
@@ -587,7 +596,7 @@ const styles: any = {
   },
   sideBtnActive: {
     background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "#fff",
+    color: "var(--document-reader-text)",
   },
   uploadZone: {
     position: "relative" as const,
@@ -618,21 +627,21 @@ const styles: any = {
   },
   uploadTitle: {
     fontSize: 20,
-    color: "#fff",
+    color: "var(--document-reader-text)",
     margin: "0 0 8px 0",
     fontWeight: 600,
   },
   uploadText: {
     fontSize: 16,
-    color: "#999",
+    color: "var(--document-reader-muted-strong)",
     margin: 0,
   },
   previewCard: {
     marginBottom: 24,
     borderRadius: 20,
     overflow: "hidden",
-    background: "#1a1a1a",
-    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+    background: "var(--document-reader-modal-bg)",
+    boxShadow: "var(--document-reader-preview-shadow)",
   },
   previewImage: {
     width: "100%",
@@ -658,9 +667,9 @@ const styles: any = {
   removeBtn: {
     flex: 1,
     padding: "12px 20px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 12,
     fontSize: 14,
     fontWeight: 600,
@@ -671,7 +680,7 @@ const styles: any = {
     width: "100%",
     padding: "18px 32px",
     background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "#fff",
+    color: "var(--document-reader-text)",
     border: "none",
     borderRadius: 16,
     fontSize: 16,
@@ -683,7 +692,7 @@ const styles: any = {
   card: {
     padding: 32,
     borderRadius: 20,
-    background: "linear-gradient(135deg, #1a1a1a 0%, #252525 100%)",
+    background: "var(--document-reader-card-bg)",
     border: "1px solid rgba(255, 107, 53, 0.2)",
     marginBottom: 24,
     position: "relative" as const,
@@ -721,14 +730,14 @@ const styles: any = {
     fontSize: 11,
     fontWeight: 600,
     letterSpacing: "0.05em",
-    color: "#888",
+    color: "var(--document-reader-muted)",
     textTransform: "uppercase" as const,
     marginBottom: 6,
   },
   fieldValue: {
     fontSize: 18,
     fontFamily: "'Instrument Serif', serif",
-    color: "#fff",
+    color: "var(--document-reader-text)",
     fontWeight: 400,
   },
   downloadBtn: {
@@ -747,9 +756,9 @@ const styles: any = {
   newUploadBtn: {
     width: "100%",
     padding: "16px 32px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 16,
     fontSize: 15,
     fontWeight: 600,
@@ -764,7 +773,7 @@ const styles: any = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "rgba(0, 0, 0, 0.95)",
+    background: "var(--document-reader-modal-overlay)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -772,7 +781,7 @@ const styles: any = {
     padding: 20,
   },
   cropperContainer: {
-    background: "#1a1a1a",
+    background: "var(--document-reader-modal-bg)",
     borderRadius: 20,
     padding: 24,
     maxWidth: 600,
@@ -781,7 +790,7 @@ const styles: any = {
   cropperTitle: {
     fontSize: 24,
     fontFamily: "'Instrument Serif', serif",
-    color: "#fff",
+    color: "var(--document-reader-text)",
     margin: "0 0 8px 0",
     textAlign: "center",
   },
@@ -808,13 +817,13 @@ const styles: any = {
   timestampValue: {
     fontSize: 12,
     fontWeight: 500,
-    color: "#ddd",
+    color: "var(--document-reader-text)",
     letterSpacing: "0.04em",
   },
 
   cropperSubtitle: {
     fontSize: 14,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     margin: "0 0 24px 0",
     textAlign: "center",
   },
@@ -822,13 +831,13 @@ const styles: any = {
     position: "relative" as const,
     width: "100%",
     height: 400,
-    background: "#000",
+    background: "var(--document-reader-crop-bg)",
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: 20,
   },
   reactEasyCropContainer: {
-    background: "#000",
+    background: "var(--document-reader-crop-bg)",
   },
   reactEasyCropMedia: {},
   reactEasyCropArea: {
@@ -841,12 +850,12 @@ const styles: any = {
     gap: 12,
     marginBottom: 20,
     padding: "12px 16px",
-    background: "rgba(255, 255, 255, 0.03)",
+    background: "var(--document-reader-surface-subtle)",
     borderRadius: 12,
   },
   zoomLabel: {
     fontSize: 14,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     fontWeight: 600,
     minWidth: 50,
   },
@@ -859,16 +868,16 @@ const styles: any = {
     color: "#b70d0dff",
     textAlign: "center",
     padding: "16px 20px",
-    background: "rgba(255, 255, 255, 0.02)",
+    background: "var(--document-reader-surface-faint)",
     borderRadius: 12,
-    border: "1px solid rgba(255, 255, 255, 0.05)",
+    border: "1px solid var(--document-reader-border-soft)",
     marginBottom: 24,
   },
   zoomSlider: {
     flex: 1,
     height: 4,
     borderRadius: 2,
-    background: "rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-border)",
     outline: "none",
     appearance: "none" as const,
     WebkitAppearance: "none",
@@ -898,9 +907,9 @@ const styles: any = {
   cancelBtn: {
     flex: 1,
     padding: "14px 24px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 12,
     fontSize: 15,
     fontWeight: 600,
@@ -911,13 +920,24 @@ const styles: any = {
     flex: 1,
     padding: "14px 24px",
     background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "#fff",
+    color: "var(--document-reader-text)",
     border: "none",
     borderRadius: 12,
     fontSize: 15,
     fontWeight: 600,
     cursor: "pointer",
     transition: "all 0.2s ease",
+  },
+  errorBanner: {
+    width: "100%",
+    maxWidth: "720px",
+    margin: "0 auto 18px",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    color: "#991b1b",
+    background: "rgba(254, 226, 226, 0.95)",
+    border: "1px solid rgba(220, 38, 38, 0.35)",
+    fontWeight: 600,
   },
 };
 

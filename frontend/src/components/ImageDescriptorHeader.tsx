@@ -4,7 +4,7 @@ const Header = () => {
   return (
     <div className="header-wrapper">
       <div className="animated-header">
-        <h1>AI Fabric Analzer</h1>
+        <h1>AI Fabric Analyzer</h1>
       </div>
     </div>
   );

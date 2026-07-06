@@ -11,6 +11,49 @@ import "@/assets/styles/FabricChat.css";
 
 type ChatDisplayMessage = { id?: string; role?: string; content?: unknown };
 
+
+const NewChatIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" className="chat-action-icon">
+    <path
+      d="M7.5 8.5h7M7.5 12h4.5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <path
+      d="M18.5 4.75A8.25 8.25 0 0 0 5.72 15.13L4.5 19.5l4.38-1.22A8.25 8.25 0 0 0 19.25 5.5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M18.5 3.5v4M16.5 5.5h4"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" className="chat-action-icon">
+    <path
+      d="M12 4v9.25M8.25 9.75 12 13.5l3.75-3.75"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M5 15.75v1.75A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-1.75"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 const contentToString = (value: unknown): string => {
   if (typeof value === "string") return value;
   try {
@@ -144,9 +187,18 @@ export default function Chat() {
         </div>
 
         <div className="chat-card-actions">
-          <button className="btn btn-secondary" onClick={newChat}>New Chat</button>
-          <button className="btn btn-ghost" onClick={downloadChat} disabled={downloadDisabled}>
-            Download Chat
+          <button className="btn btn-secondary" onClick={newChat} aria-label="Start a new chat">
+            <NewChatIcon />
+            <span>New Chat</span>
+          </button>
+          <button
+            className="btn btn-ghost"
+            onClick={downloadChat}
+            disabled={downloadDisabled}
+            aria-label="Download chat as PDF"
+          >
+            <DownloadIcon />
+            <span>Download Chat</span>
           </button>
         </div>
       </div>
@@ -187,7 +239,11 @@ export default function Chat() {
             </div>
           )}
 
-          {error && <div className="error">{error} "Please try again"</div>}
+          {error && (
+            <div className="error" role="alert" data-error-detail={error} title={error}>
+              Unable to connect to the server, please try after some time.
+            </div>
+          )}
         </div>
 
         <Composer

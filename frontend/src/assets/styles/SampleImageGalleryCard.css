@@ -57,3 +57,191 @@
   display: block;
   transition: ease-out;
 }
+
+/* Right sample drawer contrast + compact cards. */
+.analysis-page .sample-gallery {
+  margin: 0;
+  color: #0f172a;
+  text-align: center;
+}
+
+.analysis-page .sample-gallery h2 {
+  margin: 0 0 16px;
+  color: #0f172a ;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.analysis-page .sample-gallery .sample-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 0;
+}
+
+.analysis-page .sample-gallery .sample-card {
+  width: 100%;
+  height: 188px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.analysis-page .sample-gallery .sample-img {
+  border-radius: 16px;
+}
+
+.analysis-page .sample-gallery .analyze-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.88);
+  font-weight: 800;
+}
+
+/* Dark theme: keep the Analysis sample sidebar text readable even when this
+   component stylesheet loads after the global theme overlay. */
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery h2,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery p,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery span {
+  color: #f8fafc ;
+}
+
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card {
+  background: rgba(23, 31, 51, 0.96) ;
+  border-color: rgba(255, 255, 255, 0.14) ;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) ;
+}
+
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
+  background: linear-gradient(135deg, #e0a82e, #f0c463) ;
+  color: #ffffff ;
+  border: 1px solid #e0a82e ;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.24) ;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery,
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery h2 {
+  color: #0f172a ;
+}
+
+/* Final theme polish for sample-drawer Short Analysis buttons. */
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
+  color: #171101 ;
+  text-shadow: none ;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
+  color: #ffffff ;
+}
+
+/* Sample images are clickable cards now; no overlay button is shown. */
+.sample-gallery .sample-card {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sample-gallery .sample-card:focus-visible {
+  outline: 3px solid rgba(224, 168, 46, 0.55);
+  outline-offset: 3px;
+}
+
+.sample-gallery .sample-card:hover .sample-img {
+  filter: brightness(1.03);
+}
+
+.sample-gallery button.sample-card {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+}
+.sample-gallery button.sample-card:disabled {
+  cursor: not-allowed;
+}
+
+/* Clear sample-image action affordance. The whole card remains clickable, but
+   users now see an explicit Select button near the bottom of each sample. */
+.sample-gallery .sample-card__select {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  background: rgba(15, 23, 42, 0.84);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.sample-gallery .sample-card:hover .sample-card__select,
+.sample-gallery .sample-card:focus-visible .sample-card__select {
+  background: linear-gradient(135deg, #e0a82e, #f0c463);
+  border-color: #f0c463;
+  color: #171101;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
+  background: rgba(15, 23, 42, 0.86) ;
+  color: #ffffff ;
+  border-color: rgba(255, 255, 255, 0.9) ;
+}
+
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
+  background: rgba(15, 23, 42, 0.9) ;
+  color: #ffffff ;
+  border-color: rgba(255, 255, 255, 0.72) ;
+}
+
+/* Professional QA top-up: make the sample selection affordance impossible to miss. */
+.sample-gallery .sample-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.58), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sample-gallery .sample-card__select {
+  bottom: 14px;
+  min-width: 92px;
+  min-height: 36px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card__select,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
+  background: #111827 ;
+  color: #ffffff ;
+  border: 1px solid rgba(255, 255, 255, 0.92) ;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32) ;
+}
+
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card:hover .sample-card__select,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card:hover .sample-card__select,
+:root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card:focus-visible .sample-card__select,
+:root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card:focus-visible .sample-card__select {
+  background: linear-gradient(135deg, #e0a82e, #f0c463) ;
+  color: #171101 ;
+  border-color: #f0c463 ;
+}

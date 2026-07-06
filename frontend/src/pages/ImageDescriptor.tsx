@@ -13,6 +13,9 @@ const ImageDescription = () => {
     const wrapper = document.querySelector(".app-wrapper");
     wrapper?.classList.add("upload-bg");
 
+    return () => {
+      wrapper?.classList.remove("upload-bg");
+    };
   }, []);
 
   const {
@@ -28,19 +31,26 @@ const ImageDescription = () => {
     isValidImage,
     validationLoading,
     validationMessage,
+    analysisPopupMessage,
     setShowDrawer,
     handleUploadedImage,
     handleRunAnalysis,
     handleSampleShortAnalysis,
     handlePrev,
     handleNext,
-    clearImage
+    clearImage,
+    dismissAnalysisPopup,
   } = useImageAnalysis();
 
   const [, setOpenDescription] = useState(false);
-  const imageInputRef = useRef(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const popupCardRef = useRef<HTMLDivElement | null>(null);
+  const popupButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  const wrappedRunAnalysis = async (file, mode) => {
+  const wrappedRunAnalysis = async (
+    file: File | null,
+    mode: "short" | "long",
+  ) => {
     try {
       const res = handleRunAnalysis?.(file, mode);
       if (res && typeof res.then === "function") await res;
@@ -50,7 +60,9 @@ const ImageDescription = () => {
   };
 
   useEffect(() => {
-    const hasPartial = (typedText && typedText.trim().length > 0) || (responses && responses.length > 0);
+    const hasPartial =
+      (typedText && typedText.trim().length > 0) ||
+      (responses && responses.length > 0);
     if (hasPartial) setOpenDescription(true);
   }, [typedText, responses]);
 
@@ -58,8 +70,50 @@ const ImageDescription = () => {
     if (!uploadedImageUrl && !sampleImageUrl) setOpenDescription(false);
   }, [uploadedImageUrl, sampleImageUrl]);
 
+  useEffect(() => {
+    if (!analysisPopupMessage) return;
+
+    const previousActiveElement = document.activeElement as HTMLElement | null;
+    popupButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        dismissAnalysisPopup();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(
+        popupCardRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((element) => !element.hasAttribute("disabled"));
+
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousActiveElement?.focus?.();
+    };
+  }, [analysisPopupMessage, dismissAnalysisPopup]);
+
   return (
-    <div className="home-container">
+    <div
+      className={`home-container analysis-page ${showDrawer ? "drawer-open" : ""}`}
+    >
       <Header />
 
       <div className="top-texts">
@@ -69,8 +123,8 @@ const ImageDescription = () => {
         </span>
       </div>
 
-      <div className="result-wrapper grid">
-        <section className="preview-col">
+      <div className="result-wrapper analysis-grid">
+        <section className="analysis-preview-col">
           <ImagePreview
             uploadedImageUrl={uploadedImageUrl}
             sampleImageUrl={sampleImageUrl}
@@ -83,21 +137,10 @@ const ImageDescription = () => {
             imageInputRef={imageInputRef}
             clearImage={clearImage}
           />
-
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleUploadedImage(file);
-            }}
-          />
         </section>
 
-        <section className="action-col">
-          <div className="description-area slide-in-right">
+        <section className="analysis-action-col">
+          <div className="analysis-description-area slide-in-right">
             <DescriptionBox
               isValidImage={isValidImage}
               validationMessage={validationMessage}
@@ -123,6 +166,28 @@ const ImageDescription = () => {
             }}
             loading={loading}
           />
+        </div>
+      )}
+
+      {analysisPopupMessage && (
+        <div className="analysis-popup" role="alertdialog" aria-modal="true">
+          <div className="analysis-popup__card" ref={popupCardRef}>
+            <div className="analysis-popup__icon" aria-hidden="true">
+              ⚠️
+            </div>
+            <div className="analysis-popup__content">
+              <h3>Invalid image</h3>
+              <p>{analysisPopupMessage}</p>
+            </div>
+            <button
+              type="button"
+              className="analysis-popup__button"
+              onClick={dismissAnalysisPopup}
+              ref={popupButtonRef}
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
     </div>

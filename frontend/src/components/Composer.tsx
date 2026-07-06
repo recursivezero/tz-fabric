@@ -77,6 +77,7 @@ export default function Composer({
 
   const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string; trimmed?: boolean } | null>(null);
+  const hasAttachedMedia = Boolean(previewUrl || audioUrl);
 
   const FILE_NAME_MAX = 20;
   // A: new state
@@ -176,7 +177,9 @@ export default function Composer({
 
   const trimAudioFile = async (file: File): Promise<File> => {
     const arrayBuffer = await file.arrayBuffer();
-    const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextClass =
+      window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ac = new AudioContextClass();
     try {
       const decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
       const duration = decoded.duration;
@@ -515,6 +518,7 @@ export default function Composer({
       {/* --- NEW: Confirmation modal for image upload --- */}
       {pendingImage && (
         <div
+          className="composer-modal-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Confirm image upload"
@@ -529,10 +533,10 @@ export default function Composer({
             padding: 16,
           }}
         >
-          <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
+          <div className="composer-modal" style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
               <div style={{ flex: "0 0 120px" }}>
-                <img src={pendingImage.url} alt="Confirm preview" style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 6 }} />
+                <img src={pendingImage.url} alt="Confirm preview" className="composer-modal__thumb" style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 6 }} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, marginBottom: 6 }}>Upload this image?</div>
@@ -552,6 +556,7 @@ export default function Composer({
       )}
       {pendingAudio && (
         <div
+          className="composer-modal-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Confirm audio upload"
@@ -566,7 +571,7 @@ export default function Composer({
             padding: 16,
           }}
         >
-          <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
+          <div className="composer-modal" style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <div style={{ flex: "0 0 120px" }}>
                 <audio controls src={pendingAudio.url} style={{ width: 120 }} controlsList="nodownload" />
@@ -591,7 +596,14 @@ export default function Composer({
         </div>
       )}
 
-      <div className="composer" style={{ paddingTop: isRecording ? 48 : undefined }}>
+      <div
+        className={[
+          "composer",
+          hasAttachedMedia ? "composer--has-upload" : "",
+          showAttachMenu ? "composer--attach-open" : "",
+        ].filter(Boolean).join(" ")}
+        style={{ paddingTop: isRecording ? 48 : undefined }}
+      >
         {status === "validating" && !previewUrl && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Loader />
@@ -601,10 +613,10 @@ export default function Composer({
         {(previewUrl || audioUrl) && (
           <div className="upload-previews" role="region" aria-label="Upload previews">
             {previewUrl && (
-              <div className="upload-preview image-preview">
+              <div className="upload-preview upload-preview--image">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={imageMeta.name}>
+                  <div className="upload-preview__meta" title={imageMeta.name}>
                     {formatFileName(imageMeta.name, NAME_MAX)} ({imageMeta.size})
                   </div>
                 )}
@@ -620,10 +632,10 @@ export default function Composer({
             )}
 
             {audioUrl && (
-              <div className="upload-preview audio-preview">
+              <div className="upload-preview upload-preview--audio">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={audioMeta.name}>
+                  <div className="upload-preview__meta" title={audioMeta.name}>
                     {formatFileName(audioMeta.name, NAME_MAX)} ({audioMeta.size})
                     {audioMeta.trimmed ? " — trimmed to 1min" : ""}
                   </div>
@@ -674,7 +686,6 @@ export default function Composer({
                     onSend(value);
                   }
                 }}
-                style={{ color: "black" }}
                 rows={1}
                 readOnly={mode !== "free"}
               />
@@ -718,14 +729,20 @@ export default function Composer({
                   <button
                     className="attach-menu-item"
                     type="button"
-                    onClick={() => imageInputRef.current?.click()}
+                    onClick={() => {
+                      imageInputRef.current?.click();
+                      setShowAttachMenu(false);
+                    }}
                   >
                     🖼️ Upload image
                   </button>
                   <button
                     className="attach-menu-item"
                     type="button"
-                    onClick={() => audioInputRef.current?.click()}
+                    onClick={() => {
+                      audioInputRef.current?.click();
+                      setShowAttachMenu(false);
+                    }}
                   >
                     🎙️ Upload audio
                   </button>
@@ -753,7 +770,6 @@ export default function Composer({
         {!audioUrl && (
           <div className="composer-audio-row">
             <button
-              style={{ color: "black" }}
               type="button"
               onClick={stopRecording}
               disabled={!isRecording}
@@ -765,7 +781,6 @@ export default function Composer({
             </button>
 
             <button
-              style={{ color: "black" }}
               type="button"
               onClick={startRecording}
               disabled={isRecording}
@@ -796,8 +811,9 @@ export default function Composer({
               flexWrap: "wrap",
             }}
           >
-            <label style={{ fontSize: 16, color: "black" }}>Type File name:</label>
+            <label className="locked-control-label">Type File name:</label>
             <input
+              className="locked-control-input"
               type="text"
               value={nameOnly}
               onChange={(e) => {
@@ -806,33 +822,19 @@ export default function Composer({
               }}
               placeholder="NeonFabric"
               maxLength={FILE_NAME_MAX}
-              style={{
-                padding: "8px 8px",
-                borderRadius: 6,
-                border: "1px solid #000000ff",
-                minWidth: 200,
-              }}
               aria-label={`File name (max ${FILE_NAME_MAX} chars)`}
             />
-            <div style={{ fontSize: 13, color: "rgba(0,0,0,0.6)", marginLeft: 6 }}>
+            <div className="locked-control-count">
               {nameOnly.length}/{FILE_NAME_MAX}
             </div>
             <button
+              className="locked-control-btn locked-control-btn--confirm"
               type="button"
               onClick={() => {
                 const nm = nameOnly.trim().slice(0, FILE_NAME_MAX);
                 setFileName?.(nm);
                 onSend(textForSubmitName(nm));
                 setMode("free");
-              }}
-              style={{
-                padding: "6px 12px",
-                borderRadius: 8,
-                border: "1px solid #0f172a",
-                background: "#0f172a",
-                color: "#fff",
-                cursor: "pointer",
-                fontWeight: 700,
               }}
               aria-label="Confirm name"
               title="Confirm name"
@@ -842,16 +844,9 @@ export default function Composer({
             </button>
 
             <button
+              className="locked-control-btn locked-control-btn--cancel"
               type="button"
               onClick={() => setMode("free")}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 8,
-                border: "1px solid #e5e7eb",
-                background: "#fff",
-                color: "#111827",
-                cursor: "pointer",
-              }}
               aria-label="Cancel"
               title="Cancel"
             >
@@ -881,8 +876,8 @@ export default function Composer({
           }}
         />
         {pendingRemove && (
-          <div role="dialog" aria-modal="true" aria-label={`Confirm remove ${pendingRemove.kind}`} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300, background: "rgba(0,0,0,0.4)", padding: 16 }}>
-            <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
+          <div className="composer-modal-overlay" role="dialog" aria-modal="true" aria-label={`Confirm remove ${pendingRemove.kind}`} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300, background: "rgba(0,0,0,0.4)", padding: 16 }}>
+            <div className="composer-modal" style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <div style={{ flex: "0 0 84px" }}>
                   <div style={{ width: 84, height: 84, background: "#f3f4f6", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>

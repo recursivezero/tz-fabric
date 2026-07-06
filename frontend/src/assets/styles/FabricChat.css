@@ -26,7 +26,7 @@
 .chat-scroll-area {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto !important;
+  overflow: auto ;
 }
 
 .chat-card-topbar {
@@ -123,8 +123,8 @@
 .btn:disabled {
   opacity: .5;
   cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
+  transform: none ;
+  box-shadow: none ;
 }
 
 .btn-secondary {
@@ -240,7 +240,7 @@
 }
 
 .chat-scroll-area {
-  overflow: visible !important;
+  overflow: visible ;
   max-height: none;
   padding: 12px 0 0;
   background: transparent;
@@ -258,11 +258,11 @@
 }
 
 .page-root.is-empty .chat-scroll-area::before {
-  display: none !important;
+  display: none ;
 }
 
 .page-root.is-empty .chat-scroll-area {
-  background: radial-gradient(600px 280px at 50% 0%, #eef2ff 0%, transparent 70%) !important;
+  background: radial-gradient(600px 280px at 50% 0%, #eef2ff 0%, transparent 70%) ;
 }
 
 .page-root {
@@ -279,11 +279,114 @@
 .chat-scroll-area {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto !important;
+  overflow: auto ;
   padding: 12px 0 140px;
 }
 
 .content-col {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* Final chat layout overrides: keep the conversation visible and the composer compact. */
+.page-root {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #081126;
+}
+
+.chat-card-topbar {
+  flex: 0 0 auto;
+  width: min(1120px, calc(100% - 32px));
+  margin: 10px auto 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+}
+
+.chat-card-title .main {
+  color: #f8fafc;
+}
+
+.chat-body {
+  flex: 1 1 auto;
+  height: auto ;
+  min-height: 0;
+  width: min(1120px, calc(100% - 32px));
+  margin: 10px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.chat-scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto ;
+  overflow-x: hidden ;
+  padding: 14px 8px 18px ;
+  scrollbar-width: thin;
+}
+
+.chat-scroll-area::-webkit-scrollbar {
+  display: initial;
+  width: 8px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+.page-root.is-empty .chat-scroll-area {
+  background: transparent ;
+}
+
+@media (max-width: 720px) {
+  .page-root {
+    padding: 0;
+  }
+
+  .chat-card-topbar,
+  .chat-body {
+    width: calc(100% - 20px);
+  }
+
+  .chat-card-actions {
+    gap: 6px;
+  }
+
+  .page-root .btn {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+
+.chat-action-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.chat-card-actions .btn span {
+  line-height: 1;
+}
+
+@media (max-width: 420px) {
+  .chat-card-actions .btn span {
+    display: none;
+  }
+
+  .chat-card-actions .btn {
+    width: 36px;
+    justify-content: center;
+    padding: 0 ;
+  }
 }
