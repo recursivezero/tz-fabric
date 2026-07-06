@@ -210,57 +210,57 @@
 
 /* Final repair: keep Analysis result card equal to image/drop card and place Prev/Next below it. */
 .analysis-page .description-wrapper {
-  height: auto !important;
-  min-height: 0 !important;
-  align-self: start !important;
+  height: auto ;
+  min-height: 0 ;
+  align-self: start ;
 }
 
 .analysis-page .description-wrapper .description-box {
-  order: 1 !important;
-  box-sizing: border-box !important;
-  flex: 0 0 auto !important;
-  width: 100% !important;
-  height: clamp(260px, 42dvh, 440px) !important;
-  min-height: clamp(260px, 42dvh, 440px) !important;
-  max-height: clamp(260px, 42dvh, 440px) !important;
+  order: 1 ;
+  box-sizing: border-box ;
+  flex: 0 0 auto ;
+  width: 100% ;
+  height: clamp(260px, 42dvh, 440px) ;
+  min-height: clamp(260px, 42dvh, 440px) ;
+  max-height: clamp(260px, 42dvh, 440px) ;
 }
 
 .analysis-page .description-wrapper .nav-buttons {
-  order: 2 !important;
-  margin: 16px 0 0 !important;
-  flex: 0 0 auto !important;
+  order: 2 ;
+  margin: 16px 0 0 ;
+  flex: 0 0 auto ;
 }
 
 /* Final theme polish: Prev/Next use dark text on yellow in dark theme and
    white text on yellow in light theme, matching the Analysis action buttons. */
 :root[data-theme="dark"] .analysis-page .description-wrapper .nav-btn {
-  color: #171101 !important;
-  text-shadow: none !important;
+  color: #171101 ;
+  text-shadow: none ;
 }
 
 :root[data-theme="light"] .analysis-page .description-wrapper .nav-btn {
-  color: #ffffff !important;
+  color: #ffffff ;
 }
 
 /* Keep the Analysis card clean: show only the copy icon, not "Viewing response X of Y". */
 .analysis-page .description-wrapper .response-copy-only {
-  justify-content: flex-end !important;
+  justify-content: flex-end ;
 }
 
 .analysis-page .description-wrapper .response-copy-only .copy-btn {
-  margin-left: auto !important;
+  margin-left: auto ;
 }
 
 /* Keep the Analysis response copy icon visible in light theme. */
 :root[data-theme="light"] .analysis-page .description-wrapper .copy-btn {
-  background: rgba(15, 23, 42, 0.08) !important;
-  border-color: rgba(15, 23, 42, 0.22) !important;
-  color: #0f172a !important;
+  background: rgba(15, 23, 42, 0.08) ;
+  border-color: rgba(15, 23, 42, 0.22) ;
+  color: #0f172a ;
 }
 
 :root[data-theme="light"] .analysis-page .description-wrapper .copy-btn svg {
-  color: #0f172a !important;
-  fill: currentColor !important;
+  color: #0f172a ;
+  fill: currentColor ;
 }
 /* Top-up fix: the Analysis result card stays dark even when the app is in
    light theme, so keep the copy action high-contrast instead of inheriting
@@ -271,17 +271,17 @@
   .description-wrapper
   .response-copy-only
   .copy-btn {
-  min-width: 38px !important;
-  min-height: 34px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: rgba(15, 23, 42, 0.88) !important;
-  border: 1px solid rgba(255, 255, 255, 0.42) !important;
-  color: #ffffff !important;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+  min-width: 38px ;
+  min-height: 34px ;
+  display: inline-flex ;
+  align-items: center ;
+  justify-content: center ;
+  background: rgba(15, 23, 42, 0.88) ;
+  border: 1px solid rgba(255, 255, 255, 0.42) ;
+  color: #ffffff ;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28) ;
+  opacity: 1 ;
+  visibility: visible ;
 }
 
 .analysis-page .description-wrapper .response-copy-only .copy-btn svg,
@@ -291,11 +291,11 @@
   .response-copy-only
   .copy-btn
   svg {
-  width: 18px !important;
-  height: 18px !important;
-  color: #ffffff !important;
-  fill: currentColor !important;
-  stroke: currentColor !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+  width: 18px ;
+  height: 18px ;
+  color: #ffffff ;
+  fill: currentColor ;
+  stroke: currentColor ;
+  opacity: 1 ;
+  visibility: visible ;
 }

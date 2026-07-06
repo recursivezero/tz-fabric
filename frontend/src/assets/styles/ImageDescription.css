@@ -85,7 +85,7 @@
 }
 
 .description-area .description-area {
-  width: 100% !important;
+  width: 100% ;
   box-sizing: border-box;
 }
 
@@ -347,7 +347,7 @@
 }
 
 .description-area .description-area {
-  width: 100% !important;
+  width: 100% ;
   box-sizing: border-box;
 }
 
@@ -396,7 +396,7 @@
 }
 
 .result-wrapper.grid {
-  align-items: start !important;
+  align-items: start ;
 }
 
 .action-col .upload-action-card {
@@ -445,7 +445,7 @@
 .analysis-page .top-texts {
   width: min(900px, 100%);
   margin: 0 auto 10px;
-  color: #e5e7eb !important;
+  color: #e5e7eb ;
   font-size: clamp(15px, 1.5vw, 18px);
   line-height: 1.4;
   text-align: center;
@@ -465,7 +465,7 @@
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.92fr);
   gap: clamp(18px, 3vw, 32px);
-  align-items: stretch !important;
+  align-items: stretch ;
 }
 
 .analysis-page.drawer-open .result-wrapper.grid {
@@ -561,7 +561,7 @@
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.92fr);
   gap: clamp(18px, 3vw, 32px);
-  align-items: start !important;
+  align-items: start ;
   box-sizing: border-box;
 }
 
@@ -607,14 +607,14 @@
 
 /* Final repair: avoid old generic grid/column CSS from other pages changing Analysis layout. */
 .analysis-page .result-wrapper.analysis-grid {
-  align-items: start !important;
+  align-items: start ;
 }
 
 .analysis-page .analysis-preview-col,
 .analysis-page .analysis-action-col,
 .analysis-page .analysis-description-area {
-  height: auto !important;
-  align-self: start !important;
+  height: auto ;
+  align-self: start ;
 }
 
 /* Custom Analysis popup: replaces native browser alerts for invalid sample images. */

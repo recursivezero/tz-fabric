@@ -26,7 +26,7 @@
 .chat-scroll-area {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto !important;
+  overflow: auto ;
 }
 
 .chat-card-topbar {
@@ -123,8 +123,8 @@
 .btn:disabled {
   opacity: .5;
   cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
+  transform: none ;
+  box-shadow: none ;
 }
 
 .btn-secondary {
@@ -240,7 +240,7 @@
 }
 
 .chat-scroll-area {
-  overflow: visible !important;
+  overflow: visible ;
   max-height: none;
   padding: 12px 0 0;
   background: transparent;
@@ -258,11 +258,11 @@
 }
 
 .page-root.is-empty .chat-scroll-area::before {
-  display: none !important;
+  display: none ;
 }
 
 .page-root.is-empty .chat-scroll-area {
-  background: radial-gradient(600px 280px at 50% 0%, #eef2ff 0%, transparent 70%) !important;
+  background: radial-gradient(600px 280px at 50% 0%, #eef2ff 0%, transparent 70%) ;
 }
 
 .page-root {
@@ -279,7 +279,7 @@
 .chat-scroll-area {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto !important;
+  overflow: auto ;
   padding: 12px 0 140px;
 }
 
@@ -315,7 +315,7 @@
 
 .chat-body {
   flex: 1 1 auto;
-  height: auto !important;
+  height: auto ;
   min-height: 0;
   width: min(1120px, calc(100% - 32px));
   margin: 10px auto 0;
@@ -328,9 +328,9 @@
 .chat-scroll-area {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 14px 8px 18px !important;
+  overflow-y: auto ;
+  overflow-x: hidden ;
+  padding: 14px 8px 18px ;
   scrollbar-width: thin;
 }
 
@@ -345,7 +345,7 @@
 }
 
 .page-root.is-empty .chat-scroll-area {
-  background: transparent !important;
+  background: transparent ;
 }
 
 @media (max-width: 720px) {
@@ -387,6 +387,6 @@
   .chat-card-actions .btn {
     width: 36px;
     justify-content: center;
-    padding: 0 !important;
+    padding: 0 ;
   }
 }

@@ -67,7 +67,7 @@
 
 .analysis-page .sample-gallery h2 {
   margin: 0 0 16px;
-  color: #0f172a !important;
+  color: #0f172a ;
   font-size: 22px;
   line-height: 1.25;
   font-weight: 900;
@@ -109,35 +109,35 @@
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery h2,
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery p,
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery span {
-  color: #f8fafc !important;
+  color: #f8fafc ;
 }
 
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card {
-  background: rgba(23, 31, 51, 0.96) !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) !important;
+  background: rgba(23, 31, 51, 0.96) ;
+  border-color: rgba(255, 255, 255, 0.14) ;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) ;
 }
 
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
-  background: linear-gradient(135deg, #e0a82e, #f0c463) !important;
-  color: #ffffff !important;
-  border: 1px solid #e0a82e !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.24) !important;
+  background: linear-gradient(135deg, #e0a82e, #f0c463) ;
+  color: #ffffff ;
+  border: 1px solid #e0a82e ;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.24) ;
 }
 
 :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery,
 :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery h2 {
-  color: #0f172a !important;
+  color: #0f172a ;
 }
 
 /* Final theme polish for sample-drawer Short Analysis buttons. */
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
-  color: #171101 !important;
-  text-shadow: none !important;
+  color: #171101 ;
+  text-shadow: none ;
 }
 
 :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .analyze-button {
-  color: #ffffff !important;
+  color: #ffffff ;
 }
 
 /* Sample images are clickable cards now; no overlay button is shown. */
@@ -199,15 +199,15 @@
 }
 
 :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
-  background: rgba(15, 23, 42, 0.86) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(15, 23, 42, 0.86) ;
+  color: #ffffff ;
+  border-color: rgba(255, 255, 255, 0.9) ;
 }
 
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
-  background: rgba(15, 23, 42, 0.9) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.72) !important;
+  background: rgba(15, 23, 42, 0.9) ;
+  color: #ffffff ;
+  border-color: rgba(255, 255, 255, 0.72) ;
 }
 
 /* Professional QA top-up: make the sample selection affordance impossible to miss. */
@@ -231,17 +231,17 @@
 
 :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card__select,
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card__select {
-  background: #111827 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.92) !important;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32) !important;
+  background: #111827 ;
+  color: #ffffff ;
+  border: 1px solid rgba(255, 255, 255, 0.92) ;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32) ;
 }
 
 :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card:hover .sample-card__select,
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card:hover .sample-card__select,
 :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card:focus-visible .sample-card__select,
 :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card:focus-visible .sample-card__select {
-  background: linear-gradient(135deg, #e0a82e, #f0c463) !important;
-  color: #171101 !important;
-  border-color: #f0c463 !important;
+  background: linear-gradient(135deg, #e0a82e, #f0c463) ;
+  color: #171101 ;
+  border-color: #f0c463 ;
 }

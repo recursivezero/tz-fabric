@@ -309,26 +309,26 @@ figcaption {
 }
 /* Light-mode list readability fixes for card titles and dates. */
 :root[data-theme="light"] .grid-page .media-name {
-  background: #f8fafc !important;
-  color: #0f172a !important;
-  border-top: 1px solid rgba(15, 23, 42, 0.1) !important;
-  font-style: normal !important;
-  font-weight: 800 !important;
+  background: #f8fafc ;
+  color: #0f172a ;
+  border-top: 1px solid rgba(15, 23, 42, 0.1) ;
+  font-style: normal ;
+  font-weight: 800 ;
 }
 
 :root[data-theme="light"] .grid-page .media-meta,
 :root[data-theme="light"] .grid-page .media-meta time {
-  background: #ffffff !important;
-  color: #334155 !important;
+  background: #ffffff ;
+  color: #334155 ;
 }
 
 :root[data-theme="dark"] .grid-page .media-name {
-  color: #f8fafc !important;
+  color: #f8fafc ;
 }
 
 :root[data-theme="dark"] .grid-page .media-meta,
 :root[data-theme="dark"] .grid-page .media-meta time {
-  color: #f1f5f9 !important;
+  color: #f1f5f9 ;
 }
 
 /* ============================================================
@@ -337,18 +337,18 @@ figcaption {
 .grid-page-title {
   text-align: center;
   margin-block: 10px;
-  color: var(--tz-turmeric, #a455ab) !important;
+  color: var(--tz-turmeric, #a455ab) ;
   font-weight: 850;
 }
 
 .grid-page-subtitle {
   text-align: center;
-  color: var(--tz-muted, #475569) !important;
+  color: var(--tz-muted, #475569) ;
   font-weight: 650;
 }
 
 .grid-page .grid-count-inline {
-  color: var(--tz-muted, #475569) !important;
+  color: var(--tz-muted, #475569) ;
 }
 
 .lb-stage {

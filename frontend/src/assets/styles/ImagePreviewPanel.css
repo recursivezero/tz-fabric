@@ -133,7 +133,6 @@
 }
 
 .image-preview-container .btn {
-  padding: 8px 12px;
   border-radius: 8px;
   min-width: 90px;
   cursor: pointer;
@@ -288,24 +287,24 @@
 .analysis-page .image-preview-container,
 .analysis-page .preview-visual,
 .analysis-page .preview-wrap {
-  height: auto !important;
-  min-height: 0 !important;
-  flex: 0 0 auto !important;
+  height: auto ;
+  min-height: 0 ;
+  flex: 0 0 auto ;
 }
 
 .analysis-page .dropzone.big-drop,
 .analysis-page .preview-image {
-  box-sizing: border-box !important;
-  width: 100% !important;
-  height: clamp(260px, 42dvh, 440px) !important;
-  min-height: clamp(260px, 42dvh, 440px) !important;
-  max-height: clamp(260px, 42dvh, 440px) !important;
+  box-sizing: border-box ;
+  width: 100% ;
+  height: clamp(260px, 42dvh, 440px) ;
+  min-height: clamp(260px, 42dvh, 440px) ;
+  max-height: clamp(260px, 42dvh, 440px) ;
 }
 
 .analysis-page .preview-buttons-container {
-  flex: 0 0 auto !important;
-  align-self: center !important;
-  margin-top: 16px !important;
+  flex: 0 0 auto ;
+  align-self: center ;
+  margin-top: 16px ;
 }
 
 /* Final theme polish: Analysis buttons are yellow in both themes, but text
@@ -313,12 +312,12 @@
 :root[data-theme="dark"] .analysis-page .analysis-btn,
 :root[data-theme="dark"] .analysis-page .analysis-btn.short,
 :root[data-theme="dark"] .analysis-page .analysis-btn.long {
-  color: #171101 !important;
-  text-shadow: none !important;
+  color: #171101 ;
+  text-shadow: none ;
 }
 
 :root[data-theme="light"] .analysis-page .analysis-btn,
 :root[data-theme="light"] .analysis-page .analysis-btn.short,
 :root[data-theme="light"] .analysis-page .analysis-btn.long {
-  color: #ffffff !important;
+  color: #ffffff ;
 }

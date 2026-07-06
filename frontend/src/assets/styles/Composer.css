@@ -358,7 +358,7 @@
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: #f8fafc;
-  color: #0f172a !important;
+  color: #0f172a ;
   font-size: 16px;
   line-height: 1.35;
 }
@@ -497,8 +497,8 @@
   min-width: 190px;
   padding: 10px;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.32) !important;
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22) !important;
+  border: 1px solid rgba(148, 163, 184, 0.32) ;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22) ;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -506,82 +506,82 @@
 .composer .attach-menu-item {
   min-height: 42px;
   justify-content: flex-start;
-  border: 1px solid transparent !important;
+  border: 1px solid transparent ;
   font-weight: 800;
   line-height: 1.15;
-  opacity: 1 !important;
-  text-shadow: none !important;
+  opacity: 1 ;
+  text-shadow: none ;
 }
 
 :root[data-theme="light"] .composer .attach-menu {
-  background: rgba(255, 255, 255, 0.96) !important;
+  background: rgba(255, 255, 255, 0.96) ;
 }
 
 :root[data-theme="light"] .composer .attach-menu-item {
-  background: #f8fafc !important;
-  color: #0f172a !important;
-  border-color: rgba(15, 23, 42, 0.1) !important;
+  background: #f8fafc ;
+  color: #0f172a ;
+  border-color: rgba(15, 23, 42, 0.1) ;
 }
 
 :root[data-theme="light"] .composer .attach-menu-item:hover,
 :root[data-theme="light"] .composer .attach-menu-item:focus-visible {
-  background: #e2e8f0 !important;
-  color: #0f172a !important;
-  border-color: rgba(71, 85, 105, 0.28) !important;
+  background: #e2e8f0 ;
+  color: #0f172a ;
+  border-color: rgba(71, 85, 105, 0.28) ;
 }
 
 :root[data-theme="dark"] .composer .attach-menu {
-  background: rgba(15, 23, 42, 0.96) !important;
+  background: rgba(15, 23, 42, 0.96) ;
 }
 
 :root[data-theme="dark"] .composer .attach-menu-item {
-  background: rgba(30, 41, 59, 0.96) !important;
-  color: #f8fafc !important;
-  border-color: rgba(226, 232, 240, 0.18) !important;
+  background: rgba(30, 41, 59, 0.96) ;
+  color: #f8fafc ;
+  border-color: rgba(226, 232, 240, 0.18) ;
 }
 
 :root[data-theme="dark"] .composer .attach-menu-item:hover,
 :root[data-theme="dark"] .composer .attach-menu-item:focus-visible {
-  background: rgba(51, 65, 85, 0.98) !important;
-  color: #ffffff !important;
-  border-color: rgba(226, 232, 240, 0.38) !important;
+  background: rgba(51, 65, 85, 0.98) ;
+  color: #ffffff ;
+  border-color: rgba(226, 232, 240, 0.38) ;
 }
 
 .composer .upload-previews {
   max-width: min(560px, calc(100vw - 32px));
-  border: 1px solid rgba(148, 163, 184, 0.26) !important;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16) !important;
+  border: 1px solid rgba(148, 163, 184, 0.26) ;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16) ;
 }
 
 .composer .upload-preview {
   max-width: 100%;
   min-width: 0;
   flex: 0 1 auto;
-  color: inherit !important;
+  color: inherit ;
 }
 
 .composer .upload-preview__meta {
   min-width: 0;
   max-width: 260px;
-  color: inherit !important;
-  opacity: 1 !important;
+  color: inherit ;
+  opacity: 1 ;
   white-space: normal;
   overflow-wrap: anywhere;
-  text-shadow: none !important;
+  text-shadow: none ;
 }
 
 :root[data-theme="dark"] .composer .upload-previews,
 :root[data-theme="dark"] .composer .upload-preview {
-  background: rgba(15, 23, 42, 0.95) !important;
-  border-color: rgba(226, 232, 240, 0.24) !important;
-  color: #f8fafc !important;
+  background: rgba(15, 23, 42, 0.95) ;
+  border-color: rgba(226, 232, 240, 0.24) ;
+  color: #f8fafc ;
 }
 
 :root[data-theme="light"] .composer .upload-previews,
 :root[data-theme="light"] .composer .upload-preview {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border-color: rgba(15, 23, 42, 0.12) !important;
-  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.96) ;
+  border-color: rgba(15, 23, 42, 0.12) ;
+  color: #0f172a ;
 }
 
 /* ============================================================
@@ -591,30 +591,30 @@
    - keeps the submit-with-name label/input/actions readable without inline color hacks
    ============================================================ */
 .composer-modal-overlay {
-  background: rgba(8, 11, 20, 0.58) !important;
+  background: rgba(8, 11, 20, 0.58) ;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 
 .composer-modal {
-  background: var(--tz-panel, #ffffff) !important;
-  color: var(--tz-cotton, #0f172a) !important;
-  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) !important;
-  border-radius: var(--tz-radius, 16px) !important;
-  box-shadow: var(--tz-shadow, 0 18px 50px rgba(0, 0, 0, 0.24)) !important;
+  background: var(--tz-panel, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) ;
+  border-radius: var(--tz-radius, 16px) ;
+  box-shadow: var(--tz-shadow, 0 18px 50px rgba(0, 0, 0, 0.24)) ;
 }
 
 .composer-modal,
 .composer-modal *:not(button):not(svg):not(path) {
-  color: var(--tz-cotton, #0f172a) !important;
-  text-shadow: none !important;
+  color: var(--tz-cotton, #0f172a) ;
+  text-shadow: none ;
 }
 
 .composer-modal__thumb,
 .composer-modal img {
-  object-fit: contain !important;
-  background: var(--tz-ink-2, #f8fafc) !important;
-  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) !important;
+  object-fit: contain ;
+  background: var(--tz-ink-2, #f8fafc) ;
+  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) ;
 }
 
 .composer-modal audio {
@@ -623,134 +623,134 @@
 }
 
 .composer-modal button {
-  color: inherit !important;
-  opacity: 1 !important;
+  color: inherit ;
+  opacity: 1 ;
 }
 
 .composer-modal button:first-of-type {
-  background: var(--tz-turmeric, #e0a82e) !important;
-  color: #171101 !important;
-  border: 1px solid var(--tz-turmeric, #e0a82e) !important;
+  background: var(--tz-turmeric, #e0a82e) ;
+  color: #171101 ;
+  border: 1px solid var(--tz-turmeric, #e0a82e) ;
 }
 
 .composer-modal button:last-of-type {
-  background: var(--tz-button-ghost-bg, #ffffff) !important;
-  color: var(--tz-cotton, #0f172a) !important;
-  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) !important;
+  background: var(--tz-button-ghost-bg, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) ;
 }
 
 .composer .upload-previews {
-  display: flex !important;
-  align-items: stretch !important;
-  flex-wrap: wrap !important;
-  gap: 10px !important;
-  width: 100% !important;
-  max-width: min(760px, calc(100vw - 32px)) !important;
+  display: flex ;
+  align-items: stretch ;
+  flex-wrap: wrap ;
+  gap: 10px ;
+  width: 100% ;
+  max-width: min(760px, calc(100vw - 32px)) ;
 }
 
 .composer .upload-preview {
-  display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr) auto !important;
-  align-items: center !important;
-  gap: 10px !important;
-  flex: 1 1 320px !important;
-  min-width: min(300px, 100%) !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
+  display: grid ;
+  grid-template-columns: auto minmax(0, 1fr) auto ;
+  align-items: center ;
+  gap: 10px ;
+  flex: 1 1 320px ;
+  min-width: min(300px, 100%) ;
+  max-width: 100% ;
+  overflow: hidden ;
 }
 
 .composer .upload-preview--image {
-  flex-basis: 360px !important;
+  flex-basis: 360px ;
 }
 
 .composer .upload-preview--audio {
-  flex-basis: 380px !important;
+  flex-basis: 380px ;
 }
 
 .composer .upload-thumb {
-  width: 72px !important;
-  height: 72px !important;
-  flex: 0 0 72px !important;
-  object-fit: contain !important;
-  background: var(--tz-ink-2, #f8fafc) !important;
+  width: 72px ;
+  height: 72px ;
+  flex: 0 0 72px ;
+  object-fit: contain ;
+  background: var(--tz-ink-2, #f8fafc) ;
 }
 
 .composer .upload-preview audio {
-  min-width: 180px !important;
-  width: min(240px, 100%) !important;
-  max-width: 100% !important;
+  min-width: 180px ;
+  width: min(240px, 100%) ;
+  max-width: 100% ;
 }
 
 .composer .upload-preview__meta {
-  min-width: 0 !important;
-  max-width: 100% !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  overflow-wrap: normal !important;
-  word-break: normal !important;
-  font-size: 14px !important;
-  line-height: 1.25 !important;
+  min-width: 0 ;
+  max-width: 100% ;
+  white-space: nowrap ;
+  overflow: hidden ;
+  text-overflow: ellipsis ;
+  overflow-wrap: normal ;
+  word-break: normal ;
+  font-size: 14px ;
+  line-height: 1.25 ;
 }
 
 .composer .upload-remove {
-  flex: 0 0 auto !important;
-  white-space: nowrap !important;
-  min-height: 34px !important;
-  padding: 6px 12px !important;
+  flex: 0 0 auto ;
+  white-space: nowrap ;
+  min-height: 34px ;
+  padding: 6px 12px ;
 }
 
 .composer .locked-controls,
 .composer .locked-controls label,
 .composer .locked-controls div {
-  color: var(--tz-cotton, #0f172a) !important;
-  text-shadow: none !important;
+  color: var(--tz-cotton, #0f172a) ;
+  text-shadow: none ;
 }
 
 .composer .locked-controls input {
-  background: var(--tz-ink-2, #ffffff) !important;
-  color: var(--tz-cotton, #0f172a) !important;
-  border-color: var(--tz-line, rgba(15, 23, 42, 0.14)) !important;
+  background: var(--tz-ink-2, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border-color: var(--tz-line, rgba(15, 23, 42, 0.14)) ;
 }
 
 .composer .locked-controls button {
-  color: var(--tz-cotton, #0f172a) !important;
-  opacity: 1 !important;
+  color: var(--tz-cotton, #0f172a) ;
+  opacity: 1 ;
 }
 
 .composer .locked-controls button:first-of-type {
-  background: var(--tz-turmeric, #e0a82e) !important;
-  color: #171101 !important;
-  border-color: var(--tz-turmeric, #e0a82e) !important;
+  background: var(--tz-turmeric, #e0a82e) ;
+  color: #171101 ;
+  border-color: var(--tz-turmeric, #e0a82e) ;
 }
 
 .composer .locked-controls button:last-of-type {
-  background: var(--tz-button-ghost-bg, #ffffff) !important;
-  color: var(--tz-cotton, #0f172a) !important;
-  border-color: var(--tz-line, rgba(15, 23, 42, 0.14)) !important;
+  background: var(--tz-button-ghost-bg, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border-color: var(--tz-line, rgba(15, 23, 42, 0.14)) ;
 }
 
 .composer .record-btn {
-  color: var(--tz-cotton, #0f172a) !important;
+  color: var(--tz-cotton, #0f172a) ;
 }
 
 :root[data-theme="light"] .composer-modal,
 :root[data-theme="light"] .composer .locked-controls,
 :root[data-theme="light"] .composer .upload-preview,
 :root[data-theme="light"] .composer .upload-previews {
-  color: #0f172a !important;
+  color: #0f172a ;
 }
 
 :root[data-theme="dark"] .composer-modal,
 :root[data-theme="dark"] .composer .locked-controls,
 :root[data-theme="dark"] .composer .upload-preview,
 :root[data-theme="dark"] .composer .upload-previews {
-  color: #f8fafc !important;
+  color: #f8fafc ;
 }
 
 @media (max-width: 620px) {
   .composer .upload-preview {
-    grid-template-columns: auto minmax(0, 1fr) !important;
+    grid-template-columns: auto minmax(0, 1fr) ;
   }
 
   .composer .upload-remove {
@@ -760,41 +760,41 @@
 }
 
 .composer .locked-control-label {
-  font-size: 16px !important;
-  font-weight: 750 !important;
-  color: var(--tz-cotton, #0f172a) !important;
+  font-size: 16px ;
+  font-weight: 750 ;
+  color: var(--tz-cotton, #0f172a) ;
 }
 
 .composer .locked-control-input {
-  min-width: 200px !important;
-  padding: 8px 10px !important;
-  border-radius: 8px !important;
+  min-width: 200px ;
+  padding: 8px 10px ;
+  border-radius: 8px ;
 }
 
 .composer .locked-control-count {
   margin-left: 6px;
-  font-size: 13px !important;
-  color: var(--tz-muted, #64748b) !important;
+  font-size: 13px ;
+  color: var(--tz-muted, #64748b) ;
 }
 
 .composer .locked-control-btn {
-  min-height: 34px !important;
-  padding: 6px 12px !important;
-  border-radius: 999px !important;
-  cursor: pointer !important;
-  font-weight: 800 !important;
+  min-height: 34px ;
+  padding: 6px 12px ;
+  border-radius: 999px ;
+  cursor: pointer ;
+  font-weight: 800 ;
 }
 
 .composer .locked-control-btn--confirm {
-  background: var(--tz-turmeric, #e0a82e) !important;
-  color: #171101 !important;
-  border: 1px solid var(--tz-turmeric, #e0a82e) !important;
+  background: var(--tz-turmeric, #e0a82e) ;
+  color: #171101 ;
+  border: 1px solid var(--tz-turmeric, #e0a82e) ;
 }
 
 .composer .locked-control-btn--cancel {
-  background: var(--tz-button-ghost-bg, #ffffff) !important;
-  color: var(--tz-cotton, #0f172a) !important;
-  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) !important;
+  background: var(--tz-button-ghost-bg, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) ;
 }
 
 /* ============================================================
@@ -834,18 +834,18 @@
 .composer .upload-previews,
 :root[data-theme="light"] .composer .upload-previews,
 :root[data-theme="dark"] .composer .upload-previews {
-  background: transparent !important;
-  color: var(--tz-chat-upload-preview-text) !important;
-  border-color: var(--tz-chat-upload-preview-border) !important;
+  background: transparent ;
+  color: var(--tz-chat-upload-preview-text) ;
+  border-color: var(--tz-chat-upload-preview-border) ;
 }
 
 .composer .upload-preview,
 :root[data-theme="light"] .composer .upload-preview,
 :root[data-theme="dark"] .composer .upload-preview {
-  background: var(--tz-chat-upload-preview-bg) !important;
-  color: var(--tz-chat-upload-preview-text) !important;
-  border-color: var(--tz-chat-upload-preview-border) !important;
-  text-shadow: none !important;
+  background: var(--tz-chat-upload-preview-bg) ;
+  color: var(--tz-chat-upload-preview-text) ;
+  border-color: var(--tz-chat-upload-preview-border) ;
+  text-shadow: none ;
 }
 
 .composer .upload-preview__meta,
@@ -854,41 +854,41 @@
 :root[data-theme="light"] .composer .upload-preview .upload-preview__meta,
 :root[data-theme="dark"] .composer .upload-preview__meta,
 :root[data-theme="dark"] .composer .upload-preview .upload-preview__meta {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  color: var(--tz-chat-upload-preview-text) !important;
-  -webkit-text-fill-color: var(--tz-chat-upload-preview-text) !important;
-  text-shadow: none !important;
-  mix-blend-mode: normal !important;
-  background: transparent !important;
-  font-weight: 800 !important;
-  line-height: 1.2 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: min(42vw, 360px) !important;
-  min-width: 0 !important;
-  position: relative !important;
-  z-index: 2 !important;
+  display: block ;
+  visibility: visible ;
+  opacity: 1 ;
+  color: var(--tz-chat-upload-preview-text) ;
+  -webkit-text-fill-color: var(--tz-chat-upload-preview-text) ;
+  text-shadow: none ;
+  mix-blend-mode: normal ;
+  background: transparent ;
+  font-weight: 800 ;
+  line-height: 1.2 ;
+  white-space: nowrap ;
+  overflow: hidden ;
+  text-overflow: ellipsis ;
+  max-width: min(42vw, 360px) ;
+  min-width: 0 ;
+  position: relative ;
+  z-index: 2 ;
 }
 
 .composer .upload-preview--audio .upload-preview__meta,
 :root[data-theme="light"] .composer .upload-preview--audio .upload-preview__meta,
 :root[data-theme="dark"] .composer .upload-preview--audio .upload-preview__meta {
-  color: var(--tz-chat-upload-preview-text) !important;
-  -webkit-text-fill-color: var(--tz-chat-upload-preview-text) !important;
+  color: var(--tz-chat-upload-preview-text) ;
+  -webkit-text-fill-color: var(--tz-chat-upload-preview-text) ;
 }
 
 .composer .upload-remove,
 :root[data-theme="light"] .composer .upload-remove,
 :root[data-theme="dark"] .composer .upload-remove {
-  background: var(--tz-chat-upload-remove-bg) !important;
-  color: var(--tz-chat-upload-remove-text) !important;
-  -webkit-text-fill-color: var(--tz-chat-upload-remove-text) !important;
-  border: 1px solid var(--tz-chat-upload-preview-border) !important;
-  opacity: 1 !important;
-  text-shadow: none !important;
+  background: var(--tz-chat-upload-remove-bg) ;
+  color: var(--tz-chat-upload-remove-text) ;
+  -webkit-text-fill-color: var(--tz-chat-upload-remove-text) ;
+  border: 1px solid var(--tz-chat-upload-preview-border) ;
+  opacity: 1 ;
+  text-shadow: none ;
 }
 
 /* ============================================================
@@ -899,21 +899,21 @@
    part of the upload-image/audio selection menu. In upload mode, open the menu
    below the input instead and keep previews on their own layer. */
 .composer.composer--has-upload .upload-previews {
-  position: relative !important;
-  z-index: 1 !important;
+  position: relative ;
+  z-index: 1 ;
 }
 
 .composer.composer--has-upload .composer-input-wrapper {
-  position: relative !important;
-  z-index: 20 !important;
+  position: relative ;
+  z-index: 20 ;
 }
 
 .composer.composer--has-upload .attach-menu {
-  top: calc(100% + 8px) !important;
-  bottom: auto !important;
-  left: 8px !important;
-  z-index: 6000 !important;
-  max-width: min(240px, calc(100vw - 32px)) !important;
+  top: calc(100% + 8px) ;
+  bottom: auto ;
+  left: 8px ;
+  z-index: 6000 ;
+  max-width: min(240px, calc(100vw - 32px)) ;
 }
 
 .composer.composer--has-upload .attach-menu::before {
@@ -930,7 +930,7 @@
 }
 
 .composer.composer--has-upload .upload-preview__meta {
-  align-self: center !important;
+  align-self: center ;
 }
 
 /* ============================================================
@@ -942,21 +942,21 @@
    Upload image/audio menu. When media is already attached, render this menu as
    part of the composer flow so it remains fully visible and clickable. */
 .composer.composer--has-upload.composer--attach-open {
-  overflow: visible !important;
-  padding-bottom: 14px !important;
+  overflow: visible ;
+  padding-bottom: 14px ;
 }
 
 .composer.composer--has-upload.composer--attach-open .composer-row,
 .composer.composer--has-upload.composer--attach-open .composer-middle {
-  overflow: visible !important;
+  overflow: visible ;
 }
 
 .composer.composer--has-upload.composer--attach-open .composer-input-wrapper {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  align-items: stretch !important;
-  gap: 8px !important;
-  overflow: visible !important;
+  display: grid ;
+  grid-template-columns: minmax(0, 1fr) ;
+  align-items: stretch ;
+  gap: 8px ;
+  overflow: visible ;
   isolation: isolate;
 }
 
@@ -966,51 +966,51 @@
 }
 
 .composer.composer--has-upload.composer--attach-open .attach-menu {
-  position: relative !important;
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: auto !important;
+  position: relative ;
+  top: auto ;
+  right: auto ;
+  bottom: auto ;
+  left: auto ;
   grid-column: 1 / -1;
   grid-row: 2;
-  align-self: start !important;
-  justify-self: start !important;
-  width: max-content !important;
-  min-width: 190px !important;
-  max-width: min(280px, calc(100% - 8px)) !important;
-  margin: 0 !important;
-  z-index: 30 !important;
-  transform: none !important;
-  animation: none !important;
+  align-self: start ;
+  justify-self: start ;
+  width: max-content ;
+  min-width: 190px ;
+  max-width: min(280px, calc(100% - 8px)) ;
+  margin: 0 ;
+  z-index: 30 ;
+  transform: none ;
+  animation: none ;
 }
 
 .composer.composer--has-upload.composer--attach-open .attach-menu::before {
-  display: none !important;
+  display: none ;
 }
 
 .composer .attach-btn.inside {
-  box-sizing: border-box !important;
-  flex: 0 0 auto !important;
-  overflow: visible !important;
-  clip-path: none !important;
+  box-sizing: border-box ;
+  flex: 0 0 auto ;
+  overflow: visible ;
+  clip-path: none ;
 }
 
 .composer .attach-btn.inside svg {
-  display: block !important;
-  width: 22px !important;
-  height: 22px !important;
-  flex: 0 0 auto !important;
-  pointer-events: none !important;
+  display: block ;
+  width: 22px ;
+  height: 22px ;
+  flex: 0 0 auto ;
+  pointer-events: none ;
 }
 
 .composer.composer--has-upload .attach-menu-item {
-  width: 100% !important;
-  white-space: nowrap !important;
+  width: 100% ;
+  white-space: nowrap ;
 }
 
 @media (max-width: 620px) {
   .composer.composer--has-upload.composer--attach-open .attach-menu {
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 100% ;
+    max-width: 100% ;
   }
 }

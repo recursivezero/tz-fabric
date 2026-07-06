@@ -361,10 +361,10 @@
    Start Recording button so they never appear as low-contrast white pills. */
 :root[data-theme="light"] .upload-page .name-field .btn.submit,
 :root[data-theme="light"] .upload-page .name-field .cancel {
-  background: var(--tz-turmeric, #b7791f) !important;
-  color: #ffffff !important;
-  border: 1px solid var(--tz-turmeric, #b7791f) !important;
-  box-shadow: 0 4px 14px rgba(183, 121, 31, 0.22) !important;
+  background: var(--tz-turmeric, #b7791f) ;
+  color: #ffffff ;
+  border: 1px solid var(--tz-turmeric, #b7791f) ;
+  box-shadow: 0 4px 14px rgba(183, 121, 31, 0.22) ;
 }
 
 :root[data-theme="light"]
@@ -375,24 +375,24 @@
   .upload-page
   .name-field
   .cancel:hover:not(:disabled) {
-  background: var(--tz-turmeric-soft, #d09128) !important;
-  border-color: var(--tz-turmeric-soft, #d09128) !important;
-  color: #ffffff !important;
+  background: var(--tz-turmeric-soft, #d09128) ;
+  border-color: var(--tz-turmeric-soft, #d09128) ;
+  color: #ffffff ;
 }
 
 :root[data-theme="light"] .upload-page .name-field .btn.submit:disabled {
-  background: var(--tz-turmeric, #b7791f) !important;
-  border-color: var(--tz-turmeric, #b7791f) !important;
-  color: #ffffff !important;
-  opacity: 0.58 !important;
-  box-shadow: none !important;
+  background: var(--tz-turmeric, #b7791f) ;
+  border-color: var(--tz-turmeric, #b7791f) ;
+  color: #ffffff ;
+  opacity: 0.58 ;
+  box-shadow: none ;
 }
 
 /* Final theme polish: Upload light-theme yellow actions keep white text. */
 :root[data-theme="light"] .upload-page .btn.primary,
 :root[data-theme="light"] .upload-page .btn.submit,
 :root[data-theme="light"] .upload-page .cancel {
-  color: #ffffff !important;
+  color: #ffffff ;
 }
 
 /* Button text alignment fixes for Upload actions. */

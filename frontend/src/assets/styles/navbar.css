@@ -26,7 +26,7 @@
 
   /* desktop layout stays intact */
   .hamburger {
-    display: none !important;
+    display: none ;
   }
 
   .header-nav ul {
