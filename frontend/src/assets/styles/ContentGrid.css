@@ -385,3 +385,83 @@ figcaption {
     bottom: 58px;
   }
 }
+
+/* Senior QA patch: Fabric List contrast fixes without !important.
+   Keep pagination, totals, card meta, and audio labels readable in both themes. */
+.grid-page .grid-header,
+.grid-page .grid-controls.inline,
+.grid-page .media-card,
+.grid-page .audio-box {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.grid-page .grid-title-text,
+.grid-page .grid-count-inline,
+.grid-page .grid-controls.inline .grid-page {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .grid-count-inline {
+  font-weight: 850;
+}
+
+.grid-page .grid-controls.inline .grid-page {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  border-radius: 8px;
+  background: var(--tz-ui-surface-raised, rgba(30, 41, 59, 0.96));
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.grid-page .grid-controls.inline button {
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.94));
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+.grid-page .grid-controls.inline button:hover:not(:disabled) {
+  background: var(--tz-ui-control-hover-bg, rgba(51, 65, 85, 0.98));
+}
+
+.grid-page .audio-box {
+  background: var(--tz-ui-surface-raised, rgba(30, 41, 59, 0.96));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+}
+
+.grid-page .audio-label {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .media-meta,
+.grid-page .media-meta time,
+.grid-page .grid-page-subtitle {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+}
+
+:root[data-theme="light"] .grid-page .grid-title-text,
+:root[data-theme="light"] .grid-page .grid-count-inline,
+:root[data-theme="light"] .grid-page .grid-controls.inline .grid-page,
+:root[data-theme="light"] .grid-page .audio-label {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .grid-page .audio-box,
+:root[data-theme="light"] .grid-page .grid-controls.inline .grid-page {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="light"] .grid-page .media-meta,
+:root[data-theme="light"] .grid-page .media-meta time,
+:root[data-theme="light"] .grid-page .grid-page-subtitle {
+  color: #475569;
+}

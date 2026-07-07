@@ -2412,3 +2412,101 @@
     max-height: calc(100dvh - 126px) ;
   }
 }
+
+/* Senior QA patch: Search page visibility + settings dropdown layout.
+   Fixes low-contrast category/database labels and prevents the settings menu
+   from covering original/cropped images in image-search preview mode. */
+.fabric-search .category-picker,
+.fabric-search .db-panel,
+.fabric-search .settings-panel__toggle,
+.fabric-search .settings-panel__content {
+  color: var(--tz-ui-text, var(--color-text, #f8fafc));
+}
+
+.fabric-search .category-picker__title,
+.fabric-search .db-panel__label {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.fabric-search .category-picker__toggle-all {
+  color: var(--tz-green, var(--color-green, #22c55e));
+  opacity: 1;
+}
+
+.fabric-search .settings-panel__toggle,
+.fabric-search .settings-panel__toggle span {
+  color: var(--tz-ui-text, var(--color-text, #f8fafc));
+  opacity: 1;
+  text-shadow: none;
+}
+
+.fabric-search .settings-panel__content .db-panel {
+  background: var(--tz-ui-surface-raised, var(--color-surface, rgba(20, 16, 12, 0.94)));
+  border-color: var(--tz-ui-border, var(--color-border, rgba(255, 255, 255, 0.12)));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+.fabric-search .db-panel__btn {
+  opacity: 1;
+  text-shadow: none;
+}
+
+.fabric-search.fabric-search--previewing .fabric-search__top-bar {
+  align-items: flex-start;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+  min-height: auto;
+  position: relative;
+  z-index: 30;
+}
+
+.fabric-search.fabric-search--previewing .fabric-search__settings {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.fabric-search.fabric-search--previewing .settings-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: min(360px, 100%);
+}
+
+.fabric-search.fabric-search--previewing .settings-panel__content {
+  position: static;
+  margin-top: 10px;
+  min-width: min(340px, calc(100vw - 48px));
+  max-width: 100%;
+}
+
+.fabric-search.fabric-search--previewing .image-preview {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme="light"] .fabric-search .category-picker__title,
+:root[data-theme="light"] .fabric-search .db-panel__label,
+:root[data-theme="light"] .fabric-search .settings-panel__toggle,
+:root[data-theme="light"] .fabric-search .settings-panel__toggle span {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .fabric-search .settings-panel__content .db-panel {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+@media (max-width: 760px) {
+  .fabric-search.fabric-search--previewing .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .settings-panel {
+    align-items: stretch;
+  }
+
+  .fabric-search.fabric-search--previewing .settings-panel__toggle,
+  .fabric-search.fabric-search--previewing .settings-panel__content {
+    width: 100%;
+  }
+}

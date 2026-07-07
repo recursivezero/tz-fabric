@@ -390,3 +390,64 @@
     padding: 0 ;
   }
 }
+
+/* Senior QA patch: Chat text contrast after theme toggle.
+   Keeps empty-state heading/subtitle, topbar labels, composer text and action labels readable. */
+.page-root .chat-card-topbar,
+.page-root .chat-body,
+.page-root .empty-state-large,
+.page-root .composer {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.page-root .chat-card-title .main,
+.page-root .empty-state-large h3 {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .empty-state-large p,
+.page-root .audio-label,
+.page-root .stop-text {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .chat-card-actions .btn,
+.page-root .chat-card-actions .btn span,
+.page-root .chat-card-actions .chat-action-icon {
+  color: inherit;
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .chat-card-actions .btn-secondary {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #171101;
+}
+
+.page-root .chat-card-actions .btn-ghost {
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.94));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+:root[data-theme="light"] .page-root .chat-card-title .main,
+:root[data-theme="light"] .page-root .empty-state-large h3,
+:root[data-theme="light"] .page-root .chat-card-actions .btn-ghost {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .page-root .empty-state-large p,
+:root[data-theme="light"] .page-root .audio-label,
+:root[data-theme="light"] .page-root .stop-text {
+  color: #475569;
+}
+
+:root[data-theme="light"] .page-root .chat-card-actions .btn-ghost {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
