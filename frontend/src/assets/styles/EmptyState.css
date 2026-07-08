@@ -65,3 +65,70 @@
   background: #aeafb23f;
   border-color: #e5e7eb;
 }
+/* Senior QA: keep chat landing copy and prompt chips readable after theme changes. */
+.page-root .empty-state-large h3 {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .empty-state-large p {
+  color: var(--tz-ui-text-muted, var(--tz-muted, #cbd5e1));
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .empty-state-large .chip,
+.page-root .empty-state-large .chip:nth-child(odd),
+.page-root .empty-state-large .chip:nth-child(even) {
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-control-bg, rgba(255, 255, 255, 0.94));
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+  opacity: 1;
+  text-shadow: none;
+}
+
+:root[data-theme="dark"] .page-root .empty-state-large .chip,
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(odd),
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(even) {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="light"] .page-root .empty-state-large .chip,
+:root[data-theme="light"] .page-root .empty-state-large .chip:nth-child(odd),
+:root[data-theme="light"] .page-root .empty-state-large .chip:nth-child(even) {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+/* Senior visual-system pass: prompt chips should never look blank or disabled by accident. */
+.page-root .empty-state-large .chips {
+  gap: 12px;
+}
+
+.page-root .empty-state-large .chip,
+.page-root .empty-state-large .chip:nth-child(odd),
+.page-root .empty-state-large .chip:nth-child(even) {
+  min-height: 40px;
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-control-bg, rgba(255, 255, 255, 0.96));
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+  font-weight: 800;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+}
+
+.page-root .empty-state-large .chip:disabled {
+  opacity: 0.72;
+  color: var(--tz-ui-text-muted, #64748b);
+}
+
+:root[data-theme="dark"] .page-root .empty-state-large .chip,
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(odd),
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(even) {
+  color: var(--tz-ui-text, #f8fafc);
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.96));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+}

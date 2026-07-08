@@ -45,6 +45,7 @@ export default function ContentGrid() {
 
   const draggingRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
+  const previousBodyOverflowRef = useRef<string | null>(null);
 
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 6;
@@ -100,8 +101,14 @@ export default function ContentGrid() {
     return last.replace(/\.[^.]+$/, "");
   }
 
-  const cleanName = (filename: string) =>
-    filename?.split("_")[0].split(".")[0] ?? "";
+  const cleanName = (filename: string) => {
+    if (!filename) return "";
+    return filename
+      .replace(/\.[^.]+$/, "")
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
 
   // ✅ Hide items with missing/broken images
   const visibleItems = useMemo(() => {
@@ -121,6 +128,7 @@ export default function ContentGrid() {
     setScale(1);
     setOffset({ x: 0, y: 0 });
     setLightboxOpen(true);
+    previousBodyOverflowRef.current = document.body.style.overflow;
     document.body.style.overflow = "hidden";
   };
 
@@ -128,7 +136,8 @@ export default function ContentGrid() {
     setLightboxOpen(false);
     setActiveSrc(null);
     setActiveCaption(null);
-    document.body.style.overflow = "";
+    document.body.style.overflow = previousBodyOverflowRef.current ?? "";
+    previousBodyOverflowRef.current = null;
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-render loop.
@@ -215,7 +224,7 @@ export default function ContentGrid() {
             <button disabled={ page === 1 } onClick={ safePrev }>
               ← Prev
             </button>
-            <span className="grid-page">
+            <span className="grid-page-indicator">
               Page { page } / { totalPages }
             </span>
             <button
@@ -336,10 +345,10 @@ export default function ContentGrid() {
             ) }
 
             <div className="lb-controls">
-              <button onClick={ zoomOut }>−</button>
-              <button onClick={ resetView }>Reset</button>
-              <button onClick={ zoomIn }>+</button>
-              <button className="lb-close" onClick={ closeLightbox }>
+              <button type="button" onClick={ zoomOut } aria-label="Zoom out">−</button>
+              <button type="button" onClick={ resetView }>Reset</button>
+              <button type="button" onClick={ zoomIn } aria-label="Zoom in">+</button>
+              <button type="button" className="lb-close" onClick={ closeLightbox } aria-label="Close preview">
                 ✕
               </button>
             </div>

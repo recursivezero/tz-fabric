@@ -1051,3 +1051,40 @@
   background: rgba(30, 41, 59, 0.96);
   border-color: rgba(226, 232, 240, 0.24);
 }
+
+/* Senior QA: Composer readability guard after global theme changes. */
+.composer .composer-input {
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-surface, #ffffff);
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+  opacity: 1;
+}
+
+.composer .composer-input::placeholder {
+  color: var(--tz-ui-text-muted, #64748b);
+  opacity: 1;
+}
+
+.composer .attach-btn.inside,
+.composer .record-btn {
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-control-bg, #ffffff);
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+:root[data-theme="dark"] .composer .composer-input {
+  color: #f8fafc;
+  background: rgba(10, 15, 29, 0.92);
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="dark"] .composer .composer-input::placeholder {
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .composer .attach-btn.inside,
+:root[data-theme="dark"] .composer .record-btn {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(226, 232, 240, 0.24);
+}

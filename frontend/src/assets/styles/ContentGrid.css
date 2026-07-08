@@ -465,3 +465,162 @@ figcaption {
 :root[data-theme="light"] .grid-page .grid-page-subtitle {
   color: #475569;
 }
+
+/* Senior QA: Fabric List contrast fixes without forced-priority rules.
+   Keep pagination, totals, card meta, and audio labels readable in both themes. */
+.grid-page .grid-header,
+.grid-page .grid-controls.inline,
+.grid-page .media-card,
+.grid-page .audio-box {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.grid-page .grid-title-text,
+.grid-page .grid-count-inline,
+.grid-page .grid-controls.inline .grid-page-indicator {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .grid-count-inline {
+  font-weight: 850;
+}
+
+.grid-page .grid-controls.inline .grid-page-indicator {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  border-radius: 8px;
+  background: var(--tz-ui-surface-raised, rgba(30, 41, 59, 0.96));
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.grid-page .grid-controls.inline button {
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.94));
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+.grid-page .grid-controls.inline button:hover:not(:disabled) {
+  background: var(--tz-ui-control-hover-bg, rgba(51, 65, 85, 0.98));
+}
+
+.grid-page .audio-box {
+  background: var(--tz-ui-surface-raised, rgba(30, 41, 59, 0.96));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+}
+
+.grid-page .audio-label {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .media-meta,
+.grid-page .media-meta time,
+.grid-page .grid-page-subtitle {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+}
+
+:root[data-theme="light"] .grid-page .grid-title-text,
+:root[data-theme="light"] .grid-page .grid-count-inline,
+:root[data-theme="light"] .grid-page .grid-controls.inline .grid-page-indicator,
+:root[data-theme="light"] .grid-page .audio-label {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .grid-page .audio-box,
+:root[data-theme="light"] .grid-page .grid-controls.inline .grid-page-indicator {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="light"] .grid-page .media-meta,
+:root[data-theme="light"] .grid-page .media-meta time,
+:root[data-theme="light"] .grid-page .grid-page-subtitle {
+  color: #475569;
+}
+
+/* Senior visual-system pass: list page readable metadata, intentional disabled state, consistent card rhythm. */
+.grid-page {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+  min-height: calc(100dvh - 68px);
+  padding-block: clamp(18px, 3vh, 32px) 48px;
+}
+
+.grid-page .grid-header {
+  align-items: center;
+  margin: 24px 0 18px;
+}
+
+.grid-page .grid-title-text,
+.grid-page .grid-count-inline,
+.grid-page .grid-controls.inline .grid-page-indicator {
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+.grid-page .grid-controls.inline button:disabled {
+  opacity: 1;
+  color: var(--tz-ui-text-faint, #94a3b8);
+  background: var(--tz-ui-surface-subtle, rgba(30, 41, 59, 0.58));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.2));
+  cursor: not-allowed;
+}
+
+.grid-page .media-grid {
+  align-items: stretch;
+}
+
+.grid-page .media-card {
+  background: var(--tz-ui-surface-raised, rgba(23, 31, 51, 0.96));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.22));
+  box-shadow: var(--tz-ui-shadow-panel, 0 18px 48px rgba(0, 0, 0, 0.22));
+}
+
+.grid-page .media-thumb img {
+  height: 250px;
+  object-fit: cover;
+}
+
+.grid-page .media-name {
+  min-height: 34px;
+  padding: 8px 12px;
+  color: var(--tz-ui-text, #f8fafc);
+  background: rgba(15, 23, 42, 0.72);
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.grid-page .media-meta {
+  border-top-color: var(--tz-ui-border, rgba(226, 232, 240, 0.22));
+  color: var(--tz-ui-text-muted, #cbd5e1);
+}
+
+.grid-page .audio-label {
+  color: var(--tz-ui-text, #f8fafc);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+:root[data-theme="light"] .grid-page .media-card,
+:root[data-theme="light"] .grid-page .audio-box {
+  background: var(--tz-ui-surface-raised, #ffffff);
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+:root[data-theme="light"] .grid-page .media-name {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+:root[data-theme="light"] .grid-page .grid-controls.inline button:disabled {
+  color: #64748b;
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.12);
+}

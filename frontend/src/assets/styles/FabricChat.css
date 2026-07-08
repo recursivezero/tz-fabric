@@ -451,3 +451,170 @@
   background: #ffffff;
   border-color: rgba(15, 23, 42, 0.14);
 }
+
+/* Senior QA: chat readability and bottom-control clipping fixes without forced-priority rules. */
+.page-root .chat-card-topbar,
+.page-root .chat-body,
+.page-root .empty-state-large,
+.page-root .composer {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.page-root .chat-card-title .main,
+.page-root .empty-state-large h3 {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .empty-state-large p,
+.page-root .audio-label,
+.page-root .stop-text {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .chat-card-actions .btn,
+.page-root .chat-card-actions .btn span,
+.page-root .chat-card-actions .chat-action-icon {
+  color: inherit;
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .chat-card-actions .btn-secondary {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #171101;
+}
+
+.page-root .chat-card-actions .btn-ghost {
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.94));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+.page-root .chat-body {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.page-root .chat-scroll-area {
+  padding-bottom: 24px;
+}
+
+.page-root .composer {
+  flex: 0 0 auto;
+  padding: 8px 8px max(14px, env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+}
+
+.page-root .composer-audio-row {
+  margin-top: 8px;
+  margin-right: 8px;
+  padding-bottom: 2px;
+}
+
+.page-root .record-btn,
+.page-root .audio-label,
+.page-root .stop-text {
+  line-height: 1.2;
+}
+
+:root[data-theme="light"] .page-root .chat-card-title .main,
+:root[data-theme="light"] .page-root .empty-state-large h3,
+:root[data-theme="light"] .page-root .chat-card-actions .btn-ghost {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .page-root .empty-state-large p,
+:root[data-theme="light"] .page-root .audio-label,
+:root[data-theme="light"] .page-root .stop-text {
+  color: #475569;
+}
+
+:root[data-theme="light"] .page-root .chat-card-actions .btn-ghost {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+/* Senior visual-system pass: chat should read as one stable product surface. */
+.page-root {
+  min-height: calc(100dvh - 64px);
+  background: var(--tz-ui-page, var(--tz-app-bg));
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.page-root .chat-card-topbar {
+  width: min(1048px, calc(100vw - 32px));
+  margin: clamp(10px, 2vh, 18px) auto 12px;
+  padding: 12px 14px;
+  background: var(--tz-ui-surface, rgba(15, 23, 42, 0.78));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.2));
+  border-radius: 18px;
+  box-shadow: var(--tz-ui-shadow-panel, 0 18px 48px rgba(0, 0, 0, 0.22));
+}
+
+.page-root .chat-body {
+  width: min(1048px, calc(100vw - 32px));
+  height: auto;
+  min-height: calc(100dvh - 162px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-root.is-empty .chat-scroll-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: clamp(24px, 6vh, 66px);
+  padding-bottom: 20px;
+}
+
+.page-root .empty-state-large h3 {
+  color: var(--tz-ui-text, #f8fafc);
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing: -0.025em;
+}
+
+.page-root .empty-state-large p {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  font-size: 15px;
+}
+
+.page-root .chat-card-actions .btn {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.page-root .composer {
+  width: 100%;
+  margin: auto auto 0;
+  background: var(--tz-ui-surface, rgba(15, 23, 42, 0.78));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.2));
+  box-shadow: var(--tz-ui-shadow-panel, 0 18px 48px rgba(0, 0, 0, 0.22));
+}
+
+.page-root .composer-audio-row {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--tz-ui-text-muted, #cbd5e1);
+}
+
+:root[data-theme="light"] .page-root .chat-card-topbar,
+:root[data-theme="light"] .page-root .composer {
+  background: var(--tz-ui-surface-raised, rgba(255, 255, 255, 0.96));
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+@media (max-height: 760px) {
+  .page-root.is-empty .chat-scroll-area {
+    padding-top: 18px;
+  }
+
+  .page-root .empty-state-large h3 {
+    font-size: 22px;
+  }
+}
