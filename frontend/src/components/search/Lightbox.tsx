@@ -20,6 +20,9 @@ export default function Lightbox({
   onClose, onWheel, onMouseDown, onMouseMove, onMouseUp,
   onZoomIn, onZoomOut, onReset,
 }: LightboxProps) {
+  const canZoomOut = scale > 0.51;
+  const canZoomIn = scale < 5.99;
+
   return (
     <div
       className="lightbox"
@@ -58,6 +61,8 @@ export default function Lightbox({
             onClick={onZoomOut}
             type="button"
             aria-label="Zoom out"
+            title="Zoom out"
+            disabled={!canZoomOut}
           >
             −
           </button>
@@ -66,6 +71,7 @@ export default function Lightbox({
             onClick={onReset}
             type="button"
             aria-label="Reset zoom"
+            title="Reset zoom"
           >
             <span aria-hidden="true">↺</span>
             <span>Reset</span>
@@ -75,6 +81,8 @@ export default function Lightbox({
             onClick={onZoomIn}
             type="button"
             aria-label="Zoom in"
+            title="Zoom in"
+            disabled={!canZoomIn}
           >
             +
           </button>
@@ -83,6 +91,7 @@ export default function Lightbox({
             onClick={onClose}
             type="button"
             aria-label="Close preview"
+            title="Close preview"
           >
             ✕
           </button>

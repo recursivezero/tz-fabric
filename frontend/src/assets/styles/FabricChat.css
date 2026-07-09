@@ -618,3 +618,77 @@
     font-size: 22px;
   }
 }
+
+/* Senior QA final: stabilize chat layout on 1366x768 and 125% browser zoom. */
+.page-root {
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
+}
+
+.page-root .chat-card-topbar {
+  flex: 0 0 auto;
+}
+
+.page-root .chat-body {
+  min-height: min(680px, calc(100dvh - 154px));
+  padding-bottom: 6px;
+}
+
+.page-root.is-empty .chat-scroll-area {
+  justify-content: center;
+  padding-top: clamp(18px, 4.4vh, 42px);
+  padding-bottom: clamp(16px, 3vh, 34px);
+}
+
+.page-root .chat-card-actions .btn {
+  min-height: var(--tz-control-height, 44px);
+  border-radius: var(--tz-control-radius, 999px);
+  font-weight: 850;
+}
+
+.page-root .chat-card-actions .btn-secondary:hover:not(:disabled),
+.page-root .chat-card-actions .btn-ghost:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+@media (max-height: 760px) {
+  .page-root .chat-card-topbar {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding-block: 10px;
+  }
+
+  .page-root .chat-body {
+    min-height: calc(100dvh - 144px);
+  }
+
+  .page-root.is-empty .chat-scroll-area {
+    justify-content: flex-start;
+  }
+}
+
+/* Final senior QA top-up: make the Chat empty state feel intentional, not empty. */
+.page-root.is-empty .chat-scroll-area {
+  justify-content: center;
+  padding-top: clamp(22px, 4vh, 48px);
+  padding-bottom: clamp(22px, 4vh, 48px);
+}
+
+.page-root .empty-state-large {
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+.page-root .empty-state-large .sample-prompts,
+.page-root .sample-prompts {
+  gap: clamp(10px, 1.2vw, 16px);
+}
+
+.page-root .chat-body {
+  min-height: min(700px, calc(100dvh - 150px));
+}
+
+@media (max-height: 760px) {
+  .page-root .chat-body {
+    min-height: calc(100dvh - 138px);
+  }
+}

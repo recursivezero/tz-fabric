@@ -51,6 +51,19 @@ export default function ContentGrid() {
   const MAX_SCALE = 6;
   const ZOOM_STEP = 0.2;
 
+  const clampLightboxOffset = (next: { x: number; y: number }) => {
+    const viewportWidth = typeof window === "undefined" ? 1200 : window.innerWidth;
+    const viewportHeight = typeof window === "undefined" ? 800 : window.innerHeight;
+    const scaleAllowance = Math.max(1, scale);
+    const maxX = Math.round(Math.min(viewportWidth * 0.42, 460 * scaleAllowance));
+    const maxY = Math.round(Math.min(viewportHeight * 0.42, 360 * scaleAllowance));
+
+    return {
+      x: Math.max(-maxX, Math.min(maxX, next.x)),
+      y: Math.max(-maxY, Math.min(maxY, next.y)),
+    };
+  };
+
   // Add page background
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
@@ -94,20 +107,49 @@ export default function ContentGrid() {
   };
 
   function pickDisplayName(item: MediaItem) {
-    if (item.basename) return item.basename;
-    if (item.imageFilename)
-      return item.imageFilename.replace(/\.[^.]+$/, "");
-    const last = (item.imageUrl || "").split("/").pop() || "";
-    return last.replace(/\.[^.]+$/, "");
+    const fromImageFilename = item.imageFilename?.trim();
+    const fromUrl = item.imageUrl
+      ? decodeURIComponent((item.imageUrl.split(/[?#]/)[0].split("/").pop() || "").trim())
+      : "";
+    const fromBasename = item.basename?.trim();
+
+    // Prefer the actual uploaded/stored filename. Basename can be a generated or
+    // user-facing title and was creating very long card captions on the List page.
+    return fromImageFilename || fromUrl || fromBasename || "Uploaded fabric";
   }
 
   const cleanName = (filename: string) => {
-    if (!filename) return "";
-    return filename
-      .replace(/\.[^.]+$/, "")
+    const raw = String(filename || "").trim();
+    if (!raw) return "Uploaded fabric";
+
+    const withoutQuery = raw.split(/[?#]/)[0];
+    const lastSegment = decodeURIComponent(withoutQuery.split("/").pop() || withoutQuery);
+    const withoutExtension = lastSegment.replace(/\.[^.]+$/, "");
+
+    const normalized = withoutExtension
+      .replace(/(?:[_\s-]?20\d{6}T\d{6})(?:[_\s-]?[a-z0-9]{4,})?$/i, "")
+      .replace(/(?:[_\s-]?20\d{6})[_\s-]?\d{6}.*$/i, "")
+      .replace(/[_\s-][a-f0-9]{5,}$/i, "")
+      .replace(/\b\d{10,}\b/g, "")
+      .replace(/^[a-f0-9]{6,}\s+/i, "")
+      .replace(/^\d+(?:[\s_-]+\d+){1,}\s*/i, "")
+      .replace(/[_-](?:copy|final|submitted)$/i, "")
       .replace(/[_-]+/g, " ")
       .replace(/\s+/g, " ")
       .trim();
+
+    const letters = (normalized.match(/[a-z]/gi) ?? []).length;
+    const digits = (normalized.match(/\d/g) ?? []).length;
+    const looksTechnical =
+      !letters ||
+      digits > letters ||
+      /\b(?:single image|image|img|upload|submitted files?)\b/i.test(normalized) ||
+      /^[a-f0-9]{6,}\b/i.test(normalized);
+
+    if (looksTechnical) return "Fabric sample";
+
+    const shortName = normalized.split(" ").slice(0, 3).join(" ");
+    return shortName.replace(/\b\w/g, (char) => char.toUpperCase()) || "Uploaded fabric";
   };
 
   // ✅ Hide items with missing/broken images
@@ -166,6 +208,7 @@ export default function ContentGrid() {
   };
 
   const onMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    if ((e.target as HTMLElement).closest(".lb-controls")) return;
     draggingRef.current = true;
     lastPosRef.current = { x: e.clientX, y: e.clientY };
   };
@@ -174,7 +217,7 @@ export default function ContentGrid() {
     const dx = e.clientX - lastPosRef.current.x;
     const dy = e.clientY - lastPosRef.current.y;
     lastPosRef.current = { x: e.clientX, y: e.clientY };
-    setOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
+    setOffset((o) => clampLightboxOffset({ x: o.x + dx, y: o.y + dy }));
   };
   const onMouseUpOrLeave = () => {
     draggingRef.current = false;
@@ -247,7 +290,8 @@ export default function ContentGrid() {
           const rawSrc = item.imageUrl;
           const src =
             rawSrc?.startsWith("http") ? rawSrc : `${BASE_URL}${rawSrc}`;
-          const caption = cleanName(pickDisplayName(item));
+          const rawDisplayName = pickDisplayName(item);
+          const caption = cleanName(rawDisplayName);
 
           return (
             <article className="media-card" key={ item._id ?? src }>
@@ -274,7 +318,7 @@ export default function ContentGrid() {
 
                 <figcaption
                   className="media-name"
-                  title={ caption }
+                  title={ rawDisplayName }
                   onClick={ () => openLightbox(src, caption) }
                 >
                   { caption }
@@ -345,9 +389,9 @@ export default function ContentGrid() {
             ) }
 
             <div className="lb-controls">
-              <button type="button" onClick={ zoomOut } aria-label="Zoom out">−</button>
-              <button type="button" onClick={ resetView }>Reset</button>
-              <button type="button" onClick={ zoomIn } aria-label="Zoom in">+</button>
+              <button type="button" onClick={ zoomOut } aria-label="Zoom out" title="Zoom out" disabled={ scale <= MIN_SCALE }>−</button>
+              <button type="button" onClick={ resetView } title="Reset zoom">Reset</button>
+              <button type="button" onClick={ zoomIn } aria-label="Zoom in" title="Zoom in" disabled={ scale >= MAX_SCALE }>+</button>
               <button type="button" className="lb-close" onClick={ closeLightbox } aria-label="Close preview">
                 ✕
               </button>

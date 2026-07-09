@@ -2319,3 +2319,53 @@ footer a:hover,
 .lb-caption {
   color: var(--tz-ui-text-muted) ;
 }
+
+/* ============================================================
+   Senior QA visual-system hardening: shared tokens and states
+   ============================================================ */
+:root {
+  --tz-action-yellow: #e0a82e;
+  --tz-action-yellow-hover: #f0c463;
+  --tz-action-yellow-text: #171101;
+  --tz-danger: #dc2626;
+  --tz-danger-hover: #b91c1c;
+  --tz-danger-text: #ffffff;
+  --tz-focus: 0 0 0 3px var(--tz-ui-focus-ring, rgba(224, 168, 46, 0.34));
+  --tz-control-height: 44px;
+  --tz-control-radius: 999px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--tz-ui-accent, var(--tz-action-yellow));
+  outline-offset: 3px;
+  box-shadow: var(--tz-focus);
+}
+
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn,
+button {
+  text-shadow: none;
+}
+
+.btn:disabled,
+button:disabled {
+  opacity: 0.68;
+  cursor: not-allowed;
+}
+
+.site-header {
+  min-height: 64px;
+}
+
+.main-content {
+  min-height: calc(100dvh - 64px);
+}

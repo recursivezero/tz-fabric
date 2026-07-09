@@ -21,6 +21,11 @@ export default function CategoryPicker({ selected, onChange, compact = false }: 
   };
 
   const allOn = tempSelected.length === CATEGORIES.length;
+  const hasPendingChanges = compact && (
+    tempSelected.length !== selected.length ||
+    tempSelected.some((id) => !selected.includes(id)) ||
+    selected.some((id) => !tempSelected.includes(id))
+  );
   const toggleAll = () => {
     const next = allOn ? [] : CATEGORIES.map((c) => c.id);
     setTempSelected(next);
@@ -59,9 +64,10 @@ export default function CategoryPicker({ selected, onChange, compact = false }: 
             </button>
           );
         })}
-        {compact && (
-          <button className="btn btn--primary" onClick={() => onChange(tempSelected)} type="button">
-            Apply filter →
+        {compact && hasPendingChanges && (
+          <button className="category-picker__apply btn btn--primary" onClick={() => onChange(tempSelected)} type="button">
+            <span className="category-picker__apply-label">Apply filter</span>
+            <span className="category-picker__apply-arrow" aria-hidden="true">→</span>
           </button>
         )}
       </div>

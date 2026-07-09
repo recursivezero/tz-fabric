@@ -54,6 +54,19 @@ export default function Search() {
   const lastLbPosRef = useRef({ x: 0, y: 0 });
   const MIN_SCALE = 0.5, MAX_SCALE = 6, ZOOM_STEP = 0.2;
 
+  const clampLightboxOffset = useCallback((next: { x: number; y: number }) => {
+    const viewportWidth = typeof window === "undefined" ? 1200 : window.innerWidth;
+    const viewportHeight = typeof window === "undefined" ? 800 : window.innerHeight;
+    const scaleAllowance = Math.max(1, lbScale);
+    const maxX = Math.round(Math.min(viewportWidth * 0.42, 460 * scaleAllowance));
+    const maxY = Math.round(Math.min(viewportHeight * 0.42, 360 * scaleAllowance));
+
+    return {
+      x: Math.max(-maxX, Math.min(maxX, next.x)),
+      y: Math.max(-maxY, Math.min(maxY, next.y)),
+    };
+  }, [lbScale]);
+
   // Misc
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const heroFileId = useId();
@@ -301,7 +314,7 @@ export default function Search() {
     const dx = e.clientX - lastLbPosRef.current.x;
     const dy = e.clientY - lastLbPosRef.current.y;
     lastLbPosRef.current = { x: e.clientX, y: e.clientY };
-    setLbOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
+    setLbOffset((o) => clampLightboxOffset({ x: o.x + dx, y: o.y + dy }));
   };
   const onLbMouseUp = () => { draggingLbRef.current = false; };
 
@@ -533,8 +546,12 @@ export default function Search() {
           />
         )}
 
-        {!loading && file && visibleResults.length === 0 && !error && (
-          <p className="fabric-search__empty">— no matches found —</p>
+        {!loading && (file || isTextSearch) && visibleResults.length === 0 && !error && (
+          <p className="fabric-search__empty">
+            {isTextSearch && textQuery.trim()
+              ? `No results found for “${textQuery.trim()}”. Try another keyword or category.`
+              : "No matching fabrics found. Try changing crop, category, or result limit."}
+          </p>
         )}
 
       </div>

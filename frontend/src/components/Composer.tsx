@@ -533,19 +533,19 @@ export default function Composer({
             padding: 16,
           }}
         >
-          <div className="composer-modal" style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <div style={{ flex: "0 0 120px" }}>
-                <img src={pendingImage.url} alt="Confirm preview" className="composer-modal__thumb" style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 6 }} />
+          <div className="composer-modal composer-modal--confirm-upload">
+            <div className="composer-modal__layout composer-modal__layout--image">
+              <div className="composer-modal__media">
+                <img src={pendingImage.url} alt="Confirm preview" className="composer-modal__thumb" />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>Upload this image?</div>
-                <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingImage.file.name} — {formatSize(pendingImage.file.size)}</div>
-                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                  <button onClick={confirmImageUpload} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>
+              <div className="composer-modal__content">
+                <div className="composer-modal__title">Upload this image?</div>
+                <div className="composer-modal__meta">{pendingImage.file.name} — {formatSize(pendingImage.file.size)}</div>
+                <div className="composer-modal__actions">
+                  <button onClick={confirmImageUpload} type="button" className="composer-modal__button composer-modal__button--confirm">
                     Confirm
                   </button>
-                  <button onClick={cancelImageUpload} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>
+                  <button onClick={cancelImageUpload} type="button" className="composer-modal__button composer-modal__button--cancel">
                     Cancel
                   </button>
                 </div>
@@ -571,22 +571,22 @@ export default function Composer({
             padding: 16,
           }}
         >
-          <div className="composer-modal" style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <div style={{ flex: "0 0 120px" }}>
-                <audio controls src={pendingAudio.url} style={{ width: 120 }} controlsList="nodownload" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>Upload this audio?</div>
-                <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingAudio.file.name} — {formatSize(pendingAudio.file.size)}</div>
-                <div style={{ marginTop: 8, fontSize: 13, color: "rgba(0,0,0,0.6)" }}>
+          <div className="composer-modal composer-modal--confirm-upload composer-modal--audio-confirm">
+            <div className="composer-modal__layout composer-modal__layout--audio">
+              <div className="composer-modal__content composer-modal__content--audio">
+                <div className="composer-modal__title">Upload this audio?</div>
+                <div className="composer-modal__meta">{pendingAudio.file.name} — {formatSize(pendingAudio.file.size)}</div>
+                <div className="composer-modal__audio-player">
+                  <audio controls src={pendingAudio.url} controlsList="nodownload" />
+                </div>
+                <div className="composer-modal__hint">
                   If longer than 1 minute we will trim it automatically.
                 </div>
-                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                  <button onClick={confirmAudioUpload} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>
+                <div className="composer-modal__actions">
+                  <button onClick={confirmAudioUpload} type="button" className="composer-modal__button composer-modal__button--confirm">
                     Confirm
                   </button>
-                  <button onClick={cancelAudioUpload} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>
+                  <button onClick={cancelAudioUpload} type="button" className="composer-modal__button composer-modal__button--cancel">
                     Cancel
                   </button>
                 </div>
