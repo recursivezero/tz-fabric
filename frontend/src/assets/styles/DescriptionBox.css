@@ -402,3 +402,16 @@
   border-radius: 999px;
   font-weight: 900;
 }
+
+/* Analysis-page layout: navigation belongs above the analysis result card.
+   These direct-child rules intentionally override the legacy below-card order
+   without affecting DescriptionBox in any other page or context. */
+.analysis-page .description-wrapper > .nav-buttons {
+  order: 1;
+  margin: 0 0 18px;
+  transform: none;
+}
+
+.analysis-page .description-wrapper > .description-box {
+  order: 2;
+}

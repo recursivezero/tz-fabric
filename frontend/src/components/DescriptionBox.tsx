@@ -4,6 +4,18 @@ import { FaRegCopy } from "react-icons/fa";
 import "@/assets/styles/DescriptionBox.css";
 import Loader from "./Loader";
 
+type DescriptionBoxProps = {
+  isValidImage: boolean | null;
+  validationMessage: string;
+  loading: boolean;
+  responses: string[];
+  currentIndex?: number;
+  typedText?: string;
+  description?: string;
+  handlePrev: () => void;
+  handleNext: () => void | Promise<void>;
+};
+
 const DescriptionBox = ({
   isValidImage,
   validationMessage,
@@ -14,7 +26,7 @@ const DescriptionBox = ({
   description = "",
   handlePrev,
   handleNext,
-}) => {
+}: DescriptionBoxProps) => {
   const [copied, setCopied] = useState(false);
   const isError = isValidImage === false && validationMessage;
 

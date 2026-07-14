@@ -11,22 +11,19 @@
   display: block;
   padding: 6px 16px;
   border-radius: 999px;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
 }
 
 .header-nav a.active {
   /* pill background is applied by _makeover.css; border-bottom is superseded by pill style */
 }
 
-.nav-toggle {
-  display: none;
-}
-
 @media (min-width: 769px) {
-
   /* desktop layout stays intact */
   .hamburger {
-    display: none ;
+    display: none;
   }
 
   .header-nav ul {
@@ -47,7 +44,6 @@
 }
 
 @media (max-width: 768px) {
-
   .mobile-nav-wrapper {
     position: relative;
     z-index: 999;
@@ -61,6 +57,9 @@
     flex-direction: column;
     justify-content: space-between;
     cursor: pointer;
+    padding: 0;
+    border: 0;
+    background: transparent;
 
     position: fixed;
     /* always visible */
@@ -98,22 +97,22 @@
   }
 
   /* SHOW MENU */
-  .nav-toggle:checked~.header-nav ul {
+  .header-nav[data-open="true"] ul {
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
   }
 
   /* ANIMATE BUTTON INTO X */
-  .nav-toggle:checked+.hamburger span:nth-child(1) {
+  .hamburger[aria-expanded="true"] span:nth-child(1) {
     transform: translateY(9px) rotate(45deg);
   }
 
-  .nav-toggle:checked+.hamburger span:nth-child(2) {
+  .hamburger[aria-expanded="true"] span:nth-child(2) {
     opacity: 0;
   }
 
-  .nav-toggle:checked+.hamburger span:nth-child(3) {
+  .hamburger[aria-expanded="true"] span:nth-child(3) {
     transform: translateY(-9px) rotate(-45deg);
   }
 

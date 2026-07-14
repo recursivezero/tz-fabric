@@ -4,6 +4,7 @@ import Cropper from "react-easy-crop";
 
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
+import { ensureOk, fetchWithTimeout } from "@/utils/http";
 import { useNavigate } from "react-router-dom";
 
 /* =======================
@@ -52,7 +53,6 @@ const AadhaarCardReader = () => {
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [originalPreview, setOriginalPreview] = useState<string | null>(null);
 
-
   // react-easy-crop state
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -65,7 +65,7 @@ const AadhaarCardReader = () => {
     setCroppedImage(null);
     if (f) {
       const url = URL.createObjectURL(f);
-      setOriginalPreview(url);   // 🔥 ADD
+      setOriginalPreview(url); // 🔥 ADD
       setPreview(url);
       setShowCropper(true);
     }
@@ -80,20 +80,16 @@ const AadhaarCardReader = () => {
     }
   };
 
-  const onCropComplete = useCallback(
-    (_: Area, croppedPixels: Area) => {
-      setCroppedAreaPixels(croppedPixels);
-    },
-    []
-  );
-
+  const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
 
   const createCroppedImage = async (): Promise<string | null> => {
     if (!originalPreview || !croppedAreaPixels) return null;
 
     return new Promise((resolve) => {
       const image = new Image();
-      image.src = originalPreview; 
+      image.src = originalPreview;
       image.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
@@ -111,7 +107,7 @@ const AadhaarCardReader = () => {
           0,
           0,
           canvas.width,
-          canvas.height
+          canvas.height,
         );
 
         resolve(canvas.toDataURL("image/jpeg"));
@@ -119,7 +115,6 @@ const AadhaarCardReader = () => {
       image.src = originalPreview;
     });
   };
-
 
   const handleApplyCrop = async () => {
     const croppedDataUrl = await createCroppedImage();
@@ -134,7 +129,6 @@ const AadhaarCardReader = () => {
     setCroppedImage(null);
     setShowCropper(true);
   };
-
 
   const dataURLtoFile = (dataUrl: string, filename: string): File => {
     const arr = dataUrl.split(",");
@@ -167,14 +161,15 @@ const AadhaarCardReader = () => {
     fd.append("side", side);
 
     try {
-      const res = await fetch(`${FULL_API_URL}/adhaar`, {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      const res = await fetchWithTimeout(
+        `${FULL_API_URL}/adhaar`,
+        {
+          method: "POST",
+          body: fd,
+        },
+        60_000,
+      );
+      await ensureOk(res, "Failed to process Aadhaar card.");
 
       const data = await res.json();
       setResult(data);
@@ -232,8 +227,6 @@ const AadhaarCardReader = () => {
   }
 `}</style>
 
-      
-
       <div style={styles.container}>
         {error && (
           <div style={styles.errorBanner} role="alert">
@@ -267,7 +260,9 @@ const AadhaarCardReader = () => {
           </svg>
         </div>
         <h1 style={styles.title}>Aadhaar Card Reader</h1>
-        <p style={styles.subtitle}>Choose side → upload aadhar card → crop → extract</p>
+        <p style={styles.subtitle}>
+          Choose side → upload aadhar card → crop → extract
+        </p>
         <div style={styles.privacyNote}>
           <svg
             width="16"
@@ -281,8 +276,8 @@ const AadhaarCardReader = () => {
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
           <span>
-            Your image is processed only in memory during this session.
-            We do <strong>not</strong> store or save images or share data.
+            Your image is processed only in memory during this session. We do{" "}
+            <strong>not</strong> store or save images or share data.
           </span>
         </div>
 
@@ -333,18 +328,25 @@ const AadhaarCardReader = () => {
 
             <label htmlFor="file-upload" style={styles.uploadLabel}>
               <div style={styles.uploadIcon}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
               </div>
               <h3 style={styles.uploadTitle}>
-                {isDragging ? "Drop your card here" : "Upload Adhaar Card Image"}
+                {isDragging
+                  ? "Drop your card here"
+                  : "Upload Adhaar Card Image"}
               </h3>
-              <p style={styles.uploadText}>
-                Drag and drop or click to browse
-              </p>
+              <p style={styles.uploadText}>Drag and drop or click to browse</p>
             </label>
           </div>
         ) : (
@@ -405,7 +407,11 @@ const AadhaarCardReader = () => {
             {/* CROPPED IMAGE PREVIEW */}
             {croppedImage && !showCropper && (
               <div style={styles.previewCard}>
-                <img src={croppedImage} style={styles.previewImage} alt="Cropped Aadhaar" />
+                <img
+                  src={croppedImage}
+                  style={styles.previewImage}
+                  alt="Cropped Aadhaar"
+                />
                 <div style={styles.actionButtons}>
                   <button onClick={handleRecrop} style={styles.recropBtn}>
                     ✂️ Re-crop
@@ -414,7 +420,11 @@ const AadhaarCardReader = () => {
                     🗑️ Remove
                   </button>
                 </div>
-                <button onClick={submit} disabled={loading} style={styles.extractBtn}>
+                <button
+                  onClick={submit}
+                  disabled={loading}
+                  style={styles.extractBtn}
+                >
                   {loading ? "Processing..." : "Extract Details"}
                 </button>
               </div>
@@ -425,11 +435,7 @@ const AadhaarCardReader = () => {
         {/* RESULT */}
         {(loading || result) && (
           <>
-            <AadhaarCardPreview
-              data={result}
-              side={side}
-              loading={loading}
-            />
+            <AadhaarCardPreview data={result} side={side} loading={loading} />
 
             {!loading && (
               <>
@@ -460,11 +466,7 @@ type AadhaarPreviewProps = {
 
 const SKELETON = "████████";
 
-const AadhaarCardPreview = ({
-  data,
-  side,
-  loading,
-}: AadhaarPreviewProps) => {
+const AadhaarCardPreview = ({ data, side, loading }: AadhaarPreviewProps) => {
   const timestamp = new Intl.DateTimeFormat("en-IN", {
     timeZone: "Asia/Kolkata",
     year: "numeric",
@@ -491,9 +493,7 @@ const AadhaarCardPreview = ({
       {loading && <div className="card-shimmer" />}
 
       <div style={styles.cardHeader}>
-        <div style={styles.cardType}>
-          {loading ? SKELETON : "AADHAAR CARD"}
-        </div>
+        <div style={styles.cardType}>{loading ? SKELETON : "AADHAAR CARD"}</div>
       </div>
 
       <div style={styles.cardBody}>
@@ -510,10 +510,7 @@ const AadhaarCardPreview = ({
         )}
 
         {side === "back" && (
-          <Field
-            label="Address"
-            value={loading ? SKELETON : data?.address}
-          />
+          <Field label="Address" value={loading ? SKELETON : data?.address} />
         )}
       </div>
 
@@ -530,7 +527,6 @@ const AadhaarCardPreview = ({
     </div>
   );
 };
-
 
 const Field = ({ label, value }: { label: string; value?: string }) => (
   <div style={styles.cardField}>
@@ -549,7 +545,6 @@ const styles: Record<string, CSSProperties> = {
     background: "var(--document-reader-page-bg)",
     padding: "60px 20px",
     fontFamily: "'DM Sans', -apple-system, sans-serif",
-    
   },
   container: {
     maxWidth: 520,

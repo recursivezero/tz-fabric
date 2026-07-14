@@ -1,6 +1,12 @@
+import type { Dispatch, SetStateAction } from "react";
 import "@/assets/styles/DrawerToggle.css";
 
-const DrawerToggle = ({ showDrawer, setShowDrawer }) => {
+type DrawerToggleProps = {
+  showDrawer: boolean;
+  setShowDrawer: Dispatch<SetStateAction<boolean>>;
+};
+
+const DrawerToggle = ({ showDrawer, setShowDrawer }: DrawerToggleProps) => {
   return (
     <div
       className="drawer-toggle-wrapper"

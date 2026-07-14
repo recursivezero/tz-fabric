@@ -1,7 +1,12 @@
 import type { CropRect, ResultItem } from "./types";
+import { ensureOk, fetchWithTimeout } from "../../utils/http";
 import { API_BASE, ASSET_BASE, CDN_BASE, MIN_CROP_SIZE } from "./searchConfig";
 
-export function clampCropRectToBounds(rect: CropRect, imgWidth: number, imgHeight: number): CropRect {
+export function clampCropRectToBounds(
+  rect: CropRect,
+  imgWidth: number,
+  imgHeight: number,
+): CropRect {
   if (imgWidth <= 0 || imgHeight <= 0) return rect;
 
   const maxW = Math.max(MIN_CROP_SIZE, imgWidth);
@@ -28,28 +33,96 @@ export function toCdnUrl(src: string | undefined): string {
     return clean;
   }
 
-  if (clean.startsWith("/api/") || clean.startsWith("/assets/")) {
+  if (
+    clean.startsWith("/api/") ||
+    clean.startsWith("/assets/") ||
+    clean.startsWith("/static/")
+  ) {
     return `${ASSET_BASE}${clean}`;
   }
 
   const normalized = clean.replace(/^\/+/, "");
 
-  if (normalized.startsWith("images/")) {
+  if (normalized.startsWith("images/") || normalized.startsWith("audios/")) {
     return `${CDN_BASE}/${normalized}`;
   }
 
   return `${CDN_BASE}/images/${normalized}`;
 }
 
-export function toResultItem(raw: string): ResultItem {
-  const filename = raw.split("/").pop() ?? raw;
-  return { imageSrc: raw, filename };
+export function toResultItem(raw: unknown): ResultItem | null {
+  if (typeof raw === "string") {
+    const imageSrc = toCdnUrl(raw);
+    if (!imageSrc) return null;
+    return {
+      imageSrc,
+      filename: raw.split(/[?#]/)[0].split("/").pop() ?? raw,
+    };
+  }
+
+  if (!raw || typeof raw !== "object") return null;
+
+  const record = raw as Record<string, unknown>;
+  const metadata =
+    record.metadata && typeof record.metadata === "object"
+      ? (record.metadata as Record<string, unknown>)
+      : {};
+
+  const pickString = (...values: unknown[]): string | undefined =>
+    values.find(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    );
+
+  const imageValue = pickString(
+    record.imageSrc,
+    record.imageUrl,
+    record.image_url,
+    record.url,
+    record.path,
+    record.relPath,
+    metadata.imageSrc,
+    metadata.imageUrl,
+    metadata.image_url,
+    metadata.url,
+    metadata.imagePath,
+    metadata.relPath,
+    metadata.filename,
+  );
+  if (!imageValue) return null;
+
+  const audioValue = pickString(
+    record.audioSrc,
+    record.audioUrl,
+    record.audio_url,
+    metadata.audioSrc,
+    metadata.audioUrl,
+    metadata.audio_url,
+    metadata.audioPath,
+    metadata.audioRelPath,
+  );
+  const filename = pickString(
+    record.filename,
+    record.basename,
+    metadata.imageFilename,
+    metadata.filename,
+    metadata.basename,
+    imageValue.split(/[?#]/)[0].split("/").pop(),
+  );
+
+  return {
+    imageSrc: toCdnUrl(imageValue),
+    filename: filename ?? "Fabric sample",
+    audioSrc: audioValue ? toCdnUrl(audioValue) : undefined,
+  };
 }
 
 export function cleanName(filename: string): string {
   if (!filename) return "Fabric sample";
 
-  const raw = decodeURIComponent(String(filename).split(/[?#]/)[0].split("/").pop() ?? filename).trim();
+  const raw = decodeURIComponent(
+    String(filename).split(/[?#]/)[0].split("/").pop() ?? filename,
+  ).trim();
   const withoutExtension = raw.replace(/\.[^.]+$/, "");
 
   const normalized = withoutExtension
@@ -70,13 +143,17 @@ export function cleanName(filename: string): string {
   const looksTechnical =
     !letters ||
     digits > letters ||
-    /\b(?:single image|image|img|upload|submitted files?)\b/i.test(normalized) ||
+    /\b(?:single image|image|img|upload|submitted files?)\b/i.test(
+      normalized,
+    ) ||
     /^[a-f0-9]{6,}\b/i.test(normalized);
 
   if (looksTechnical) return "Fabric sample";
 
   const shortName = normalized.split(" ").slice(0, 3).join(" ");
-  return shortName.replace(/\b\w/g, (char) => char.toUpperCase()) || "Fabric sample";
+  return (
+    shortName.replace(/\b\w/g, (char) => char.toUpperCase()) || "Fabric sample"
+  );
 }
 
 export async function callDbEndpoint(op: "create" | "update"): Promise<string> {
@@ -84,8 +161,10 @@ export async function callDbEndpoint(op: "create" | "update"): Promise<string> {
     op === "create"
       ? `${API_BASE}/database/create/table`
       : `${API_BASE}/database/update/table`;
-  const res = await fetch(url, { method: "PUT" });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.detail ?? `Request failed (${res.status})`);
-  return data?.message ?? "Done.";
+  const response = await fetchWithTimeout(url, { method: "PUT" }, 30_000);
+  await ensureOk(response, `Request failed (${response.status}).`);
+  const data = (await response.json().catch(() => ({}))) as {
+    message?: unknown;
+  };
+  return typeof data.message === "string" ? data.message : "Done.";
 }

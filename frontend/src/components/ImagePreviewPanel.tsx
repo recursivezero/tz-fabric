@@ -1,5 +1,25 @@
 import { useState } from "react";
+import type { ChangeEvent, DragEvent, RefObject } from "react";
 import "@/assets/styles/ImagePreviewPanel.css";
+
+type AnalysisMode = "short" | "long";
+
+type ImagePreviewPanelProps = {
+  uploadedImageUrl: string | null;
+  sampleImageUrl: string | null;
+  validationLoading: boolean;
+  isValidImage: boolean | null;
+  loading: boolean;
+  currentFile: File | null;
+  handleRunAnalysis: (
+    file: File | null,
+    mode: AnalysisMode,
+  ) => void | Promise<void>;
+  handleUploadedImage: (file: File) => void;
+  imageInputRef: RefObject<HTMLInputElement | null>;
+  showButtons?: boolean;
+  clearImage: () => void;
+};
 
 const ImagePreviewPanel = ({
   uploadedImageUrl,
@@ -13,13 +33,13 @@ const ImagePreviewPanel = ({
   imageInputRef,
   showButtons = true,
   clearImage,
-}) => {
+}: ImagePreviewPanelProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const giveFileNameAndSize = (currentFile) => {
-    if (!currentFile) return "";
-    const fileName = currentFile.name;
-    const fileSize = (currentFile.size / 1024).toFixed(2); // KB
+  const giveFileNameAndSize = (file: File | null) => {
+    if (!file) return "";
+    const fileName = file.name;
+    const fileSize = (file.size / 1024).toFixed(2); // KB
     return `${fileName} (${fileSize} KB)`;
   };
 
@@ -32,14 +52,14 @@ const ImagePreviewPanel = ({
     !loading &&
     isImageValid;
 
-  const onDrop = (e) => {
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file && typeof handleUploadedImage === "function")
       handleUploadedImage(file);
   };
 
-  const onFileChange = (e) => {
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && typeof handleUploadedImage === "function")
       handleUploadedImage(file);
@@ -63,11 +83,54 @@ const ImagePreviewPanel = ({
 
   return (
     <div className="image-preview-container">
+      {showButtons && (
+        <div className="preview-buttons-container" data-debug="preview-buttons">
+          {validationLoading ? (
+            <p className="validation-text">
+              🔍 Checking if this is a valid fabric image...
+            </p>
+          ) : (
+            <>
+              <button
+                onClick={() => handleRunAnalysis(currentFile, "short")}
+                disabled={!canRun}
+                className={`analysis-btn short ${!canRun ? "disabled" : ""}`}
+                title={
+                  !hasImage || !currentFile
+                    ? "Upload an image first"
+                    : !isImageValid
+                      ? "Image invalid"
+                      : ""
+                }
+                data-testid="short-btn"
+              >
+                Short Analysis
+              </button>
+
+              <button
+                onClick={() => handleRunAnalysis(currentFile, "long")}
+                disabled={!canRun}
+                className={`analysis-btn long ${!canRun ? "disabled" : ""}`}
+                title={
+                  !hasImage || !currentFile
+                    ? "Upload an image first"
+                    : !isImageValid
+                      ? "Image invalid"
+                      : ""
+                }
+                data-testid="long-btn"
+              >
+                Long Analysis
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <div className="preview-visual">
         {hasImage ? (
           <div className="preview-wrap">
             <img
-              src={uploadedImageUrl || sampleImageUrl}
+              src={uploadedImageUrl ?? sampleImageUrl ?? undefined}
               alt="Preview"
               className="preview-image"
             />
@@ -113,50 +176,6 @@ const ImagePreviewPanel = ({
           <span className="filename" />
         )}
       </div>
-
-      {showButtons && (
-        <div className="preview-buttons-container" data-debug="preview-buttons">
-          {validationLoading ? (
-            <p className="validation-text">
-              🔍 Checking if this is a valid fabric image...
-            </p>
-          ) : (
-            <>
-              <button
-                onClick={() => handleRunAnalysis(currentFile, "short")}
-                disabled={!canRun}
-                className={`analysis-btn short ${!canRun ? "disabled" : ""}`}
-                title={
-                  !hasImage || !currentFile
-                    ? "Upload an image first"
-                    : !isImageValid
-                      ? "Image invalid"
-                      : ""
-                }
-                data-testid="short-btn"
-              >
-                Short Analysis
-              </button>
-
-              <button
-                onClick={() => handleRunAnalysis(currentFile, "long")}
-                disabled={!canRun}
-                className={`analysis-btn long ${!canRun ? "disabled" : ""}`}
-                title={
-                  !hasImage || !currentFile
-                    ? "Upload an image first"
-                    : !isImageValid
-                      ? "Image invalid"
-                      : ""
-                }
-                data-testid="long-btn"
-              >
-                Long Analysis
-              </button>
-            </>
-          )}
-        </div>
-      )}
 
       {showConfirm && (
         <div className="confirm-overlay" role="dialog" aria-modal="true">

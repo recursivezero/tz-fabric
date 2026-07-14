@@ -1,11 +1,26 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || "G-LSPKHRMZZW";
-const TRACKING_DELAY_MS = 1600;
+const MEASUREMENT_ID = String(
+  import.meta.env.VITE_GA_MEASUREMENT_ID ?? "",
+).trim();
+const ANALYTICS_ENABLED =
+  import.meta.env.VITE_ANALYTICS_ENABLED === "true" && !!MEASUREMENT_ID;
 
 let analyticsModulePromise: Promise<typeof import("react-ga4")> | null = null;
 let analyticsInitialized = false;
+
+function privacySignalEnabled(): boolean {
+  if (typeof navigator === "undefined") return false;
+
+  const browser = navigator as Navigator & { globalPrivacyControl?: boolean };
+  const browserWindow = window as Window & { doNotTrack?: string };
+  return (
+    browser.globalPrivacyControl === true ||
+    navigator.doNotTrack === "1" ||
+    browserWindow.doNotTrack === "1"
+  );
+}
 
 const loadAnalytics = async () => {
   analyticsModulePromise ??= import("react-ga4");
@@ -23,29 +38,23 @@ export const usePageTracking = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (import.meta.env.DEV || !MEASUREMENT_ID) {
+    if (import.meta.env.DEV || !ANALYTICS_ENABLED || privacySignalEnabled()) {
       return;
     }
 
-    const page = `${location.pathname}${location.search}`;
     let cancelled = false;
+    const page = `${location.pathname}${location.search}`;
 
-    const timer = window.setTimeout(async () => {
-      if (cancelled) return;
-
-      try {
-        const ReactGA = await loadAnalytics();
-        if (!cancelled) {
-          ReactGA.send({ hitType: "pageview", page });
-        }
-      } catch {
-        // Analytics should never block or fail the UI.
-      }
-    }, TRACKING_DELAY_MS);
+    void loadAnalytics()
+      .then((ReactGA) => {
+        if (!cancelled) ReactGA.send({ hitType: "pageview", page });
+      })
+      .catch(() => {
+        // Analytics is optional and must never interrupt the product flow.
+      });
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
     };
   }, [location.pathname, location.search]);
 };

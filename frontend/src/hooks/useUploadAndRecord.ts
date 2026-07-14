@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FULL_API_URL } from "../constants";
+import { fetchWithTimeout } from "../utils/http";
 
 const SUBMIT_SERVER_ERROR =
   "Unable to connect to the server, please try after some time.";
@@ -298,10 +299,14 @@ export const useUploadAndRecord = () => {
     setLoading(true);
     setNotification(null);
     try {
-      const res = await fetch(`${FULL_API_URL}/submit`, {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetchWithTimeout(
+        `${FULL_API_URL}/submit`,
+        {
+          method: "POST",
+          body: formData,
+        },
+        90_000,
+      );
 
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as {

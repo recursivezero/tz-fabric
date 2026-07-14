@@ -419,3 +419,11 @@
 :root[data-theme="dark"] .analysis-page .analysis-btn.long {
   color: #171101;
 }
+
+/* Analysis-page layout: keep the primary analysis actions above the image card.
+   The component markup follows the same visual order, so keyboard navigation
+   and screen-reader reading order remain predictable. */
+.analysis-page .image-preview-container > .preview-buttons-container {
+  margin: 0 0 18px;
+  transform: none;
+}

@@ -161,7 +161,7 @@ const ImageDescription = () => {
       {showDrawer && (
         <div className="drawer-panel">
           <SampleImageGallery
-            onAnalyze={(samplePath) => {
+            onAnalyze={(samplePath: string) => {
               handleSampleShortAnalysis(samplePath);
             }}
             loading={loading}

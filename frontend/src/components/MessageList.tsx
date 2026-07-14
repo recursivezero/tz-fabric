@@ -30,6 +30,22 @@ export default function MessageList({
   const lastAssistantRef = useRef<HTMLDivElement | null>(null);
   const lastAssistantMsgRef = useRef<Message | null>(null);
   const rafRef = useRef<number | null>(null);
+  const messageKeysRef = useRef(new WeakMap<object, string>());
+  const nextMessageKeyRef = useRef(0);
+
+  const getMessageKey = (message: Message): string => {
+    const messageWithId = message as Message & { id?: unknown };
+    if (typeof messageWithId.id === "string" && messageWithId.id.trim()) {
+      return `id:${messageWithId.id}`;
+    }
+
+    const existing = messageKeysRef.current.get(message);
+    if (existing) return existing;
+
+    const generated = `message:${nextMessageKeyRef.current++}`;
+    messageKeysRef.current.set(message, generated);
+    return generated;
+  };
 
   // Always keep scroll pinned to bottom on commit
   useLayoutEffect(() => {
@@ -148,7 +164,6 @@ export default function MessageList({
         rafRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, onLastAssistantRendered, scrollerRef]);
 
   // helper to decide whether a message contains the "ask more" prompt
@@ -214,7 +229,7 @@ export default function MessageList({
 
           return (
             <div
-              key={i}
+              key={getMessageKey(m)}
               className="message-wrapper"
               data-role={roleAttr}
               data-idx={i}

@@ -1,66 +1,142 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ensureOk,
+  fetchWithTimeout,
+  toUserFacingNetworkError,
+} from "../../utils/http";
 import { API_BASE, USER_FRIENDLY_SERVER_ERROR } from "./searchConfig";
 import { toResultItem } from "./searchUtils";
 import type { ResultItem, SearchApiResponse } from "./types";
+
+const SEARCH_TIMEOUT_MS = 45_000;
+
+type SearchInput =
+  | { kind: "image"; file: File }
+  | { kind: "text"; term: string };
 
 export function useSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ResultItem[]>([]);
+  const requestRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
 
-  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 20, preserveResultsOnError = false) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("limit", String(limit));
-      form.append("page", "1");
-      form.append("per_page", String(limit));
-      if (category?.length) category.forEach((c) => { form.append("category", c); });
-      const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail ?? `Search failed (${res.status})`);
-      }
-      const data: SearchApiResponse = await res.json();
-      setResults((data.results ?? []).map(toResultItem));
-    } catch (e) {
-      console.error("Image search failed:", e);
-      setError(USER_FRIENDLY_SERVER_ERROR);
-      if (!preserveResultsOnError) setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      requestRef.current?.abort();
+    },
+    [],
+  );
 
-  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 20, preserveResultsOnError = false) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.append("search_term", term);
-      form.append("limit", String(limit));
-      form.append("page", "1");
-      form.append("per_page", String(limit));
-      if (category?.length) category.forEach((c) => { form.append("category", c); });
-      const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail ?? `Search failed (${res.status})`);
+  const executeSearch = useCallback(
+    async (
+      input: SearchInput,
+      category?: string[],
+      limit = 20,
+      preserveResultsOnError = false,
+    ) => {
+      requestRef.current?.abort();
+      const controller = new AbortController();
+      requestRef.current = controller;
+      const requestId = ++requestIdRef.current;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const form = new FormData();
+        if (input.kind === "image") form.append("file", input.file);
+        else form.append("search_term", input.term);
+        form.append("limit", String(limit));
+        form.append("page", "1");
+        form.append("per_page", String(limit));
+        category?.forEach((value) => {
+          form.append("category", value);
+        });
+
+        const response = await fetchWithTimeout(
+          `${API_BASE}/search`,
+          {
+            method: "POST",
+            body: form,
+            signal: controller.signal,
+          },
+          SEARCH_TIMEOUT_MS,
+        );
+        await ensureOk(response, `Search failed (${response.status}).`);
+
+        const data = (await response.json()) as SearchApiResponse;
+        const rawResults = Array.isArray(data.results) ? data.results : [];
+        const normalized = rawResults
+          .map(toResultItem)
+          .filter((item): item is ResultItem => item !== null);
+
+        if (rawResults.length > 0 && normalized.length === 0) {
+          throw new Error(
+            "The search service returned an unsupported result format.",
+          );
+        }
+
+        if (requestId === requestIdRef.current) setResults(normalized);
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError")
+          return;
+
+        const failure = toUserFacingNetworkError(
+          caught,
+          USER_FRIENDLY_SERVER_ERROR,
+        );
+        if (requestId === requestIdRef.current) {
+          setError(failure.message);
+          if (!preserveResultsOnError) setResults([]);
+        }
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+          requestRef.current = null;
+        }
       }
-      const data: SearchApiResponse = await res.json();
-      setResults((data.results ?? []).map(toResultItem));
-    } catch (e) {
-      console.error("Text search failed:", e);
-      setError(USER_FRIENDLY_SERVER_ERROR);
-      if (!preserveResultsOnError) setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
+
+  const runImageSearch = useCallback(
+    (
+      file: File,
+      category?: string[],
+      limit = 20,
+      preserveResultsOnError = false,
+    ) =>
+      executeSearch(
+        { kind: "image", file },
+        category,
+        limit,
+        preserveResultsOnError,
+      ),
+    [executeSearch],
+  );
+
+  const runTextSearch = useCallback(
+    (
+      term: string,
+      category?: string[],
+      limit = 20,
+      preserveResultsOnError = false,
+    ) =>
+      executeSearch(
+        { kind: "text", term },
+        category,
+        limit,
+        preserveResultsOnError,
+      ),
+    [executeSearch],
+  );
 
   const clear = useCallback(() => {
+    requestRef.current?.abort();
+    requestRef.current = null;
+    requestIdRef.current += 1;
+    setLoading(false);
     setResults([]);
     setError(null);
   }, []);

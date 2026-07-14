@@ -4,21 +4,11 @@ import { FiZoomIn } from "react-icons/fi";
 import { BASE_URL } from "../constants";
 import { fetchContent, type MediaItem } from "../services/content_api";
 import "@/assets/styles/ContentGrid.css";
+import { formatUploadedAt } from "../utils/dateTime";
 import { throttle } from "../utils/throttle";
 
-const USER_FRIENDLY_SERVER_ERROR = "Unable to connect to the server, please try after some time.";
-
-const displayTime = (t: string) => {
-  return new Date(t).toLocaleString("en-US", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true
-  });
-}
+const USER_FRIENDLY_SERVER_ERROR =
+  "Unable to connect to the server, please try after some time.";
 
 export default function ContentGrid() {
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -52,11 +42,17 @@ export default function ContentGrid() {
   const ZOOM_STEP = 0.2;
 
   const clampLightboxOffset = (next: { x: number; y: number }) => {
-    const viewportWidth = typeof window === "undefined" ? 1200 : window.innerWidth;
-    const viewportHeight = typeof window === "undefined" ? 800 : window.innerHeight;
+    const viewportWidth =
+      typeof window === "undefined" ? 1200 : window.innerWidth;
+    const viewportHeight =
+      typeof window === "undefined" ? 800 : window.innerHeight;
     const scaleAllowance = Math.max(1, scale);
-    const maxX = Math.round(Math.min(viewportWidth * 0.42, 460 * scaleAllowance));
-    const maxY = Math.round(Math.min(viewportHeight * 0.42, 360 * scaleAllowance));
+    const maxX = Math.round(
+      Math.min(viewportWidth * 0.42, 460 * scaleAllowance),
+    );
+    const maxY = Math.round(
+      Math.min(viewportHeight * 0.42, 360 * scaleAllowance),
+    );
 
     return {
       x: Math.max(-maxX, Math.min(maxX, next.x)),
@@ -77,25 +73,37 @@ export default function ContentGrid() {
   useEffect(() => {
     if (mode !== "all") return;
 
+    const controller = new AbortController();
     let ignore = false;
+
     (async () => {
       setLoading(true);
       setErr(null);
       try {
-        const data = await fetchContent(page, limit);
+        const data = await fetchContent(page, limit, controller.signal);
         if (!ignore) {
           setItems(data.items);
           setTotal(data.total);
         }
-      } catch (err) {
-        console.error("Failed to load fabric list:", err);
-        if (!ignore) setErr(USER_FRIENDLY_SERVER_ERROR);
+      } catch (error) {
+        if (
+          !ignore &&
+          !(error instanceof DOMException && error.name === "AbortError")
+        ) {
+          setErr(
+            error instanceof Error && error.message
+              ? error.message
+              : USER_FRIENDLY_SERVER_ERROR,
+          );
+        }
       } finally {
         if (!ignore) setLoading(false);
       }
     })();
+
     return () => {
       ignore = true;
+      controller.abort();
     };
   }, [page, limit, mode]);
 
@@ -109,7 +117,9 @@ export default function ContentGrid() {
   function pickDisplayName(item: MediaItem) {
     const fromImageFilename = item.imageFilename?.trim();
     const fromUrl = item.imageUrl
-      ? decodeURIComponent((item.imageUrl.split(/[?#]/)[0].split("/").pop() || "").trim())
+      ? decodeURIComponent(
+          (item.imageUrl.split(/[?#]/)[0].split("/").pop() || "").trim(),
+        )
       : "";
     const fromBasename = item.basename?.trim();
 
@@ -123,7 +133,9 @@ export default function ContentGrid() {
     if (!raw) return "Uploaded fabric";
 
     const withoutQuery = raw.split(/[?#]/)[0];
-    const lastSegment = decodeURIComponent(withoutQuery.split("/").pop() || withoutQuery);
+    const lastSegment = decodeURIComponent(
+      withoutQuery.split("/").pop() || withoutQuery,
+    );
     const withoutExtension = lastSegment.replace(/\.[^.]+$/, "");
 
     const normalized = withoutExtension
@@ -143,13 +155,18 @@ export default function ContentGrid() {
     const looksTechnical =
       !letters ||
       digits > letters ||
-      /\b(?:single image|image|img|upload|submitted files?)\b/i.test(normalized) ||
+      /\b(?:single image|image|img|upload|submitted files?)\b/i.test(
+        normalized,
+      ) ||
       /^[a-f0-9]{6,}\b/i.test(normalized);
 
     if (looksTechnical) return "Fabric sample";
 
     const shortName = normalized.split(" ").slice(0, 3).join(" ");
-    return shortName.replace(/\b\w/g, (char) => char.toUpperCase()) || "Uploaded fabric";
+    return (
+      shortName.replace(/\b\w/g, (char) => char.toUpperCase()) ||
+      "Uploaded fabric"
+    );
   };
 
   // ✅ Hide items with missing/broken images
@@ -198,7 +215,6 @@ export default function ContentGrid() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lightboxOpen]);
 
   const onWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
@@ -232,103 +248,103 @@ export default function ContentGrid() {
 
   const safePrev = useMemo(
     () => throttle(() => setPage((p) => Math.max(1, p - 1)), 1000),
-    []
+    [],
   );
 
   const safeNext = useMemo(
     () => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000),
-    [totalPages]
+    [totalPages],
   );
 
   return (
     <div className="grid-page">
       <h1 className="grid-page-title">Fabric List</h1>
-      <h3 className="grid-page-subtitle">List of uploaded fabric with their audio description</h3>
+      <h3 className="grid-page-subtitle">
+        List of uploaded fabric with their audio description
+      </h3>
       <div className="upload-wrapper">
-        <div className="upload-inner" style={ { display: "flex", gap: 8 } }>
-          { mode === "similar" && (
-            <button className="btn" onClick={ showAll } disabled={ loading }>
+        <div className="upload-inner" style={{ display: "flex", gap: 8 }}>
+          {mode === "similar" && (
+            <button className="btn" onClick={showAll} disabled={loading}>
               ← Back to All
             </button>
-          ) }
+          )}
         </div>
       </div>
 
       <div className="grid-header">
         <div className="grid-left">
           <span className="grid-title-text">
-            { mode === "all" ? "Total Fabrics" : "Similar Results" }
+            {mode === "all" ? "Total Fabrics" : "Similar Results"}
           </span>
-          <span className="grid-count-inline">({ total })</span>
+          <span className="grid-count-inline">({total})</span>
         </div>
 
-        { mode === "all" && visibleItems.length > 0 && (
+        {mode === "all" && visibleItems.length > 0 && (
           <div className="grid-controls inline">
-            <button disabled={ page === 1 } onClick={ safePrev }>
+            <button disabled={page === 1} onClick={safePrev}>
               ← Prev
             </button>
             <span className="grid-page-indicator">
-              Page { page } / { totalPages }
+              Page {page} / {totalPages}
             </span>
-            <button
-              disabled={ page >= totalPages }
-              onClick={ safeNext }
-            >
+            <button disabled={page >= totalPages} onClick={safeNext}>
               Next →
             </button>
           </div>
-        ) }
+        )}
       </div>
 
-      { err && <div className="grid-error">⚠️ { err }</div> }
-      { !loading && visibleItems.length === 0 && !err && (
+      {err && <div className="grid-error">⚠️ {err}</div>}
+      {!loading && visibleItems.length === 0 && !err && (
         <div className="empty-state">No image found.</div>
-      ) }
+      )}
 
       <div className="media-grid">
-        { visibleItems.map((item) => {
+        {visibleItems.map((item) => {
           const rawSrc = item.imageUrl;
-          const src =
-            rawSrc?.startsWith("http") ? rawSrc : `${BASE_URL}${rawSrc}`;
+          const src = rawSrc?.startsWith("http")
+            ? rawSrc
+            : `${BASE_URL}${rawSrc}`;
           const rawDisplayName = pickDisplayName(item);
           const caption = cleanName(rawDisplayName);
 
           return (
-            <article className="media-card" key={ item._id ?? src }>
+            <article className="media-card" key={item._id ?? src}>
               <figure className="media-thumb">
                 <div className="img-wrapper">
                   <img
-                    src={ src }
-                    alt={ caption }
+                    src={src}
+                    alt={caption}
                     loading="lazy"
                     decoding="async"
-                    onError={ () => markBad(src) }
-                    onClick={ () => openLightbox(src, caption) }
+                    onError={() => markBad(src)}
+                    onClick={() => openLightbox(src, caption)}
                   />
                   <span
                     className="zoom-icon"
-                    onClick={ () => openLightbox(src, caption) }
+                    onClick={() => openLightbox(src, caption)}
                     title="Zoom image"
                     role="button"
                     aria-label="Zoom image"
                   >
-                    <FiZoomIn size={ 25 } />
+                    <FiZoomIn size={25} />
                   </span>
                 </div>
 
                 <figcaption
                   className="media-name"
-                  title={ rawDisplayName }
-                  onClick={ () => openLightbox(src, caption) }
+                  title={rawDisplayName}
+                  onClick={() => openLightbox(src, caption)}
                 >
-                  { caption }
+                  {caption}
                 </figcaption>
               </figure>
               <div className="media-audio">
                 <div className="audio-box">
                   <span className="audio-label">Fabric description</span>
 
-                  { item.audioUrl && (
+                  {item.audioUrl && (
                     <audio
                       controls
                       src={
@@ -339,66 +355,92 @@ export default function ContentGrid() {
                       preload="metadata"
                       controlsList="nodownload"
                     />
-                  ) }
+                  )}
                 </div>
               </div>
 
               <div className="media-meta">
-                { item.createdAt && (
-                  <time dateTime={ item.createdAt }>
-                    { displayTime(item.createdAt) }
-                  </time>
-                ) }
+                {(() => {
+                  const uploadedAt = formatUploadedAt(item.createdAt);
+                  return uploadedAt ? (
+                    <time dateTime={item.createdAt ?? undefined}>
+                      Uploaded {uploadedAt}
+                    </time>
+                  ) : (
+                    <span>Upload time unavailable</span>
+                  );
+                })()}
               </div>
             </article>
           );
-        }) }
+        })}
       </div>
 
-      { loading && <div className="grid-loading">Loading…</div> }
+      {loading && <div className="grid-loading">Loading…</div>}
 
-      { lightboxOpen && activeSrc && (
+      {lightboxOpen && activeSrc && (
         <div
           className="lb-backdrop"
-          onClick={ (e) => {
+          onClick={(e) => {
             if ((e.target as HTMLElement).classList.contains("lb-backdrop")) {
               closeLightbox();
             }
-          } }
+          }}
         >
           <div
             className="lb-stage"
-            onWheel={ onWheel }
-            onMouseDown={ onMouseDown }
-            onMouseMove={ onMouseMove }
-            onMouseUp={ onMouseUpOrLeave }
-            onMouseLeave={ onMouseUpOrLeave }
+            onWheel={onWheel}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUpOrLeave}
+            onMouseLeave={onMouseUpOrLeave}
           >
             <img
-              src={ activeSrc }
-              alt={ activeCaption ?? "preview" }
+              src={activeSrc}
+              alt={activeCaption ?? "preview"}
               className="lb-img"
-              style={ {
+              style={{
                 transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-              } }
-              draggable={ false }
+              }}
+              draggable={false}
             />
 
-            { activeCaption && (
-              <div className="lb-caption">{ activeCaption }</div>
-            ) }
+            {activeCaption && <div className="lb-caption">{activeCaption}</div>}
 
             <div className="lb-controls">
-              <button type="button" onClick={ zoomOut } aria-label="Zoom out" title="Zoom out" disabled={ scale <= MIN_SCALE }>−</button>
-              <button type="button" onClick={ resetView } title="Reset zoom">Reset</button>
-              <button type="button" onClick={ zoomIn } aria-label="Zoom in" title="Zoom in" disabled={ scale >= MAX_SCALE }>+</button>
-              <button type="button" className="lb-close" onClick={ closeLightbox } aria-label="Close preview">
+              <button
+                type="button"
+                onClick={zoomOut}
+                aria-label="Zoom out"
+                title="Zoom out"
+                disabled={scale <= MIN_SCALE}
+              >
+                −
+              </button>
+              <button type="button" onClick={resetView} title="Reset zoom">
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={zoomIn}
+                aria-label="Zoom in"
+                title="Zoom in"
+                disabled={scale >= MAX_SCALE}
+              >
+                +
+              </button>
+              <button
+                type="button"
+                className="lb-close"
+                onClick={closeLightbox}
+                aria-label="Close preview"
+              >
                 ✕
               </button>
             </div>
           </div>
         </div>
-      ) }
+      )}
     </div>
   );
 }

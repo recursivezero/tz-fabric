@@ -1,4 +1,7 @@
-export type NotificationState = { message: string; type: "success" | "error" } | null;
+export type NotificationState = {
+  message: string;
+  type: "success" | "error";
+} | null;
 export type DbOp = "create" | "update" | null;
 
 export interface ResultItem {
@@ -8,15 +11,15 @@ export interface ResultItem {
 }
 
 export interface SearchApiResponse {
-  message: string;
-  results: string[];
-  pagination: {
-    page: number;
-    per_page: number;
-    total_results: number;
-    total_pages: number;
-    has_next: boolean;
-    has_prev: boolean;
+  message?: string;
+  results?: unknown[];
+  pagination?: {
+    page?: number;
+    per_page?: number;
+    total_results?: number;
+    total_pages?: number;
+    has_next?: boolean;
+    has_prev?: boolean;
   };
 }
 

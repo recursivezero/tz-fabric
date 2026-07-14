@@ -7,6 +7,7 @@ import {
 } from "../services/chat_api";
 import { FULL_API_URL } from "../constants";
 import { extractFilenameFromText } from "../utils/extractFilenameFromText";
+import { fetchWithTimeout } from "../utils/http";
 
 type Status = "idle" | "sending" | "error" | "validating";
 
@@ -84,13 +85,10 @@ const shouldOfferMoreForQuestion = (content: unknown): boolean => {
   const isFabricQuestion = /\bfabricai\b/.test(normalized);
   const hasHowIntent = /\bhow\b/.test(normalized);
   const hasUseIntent =
-    /\b(use|using|work with|start|begin|access|operate)\b/.test(
-      normalized,
-    ) || /\bget started\b/.test(normalized);
+    /\b(use|using|work with|start|begin|access|operate)\b/.test(normalized) ||
+    /\bget started\b/.test(normalized);
   const hasHelpIntent =
-    /\b(guide|tutorial|help|steps|instructions|walkthrough)\b/.test(
-      normalized,
-    );
+    /\b(guide|tutorial|help|steps|instructions|walkthrough)\b/.test(normalized);
 
   return isFabricQuestion && ((hasHowIntent && hasUseIntent) || hasHelpIntent);
 };
@@ -238,15 +236,14 @@ export default function useChat() {
         form.append("image", file);
         const tForm = performance.now();
 
-        const ac = new AbortController();
-        const timeout = setTimeout(() => ac.abort(), 30000);
-
-        const resp = await fetch(`${FULL_API_URL}/validate-image`, {
-          method: "POST",
-          body: form,
-          signal: ac.signal,
-        });
-        clearTimeout(timeout);
+        const resp = await fetchWithTimeout(
+          `${FULL_API_URL}/validate-image`,
+          {
+            method: "POST",
+            body: form,
+          },
+          30_000,
+        );
         const tResp = performance.now();
 
         if (!resp.ok) {
@@ -305,7 +302,7 @@ export default function useChat() {
       if (uploadedPreviewUrl) {
         try {
           URL.revokeObjectURL(uploadedPreviewUrl);
-        } catch {}
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
       }
       setStatus("validating");
       setError("");
@@ -665,15 +662,15 @@ export default function useChat() {
             return obj.response.response;
           if (typeof obj.text === "string") return obj.text;
           if (typeof obj.message === "string") return obj.message;
-        } catch {}
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
       }
       return raw;
     };
 
     try {
-      createAbort();
+      const signal = createAbort();
       const regenChatRes = await withAbort(
-        chatOnce([...messages, { role: "user", content: instr }]),
+        chatOnce([...messages, { role: "user", content: instr }], { signal }),
       );
       const rc = regenChatRes as RichChatResponse;
 
@@ -722,7 +719,7 @@ export default function useChat() {
         return null;
       }
       try {
-        createAbort();
+        const signal = createAbort();
         setStatus("sending");
         setError("");
 
@@ -732,10 +729,15 @@ export default function useChat() {
         form.append("image", uploadedImageFile);
 
         const upResp = await withAbort(
-          fetch(`${FULL_API_URL}/uploads/tmp_media`, {
-            method: "POST",
-            body: form,
-          }),
+          fetchWithTimeout(
+            `${FULL_API_URL}/uploads/tmp_media`,
+            {
+              method: "POST",
+              body: form,
+              signal,
+            },
+            60_000,
+          ),
         );
 
         if (!upResp.ok) {
@@ -755,11 +757,16 @@ export default function useChat() {
           };
 
           const searchResp = await withAbort(
-            fetch(`${FULL_API_URL}/search`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(args),
-            }),
+            fetchWithTimeout(
+              `${FULL_API_URL}/search`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(args),
+                signal,
+              },
+              60_000,
+            ),
           );
 
           if (!searchResp.ok)
@@ -777,7 +784,7 @@ export default function useChat() {
 
           try {
             localStorage.setItem("mcp_last_search", JSON.stringify(payload));
-          } catch {}
+          } catch { /* Best-effort cleanup or browser storage operation. */ }
 
           const qs = new URLSearchParams({ k: String(payload.k) }).toString();
 
@@ -794,7 +801,10 @@ export default function useChat() {
 
         const searchInstruction = `Search similar images: image_url=${imageUrl} k=${k} min_sim=${min_sim} order=recent require_audio=false`;
         const chatRes = await withAbort(
-          chatOnce([...messages, { role: "user", content: searchInstruction }]),
+          chatOnce(
+            [...messages, { role: "user", content: searchInstruction }],
+            { signal },
+          ),
         );
         const rc = chatRes as RichChatResponse;
 
@@ -812,7 +822,7 @@ export default function useChat() {
 
         try {
           localStorage.setItem("mcp_last_search", JSON.stringify(payload));
-        } catch {}
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
 
         const qs = new URLSearchParams({
           k: String(payload.k),
@@ -902,7 +912,7 @@ export default function useChat() {
         }
       }
 
-      createAbort();
+      const signal = createAbort();
       setStatus("sending");
       setError("");
 
@@ -959,13 +969,18 @@ export default function useChat() {
                 else debug[k] = String(v);
               }
               console.log("[UPLOAD DEBUG]", debug);
-            } catch {}
+            } catch { /* Best-effort cleanup or browser storage operation. */ }
 
             const upResp = await withAbort(
-              fetch(`${FULL_API_URL}/uploads/tmp_media`, {
-                method: "POST",
-                body: form,
-              }),
+              fetchWithTimeout(
+                `${FULL_API_URL}/uploads/tmp_media`,
+                {
+                  method: "POST",
+                  body: form,
+                  signal,
+                },
+                60_000,
+              ),
             );
             if (!upResp.ok) {
               const t = await upResp.text().catch(() => "");
@@ -1016,10 +1031,10 @@ export default function useChat() {
             }
 
             const chatRes = await withAbort(
-              chatOnce([
-                ...messages,
-                { role: "user", content: mediaInstruction },
-              ]),
+              chatOnce(
+                [...messages, { role: "user", content: mediaInstruction }],
+                { signal },
+              ),
             );
 
             const rc = chatRes as RichChatResponse;
@@ -1062,7 +1077,10 @@ export default function useChat() {
         }
 
         const chatRes = await withAbort(
-          chatOnce([...messages, { role: "user", content: text }]),
+          chatOnce([...messages, { role: "user", content: text }], {
+            retryTransient: true,
+            signal,
+          }),
         );
         handleResponse(chatRes);
         setStatus("idle");
@@ -1172,11 +1190,11 @@ export default function useChat() {
 
   const retryLast = useCallback(async () => {
     if (status === "sending" || messages.length === 0) return;
-    createAbort();
+    const signal = createAbort();
     setStatus("sending");
     setError("");
     try {
-      const res = await withAbort(chatOnce(messages));
+      const res = await withAbort(chatOnce(messages, { signal }));
       handleResponse(res);
       setStatus("idle");
     } catch (e: unknown) {
@@ -1196,7 +1214,7 @@ export default function useChat() {
     if (abortRef.current) {
       try {
         abortRef.current.abort();
-      } catch {}
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
       abortRef.current = null;
     }
     setMessages([]);

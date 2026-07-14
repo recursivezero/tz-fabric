@@ -307,7 +307,11 @@ export default function Composer({
   };
 
   // NOTE: keep the rest of your logic unchanged (recording functions etc.)
-  const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
+  const handleChipActionDefault = (
+    actionId: string,
+    opts?: { name?: string },
+  ) => {
+    void opts;
     if (actionId === "image:analyze_short") {
       setMode("analysis");
       onChange(textForAnalysisShort);
@@ -456,7 +460,6 @@ export default function Composer({
       if (pendingImage) try { URL.revokeObjectURL(pendingImage.url); } catch (e) { console.log(e) }
       if (pendingAudio) try { URL.revokeObjectURL(pendingAudio.url); } catch (e) { console.log(e) }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingImage, pendingAudio]);
 
   useEffect(() => {
@@ -876,20 +879,41 @@ export default function Composer({
           }}
         />
         {pendingRemove && (
-          <div className="composer-modal-overlay" role="dialog" aria-modal="true" aria-label={`Confirm remove ${pendingRemove.kind}`} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300, background: "rgba(0,0,0,0.4)", padding: 16 }}>
-            <div className="composer-modal" style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ flex: "0 0 84px" }}>
-                  <div style={{ width: 84, height: 84, background: "#f3f4f6", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>
-                    {pendingRemove.kind === "image" ? "Image" : "Audio"}
-                  </div>
+          <div
+            className="composer-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Confirm remove ${pendingRemove.kind}`}
+          >
+            <div className="composer-modal composer-modal--remove-attachment">
+              <div className="composer-remove-dialog__layout">
+                <div className="composer-remove-dialog__media" aria-hidden="true">
+                  {pendingRemove.kind === "image" ? "Image" : "Audio"}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>{pendingRemove.kind === "image" ? "Remove this image?" : "Remove this audio?"}</div>
-                  {pendingRemove.name && <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingRemove.name}</div>}
-                  <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                    <button onClick={confirmRemove} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>Confirm</button>
-                    <button onClick={cancelRemove} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>Cancel</button>
+                <div className="composer-remove-dialog__content">
+                  <div className="composer-remove-dialog__title">
+                    {pendingRemove.kind === "image" ? "Remove this image?" : "Remove this audio?"}
+                  </div>
+                  {pendingRemove.name && (
+                    <div className="composer-remove-dialog__filename">
+                      {pendingRemove.name}
+                    </div>
+                  )}
+                  <div className="composer-remove-dialog__actions">
+                    <button
+                      onClick={confirmRemove}
+                      type="button"
+                      className="composer-remove-dialog__button composer-remove-dialog__button--confirm"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={cancelRemove}
+                      type="button"
+                      className="composer-remove-dialog__button composer-remove-dialog__button--cancel"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               </div>

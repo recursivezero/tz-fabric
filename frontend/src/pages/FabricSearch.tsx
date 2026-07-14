@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { fetchWithTimeout } from "../utils/http";
 import type { ChangeEvent, MouseEventHandler, WheelEventHandler } from "react";
 
 import Loader from "../components/Loader";
@@ -20,7 +28,8 @@ import "@/assets/styles/FabricSearch.css";
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Search() {
-  const { loading, error, results, runImageSearch, runTextSearch, clear } = useSearch();
+  const { loading, error, results, runImageSearch, runTextSearch, clear } =
+    useSearch();
 
   const [file, setFile] = useState<File | null>(null);
   const [textQuery, setTextQuery] = useState("");
@@ -35,9 +44,16 @@ export default function Search() {
 
   // Crop / drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [cropRect, setCropRect] = useState<CropRect>({ x: 20, y: 20, w: 160, h: 160 });
+  const [cropRect, setCropRect] = useState<CropRect>({
+    x: 20,
+    y: 20,
+    w: 160,
+    h: 160,
+  });
   const [rawImageUrl, setRawImageUrl] = useState<string | null>(null);
-  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(
+    null,
+  );
   const imgRef = useRef<HTMLImageElement | null>(null);
   const draggingRef = useRef(false);
   const resizingRef = useRef(false);
@@ -52,49 +68,86 @@ export default function Search() {
   const [lbOffset, setLbOffset] = useState({ x: 0, y: 0 });
   const draggingLbRef = useRef(false);
   const lastLbPosRef = useRef({ x: 0, y: 0 });
-  const MIN_SCALE = 0.5, MAX_SCALE = 6, ZOOM_STEP = 0.2;
+  const MIN_SCALE = 0.5,
+    MAX_SCALE = 6,
+    ZOOM_STEP = 0.2;
 
-  const clampLightboxOffset = useCallback((next: { x: number; y: number }) => {
-    const viewportWidth = typeof window === "undefined" ? 1200 : window.innerWidth;
-    const viewportHeight = typeof window === "undefined" ? 800 : window.innerHeight;
-    const scaleAllowance = Math.max(1, lbScale);
-    const maxX = Math.round(Math.min(viewportWidth * 0.42, 460 * scaleAllowance));
-    const maxY = Math.round(Math.min(viewportHeight * 0.42, 360 * scaleAllowance));
+  const clampLightboxOffset = useCallback(
+    (next: { x: number; y: number }) => {
+      const viewportWidth =
+        typeof window === "undefined" ? 1200 : window.innerWidth;
+      const viewportHeight =
+        typeof window === "undefined" ? 800 : window.innerHeight;
+      const scaleAllowance = Math.max(1, lbScale);
+      const maxX = Math.round(
+        Math.min(viewportWidth * 0.42, 460 * scaleAllowance),
+      );
+      const maxY = Math.round(
+        Math.min(viewportHeight * 0.42, 360 * scaleAllowance),
+      );
 
-    return {
-      x: Math.max(-maxX, Math.min(maxX, next.x)),
-      y: Math.max(-maxY, Math.min(maxY, next.y)),
-    };
-  }, [lbScale]);
+      return {
+        x: Math.max(-maxX, Math.min(maxX, next.x)),
+        y: Math.max(-maxY, Math.min(maxY, next.y)),
+      };
+    },
+    [lbScale],
+  );
 
   // Misc
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const heroFileId = useId();
   const stickyFileId = useId();
-  const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
+  const categoryParam =
+    selectedCategories.length > 0 ? selectedCategories : undefined;
   const PAGE_SIZE = 12;
 
   // ── Object URL helpers ─────────────────────────────────────────────────────
 
-  const setOriginalObjectUrl = useCallback((f: File | null) => {
-    if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } }
-    setPreviewUrlOrig(f ? (() => { try { return URL.createObjectURL(f); } catch { return null; } })() : null);
-  }, [previewUrlOrig]);
+  const setOriginalObjectUrl = useCallback(
+    (f: File | null) => {
+      if (previewUrlOrig) {
+        try {
+          URL.revokeObjectURL(previewUrlOrig);
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
+      }
+      setPreviewUrlOrig(
+        f
+          ? (() => {
+              try {
+                return URL.createObjectURL(f);
+              } catch {
+                return null;
+              }
+            })()
+          : null,
+      );
+    },
+    [previewUrlOrig],
+  );
 
-  const dataUrlToFile = useCallback(async (dataUrl: string, filename = "query.png"): Promise<File> => {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    return new File([blob], filename, { type: blob.type || "image/png" });
-  }, []);
+  const dataUrlToFile = useCallback(
+    async (dataUrl: string, filename = "query.png"): Promise<File> => {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return new File([blob], filename, { type: blob.type || "image/png" });
+    },
+    [],
+  );
 
-  const urlToFile = useCallback(async (url: string, filename = "query.jpg"): Promise<File> => {
-    const res = await fetch(url, { credentials: "omit" });
-    if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
-    const blob = await res.blob();
-    const ext = (blob.type?.split("/")[1]) || "jpg";
-    const name = filename.endsWith(`.${ext}`) ? filename : `${filename}.${ext}`;
-    return new File([blob], name, { type: blob.type || "image/jpeg" });
-  }, []);
+  const urlToFile = useCallback(
+    async (url: string, filename = "query.jpg"): Promise<File> => {
+      const res = await fetchWithTimeout(url, { credentials: "omit" }, 20_000);
+      if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+      const blob = await res.blob();
+      const ext = blob.type?.split("/")[1] || "jpg";
+      const name = filename.endsWith(`.${ext}`)
+        ? filename
+        : `${filename}.${ext}`;
+      return new File([blob], name, { type: blob.type || "image/jpeg" });
+    },
+    [],
+  );
 
   // ── File input ─────────────────────────────────────────────────────────────
 
@@ -114,7 +167,9 @@ export default function Search() {
     setCroppedPreviewUrl(null);
     setFile(null);
     setIsTextSearch(false);
-    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
+    try {
+      window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
+    } catch { /* Best-effort cleanup or browser storage operation. */ }
   };
 
   // ── Auto-run ───────────────────────────────────────────────────────────────
@@ -125,7 +180,12 @@ export default function Search() {
     const params = new URLSearchParams(window.location.search);
     const urlImage = params.get("image_url");
 
-    const afterRun = () => { try { localStorage.removeItem("mcp_last_search"); } catch { } setPage(1); };
+    const afterRun = () => {
+      try {
+        localStorage.removeItem("mcp_last_search");
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+      setPage(1);
+    };
 
     if (urlImage) {
       didAutoRun.current = true;
@@ -137,8 +197,14 @@ export default function Search() {
           setFile(f);
           setIsTextSearch(false);
           await runImageSearch(f, selectedCategories, searchLimit);
-        } catch { setNotification({ message: "Could not auto-run search from URL.", type: "error" }); }
-        finally { afterRun(); }
+        } catch {
+          setNotification({
+            message: "Could not auto-run search from URL.",
+            type: "error",
+          });
+        } finally {
+          afterRun();
+        }
       })();
       return;
     }
@@ -151,19 +217,37 @@ export default function Search() {
         try {
           const parsed = JSON.parse(raw);
           let f: File | null = null;
-          if (parsed?.imageUrl) f = await urlToFile(parsed.imageUrl, `query-${Date.now()}`);
-          else if (parsed?.queryPreview) f = await dataUrlToFile(parsed.queryPreview, `query-${Date.now()}.png`);
+          if (parsed?.imageUrl)
+            f = await urlToFile(parsed.imageUrl, `query-${Date.now()}`);
+          else if (parsed?.queryPreview)
+            f = await dataUrlToFile(
+              parsed.queryPreview,
+              `query-${Date.now()}.png`,
+            );
           if (!f) throw new Error("No usable image in payload.");
           originalFileRef.current = f;
           setOriginalObjectUrl(f);
           setFile(f);
           setIsTextSearch(false);
           await runImageSearch(f, selectedCategories, searchLimit);
-        } catch { setNotification({ message: "Could not auto-run search payload.", type: "error" }); }
-        finally { afterRun(); }
+        } catch {
+          setNotification({
+            message: "Could not auto-run search payload.",
+            type: "error",
+          });
+        } finally {
+          afterRun();
+        }
       })();
-    } catch { }
-  }, [runImageSearch, dataUrlToFile, urlToFile, setOriginalObjectUrl, searchLimit, selectedCategories]);
+    } catch { /* Best-effort cleanup or browser storage operation. */ }
+  }, [
+    runImageSearch,
+    dataUrlToFile,
+    urlToFile,
+    setOriginalObjectUrl,
+    searchLimit,
+    selectedCategories,
+  ]);
 
   // ── Search handlers ────────────────────────────────────────────────────────
 
@@ -171,16 +255,24 @@ export default function Search() {
     if (!file) return;
     setNotification(null);
     setIsTextSearch(false);
-    try { await runImageSearch(file, categoryParam, searchLimit); setPage(1); }
-    catch { setNotification({ message: "Search failed.", type: "error" }); }
+    try {
+      await runImageSearch(file, categoryParam, searchLimit);
+      setPage(1);
+    } catch {
+      setNotification({ message: "Search failed.", type: "error" });
+    }
   };
 
   const handleTextSearch = async () => {
     if (!textQuery.trim()) return;
     setNotification(null);
     setIsTextSearch(true);
-    try { await runTextSearch(textQuery.trim(), categoryParam, searchLimit); setPage(1); }
-    catch { setNotification({ message: "Search failed.", type: "error" }); }
+    try {
+      await runTextSearch(textQuery.trim(), categoryParam, searchLimit);
+      setPage(1);
+    } catch {
+      setNotification({ message: "Search failed.", type: "error" });
+    }
   };
 
   const handleCategoryChange = async (cats: string[]) => {
@@ -192,9 +284,19 @@ export default function Search() {
     const effectiveCats = cats.length > 0 ? cats : undefined;
 
     if (file && !isTextSearch) {
-      await runImageSearch(file, effectiveCats, searchLimit, /* preserveResultsOnError */ true);
+      await runImageSearch(
+        file,
+        effectiveCats,
+        searchLimit,
+        /* preserveResultsOnError */ true,
+      );
     } else if (textQuery.trim()) {
-      await runTextSearch(textQuery.trim(), effectiveCats, searchLimit, /* preserveResultsOnError */ true);
+      await runTextSearch(
+        textQuery.trim(),
+        effectiveCats,
+        searchLimit,
+        /* preserveResultsOnError */ true,
+      );
     }
   };
 
@@ -206,9 +308,21 @@ export default function Search() {
     setNotification(null);
     setBadImages(new Set());
     setIsTextSearch(false);
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } setRawImageUrl(null); }
-    if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } setPreviewUrlOrig(null); }
-    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
+    if (rawImageUrl) {
+      try {
+        URL.revokeObjectURL(rawImageUrl);
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+      setRawImageUrl(null);
+    }
+    if (previewUrlOrig) {
+      try {
+        URL.revokeObjectURL(previewUrlOrig);
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+      setPreviewUrlOrig(null);
+    }
+    try {
+      window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
+    } catch { /* Best-effort cleanup or browser storage operation. */ }
     originalFileRef.current = null;
     setCroppedPreviewUrl(null);
   };
@@ -216,8 +330,9 @@ export default function Search() {
   // ── Results helpers ────────────────────────────────────────────────────────
 
   const visibleResults = useMemo(
-    () => results.filter((item) => !item.imageSrc || !badImages.has(item.imageSrc)),
-    [results, badImages]
+    () =>
+      results.filter((item) => !item.imageSrc || !badImages.has(item.imageSrc)),
+    [results, badImages],
   );
 
   const paginatedResults = useMemo(() => {
@@ -227,20 +342,56 @@ export default function Search() {
 
   const totalPages = Math.max(1, Math.ceil(visibleResults.length / PAGE_SIZE));
 
-  const safePrev = useMemo(() => throttle(() => setPage((p) => Math.max(1, p - 1)), 1000), []);
-  const safeNext = useMemo(() => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000), [totalPages]);
+  const safePrev = useMemo(
+    () => throttle(() => setPage((p) => Math.max(1, p - 1)), 1000),
+    [],
+  );
+  const safeNext = useMemo(
+    () => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000),
+    [totalPages],
+  );
 
   // ── Preview URL for cropped file ───────────────────────────────────────────
 
   useEffect(() => {
     let cur: string | null = null;
-    if (file) { try { cur = URL.createObjectURL(file); setPreviewUrl(cur); } catch { setPreviewUrl(null); } }
-    else setPreviewUrl(null);
-    return () => { if (cur) { try { URL.revokeObjectURL(cur); } catch { } } };
+    if (file) {
+      try {
+        cur = URL.createObjectURL(file);
+        setPreviewUrl(cur);
+      } catch {
+        setPreviewUrl(null);
+      }
+    } else setPreviewUrl(null);
+    return () => {
+      if (cur) {
+        try {
+          URL.revokeObjectURL(cur);
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
+      }
+    };
   }, [file]);
 
-  useEffect(() => () => { if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } } }, [previewUrlOrig]);
-  useEffect(() => () => { if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } } }, [rawImageUrl]);
+  useEffect(
+    () => () => {
+      if (previewUrlOrig) {
+        try {
+          URL.revokeObjectURL(previewUrlOrig);
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
+      }
+    },
+    [previewUrlOrig],
+  );
+  useEffect(
+    () => () => {
+      if (rawImageUrl) {
+        try {
+          URL.revokeObjectURL(rawImageUrl);
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
+      }
+    },
+    [rawImageUrl],
+  );
 
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
@@ -284,7 +435,9 @@ export default function Search() {
 
       if (drawerOpen) {
         if (rawImageUrl) {
-          try { URL.revokeObjectURL(rawImageUrl); } catch { }
+          try {
+            URL.revokeObjectURL(rawImageUrl);
+          } catch { /* Best-effort cleanup or browser storage operation. */ }
           setRawImageUrl(null);
         }
         setDrawerOpen(false);
@@ -303,7 +456,12 @@ export default function Search() {
 
   const onLbWheel: WheelEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
-    setLbScale((s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP))));
+    setLbScale((s) =>
+      Math.min(
+        MAX_SCALE,
+        Math.max(MIN_SCALE, s + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP)),
+      ),
+    );
   };
   const onLbMouseDown: MouseEventHandler<HTMLDivElement> = (e) => {
     draggingLbRef.current = true;
@@ -316,7 +474,9 @@ export default function Search() {
     lastLbPosRef.current = { x: e.clientX, y: e.clientY };
     setLbOffset((o) => clampLightboxOffset({ x: o.x + dx, y: o.y + dy }));
   };
-  const onLbMouseUp = () => { draggingLbRef.current = false; };
+  const onLbMouseUp = () => {
+    draggingLbRef.current = false;
+  };
 
   // ── Crop mouse events ──────────────────────────────────────────────────────
 
@@ -336,7 +496,7 @@ export default function Search() {
           return clampCropRectToBounds(
             { ...prev, x: prev.x + dx, y: prev.y + dy },
             imgWidth,
-            imgHeight
+            imgHeight,
           );
         }
 
@@ -344,23 +504,30 @@ export default function Search() {
           return clampCropRectToBounds(
             { ...prev, w: prev.w + dx, h: prev.h + dy },
             imgWidth,
-            imgHeight
+            imgHeight,
           );
         }
 
         return prev;
       });
     };
-    const onUp = () => { draggingRef.current = false; resizingRef.current = false; };
+    const onUp = () => {
+      draggingRef.current = false;
+      resizingRef.current = false;
+    };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
-    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
   }, []);
 
   const onCropImageLoad = () => {
     const img = imgRef.current;
     if (!img) return;
-    const dispW = img.clientWidth, dispH = img.clientHeight;
+    const dispW = img.clientWidth,
+      dispH = img.clientHeight;
     if (dispW <= 0 || dispH <= 0) {
       setSelectingImage(false);
       return;
@@ -370,10 +537,15 @@ export default function Search() {
     const size = Math.max(MIN_CROP_SIZE, Math.round(short * 0.55));
     setCropRect(
       clampCropRectToBounds(
-        { x: Math.round((dispW - size) / 2), y: Math.round((dispH - size) / 2), w: size, h: size },
+        {
+          x: Math.round((dispW - size) / 2),
+          y: Math.round((dispH - size) / 2),
+          w: size,
+          h: size,
+        },
         dispW,
-        dispH
-      )
+        dispH,
+      ),
     );
     setSelectingImage(false);
   };
@@ -381,8 +553,10 @@ export default function Search() {
   const makeCroppedPreview = async (): Promise<void> => {
     if (!rawImageUrl || !imgRef.current) return;
     const imgEl = imgRef.current;
-    const dispW = imgEl.clientWidth, dispH = imgEl.clientHeight;
-    const natW = imgEl.naturalWidth, natH = imgEl.naturalHeight;
+    const dispW = imgEl.clientWidth,
+      dispH = imgEl.clientHeight;
+    const natW = imgEl.naturalWidth,
+      natH = imgEl.naturalHeight;
     const boundedCropRect = clampCropRectToBounds(cropRect, dispW, dispH);
     if (
       boundedCropRect.x !== cropRect.x ||
@@ -402,20 +576,45 @@ export default function Search() {
     canvas.width = sw;
     canvas.height = sh;
     const ctx = canvas.getContext("2d");
-    if (!ctx) { setNotification({ message: "Could not crop image.", type: "error" }); return; }
+    if (!ctx) {
+      setNotification({ message: "Could not crop image.", type: "error" });
+      return;
+    }
 
     const imgObj = new Image();
     imgObj.crossOrigin = "anonymous";
     imgObj.src = rawImageUrl;
-    try { await new Promise<void>((res, rej) => { imgObj.onload = () => res(); imgObj.onerror = () => rej(); }); }
-    catch { setNotification({ message: "Could not load image for cropping.", type: "error" }); return; }
+    try {
+      await new Promise<void>((res, rej) => {
+        imgObj.onload = () => res();
+        imgObj.onerror = () => rej();
+      });
+    } catch {
+      setNotification({
+        message: "Could not load image for cropping.",
+        type: "error",
+      });
+      return;
+    }
 
     ctx.drawImage(imgObj, sx, sy, sw, sh, 0, 0, sw, sh);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-    if (!blob) { setNotification({ message: "Could not generate cropped image.", type: "error" }); return; }
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.92),
+    );
+    if (!blob) {
+      setNotification({
+        message: "Could not generate cropped image.",
+        type: "error",
+      });
+      return;
+    }
 
-    const croppedFile = new File([blob], `query-cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
-    try { URL.revokeObjectURL(rawImageUrl); } catch { }
+    const croppedFile = new File([blob], `query-cropped-${Date.now()}.jpg`, {
+      type: "image/jpeg",
+    });
+    try {
+      URL.revokeObjectURL(rawImageUrl);
+    } catch { /* Best-effort cleanup or browser storage operation. */ }
     setRawImageUrl(null);
     setFile(croppedFile);
     setCroppedPreviewUrl(URL.createObjectURL(croppedFile));
@@ -429,7 +628,12 @@ export default function Search() {
   };
 
   const cancelCropAndClose = () => {
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } setRawImageUrl(null); }
+    if (rawImageUrl) {
+      try {
+        URL.revokeObjectURL(rawImageUrl);
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+      setRawImageUrl(null);
+    }
     setDrawerOpen(false);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
     setSelectingImage(false);
@@ -437,8 +641,18 @@ export default function Search() {
 
   const openRecrop = () => {
     const orig = originalFileRef.current;
-    if (!orig) { setNotification({ message: "Original image not available.", type: "error" }); return; }
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } }
+    if (!orig) {
+      setNotification({
+        message: "Original image not available.",
+        type: "error",
+      });
+      return;
+    }
+    if (rawImageUrl) {
+      try {
+        URL.revokeObjectURL(rawImageUrl);
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+    }
     setRawImageUrl(URL.createObjectURL(orig));
     setDrawerOpen(true);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
@@ -455,8 +669,9 @@ export default function Search() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <main className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}${showImagePreview ? " fabric-search--previewing" : ""}`}>
-
+    <main
+      className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}${showImagePreview ? " fabric-search--previewing" : ""}`}
+    >
       {/* Sticky search bar */}
       {showStickyBar && (
         <StickySearchBar
@@ -470,7 +685,6 @@ export default function Search() {
           onRecrop={openRecrop}
           fileInputId={stickyFileId}
           onFileChange={onFileChange}
-
           selectedCategories={selectedCategories}
           onSetCategories={handleCategoryChange}
           searchLimit={searchLimit}
@@ -479,8 +693,9 @@ export default function Search() {
       )}
 
       {/* Page body */}
-      <div className={`fabric-search__body${showStickyBar ? " fabric-search__body--results" : ""}`}>
-
+      <div
+        className={`fabric-search__body${showStickyBar ? " fabric-search__body--results" : ""}`}
+      >
         {/* Header + settings — hidden while results are shown */}
         {!showStickyBar && (
           <div className="fabric-search__top-bar">
@@ -522,10 +737,23 @@ export default function Search() {
           />
         )}
 
-        {notification && <Notification message={notification.message} type={notification.type} />}
-        {error && <div className="fabric-search__error" role="alert">{error}</div>}
+        {notification && (
+          <Notification
+            message={notification.message}
+            type={notification.type}
+          />
+        )}
+        {error && (
+          <div className="fabric-search__error" role="alert">
+            {error}
+          </div>
+        )}
         {(loading || selectingImage) && (
-          <div className="fabric-search__loading-overlay" role="status" aria-live="polite">
+          <div
+            className="fabric-search__loading-overlay"
+            role="status"
+            aria-live="polite"
+          >
             <Loader />
           </div>
         )}
@@ -542,18 +770,22 @@ export default function Search() {
             onNext={safeNext}
             onZoom={openLightbox}
             isTextSearch={isTextSearch}
-            onBadImage={(src) => setBadImages((prev) => new Set([...prev, src]))}
+            onBadImage={(src) =>
+              setBadImages((prev) => new Set([...prev, src]))
+            }
           />
         )}
 
-        {!loading && (file || isTextSearch) && visibleResults.length === 0 && !error && (
-          <p className="fabric-search__empty">
-            {isTextSearch && textQuery.trim()
-              ? `No results found for “${textQuery.trim()}”. Try another keyword or category.`
-              : "No matching fabrics found. Try changing crop, category, or result limit."}
-          </p>
-        )}
-
+        {!loading &&
+          (file || isTextSearch) &&
+          visibleResults.length === 0 &&
+          !error && (
+            <p className="fabric-search__empty">
+              {isTextSearch && textQuery.trim()
+                ? `No results found for “${textQuery.trim()}”. Try another keyword or category.`
+                : "No matching fabrics found. Try changing crop, category, or result limit."}
+            </p>
+          )}
       </div>
 
       {/* Lightbox */}
@@ -569,8 +801,13 @@ export default function Search() {
           onMouseMove={onLbMouseMove}
           onMouseUp={onLbMouseUp}
           onZoomIn={() => setLbScale((s) => Math.min(MAX_SCALE, s + ZOOM_STEP))}
-          onZoomOut={() => setLbScale((s) => Math.max(MIN_SCALE, s - ZOOM_STEP))}
-          onReset={() => { setLbScale(1); setLbOffset({ x: 0, y: 0 }); }}
+          onZoomOut={() =>
+            setLbScale((s) => Math.max(MIN_SCALE, s - ZOOM_STEP))
+          }
+          onReset={() => {
+            setLbScale(1);
+            setLbOffset({ x: 0, y: 0 });
+          }}
         />
       )}
 
@@ -581,8 +818,14 @@ export default function Search() {
           cropRect={cropRect}
           imgRef={imgRef}
           onImageLoad={onCropImageLoad}
-          onDragStart={(e) => { draggingRef.current = true; lastMouseRef.current = { x: e.clientX, y: e.clientY }; }}
-          onResizeStart={(e) => { resizingRef.current = true; lastMouseRef.current = { x: e.clientX, y: e.clientY }; }}
+          onDragStart={(e) => {
+            draggingRef.current = true;
+            lastMouseRef.current = { x: e.clientX, y: e.clientY };
+          }}
+          onResizeStart={(e) => {
+            resizingRef.current = true;
+            lastMouseRef.current = { x: e.clientX, y: e.clientY };
+          }}
           onConfirm={makeCroppedPreview}
           onCancel={cancelCropAndClose}
         />

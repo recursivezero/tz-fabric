@@ -4,8 +4,11 @@ import { useLocation } from "react-router-dom";
 
 import "./App.css";
 import { Routing } from "./Routing";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import Footer from "./components/Footer";
 import { NavBar } from "./components/NavBar";
+import { usePageTracking } from "./hooks/usePageTracking";
+import { useRouteMetadata } from "./hooks/useRouteMetadata";
 
 type ThemeMode = "light" | "dark";
 
@@ -38,17 +41,25 @@ const getInitialTheme = (): ThemeMode => {
     return "dark";
   }
 
-  const savedTheme = window.localStorage.getItem("theme");
-  if (savedTheme === "light" || savedTheme === "dark") {
-    return savedTheme;
+  try {
+    const savedTheme = window.localStorage.getItem("theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+  } catch {
+    // Restricted storage must not prevent the app from starting.
   }
 
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  return window.matchMedia("(prefers-color-scheme: light)").matches
+    ? "light"
+    : "dark";
 };
 
 const App: React.FC = () => {
   const location = useLocation();
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+  usePageTracking();
+  useRouteMetadata();
   const isChatRoute = location.pathname.startsWith("/chat");
   const isAnalysisRoute = location.pathname.startsWith("/analysis");
   const isWorkspaceRoute = isChatRoute || isAnalysisRoute;
@@ -56,9 +67,15 @@ const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
-    window.localStorage.setItem("theme", theme);
+    try {
+      window.localStorage.setItem("theme", theme);
+    } catch {
+      // Keep the in-memory theme when storage is blocked or unavailable.
+    }
 
-    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    const themeColor = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
     if (themeColor) {
       themeColor.content = theme === "dark" ? "#0e1322" : "#f8fafc";
     }
@@ -76,17 +93,23 @@ const App: React.FC = () => {
     >
       <header className="site-header">
         <div className="header-left">
-          <div className="logo-mark" aria-hidden>
+          <div className="logo-mark" aria-hidden="true">
             <svg
               width="36"
               height="36"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              role="img"
-              aria-label="FabricAI logo"
+              focusable="false"
             >
-              <rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#2F6BFF" />
+              <rect
+                x="0.5"
+                y="0.5"
+                width="23"
+                height="23"
+                rx="6"
+                fill="#2F6BFF"
+              />
               <path
                 d="M7 12c2 2 6 2 8 0"
                 stroke="white"
@@ -133,7 +156,9 @@ const App: React.FC = () => {
       </header>
 
       <main className="main-content">
-        <Routing />
+        <AppErrorBoundary resetKey={location.key}>
+          <Routing />
+        </AppErrorBoundary>
       </main>
 
       {!isWorkspaceRoute && <Footer />}

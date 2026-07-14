@@ -1,0 +1,358 @@
+/*
+ * Scoped UI corrections requested during senior review.
+ *
+ * This file is imported after the existing theme/makeover layer so these
+ * narrowly targeted rules win without increasing selector priority across
+ * unrelated pages.
+ */
+
+/* Analysis: keep each action pair above its own card and anchor the actions to
+   the card's outer corners. These rules support both the original and the
+   already-reordered component markup. */
+.analysis-page .image-preview-container > .preview-buttons-container,
+.analysis-page .description-wrapper > .nav-buttons {
+  order: 1;
+  align-self: stretch;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 16px;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transform: none;
+}
+
+.analysis-page .image-preview-container > .preview-visual,
+.analysis-page .description-wrapper > .description-box {
+  order: 2;
+}
+
+.analysis-page .image-preview-container > .filesize-name {
+  order: 3;
+}
+
+.analysis-page .preview-buttons-container > .validation-text {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+/* Do not let legacy centering/flex rules pull the corner controls inward. */
+.analysis-page .preview-buttons-container > .analysis-btn,
+.analysis-page .description-wrapper > .nav-buttons > .nav-btn {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* Chat: slightly reduce visual weight and vertical density. This keeps the
+   existing layout and interaction model while fitting more conversation in the
+   viewport and reducing unnecessary scrolling on laptop screens. */
+.app-wrapper--chat .page-root .chat-card-title .main {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.app-wrapper--chat .page-root .chat-card-actions .btn {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-wrapper--chat .page-root .empty-state-large h3 {
+  margin-bottom: 7px;
+  font-size: clamp(20px, 2vw, 24px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.app-wrapper--chat .page-root .empty-state-large p {
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.app-wrapper--chat .page-root .empty-state-large .chip,
+.app-wrapper--chat .page-root .empty-state-large .chip:nth-child(odd),
+.app-wrapper--chat .page-root .empty-state-large .chip:nth-child(even) {
+  min-height: 42px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.app-wrapper--chat .message-wrapper .msg-row {
+  margin-block: 6px;
+}
+
+.app-wrapper--chat .assistant-block,
+.app-wrapper--chat .bubble.user {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.app-wrapper--chat .assistant-block--with-copy {
+  padding: 9px 44px 9px 12px;
+}
+
+.app-wrapper--chat .assistant-block .assistant-content p {
+  margin-bottom: 0.5rem;
+}
+
+.app-wrapper--chat .assistant-block ul,
+.app-wrapper--chat .assistant-block ol {
+  margin-block: 6px 9px;
+  line-height: 1.45;
+}
+
+.app-wrapper--chat .assistant-block li {
+  margin-block: 4px;
+  font-size: 14px;
+}
+
+.app-wrapper--chat .assistant-block h1,
+.app-wrapper--chat .assistant-block h2,
+.app-wrapper--chat .assistant-block h3,
+.app-wrapper--chat .assistant-block h4 {
+  margin: 0.65rem 0 0.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.app-wrapper--chat .assistant-block h1 {
+  font-size: 1.35rem;
+}
+
+.app-wrapper--chat .assistant-block h2 {
+  font-size: 1.2rem;
+}
+
+.app-wrapper--chat .assistant-block h3,
+.app-wrapper--chat .assistant-block h4 {
+  font-size: 1.08rem;
+}
+
+/* Attachment preview: center the Remove label geometrically inside its pill.
+   Explicit sizing prevents inherited global button line-height/padding rules
+   from nudging the text vertically. */
+.app-wrapper--chat .composer .upload-remove {
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .analysis-page .image-preview-container > .preview-buttons-container,
+  .analysis-page .description-wrapper > .nav-buttons {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .analysis-page .preview-buttons-container > .analysis-btn,
+  .analysis-page .description-wrapper > .nav-buttons > .nav-btn {
+    flex: 0 1 48%;
+    min-width: 0;
+    padding-inline: 12px;
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large h3 {
+    font-size: 20px;
+  }
+}
+
+/* Follow-up: legacy Analysis CSS still centers the result navigation in some
+   viewport/theme combinations. The repeated class raises specificity above
+   route-level centering rules even when that stylesheet loads later. */
+.analysis-page .description-wrapper > .nav-buttons.nav-buttons {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  justify-content: stretch;
+  transform: none;
+}
+
+.analysis-page
+  .description-wrapper
+  > .nav-buttons.nav-buttons
+  > .nav-btn:first-child {
+  justify-self: start;
+}
+
+.analysis-page
+  .description-wrapper
+  > .nav-buttons.nav-buttons
+  > .nav-btn:last-child {
+  justify-self: end;
+}
+
+/* Chat attachment removal confirmation: remove hard-coded light-theme inline
+   colours while preserving the existing state and click handlers. */
+.composer-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.composer-modal-overlay .composer-modal--remove-attachment {
+  --remove-dialog-surface: #ffffff;
+  --remove-dialog-text: #0f172a;
+  --remove-dialog-muted: #475569;
+  --remove-dialog-media: #f1f5f9;
+  --remove-dialog-border: rgba(15, 23, 42, 0.16);
+  --remove-dialog-media-border: rgba(15, 23, 42, 0.12);
+  --remove-dialog-cancel: #ffffff;
+
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 32px));
+  max-width: 100%;
+  padding: 18px;
+  border: 1px solid var(--remove-dialog-border);
+  border-radius: 16px;
+  background: var(--remove-dialog-surface);
+  color: var(--remove-dialog-text);
+  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.28);
+}
+
+:root[data-theme="dark"]
+  .composer-modal-overlay
+  .composer-modal--remove-attachment {
+  --remove-dialog-surface: #0f172a;
+  --remove-dialog-text: #f8fafc;
+  --remove-dialog-muted: #cbd5e1;
+  --remove-dialog-media: #1e293b;
+  --remove-dialog-border: rgba(226, 232, 240, 0.24);
+  --remove-dialog-media-border: rgba(226, 232, 240, 0.2);
+  --remove-dialog-cancel: #1e293b;
+
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.5);
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__layout {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__media {
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--remove-dialog-media-border);
+  border-radius: 10px;
+  background: var(--remove-dialog-media);
+  color: var(--remove-dialog-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__content {
+  min-width: 0;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__title {
+  margin: 0 0 6px;
+  color: var(--remove-dialog-text);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__filename {
+  color: var(--remove-dialog-muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__button {
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__button--confirm {
+  border: 1px solid var(--tz-turmeric, #e0a82e);
+  background: var(--tz-turmeric, #e0a82e);
+  color: #171101;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__button--cancel {
+  border: 1px solid var(--remove-dialog-border);
+  background: var(--remove-dialog-cancel);
+  color: var(--remove-dialog-text);
+}
+
+@media (max-width: 520px) {
+  .composer-modal-overlay
+    .composer-modal--remove-attachment
+    .composer-remove-dialog__layout {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .composer-modal-overlay
+    .composer-modal--remove-attachment
+    .composer-remove-dialog__media {
+    justify-self: center;
+  }
+
+  .composer-modal-overlay
+    .composer-modal--remove-attachment
+    .composer-remove-dialog__actions {
+    justify-content: center;
+  }
+}

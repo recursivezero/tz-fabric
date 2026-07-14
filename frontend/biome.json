@@ -25,7 +25,20 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "a11y": "off",
+      "a11y": {
+        "recommended": true,
+        "useButtonType": "off",
+        "noSvgWithoutTitle": "off",
+        "useSemanticElements": "off",
+        "useKeyWithClickEvents": "off",
+        "noStaticElementInteractions": "off",
+        "useMediaCaption": "off",
+        "useFocusableInteractive": "off",
+        "noLabelWithoutControl": "off",
+        "noRedundantAlt": "off",
+        "noNoninteractiveElementToInteractiveRole": "off",
+        "noInteractiveElementToNoninteractiveRole": "off"
+      },
       "suspicious": {
         "noArrayIndexKey": "off",
         "noExplicitAny": "warn"

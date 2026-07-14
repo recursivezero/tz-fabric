@@ -54,6 +54,9 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 320,
+    width: "100%",
+    font: "inherit",
+    color: "inherit",
   },
 
   tileGlow: {
@@ -136,15 +139,21 @@ const Reader = () => {
       <div style={styles.container}>
         <div style={styles.header}>
           <h1 style={styles.title}>Select Document Type</h1>
-          <p style={styles.subtitle}>Choose a card to scan and extract information</p>
+          <p style={styles.subtitle}>
+            Choose a card to scan and extract information
+          </p>
         </div>
 
         <div style={styles.tileGrid}>
-          <div
+          <button
+            type="button"
             style={getTileStyle("pan")}
             onClick={() => navigate("/reader/pan")}
             onMouseEnter={() => setHoveredTile("pan")}
             onMouseLeave={() => setHoveredTile(null)}
+            onFocus={() => setHoveredTile("pan")}
+            onBlur={() => setHoveredTile(null)}
+            aria-label="Open PAN card reader"
           >
             <div style={getGlowStyle("pan")} />
             <div style={styles.tileContent}>
@@ -152,13 +161,17 @@ const Reader = () => {
               <div style={styles.tileTitle}>PAN Card</div>
               <div style={styles.tileDesc}>Income Tax Department</div>
             </div>
-          </div>
+          </button>
 
-          <div
+          <button
+            type="button"
             style={getTileStyle("aadhaar")}
-            onClick={() => navigate("/reader/adhaar")}
+            onClick={() => navigate("/reader/aadhaar")}
             onMouseEnter={() => setHoveredTile("aadhaar")}
             onMouseLeave={() => setHoveredTile(null)}
+            onFocus={() => setHoveredTile("aadhaar")}
+            onBlur={() => setHoveredTile(null)}
+            aria-label="Open Aadhaar card reader"
           >
             <div style={getGlowStyle("aadhaar")} />
             <div style={styles.tileContent}>
@@ -166,7 +179,7 @@ const Reader = () => {
               <div style={styles.tileTitle}>Aadhaar Card</div>
               <div style={styles.tileDesc}>UIDAI Identity</div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
-
+import { ensureOk, fetchWithTimeout } from "@/utils/http";
 
 type PanResult = {
   type: string;
@@ -60,9 +60,12 @@ const PanCardReader = () => {
     }
   };
 
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const onCropComplete = useCallback(
+    (_croppedArea: Area, croppedAreaPixels: Area) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    [],
+  );
 
   const createCroppedImage = async (): Promise<string | null> => {
     if (!preview || !croppedAreaPixels) return null;
@@ -92,7 +95,7 @@ const PanCardReader = () => {
           0,
           0,
           croppedAreaPixels.width,
-          croppedAreaPixels.height
+          croppedAreaPixels.height,
         );
 
         // Convert to data URL
@@ -144,14 +147,15 @@ const PanCardReader = () => {
     }
 
     try {
-      const res = await fetch(`${FULL_API_URL}/pan`, {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      const res = await fetchWithTimeout(
+        `${FULL_API_URL}/pan`,
+        {
+          method: "POST",
+          body: fd,
+        },
+        60_000,
+      );
+      await ensureOk(res, "Failed to process PAN card.");
 
       const data = await res.json();
       setResult(data);
@@ -376,12 +380,13 @@ const PanCardReader = () => {
             </svg>
           </div>
 
-
           <h1 className={loading ? "title-shimmer" : ""} style={styles.title}>
             {loading ? "Processing Your Card..." : "PAN Card Reader"}
           </h1>
           <p style={styles.subtitle}>
-            {loading ? "Extracting information with AI..." : "Extract information instantly from ID cards"}
+            {loading
+              ? "Extracting information with AI..."
+              : "Extract information instantly from ID cards"}
           </p>
           <div style={styles.privacyNote}>
             <svg
@@ -396,8 +401,8 @@ const PanCardReader = () => {
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
             <span>
-              Your image is processed only in memory during this session.
-              We do <strong>not</strong> store or save images or share data.
+              Your image is processed only in memory during this session. We do{" "}
+              <strong>not</strong> store or save images or share data.
             </span>
           </div>
         </div>
@@ -427,7 +432,14 @@ const PanCardReader = () => {
 
             <label htmlFor="file-upload" style={styles.uploadLabel}>
               <div style={styles.uploadIcon}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
@@ -436,9 +448,7 @@ const PanCardReader = () => {
               <h3 style={styles.uploadTitle}>
                 {isDragging ? "Drop your card here" : "Upload PAN Card Image"}
               </h3>
-              <p style={styles.uploadText}>
-                Drag and drop or click to browse
-              </p>
+              <p style={styles.uploadText}>Drag and drop or click to browse</p>
             </label>
           </div>
         ) : (
@@ -530,7 +540,14 @@ const PanCardReader = () => {
                       </span>
                     ) : (
                       <>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                           <polyline points="14 2 14 8 20 8" />
                           <line x1="16" y1="13" x2="8" y2="13" />
@@ -557,7 +574,14 @@ const PanCardReader = () => {
               onClick={downloadCard}
               style={styles.downloadBtn}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
@@ -565,19 +589,24 @@ const PanCardReader = () => {
               Download Card Image
             </button>
 
-            <button
-              onClick={resetUpload}
-              style={styles.newUploadBtn}
-            >
+            <button onClick={resetUpload} style={styles.newUploadBtn}>
               📤 Upload New PAN Card
             </button>
 
             <div style={styles.privacyNote}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              We do not store your data. Everything runs only during this session.
+              We do not store your data. Everything runs only during this
+              session.
             </div>
           </div>
         )}
@@ -687,7 +716,6 @@ const CardPreview = ({ data, loading }: CardPreviewProps) => {
     </div>
   );
 };
-
 
 const styles: Record<string, CSSProperties> = {
   wrapper: {
@@ -948,7 +976,8 @@ const styles: Record<string, CSSProperties> = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 11px)",
+    background:
+      "repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 11px)",
   },
   downloadBtn: {
     width: "100%",

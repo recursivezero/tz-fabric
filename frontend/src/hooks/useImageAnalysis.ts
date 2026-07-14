@@ -369,15 +369,16 @@ const useImageAnalysis = () => {
   };
 
   useEffect(() => {
+    const trackedUrls = objectUrlsRef.current;
     return () => {
-      for (const url of objectUrlsRef.current) {
+      for (const url of trackedUrls) {
         try {
           URL.revokeObjectURL(url);
         } catch {
           // Ignore stale preview URLs during teardown.
         }
       }
-      objectUrlsRef.current.clear();
+      trackedUrls.clear();
     };
   }, []);
 

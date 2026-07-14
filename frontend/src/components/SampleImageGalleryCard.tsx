@@ -6,7 +6,12 @@ const sampleImages = [
   { id: 3, name: "Sample 3", path: "../assets/sample3.jpeg" },
 ];
 
-const SampleImageGallery = ({ onAnalyze, loading }) => {
+type SampleImageGalleryProps = {
+  onAnalyze: (samplePath: string) => void | Promise<void>;
+  loading: boolean;
+};
+
+const SampleImageGallery = ({ onAnalyze, loading }: SampleImageGalleryProps) => {
   return (
     <div className="sample-gallery">
       <h2>Try with Sample Images</h2>
