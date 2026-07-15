@@ -6,6 +6,95 @@
  * unrelated pages.
  */
 
+/* Shared foreground for accent-filled controls. Keep this token limited to
+   controls whose surface is also an accent colour. Applying it to neutral
+   cards/chips caused unreadable white-on-white and black-on-navy states. */
+:root {
+  --tz-accent-control-foreground: #171101;
+  --tz-filled-control-foreground: var(--tz-accent-control-foreground);
+  --tz-action-yellow-text: var(--tz-accent-control-foreground);
+  --tz-ui-accent-contrast: var(--tz-accent-control-foreground);
+  --tz-accent-control-surface: #e0a82e;
+  --tz-accent-control-surface-hover: #f0c463;
+}
+
+:root[data-theme="light"] {
+  --tz-accent-control-foreground: #ffffff;
+  --tz-accent-control-surface: #8a4f08;
+  --tz-accent-control-surface-hover: #a45d0a;
+}
+
+:root[data-theme="dark"] {
+  --tz-accent-control-foreground: #111827;
+  --tz-accent-control-surface: #e0a82e;
+  --tz-accent-control-surface-hover: #f0c463;
+}
+
+/* Only true accent actions inherit the requested theme-dependent foreground.
+   Neutral/ghost controls and coloured information chips define their own
+   contrast-safe foregrounds below. */
+:root[data-theme]
+  :is(
+    .analysis-page .analysis-btn,
+    .analysis-page .description-wrapper .nav-btn,
+    .analysis-page .drawer-toggle-button,
+    .analysis-page .sample-gallery .analyze-button,
+    .app-wrapper--chat .page-root .chat-card-actions .btn-secondary,
+    .app-wrapper--chat .suggestion-chips .chip.primary,
+    .message-wrapper .inline-quick-replies .chip,
+    .fabric-search .btn--primary,
+    .fabric-search .category-picker__apply.btn.btn--primary,
+    .grid-page .grid-controls.inline button:not(:disabled),
+    .upload-page .btn.primary,
+    .upload-page .btn.submit,
+    .upload-page .name-field .cancel,
+    .composer-modal__button--confirm,
+    .composer .locked-control-btn--confirm,
+    .composer-modal-overlay
+      .composer-modal--remove-attachment
+      .composer-remove-dialog__button--confirm
+  ) {
+  color: var(--tz-accent-control-foreground);
+}
+
+/* Light-mode white labels require a darker amber surface than the legacy
+   turmeric token. Set foreground and surface together for every accent-filled
+   control, including active navigation and search/category actions. */
+:root[data-theme="light"]
+  :is(
+    .header-nav a.active,
+    .analysis-page .analysis-btn,
+    .analysis-page .description-wrapper .nav-btn,
+    .analysis-page .drawer-toggle-button,
+    .analysis-page .sample-gallery .analyze-button,
+    .app-wrapper--chat .page-root .chat-card-actions .btn-secondary,
+    .app-wrapper--chat .suggestion-chips .chip.primary,
+    .message-wrapper .inline-quick-replies .chip,
+    .fabric-search .btn--primary,
+    .fabric-search .btn-primary,
+    .fabric-search .search-btn,
+    .fabric-search .category-picker__chip--active,
+    .fabric-search .category-picker__apply.btn.btn--primary,
+    .grid-page .grid-controls.inline button:not(:disabled),
+    .upload-page .btn.primary,
+    .upload-page .btn.submit,
+    .upload-page .name-field .cancel,
+    .composer-modal__button--confirm,
+    .composer .locked-control-btn--confirm,
+    .composer-modal-overlay
+      .composer-modal--remove-attachment
+      .composer-remove-dialog__button--confirm
+  ) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface),
+    var(--tz-accent-control-surface-hover)
+  );
+  border-color: var(--tz-accent-control-surface);
+  color: var(--tz-accent-control-foreground);
+  text-shadow: none;
+}
+
 /* Analysis: keep each action pair above its own card and anchor the actions to
    the card's outer corners. These rules support both the original and the
    already-reordered component markup. */
@@ -22,6 +111,12 @@
   justify-content: space-between;
   gap: 16px;
   transform: none;
+}
+
+/* Short and Long remain a single left-aligned action group. Prev/Next keep
+   their separate corner-aligned result navigation below. */
+.analysis-page .image-preview-container > .preview-buttons-container {
+  justify-content: flex-start;
 }
 
 .analysis-page .image-preview-container > .preview-visual,
@@ -355,4 +450,388 @@
     .composer-remove-dialog__actions {
     justify-content: center;
   }
+}
+
+/* ============================================================
+   Theme contrast regression guard
+   ============================================================
+   These rules repair the controls shown in the supplied screenshots and the
+   same semantic control families elsewhere. They intentionally set surface and
+   foreground together so a future text-only theme override cannot recreate the
+   contrast failures. */
+
+/* Analysis sample cards are neutral controls, not accent buttons. */
+:root[data-theme="light"]
+  .analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card
+  .sample-card__select {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+:root[data-theme="dark"]
+  .analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card
+  .sample-card__select {
+  background: #f8fafc;
+  color: #111827;
+  border-color: rgba(248, 250, 252, 0.92);
+}
+
+:root[data-theme]
+  .analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card.sample-card:hover
+  .sample-card__select,
+:root[data-theme]
+  .analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card.sample-card:focus-visible
+  .sample-card__select {
+  background: linear-gradient(135deg, #e0a82e, #f0c463);
+  color: #171101;
+  border-color: #f0c463;
+}
+
+/* Chat landing prompts: pair each foreground with a deliberate surface.
+   Light mode uses strong coloured boxes with white labels; dark mode uses
+   pastel boxes with black labels, matching the requested theme direction. */
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(1) {
+  background: #9a3412;
+  border-color: #c2410c;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(2) {
+  background: #4338ca;
+  border-color: #4f46e5;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(3) {
+  background: #047857;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(4) {
+  background: #be185d;
+  border-color: #db2777;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(1) {
+  background: #fed7aa;
+  border-color: #fb923c;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(2) {
+  background: #c7d2fe;
+  border-color: #818cf8;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(3) {
+  background: #a7f3d0;
+  border-color: #34d399;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(4) {
+  background: #fbcfe8;
+  border-color: #f472b6;
+  color: #111827;
+}
+
+:root[data-theme]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:disabled {
+  color: inherit;
+  opacity: 0.62;
+}
+
+/* Assistant replies now follow the active theme instead of remaining a white
+   card in dark mode. Markdown content inherits the same readable foreground. */
+:root[data-theme="light"] .app-wrapper--chat .assistant-block {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="dark"] .app-wrapper--chat .assistant-block {
+  background: #171f33;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.22);
+}
+
+:root[data-theme]
+  .app-wrapper--chat
+  .assistant-block
+  :is(.assistant-content, p, li, h1, h2, h3, h4, strong) {
+  color: inherit;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .assistant-block--with-copy
+  .copy-btn {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .assistant-block--with-copy
+  .copy-btn {
+  background: #24304d;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.22);
+}
+
+/* Upload primary action had black text on a translucent purple surface in dark
+   mode. Use the accent surface whenever the accent foreground token is used. */
+:root[data-theme="light"] .upload-page .btn.primary {
+  background: var(--tz-accent-control-surface, #8a4f08);
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .upload-page .btn.primary {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #111827;
+}
+
+:root[data-theme="light"] .upload-page .btn.submit,
+:root[data-theme="light"] .upload-page .name-field .cancel {
+  background: var(--tz-accent-control-surface, #8a4f08);
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .upload-page .btn.submit {
+  background: #38bdf8;
+  border-color: #38bdf8;
+  color: #111827;
+}
+
+:root[data-theme="dark"] .upload-page .name-field .cancel {
+  background: #f8fafc;
+  border: 1px solid rgba(248, 250, 252, 0.86);
+  color: #111827;
+}
+
+:root[data-theme="dark"] .upload-page .btn:not(.primary):not(.submit),
+:root[data-theme="dark"] .upload-page .confirm-actions .btn-cancel {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="light"] .upload-page .btn:not(.primary):not(.submit),
+:root[data-theme="light"] .upload-page .confirm-actions .btn-cancel {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+/* Confirmation dialogs and locked composer controls use the same semantic
+   accent/neutral split in both themes. */
+:root[data-theme="light"] .composer-modal--confirm-upload,
+:root[data-theme="light"] .upload-page .confirm-modal {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+:root[data-theme="dark"] .composer-modal--confirm-upload,
+:root[data-theme="dark"] .upload-page .confirm-modal {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme]
+  .composer-modal--confirm-upload
+  :is(.composer-modal__title, .composer-modal__meta, .composer-modal__hint) {
+  color: inherit;
+}
+
+:root[data-theme="light"]
+  .composer-modal--confirm-upload
+  .composer-modal__button--confirm,
+:root[data-theme="light"] .composer .locked-control-btn--confirm {
+  background: var(--tz-accent-control-surface, #8a4f08);
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .composer-modal--confirm-upload
+  .composer-modal__button--confirm,
+:root[data-theme="dark"] .composer .locked-control-btn--confirm {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #111827;
+}
+
+:root[data-theme="light"]
+  .composer-modal--confirm-upload
+  .composer-modal__button--cancel,
+:root[data-theme="light"] .composer .locked-control-btn--cancel {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+:root[data-theme="dark"]
+  .composer-modal--confirm-upload
+  .composer-modal__button--cancel,
+:root[data-theme="dark"] .composer .locked-control-btn--cancel {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+/* ============================================================
+   Analysis response position and Upload action hierarchy
+   ============================================================ */
+
+/* Keep the response position beside the copy action in the lower-right corner
+   of the result card. The value is derived from the existing response history,
+   so Prev/Next behavior and regeneration logic remain unchanged. */
+.analysis-page .description-wrapper .response-copy-only {
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.analysis-page .description-wrapper .response-copy-only .response-position {
+  min-width: 46px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-page .description-wrapper .response-copy-only .copy-btn {
+  margin-left: 0;
+}
+
+/* Submit is the primary Upload action; Cancel is deliberately secondary.
+   Surface and foreground are always paired to avoid theme contrast regressions. */
+:root[data-theme="light"] .upload-page .name-field .btn.submit {
+  background: var(--tz-accent-control-surface, #8a4f08);
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(138, 79, 8, 0.22);
+}
+
+:root[data-theme="light"] .upload-page .name-field .cancel {
+  background: #ffffff;
+  border: 1px solid rgba(138, 79, 8, 0.48);
+  color: #7c4707;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="dark"] .upload-page .name-field .btn.submit {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #111827;
+  box-shadow: 0 6px 20px rgba(224, 168, 46, 0.22);
+}
+
+:root[data-theme="dark"] .upload-page .name-field .cancel {
+  background: #1e293b;
+  border: 1px solid rgba(224, 168, 46, 0.48);
+  color: #f8fafc;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="light"]
+  .upload-page
+  .name-field
+  .btn.submit:hover:not(:disabled) {
+  background: var(--tz-accent-control-surface-hover, #a45d0a);
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a);
+}
+
+:root[data-theme="light"]
+  .upload-page
+  .name-field
+  .cancel:hover:not(:disabled) {
+  background: #fff7ed;
+  border-color: #8a4f08;
+  color: #6b3b05;
+}
+
+:root[data-theme="dark"]
+  .upload-page
+  .name-field
+  .btn.submit:hover:not(:disabled) {
+  background: var(--tz-accent-control-surface-hover, #f0c463);
+  border-color: var(--tz-accent-control-surface-hover, #f0c463);
+}
+
+:root[data-theme="dark"] .upload-page .name-field .cancel:hover:not(:disabled) {
+  background: #293548;
+  border-color: rgba(240, 196, 99, 0.72);
+  color: #ffffff;
+}
+
+:root[data-theme] .upload-page .name-field .btn.submit:disabled {
+  opacity: 0.55;
+  box-shadow: none;
 }

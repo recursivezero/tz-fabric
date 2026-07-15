@@ -121,9 +121,16 @@ const DescriptionBox = ({
           )}
         </div>
 
-        {/* Copy action: keep the UI clean and avoid showing response-count text. */}
         {!loading && !isError && hasResponses && (
           <div className="response-counter response-copy-only">
+            <span
+              className="response-position"
+              role="status"
+              aria-live="polite"
+              aria-label={`Response ${currentIndex + 1} of ${responses.length}`}
+            >
+              {currentIndex + 1}/{responses.length}
+            </span>
             <button
               type="button"
               className="copy-btn"
