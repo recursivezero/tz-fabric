@@ -45,7 +45,7 @@ export default function StickySearchBar({
             </div>
 
             <div className="search-bar__image-actions">
-              <button className="btn btn--outline btn--sm" onClick={onRecrop} type="button">
+              <button className="btn btn--sm search-bar__image-action search-bar__image-action--recrop" onClick={onRecrop} type="button">
                 ✂️ Recrop
               </button>
 
@@ -58,7 +58,7 @@ export default function StickySearchBar({
               />
 
               <button
-                className="btn btn--ghost btn--sm"
+                className="btn btn--sm search-bar__image-action search-bar__image-action--new-image"
                 onClick={() => document.getElementById(fileInputId)?.click()}
                 type="button"
               >
