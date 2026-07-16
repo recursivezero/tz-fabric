@@ -90,11 +90,7 @@ export default function ContentGrid() {
           !ignore &&
           !(error instanceof DOMException && error.name === "AbortError")
         ) {
-          setErr(
-            error instanceof Error && error.message
-              ? error.message
-              : USER_FRIENDLY_SERVER_ERROR,
-          );
+          setErr(USER_FRIENDLY_SERVER_ERROR);
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -295,7 +291,11 @@ export default function ContentGrid() {
         )}
       </div>
 
-      {err && <div className="grid-error">⚠️ {err}</div>}
+      {err && (
+        <div className="grid-error" role="alert" aria-live="assertive">
+          {err}
+        </div>
+      )}
       {!loading && visibleItems.length === 0 && !err && (
         <div className="empty-state">No image found.</div>
       )}

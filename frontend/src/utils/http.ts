@@ -128,13 +128,13 @@ export function toUserFacingNetworkError(
   error: unknown,
   fallback = "Unable to connect to the server. Please try again.",
 ): Error {
-  if (error instanceof HttpError || error instanceof RequestTimeoutError) {
-    return error;
-  }
-
   if (error instanceof DOMException && error.name === "AbortError") {
     return error;
   }
 
+  // API response bodies and status-derived messages are useful for diagnostics,
+  // but they must not leak implementation details or raw status codes into the
+  // interface. Callers keep the original error for logging and receive a
+  // stable, user-facing message for rendering.
   return new Error(fallback);
 }

@@ -300,12 +300,7 @@ export default function Chat() {
           )}
 
           {error && (
-            <div
-              className="error"
-              role="alert"
-              data-error-detail={error}
-              title={error}
-            >
+            <div className="error" role="alert" aria-live="assertive">
               Unable to connect to the server, please try after some time.
             </div>
           )}

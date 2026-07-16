@@ -744,7 +744,11 @@ export default function Search() {
           />
         )}
         {error && (
-          <div className="fabric-search__error" role="alert">
+          <div
+            className="fabric-search__error"
+            role="alert"
+            aria-live="assertive"
+          >
             {error}
           </div>
         )}

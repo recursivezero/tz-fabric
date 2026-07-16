@@ -73,13 +73,24 @@ describe("HTTP utilities", () => {
     await rejection;
   });
 
-  it("sanitizes unknown network failures for the UI", () => {
-    const error = toUserFacingNetworkError(
-      new Error("ECONNREFUSED 10.0.0.5:27017"),
-      "Unable to connect.",
-    );
+  it("sanitizes network and HTTP failures for the UI", () => {
+    const fallback = "Unable to connect.";
 
-    expect(error.message).toBe("Unable to connect.");
-    expect(new HttpError(500, "Known").message).toBe("Known");
+    expect(
+      toUserFacingNetworkError(
+        new Error("ECONNREFUSED 10.0.0.5:27017"),
+        fallback,
+      ).message,
+    ).toBe(fallback);
+    expect(
+      toUserFacingNetworkError(
+        new HttpError(500, "Search failed (500)."),
+        fallback,
+      ).message,
+    ).toBe(fallback);
+    expect(
+      toUserFacingNetworkError(new RequestTimeoutError(20_000), fallback)
+        .message,
+    ).toBe(fallback);
   });
 });
