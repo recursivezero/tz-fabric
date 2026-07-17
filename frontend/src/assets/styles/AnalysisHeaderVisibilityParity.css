@@ -1,0 +1,163 @@
+/*
+ * Analysis header visibility parity.
+ *
+ * Loaded after the existing Analysis accent fixes so the Analysis route uses
+ * the exact shared navbar and theme-toggle treatment used by the other pages.
+ * This file is presentation-only and does not change routing or theme logic.
+ */
+
+/* Guard against older Analysis-specific opacity/filter rules dimming header
+   content as a group. */
+.app-wrapper--analysis
+  .site-header
+  :is(
+    .header-left,
+    .header-center,
+    .header-right,
+    .mobile-nav-wrapper,
+    .header-nav,
+    .header-nav ul,
+    .brand-name,
+    .logo-mark
+  ) {
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  visibility: visible !important;
+}
+
+/* Match the brand and inactive navigation labels used outside Analysis. */
+.app-wrapper--analysis .site-header .brand-name {
+  color: var(--tz-cotton) !important;
+  -webkit-text-fill-color: var(--tz-cotton) !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a:not(.active) {
+  color: var(--tz-muted) !important;
+  -webkit-text-fill-color: var(--tz-muted) !important;
+  font-weight: 650 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a:not(.active):is(:hover, :focus-visible) {
+  color: var(--tz-cotton) !important;
+  -webkit-text-fill-color: var(--tz-cotton) !important;
+}
+
+/* Keep the active Analysis route identical to the active route on Upload and
+   the rest of the application. */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background-color: transparent !important;
+  background-image: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  ) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 650 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  background-image: none !important;
+  border-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  color: #171101 !important;
+  -webkit-text-fill-color: #171101 !important;
+  font-weight: 650 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+/* Reapply the shared theme-toggle surface and shadow at route-level
+   specificity. This prevents Analysis-only CSS from flattening its glow. */
+.app-wrapper--analysis .site-header #theme.theme-toggle {
+  background: linear-gradient(
+    135deg,
+    var(--tz-button-ghost-bg),
+    var(--tz-panel-2)
+  ) !important;
+  border-color: var(--tz-line) !important;
+  color: var(--tz-cotton) !important;
+  box-shadow: var(--tz-shadow-soft) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  visibility: visible !important;
+}
+
+.app-wrapper--analysis .site-header #theme.theme-toggle:hover {
+  background: linear-gradient(
+    135deg,
+    var(--tz-button-ghost-hover-bg),
+    var(--tz-panel-3)
+  ) !important;
+  border-color: var(--tz-turmeric) !important;
+  color: var(--tz-cotton) !important;
+  box-shadow: var(--tz-shadow-soft) !important;
+}
+
+.app-wrapper--analysis .site-header #theme.theme-toggle:focus-visible {
+  outline: 2px solid var(--tz-ui-accent, var(--tz-turmeric)) !important;
+  outline-offset: 3px !important;
+  box-shadow:
+    var(--tz-shadow-soft),
+    var(--tz-focus) !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #theme.theme-toggle
+  :is(.theme-toggle__track, .theme-toggle__icon, .theme-toggle__thumb) {
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  visibility: visible !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #theme.theme-toggle
+  .theme-toggle__icon {
+  opacity: 0.54 !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #theme.theme-toggle
+  .theme-toggle__thumb {
+  opacity: 1 !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2) !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #theme.theme-toggle
+  :is(.theme-toggle__icon, .theme-toggle__thumb)
+  svg {
+  color: currentColor !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
