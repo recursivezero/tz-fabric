@@ -6,6 +6,8 @@ import App from "./App";
 import "./index.css";
 import "@/assets/styles/_makeover.css";
 import "@/assets/styles/SeniorUiFixes.css";
+import "@/assets/styles/ReaderAnalysisContrastFixes.css";
+import "@/assets/styles/AnalysisUploadButtonParity.css";
 
 const rootElement = document.getElementById("root");
 

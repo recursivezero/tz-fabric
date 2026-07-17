@@ -7,7 +7,7 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
     minHeight: "100vh",
     background: "var(--reader-page-bg)",
     padding: "60px 20px",
-    fontFamily: "'DM Sans', -apple-system, sans-serif",
+    fontFamily: "var(--tz-font-body)",
   },
   container: {
     maxWidth: 1200,
@@ -18,13 +18,11 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
     marginBottom: 80,
   },
   title: {
-    fontFamily: "'Instrument Serif', serif",
-    fontSize: 56,
-    fontWeight: 400,
+    fontFamily: "var(--tz-font-display)",
+    fontSize: "clamp(2.25rem, 6vw, 3.5rem)",
+    fontWeight: 700,
     margin: "0 0 16px 0",
-    background: "var(--reader-title-gradient)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "var(--reader-text)",
     letterSpacing: "-0.02em",
   },
   subtitle: {
@@ -82,7 +80,7 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   tileIcon: {
     fontSize: 88,
     marginBottom: 28,
-    filter: "drop-shadow(0 8px 24px rgba(255, 107, 53, 0.4))",
+    filter: "var(--reader-icon-shadow)",
     transition: "all 0.4s ease",
   },
 

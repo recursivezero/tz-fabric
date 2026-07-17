@@ -239,7 +239,7 @@ const AadhaarCardReader = () => {
             cursor: "pointer",
             transform: hovered ? "scale(1.06)" : "scale(1)",
             boxShadow: hovered
-              ? "0 12px 40px rgba(255, 107, 53, 0.35)"
+              ? "var(--document-reader-accent-shadow)"
               : "none",
           }}
           onMouseEnter={() => setHovered(true)}
@@ -252,7 +252,7 @@ const AadhaarCardReader = () => {
             height="48"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#FF6B35"
+            stroke="currentColor"
             strokeWidth="2"
           >
             <rect x="1" y="4" width="22" height="16" rx="2" />
@@ -439,10 +439,18 @@ const AadhaarCardReader = () => {
 
             {!loading && (
               <>
-                <button onClick={downloadCard} style={styles.downloadBtn}>
+                <button
+                  className="reader-result-action-button reader-download-button"
+                  onClick={downloadCard}
+                  style={styles.downloadBtn}
+                >
                   💾 Download Card Image
                 </button>
-                <button onClick={resetUpload} style={styles.newUploadBtn}>
+                <button
+                  className="reader-result-action-button"
+                  onClick={resetUpload}
+                  style={styles.newUploadBtn}
+                >
                   📤 Upload New Aadhaar Card
                 </button>
               </>
@@ -544,7 +552,7 @@ const styles: Record<string, CSSProperties> = {
     minHeight: "100vh",
     background: "var(--document-reader-page-bg)",
     padding: "60px 20px",
-    fontFamily: "'DM Sans', -apple-system, sans-serif",
+    fontFamily: "var(--tz-font-body)",
   },
   container: {
     maxWidth: 520,
@@ -552,13 +560,11 @@ const styles: Record<string, CSSProperties> = {
     textAlign: "center",
   },
   title: {
-    fontFamily: "'Instrument Serif', serif",
-    fontSize: 48,
-    fontWeight: 400,
+    fontFamily: "var(--tz-font-display)",
+    fontSize: "clamp(2rem, 5vw, 3rem)",
+    fontWeight: 700,
     margin: "0 0 12px 0",
-    background: "var(--document-reader-title-gradient)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "var(--document-reader-text)",
     letterSpacing: "-0.02em",
     textAlign: "center",
   },
@@ -590,23 +596,23 @@ const styles: Record<string, CSSProperties> = {
     transition: "all 0.2s ease",
   },
   sideBtnActive: {
-    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "var(--document-reader-text)",
+    background: "var(--document-reader-primary-bg)",
+    color: "var(--document-reader-accent-contrast)",
   },
   uploadZone: {
     position: "relative" as const,
     padding: 60,
-    border: "2px dashed rgba(255, 107, 53, 0.3)",
+    border: "2px dashed var(--document-reader-accent-border)",
     borderRadius: 24,
-    background: "rgba(255, 107, 53, 0.03)",
+    background: "var(--document-reader-surface-faint)",
     cursor: "pointer",
     textAlign: "center",
     marginBottom: 20,
     transition: "all 0.3s ease",
   },
   uploadZoneDragging: {
-    borderColor: "#FF6B35",
-    background: "rgba(255, 107, 53, 0.08)",
+    borderColor: "var(--document-reader-accent)",
+    background: "var(--document-reader-accent-soft)",
     transform: "scale(1.02)",
   },
   fileInput: {
@@ -617,7 +623,7 @@ const styles: Record<string, CSSProperties> = {
     display: "block",
   },
   uploadIcon: {
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     marginBottom: 16,
   },
   uploadTitle: {
@@ -650,9 +656,9 @@ const styles: Record<string, CSSProperties> = {
   recropBtn: {
     flex: 1,
     padding: "12px 20px",
-    background: "rgba(255, 107, 53, 0.1)",
-    color: "#FF6B35",
-    border: "1px solid rgba(255, 107, 53, 0.3)",
+    background: "var(--document-reader-accent-soft)",
+    color: "var(--document-reader-accent)",
+    border: "1px solid var(--document-reader-accent-border)",
     borderRadius: 12,
     fontSize: 14,
     fontWeight: 600,
@@ -674,8 +680,8 @@ const styles: Record<string, CSSProperties> = {
   extractBtn: {
     width: "100%",
     padding: "18px 32px",
-    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "var(--document-reader-text)",
+    background: "var(--document-reader-primary-bg)",
+    color: "var(--document-reader-accent-contrast)",
     border: "none",
     borderRadius: 16,
     fontSize: 16,
@@ -688,7 +694,7 @@ const styles: Record<string, CSSProperties> = {
     padding: 32,
     borderRadius: 20,
     background: "var(--document-reader-card-bg)",
-    border: "1px solid rgba(255, 107, 53, 0.2)",
+    border: "1px solid var(--document-reader-accent-border-soft)",
     marginBottom: 24,
     position: "relative" as const,
     overflow: "hidden",
@@ -698,7 +704,7 @@ const styles: Record<string, CSSProperties> = {
     top: 16,
     right: 16,
     fontSize: 10,
-    color: "rgba(255, 107, 53, 0.3)",
+    color: "var(--document-reader-accent-border)",
     fontWeight: 600,
     letterSpacing: "0.1em",
     textTransform: "uppercase" as const,
@@ -706,13 +712,13 @@ const styles: Record<string, CSSProperties> = {
   cardHeader: {
     marginBottom: 32,
     paddingBottom: 20,
-    borderBottom: "1px solid rgba(255, 107, 53, 0.2)",
+    borderBottom: "1px solid var(--document-reader-accent-border-soft)",
   },
   cardType: {
     fontSize: 13,
     fontWeight: 700,
     letterSpacing: "0.1em",
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     textTransform: "uppercase" as const,
   },
   cardBody: {
@@ -731,16 +737,16 @@ const styles: Record<string, CSSProperties> = {
   },
   fieldValue: {
     fontSize: 18,
-    fontFamily: "'Instrument Serif', serif",
+    fontFamily: "var(--tz-font-display)",
     color: "var(--document-reader-text)",
     fontWeight: 400,
   },
   downloadBtn: {
     width: "100%",
     padding: "16px 32px",
-    background: "rgba(255, 107, 53, 0.1)",
-    color: "#FF6B35",
-    border: "1px solid rgba(255, 107, 53, 0.3)",
+    background: "var(--document-reader-accent-soft)",
+    color: "var(--document-reader-accent)",
+    border: "1px solid var(--document-reader-accent-border)",
     borderRadius: 16,
     fontSize: 15,
     fontWeight: 600,
@@ -784,7 +790,7 @@ const styles: Record<string, CSSProperties> = {
   },
   cropperTitle: {
     fontSize: 24,
-    fontFamily: "'Instrument Serif', serif",
+    fontFamily: "var(--tz-font-display)",
     color: "var(--document-reader-text)",
     margin: "0 0 8px 0",
     textAlign: "center",
@@ -795,8 +801,8 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     paddingTop: 8,
     marginTop: 12,
-    borderTop: "1px dashed rgba(255, 107, 53, 0.25)",
-    fontFamily: "'DM Sans', sans-serif",
+    borderTop: "1px dashed var(--document-reader-accent-border-soft)",
+    fontFamily: "var(--tz-font-body)",
     position: "relative" as const,
     zIndex: 1,
   },
@@ -806,7 +812,7 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 700,
     letterSpacing: "0.12em",
     textTransform: "uppercase" as const,
-    color: "rgba(255, 107, 53, 0.6)",
+    color: "var(--document-reader-accent-muted)",
   },
 
   timestampValue: {
@@ -836,7 +842,7 @@ const styles: Record<string, CSSProperties> = {
   },
   reactEasyCropMedia: {},
   reactEasyCropArea: {
-    border: "2px solid #FF6B35",
+    border: "2px solid var(--document-reader-accent)",
     boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
   },
   zoomControl: {
@@ -860,7 +866,7 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "center",
     gap: 10,
     fontSize: 16,
-    color: "#b70d0dff",
+    color: "var(--document-reader-muted)",
     textAlign: "center",
     padding: "16px 20px",
     background: "var(--document-reader-surface-faint)",
@@ -880,7 +886,7 @@ const styles: Record<string, CSSProperties> = {
   },
   zoomValue: {
     fontSize: 14,
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     fontWeight: 600,
     minWidth: 45,
     textAlign: "right" as const,
@@ -892,7 +898,8 @@ const styles: Record<string, CSSProperties> = {
   iconWrapper: {
     display: "inline-flex",
     padding: 16,
-    background: "rgba(255, 107, 53, 0.1)",
+    color: "var(--document-reader-accent)",
+    background: "var(--document-reader-accent-soft)",
     borderRadius: 20,
     marginBottom: 24,
     transition: "all 0.2s ease",
@@ -914,8 +921,8 @@ const styles: Record<string, CSSProperties> = {
   cropBtn: {
     flex: 1,
     padding: "14px 24px",
-    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "var(--document-reader-text)",
+    background: "var(--document-reader-primary-bg)",
+    color: "var(--document-reader-accent-contrast)",
     border: "none",
     borderRadius: 12,
     fontSize: 15,
@@ -929,9 +936,9 @@ const styles: Record<string, CSSProperties> = {
     margin: "0 auto 18px",
     padding: "12px 16px",
     borderRadius: "12px",
-    color: "#991b1b",
-    background: "rgba(254, 226, 226, 0.95)",
-    border: "1px solid rgba(220, 38, 38, 0.35)",
+    color: "var(--document-reader-danger-text)",
+    background: "var(--document-reader-danger-bg)",
+    border: "1px solid var(--document-reader-danger-border)",
     fontWeight: 600,
   },
 };

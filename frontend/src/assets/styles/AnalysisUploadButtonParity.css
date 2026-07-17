@@ -1,0 +1,205 @@
+/*
+ * Analysis route accent parity with the Upload route.
+ *
+ * This stylesheet is intentionally loaded after ReaderAnalysisContrastFixes.css
+ * so the Analysis navbar pill and primary controls use the same theme surfaces
+ * as Upload without changing any component behaviour or disabled state.
+ */
+
+/* Active Analysis navbar item: match the active Upload navbar treatment. */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  .header-nav
+  a.active {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  ) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  .header-nav
+  a.active {
+  background: var(--tz-accent-control-surface, #e0a82e) !important;
+  border-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Short/Long and Prev/Next: match Upload's Start Recording surface exactly. */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ) {
+  background: var(--tz-accent-control-surface, #8a4f08) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ) {
+  background: var(--tz-accent-control-surface, #e0a82e) !important;
+  border-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* Preserve disabled functionality while preventing legacy opacity/background
+   rules from changing the requested Upload-matched hue. The not-allowed cursor
+   and removed shadow continue to communicate that the control is unavailable. */
+:root[data-theme]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ):is(:disabled, .disabled) {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ):hover:not(:disabled):not(.disabled) {
+  background: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ):hover:not(:disabled):not(.disabled) {
+  background: var(--tz-accent-control-surface-hover, #f0c463) !important;
+  border-color: var(--tz-accent-control-surface-hover, #f0c463) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  )
+  svg {
+  color: currentColor !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/*
+ * Final Analysis navbar parity guard.
+ *
+ * NavLink exposes aria-current="page" on the active route. Targeting that
+ * semantic state prevents older route-specific navbar rules from restoring
+ * the muted brown Analysis pill after the page-level styles are loaded.
+ * The values below intentionally mirror the active Upload route treatment.
+ */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  background-image: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  ) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  background-image: none !important;
+  border-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:hover,
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:focus-visible {
+  background-color: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  background-image: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface-hover, #a45d0a),
+    var(--tz-accent-control-surface, #8a4f08)
+  ) !important;
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:hover,
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:focus-visible {
+  background-color: var(--tz-accent-control-surface-hover, #f0c463) !important;
+  background-image: none !important;
+  border-color: var(--tz-accent-control-surface-hover, #f0c463) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
