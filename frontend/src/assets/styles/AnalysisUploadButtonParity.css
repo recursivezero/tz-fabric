@@ -512,3 +512,71 @@
     max-height: none;
   }
 }
+
+
+/*
+ * Analysis header stacking and native navbar parity.
+ *
+ * The Analysis workspace contains fixed layers with high z-index values. Keep
+ * the shared site header above those layers, then let its selected route use
+ * the same theme surfaces as every other navbar item. This replaces the
+ * runtime computed-style copy, which could not correct a layer painted above
+ * the header and made the result timing-dependent on lazy route mounting.
+ */
+.app-wrapper--analysis .site-header {
+  position: relative;
+  z-index: 1100;
+  isolation: isolate;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  ) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background: var(--tz-turmeric, #e0a82e) !important;
+  border-color: var(--tz-turmeric, #e0a82e) !important;
+  color: #171101 !important;
+  -webkit-text-fill-color: #171101 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:is(:hover, :focus-visible) {
+  background: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:is(:hover, :focus-visible) {
+  background: var(--tz-turmeric-soft, #f0c463) !important;
+  border-color: var(--tz-turmeric-soft, #f0c463) !important;
+}
