@@ -354,7 +354,7 @@ export default function Composer({
   const startRecording = async () => {
     setError(null);
     setInfo(null);
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (!navigator.mediaDevices?.getUserMedia) {
       setError("Microphone not supported in this browser.");
       return;
     }

@@ -1117,7 +1117,7 @@ export default function useChat() {
   const onAssistantRendered = useCallback(
     (lastAssistant: Message) => {
       try {
-        if (!lastAssistant || !lastAssistant.content) return;
+        if (!lastAssistant?.content) return;
         const content = String(lastAssistant.content).trim();
 
         // If we have a pending ask-more token and the rendered content matches it,
