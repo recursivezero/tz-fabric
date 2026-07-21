@@ -1,6 +1,7 @@
 .homeV2 {
   position: relative;
-  min-height: 85vh;
+  width: 100%;
+  min-height: 0;
   display: flex;
   justify-content: center;
   color: var(--text-color);
@@ -10,8 +11,9 @@
 }
 
 .homeV2__container {
+  width: min(100%, 1280px);
   max-width: 80vw;
-  padding: 36px 20px 56px;
+  padding: clamp(20px, 3vh, 36px) 20px clamp(24px, 4vh, 40px);
 }
 
 .homeV2__hero {

@@ -354,10 +354,13 @@ const UploadPage = () => {
         </div>
         <div className="name-field">
           <div>
-            <label className="name-label">File Name(optional)</label>
+            <label className="name-label" htmlFor="upload-file-name">
+              File Name <span className="name-label__optional">(Optional)</span>
+            </label>
           </div>
           <div>
             <input
+              id="upload-file-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

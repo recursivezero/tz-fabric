@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import "./App.css";
+import "./assets/styles/GlobalUiConsistency.css";
 import { Routing } from "./Routing";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import Footer from "./components/Footer";
