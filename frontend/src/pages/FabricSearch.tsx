@@ -19,11 +19,16 @@ import SettingsPanel from "../components/search/SettingsPanel";
 import SearchHero from "../components/search/SearchHero";
 import StickySearchBar from "../components/search/StickySearchBar";
 import { MIN_CROP_SIZE } from "../components/search/searchConfig";
-import { clampCropRectToBounds } from "../components/search/searchUtils";
+import {
+  clampCropRectToBounds,
+  getSearchLayoutState,
+} from "../components/search/searchUtils";
 import type { CropRect, NotificationState } from "../components/search/types";
 import { useSearch } from "../components/search/useSearch";
 import { throttle } from "../utils/throttle";
 import "@/assets/styles/FabricSearch.css";
+import "@/assets/styles/SearchTextResultsLayout.css";
+import "@/assets/styles/SearchSettingsIcon.css";
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -661,16 +666,25 @@ export default function Search() {
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const hasResults = visibleResults.length > 0;
-  const showHero = !file && !drawerOpen && !hasResults && !loading;
-  const showStickyBar = hasResults || (loading && (!!file || isTextSearch));
-  const showImagePreview = !!file && !drawerOpen && !hasResults && !loading;
+  const {
+    keepTextSearchWorkspace,
+    showHero,
+    showStickyBar,
+    showImagePreview,
+  } = getSearchLayoutState({
+    hasResults,
+    loading,
+    hasFile: !!file,
+    drawerOpen,
+    isTextSearch,
+  });
   const stickyPreview = croppedPreviewUrl || previewUrlOrig || previewUrl;
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <main
-      className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}${showImagePreview ? " fabric-search--previewing" : ""}`}
+      className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}${showImagePreview ? " fabric-search--previewing" : ""}${keepTextSearchWorkspace ? " fabric-search--text-results" : ""}`}
     >
       {/* Sticky search bar */}
       {showStickyBar && (
@@ -711,6 +725,8 @@ export default function Search() {
             textQuery={textQuery}
             setTextQuery={setTextQuery}
             onTextSearch={handleTextSearch}
+            onClear={handleClear}
+            showClear={keepTextSearchWorkspace}
             onFileChange={onFileChange}
             fileInputId={heroFileId}
             searchLimit={searchLimit}

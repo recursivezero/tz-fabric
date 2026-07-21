@@ -1,0 +1,210 @@
+/* Keep Search settings available without letting a full-width label compete
+   with the hero. The icon-only control lives on the page edge and opens its
+   existing database panel inward, so no settings behavior changes. */
+.fabric-search .fabric-search__top-bar {
+  min-height: 0;
+}
+
+.fabric-search .fabric-search__settings,
+.fabric-search.fabric-search--previewing .fabric-search__settings {
+  position: fixed;
+  top: clamp(76px, 8vh, 92px);
+  right: clamp(12px, 1.5vw, 24px);
+  z-index: 180;
+  display: block;
+  width: auto;
+  margin: 0;
+}
+
+.fabric-search .settings-panel,
+.fabric-search.fabric-search--previewing .settings-panel {
+  position: relative;
+  display: block;
+  width: 48px;
+  max-width: 48px;
+  overflow: visible;
+  contain: none;
+}
+
+.fabric-search .settings-panel__toggle,
+:root[data-theme="light"] .fabric-search .settings-panel__toggle,
+:root[data-theme="dark"] .fabric-search .settings-panel__toggle {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
+  gap: 0;
+  border-radius: 50%;
+  clip-path: none;
+  overflow: visible;
+  background: var(--tz-ui-surface-raised, rgba(15, 23, 42, 0.94));
+  color: var(--tz-ui-text, #f8fafc);
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.24);
+  transition:
+    transform 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+:root[data-theme="light"] .fabric-search .settings-panel__toggle {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.fabric-search .settings-panel__toggle:hover {
+  transform: translateY(-2px);
+  color: var(--tz-action-yellow, #e0a82e);
+  border-color: color-mix(
+    in srgb,
+    var(--tz-action-yellow, #e0a82e) 62%,
+    transparent
+  );
+  box-shadow:
+    0 0 0 3px rgba(224, 168, 46, 0.14),
+    0 16px 34px rgba(2, 6, 23, 0.28);
+}
+
+.fabric-search .settings-panel__toggle:focus-visible {
+  outline: 3px solid
+    color-mix(in srgb, var(--tz-action-yellow, #e0a82e) 72%, white);
+  outline-offset: 3px;
+}
+
+.fabric-search .settings-panel__toggle--open {
+  color: var(--tz-action-yellow, #e0a82e);
+  border-color: var(--tz-action-yellow, #e0a82e);
+  box-shadow:
+    0 0 0 3px rgba(224, 168, 46, 0.16),
+    0 16px 36px rgba(2, 6, 23, 0.3);
+}
+
+.fabric-search .settings-panel__icon {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  stroke-width: 2.1;
+  transition: transform 180ms ease;
+}
+
+.fabric-search .settings-panel__toggle--open .settings-panel__icon {
+  transform: rotate(30deg);
+}
+
+.fabric-search .settings-panel__content,
+.fabric-search.fabric-search--previewing .settings-panel__content {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: min(224px, calc(100vw - 32px));
+  min-width: 0;
+  max-height: calc(100dvh - 148px);
+  margin: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* Keep the database menu as a narrow vertical utility card. Opening below the
+   side icon prevents the panel from spanning across and covering the Search
+   hero while preserving the existing database actions and notifications. */
+.fabric-search .settings-panel__content .db-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  gap: 12px;
+  padding: 16px;
+}
+
+.fabric-search .settings-panel__content .db-panel__header,
+.fabric-search .settings-panel__content .db-panel__actions,
+.fabric-search .settings-panel__content .db-panel__notification {
+  width: 100%;
+}
+
+.fabric-search .settings-panel__content .db-panel__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fabric-search .settings-panel__content .db-panel__btn {
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.fabric-search .settings-panel__content .db-panel__notification {
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 680px) {
+  .fabric-search .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .fabric-search__settings {
+    top: 78px;
+    right: 10px;
+  }
+
+  .fabric-search .settings-panel,
+  .fabric-search.fabric-search--previewing .settings-panel {
+    width: 44px;
+    max-width: 44px;
+  }
+
+  .fabric-search .settings-panel__toggle,
+  :root[data-theme="light"] .fabric-search .settings-panel__toggle,
+  :root[data-theme="dark"] .fabric-search .settings-panel__toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .fabric-search .settings-panel__content,
+  .fabric-search.fabric-search--previewing .settings-panel__content {
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(216px, calc(100vw - 20px));
+    min-width: 0;
+    max-height: calc(100dvh - 140px);
+  }
+}
+
+/* Route spacing: start Search content immediately below the shared navbar.
+   Route-level vh padding previously created an oversized blank band at wide
+   viewports and when the browser was zoomed out. */
+.fabric-search.fabric-search--text-results {
+  padding-top: 0;
+}
+
+.fabric-search:not(.fabric-search--has-results):not(.fabric-search--previewing)
+  .fabric-search__body,
+.fabric-search.fabric-search--text-results .fabric-search__body {
+  padding-top: 0;
+}
+
+.fabric-search .hero__header {
+  padding-top: 0;
+  padding-bottom: clamp(14px, 2vh, 24px);
+}
+
+@media (max-width: 680px) {
+  .fabric-search:not(.fabric-search--has-results):not(.fabric-search--previewing)
+    .fabric-search__body,
+  .fabric-search.fabric-search--text-results .fabric-search__body {
+    padding-top: 0;
+  }
+
+  .fabric-search .hero__header {
+    padding-top: 0;
+  }
+}

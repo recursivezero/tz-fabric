@@ -6,6 +6,8 @@ interface HeroProps {
   textQuery: string;
   setTextQuery: (v: string) => void;
   onTextSearch: () => void;
+  onClear?: () => void;
+  showClear?: boolean;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   fileInputId: string;
   searchLimit: number;
@@ -17,6 +19,7 @@ interface HeroProps {
 
 export default function SearchHero({
   textQuery, setTextQuery, onTextSearch,
+  onClear, showClear = false,
   onFileChange, fileInputId,
   searchLimit, onSetLimit,
   selectedCategories, onSetCategories,
@@ -58,6 +61,17 @@ export default function SearchHero({
           >
             Search
           </button>
+          {showClear && onClear && (
+            <button
+              className="btn btn--ghost hero__clear-btn"
+              onClick={onClear}
+              disabled={loading}
+              type="button"
+            >
+              <span aria-hidden="true">✕</span>
+              <span>Clear</span>
+            </button>
+          )}
         </div>
 
         <LimitSlider value={searchLimit} onChange={onSetLimit} />

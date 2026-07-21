@@ -1,0 +1,115 @@
+/*
+ * Chat route layout stability.
+ *
+ * The Chat page is lazy-loaded. In development, route CSS can be inserted in a
+ * different order after navigating away and back, which previously allowed the
+ * empty-state centring rules to replace the normal full-height chat layout.
+ * These route-scoped final declarations keep the same structure regardless of
+ * stylesheet insertion order or browser zoom level.
+ */
+.app-wrapper--chat .main-content {
+  min-width: 0;
+}
+
+.app-wrapper--chat .page-root {
+  --chat-route-workspace-width: min(1048px, calc(100vw - 32px));
+
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  justify-content: stretch !important;
+  align-content: stretch !important;
+  justify-items: stretch !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: clamp(10px, 2vh, 18px) 16px
+    max(12px, env(safe-area-inset-bottom)) !important;
+  overflow: hidden !important;
+}
+
+.app-wrapper--chat .page-root .chat-card-topbar,
+.app-wrapper--chat .page-root .chat-body {
+  width: var(--chat-route-workspace-width) !important;
+  max-width: none !important;
+  margin-inline: auto !important;
+}
+
+.app-wrapper--chat .page-root .chat-card-topbar {
+  align-self: start !important;
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
+}
+
+.app-wrapper--chat .page-root .chat-body,
+.app-wrapper--chat .page-root.is-empty .chat-body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-self: stretch !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  overflow: hidden !important;
+}
+
+.app-wrapper--chat .page-root .chat-scroll-area,
+.app-wrapper--chat .page-root.is-empty .chat-scroll-area {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  min-height: 0 !important;
+  padding: clamp(20px, 5vh, 56px) 8px 20px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.app-wrapper--chat .page-root .empty-state-large {
+  flex: 0 0 auto !important;
+  margin-inline: auto !important;
+}
+
+/* Keep the landing prompt close to the assistant toolbar. The previous 5vh
+   top padding became a large empty band at wide viewports and browser zoom-out. */
+.app-wrapper--chat .page-root.is-empty .chat-scroll-area {
+  padding-top: clamp(8px, 1.4vh, 18px) !important;
+}
+
+.app-wrapper--chat .page-root .composer {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  margin: auto 0 0 !important;
+}
+
+/*
+ * A zoomed-out browser exposes a much wider CSS viewport. Grow the bounded
+ * workspace proportionally so the interface keeps the same readable physical
+ * size instead of collapsing into a small card in the middle of the screen.
+ */
+@media (min-width: 1800px) {
+  .app-wrapper--chat .page-root {
+    --chat-route-workspace-width: clamp(1048px, 42vw, 2400px);
+  }
+}
+
+@media (max-width: 720px) {
+  .app-wrapper--chat .page-root {
+    --chat-route-workspace-width: calc(100vw - 20px);
+
+    padding: 10px 0 max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-wrapper--chat .page-root .chat-card-topbar {
+    margin-bottom: 8px !important;
+  }
+
+  .app-wrapper--chat .page-root .chat-scroll-area,
+  .app-wrapper--chat .page-root.is-empty .chat-scroll-area {
+    padding: 16px 4px !important;
+  }
+}

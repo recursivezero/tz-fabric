@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { clampCropRectToBounds, toCdnUrl, toResultItem } from "./searchUtils";
+import {
+  clampCropRectToBounds,
+  getSearchLayoutState,
+  toCdnUrl,
+  toResultItem,
+} from "./searchUtils";
 
 describe("search response normalization", () => {
   it("normalizes legacy string results", () => {
@@ -47,5 +52,41 @@ describe("crop bounds", () => {
     expect(
       clampCropRectToBounds({ x: -10, y: 90, w: 120, h: 80 }, 100, 100),
     ).toEqual({ x: 0, y: 20, w: 100, h: 80 });
+  });
+});
+
+describe("search layout state", () => {
+  it("keeps the full Search workspace visible for text results", () => {
+    expect(
+      getSearchLayoutState({
+        hasResults: true,
+        loading: false,
+        hasFile: false,
+        drawerOpen: false,
+        isTextSearch: true,
+      }),
+    ).toMatchObject({
+      keepTextSearchWorkspace: true,
+      showHero: true,
+      showStickyBar: false,
+      showImagePreview: false,
+    });
+  });
+
+  it("retains the compact sticky toolbar for image results", () => {
+    expect(
+      getSearchLayoutState({
+        hasResults: true,
+        loading: false,
+        hasFile: true,
+        drawerOpen: false,
+        isTextSearch: false,
+      }),
+    ).toMatchObject({
+      keepTextSearchWorkspace: false,
+      showHero: false,
+      showStickyBar: true,
+      showImagePreview: false,
+    });
   });
 });

@@ -6,7 +6,7 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   wrapper: {
     minHeight: "100vh",
     background: "var(--reader-page-bg)",
-    padding: "60px 20px",
+    padding: "clamp(12px, 2vh, 20px) 20px 48px",
     fontFamily: "var(--tz-font-body)",
   },
   container: {
@@ -15,7 +15,7 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   },
   header: {
     textAlign: "center",
-    marginBottom: 80,
+    marginBottom: 40,
   },
   title: {
     fontFamily: "var(--tz-font-display)",

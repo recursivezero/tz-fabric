@@ -2,6 +2,35 @@ import type { CropRect, ResultItem } from "./types";
 import { ensureOk, fetchWithTimeout } from "../../utils/http";
 import { API_BASE, ASSET_BASE, CDN_BASE, MIN_CROP_SIZE } from "./searchConfig";
 
+export interface SearchLayoutStateInput {
+  hasResults: boolean;
+  loading: boolean;
+  hasFile: boolean;
+  drawerOpen: boolean;
+  isTextSearch: boolean;
+}
+
+export function getSearchLayoutState({
+  hasResults,
+  loading,
+  hasFile,
+  drawerOpen,
+  isTextSearch,
+}: SearchLayoutStateInput) {
+  const keepTextSearchWorkspace = isTextSearch && !hasFile && !drawerOpen;
+
+  return {
+    keepTextSearchWorkspace,
+    showHero:
+      !hasFile &&
+      !drawerOpen &&
+      (keepTextSearchWorkspace || (!hasResults && !loading)),
+    showStickyBar:
+      !keepTextSearchWorkspace && (hasResults || (loading && hasFile)),
+    showImagePreview: hasFile && !drawerOpen && !hasResults && !loading,
+  };
+}
+
 export function clampCropRectToBounds(
   rect: CropRect,
   imgWidth: number,

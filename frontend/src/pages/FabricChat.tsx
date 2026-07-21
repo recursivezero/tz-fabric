@@ -7,6 +7,7 @@ import TypingIndicator from "../components/TypingIndicator";
 import useChat from "../hooks/chat";
 import { fetchWithTimeout } from "../utils/http";
 import "@/assets/styles/FabricChat.css";
+import "@/assets/styles/ChatRouteLayoutStability.css";
 
 type ChatDisplayMessage = { id?: string; role?: string; content?: unknown };
 
