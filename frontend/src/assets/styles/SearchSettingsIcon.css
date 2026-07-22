@@ -208,3 +208,91 @@
     padding-top: 0;
   }
 }
+
+/* Search interaction polish: keep action pills compact and keep the settings
+   utility panel viewport-bound in every Search state, including image preview.
+   These are presentation-only overrides; component behavior is unchanged. */
+.fabric-search .hero__search-row > .btn--primary,
+.fabric-search .search-bar__text-row > .btn--primary,
+.fabric-search .search-bar__image-actions > .btn--primary,
+.fabric-search .image-preview__search-row > .btn--primary {
+  min-width: 118px;
+  min-height: 42px;
+  height: 42px;
+  padding: 0 20px;
+  line-height: 1;
+}
+
+.fabric-search .image-preview__action-rail .btn {
+  min-width: 104px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 16px;
+  gap: 6px;
+  line-height: 1;
+}
+
+/* The legacy preview stylesheet changes this dropdown to a static element.
+   Pinning the already-small vertical card to the viewport prevents it from
+   being clipped by preview/result containers or ancestor containment. */
+.fabric-search .settings-panel__content,
+.fabric-search.fabric-search--previewing .settings-panel__content,
+.fabric-search.fabric-search--has-results .settings-panel__content,
+.fabric-search.fabric-search--text-results .settings-panel__content {
+  position: fixed !important;
+  top: clamp(136px, calc(8vh + 60px), 152px) !important;
+  right: clamp(12px, 1.5vw, 24px) !important;
+  left: auto !important;
+  z-index: 220 !important;
+  box-sizing: border-box;
+  width: min(224px, calc(100vw - 32px)) !important;
+  min-width: 0 !important;
+  max-width: min(224px, calc(100vw - 32px)) !important;
+  max-height: calc(100dvh - 164px) !important;
+  margin: 0 !important;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  transform: none !important;
+  clip-path: none !important;
+  contain: none !important;
+}
+
+.fabric-search .fabric-search__settings,
+.fabric-search .settings-panel,
+.fabric-search.fabric-search--previewing .fabric-search__settings,
+.fabric-search.fabric-search--previewing .settings-panel {
+  overflow: visible !important;
+  contain: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+@media (max-width: 680px) {
+  .fabric-search .hero__search-row > .btn--primary,
+  .fabric-search .search-bar__text-row > .btn--primary,
+  .fabric-search .search-bar__image-actions > .btn--primary,
+  .fabric-search .image-preview__search-row > .btn--primary {
+    min-width: 108px;
+    min-height: 40px;
+    height: 40px;
+    padding-inline: 16px;
+  }
+
+  .fabric-search .image-preview__action-rail .btn {
+    min-width: 96px;
+    min-height: 38px;
+    height: 38px;
+    padding-inline: 13px;
+  }
+
+  .fabric-search .settings-panel__content,
+  .fabric-search.fabric-search--previewing .settings-panel__content,
+  .fabric-search.fabric-search--has-results .settings-panel__content,
+  .fabric-search.fabric-search--text-results .settings-panel__content {
+    top: 132px !important;
+    right: 10px !important;
+    width: min(216px, calc(100vw - 20px)) !important;
+    max-width: min(216px, calc(100vw - 20px)) !important;
+    max-height: calc(100dvh - 146px) !important;
+  }
+}

@@ -149,6 +149,14 @@ figcaption {
   color: #ff0000;
 }
 
+/* Error text must remain white on the shared red failure surface. */
+.grid-page .grid-error,
+.grid-page .grid-error * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+}
+
 .lb-backdrop {
   position: fixed;
   inset: 0;

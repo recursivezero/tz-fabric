@@ -215,6 +215,14 @@
   margin: 8px auto 0;
 }
 
+/* Keep server failures readable after lazy-loaded Chat styles are inserted. */
+.app-wrapper--chat .page-root .error[role="alert"],
+.app-wrapper--chat .page-root .error[role="alert"] * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+}
+
 @media (max-width: 720px) {
   .page-root {
     padding: 72px 12px 28px;

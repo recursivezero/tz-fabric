@@ -13,6 +13,52 @@ import { useRouteMetadata } from "./hooks/useRouteMetadata";
 
 type ThemeMode = "light" | "dark";
 
+const ERROR_TEXT_SELECTOR = [
+  '[role="alert"]',
+  ".notification.error",
+  ".fabric-search__error",
+  ".grid-error",
+  ".upload-submit-error-below",
+  ".db-panel__notification--error",
+  ".description-wrapper .description-box.error",
+  ".analysis-popup__card",
+  ".app-error__card",
+].join(",");
+
+const setErrorTextWhite = (errorBox: HTMLElement): void => {
+  const elements = [errorBox, ...errorBox.querySelectorAll<HTMLElement>("*")];
+
+  for (const element of elements) {
+    element.style.setProperty("color", "#ffffff", "important");
+    element.style.setProperty(
+      "-webkit-text-fill-color",
+      "#ffffff",
+      "important",
+    );
+  }
+};
+
+const applyErrorTextContrast = (root: ParentNode): void => {
+  const errorBoxes = new Set<HTMLElement>();
+
+  if (root instanceof HTMLElement) {
+    if (root.matches(ERROR_TEXT_SELECTOR)) {
+      errorBoxes.add(root);
+    }
+
+    const containingError = root.closest<HTMLElement>(ERROR_TEXT_SELECTOR);
+    if (containingError) {
+      errorBoxes.add(containingError);
+    }
+  }
+
+  root
+    .querySelectorAll<HTMLElement>(ERROR_TEXT_SELECTOR)
+    .forEach((errorBox) => errorBoxes.add(errorBox));
+
+  errorBoxes.forEach(setErrorTextWhite);
+};
+
 const SunIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.8" />
@@ -81,6 +127,33 @@ const App: React.FC = () => {
       themeColor.content = theme === "dark" ? "#0e1322" : "#f8fafc";
     }
   }, [theme]);
+
+  useEffect(() => {
+    applyErrorTextContrast(document);
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.target instanceof HTMLElement) {
+          applyErrorTextContrast(mutation.target);
+        }
+
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement) {
+            applyErrorTextContrast(node);
+          }
+        });
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "role"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const toggleTheme = () => {
     setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
