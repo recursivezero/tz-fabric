@@ -9,6 +9,7 @@ import "@/assets/styles/SeniorUiFixes.css";
 import "@/assets/styles/ReaderAnalysisContrastFixes.css";
 import "@/assets/styles/AnalysisUploadButtonParity.css";
 import "@/assets/styles/AnalysisHeaderVisibilityParity.css";
+import "@/assets/styles/HomeViewportNavigationFix.css";
 
 const rootElement = document.getElementById("root");
 

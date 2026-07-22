@@ -107,6 +107,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   usePageTracking();
   useRouteMetadata();
+  const isHomeRoute = location.pathname === "/";
   const isChatRoute = location.pathname.startsWith("/chat");
   const isAnalysisRoute = location.pathname.startsWith("/analysis");
   const isWorkspaceRoute = isChatRoute || isAnalysisRoute;
@@ -161,9 +162,9 @@ const App: React.FC = () => {
 
   return (
     <div
-      className={`app-wrapper ${isChatRoute ? "app-wrapper--chat" : ""} ${
-        isAnalysisRoute ? "app-wrapper--analysis" : ""
-      }`}
+      className={`app-wrapper ${isHomeRoute ? "app-wrapper--home" : ""} ${
+        isChatRoute ? "app-wrapper--chat" : ""
+      } ${isAnalysisRoute ? "app-wrapper--analysis" : ""}`}
     >
       <header className="site-header">
         <div className="header-left">
