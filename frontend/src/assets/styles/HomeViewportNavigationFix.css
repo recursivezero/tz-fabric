@@ -241,3 +241,35 @@
     z-index: 1002;
   }
 }
+
+/* Zoomed-out Home hierarchy.
+ *
+ * Browser zoom-out exposes a much larger effective CSS viewport. Keep the
+ * entire Home content stack together near the top while preserving its centred
+ * horizontal alignment. Common 100% desktop and mobile viewports stay on the
+ * existing v30 layout because this guard only activates beyond standard QHD
+ * dimensions.
+ */
+@media (min-width: 2600px) and (min-height: 1400px) {
+  .app-wrapper--home .homeV2__container {
+    justify-content: flex-start;
+    padding-block-start: clamp(32px, 3.5vh, 72px);
+    padding-block-end: 0;
+  }
+
+  .app-wrapper--home .homeV2__hero {
+    flex: 0 0 auto;
+    margin: 0 0 clamp(24px, 2vh, 40px);
+  }
+
+  .app-wrapper--home .homeV2__features {
+    flex: 0 0 auto;
+    margin-top: 0;
+  }
+
+  .app-wrapper--home .homeV2__steps {
+    flex: 0 0 auto;
+    margin-top: clamp(20px, 1.75vh, 32px);
+    margin-bottom: 0;
+  }
+}
