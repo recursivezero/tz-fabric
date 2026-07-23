@@ -151,9 +151,24 @@ const Reader = () => {
           >
             <div style={getGlowStyle("pan")} />
             <div style={styles.tileContent}>
-              <div style={getIconStyle("pan")}>🪪</div>
-              <div style={styles.tileTitle}>PAN Card</div>
-              <div style={styles.tileDesc}>Income Tax Department</div>
+              <div
+                className="reader-landing__tile-icon"
+                style={getIconStyle("pan")}
+              >
+                🪪
+              </div>
+              <div
+                className="reader-landing__tile-title"
+                style={styles.tileTitle}
+              >
+                PAN Card
+              </div>
+              <div
+                className="reader-landing__tile-description"
+                style={styles.tileDesc}
+              >
+                Income Tax Department
+              </div>
             </div>
           </button>
 
@@ -170,9 +185,24 @@ const Reader = () => {
           >
             <div style={getGlowStyle("aadhaar")} />
             <div style={styles.tileContent}>
-              <div style={getIconStyle("aadhaar")}>🆔</div>
-              <div style={styles.tileTitle}>Aadhaar Card</div>
-              <div style={styles.tileDesc}>UIDAI Identity</div>
+              <div
+                className="reader-landing__tile-icon"
+                style={getIconStyle("aadhaar")}
+              >
+                🆔
+              </div>
+              <div
+                className="reader-landing__tile-title"
+                style={styles.tileTitle}
+              >
+                Aadhaar Card
+              </div>
+              <div
+                className="reader-landing__tile-description"
+                style={styles.tileDesc}
+              >
+                UIDAI Identity
+              </div>
             </div>
           </button>
         </div>

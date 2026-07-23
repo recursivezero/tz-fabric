@@ -3680,3 +3680,35 @@
   border-color: rgba(15, 23, 42, 0.16);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.10);
 }
+
+/* v39: keep the stacked original/cropped preview usable on tablet and mobile
+   viewports. The document body is intentionally contained by the legacy shell,
+   so the preview route owns its vertical scroll at the same breakpoint where
+   the two preview panes become a single column. Desktop preview geometry and
+   all crop/search behavior remain unchanged. */
+@media (max-width: 900px) {
+  .fabric-search.fabric-search--previewing {
+    box-sizing: border-box;
+    height: calc(100dvh - var(--site-header-height, 64px));
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .fabric-search.fabric-search--previewing .fabric-search__body {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-height: max-content;
+    padding-inline: clamp(12px, 3vw, 22px);
+    overflow: visible;
+  }
+
+  .fabric-search.fabric-search--previewing .image-preview {
+    width: 100%;
+    min-height: max-content;
+    overflow: visible;
+  }
+}

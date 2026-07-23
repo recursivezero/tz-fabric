@@ -367,3 +367,13 @@
     display: none;
   }
 }
+
+/* v39: keep the mobile appearance control with the route list instead of
+   pushing it to the bottom of the viewport. The menu remains independently
+   scrollable on short devices through HomeViewportNavigationFix.css. */
+@media (max-width: 768px) {
+  .site-header .mobile-menu__theme {
+    margin: 6px auto 0;
+    padding-top: 12px;
+  }
+}

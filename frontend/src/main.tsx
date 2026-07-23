@@ -11,6 +11,7 @@ import "@/assets/styles/AnalysisUploadButtonParity.css";
 import "@/assets/styles/AnalysisHeaderVisibilityParity.css";
 import "@/assets/styles/HomeViewportNavigationFix.css";
 import "@/assets/styles/CrossRouteLayoutCompletion.css";
+import "@/assets/styles/MobileViewportStability.css";
 
 const rootElement = document.getElementById("root");
 

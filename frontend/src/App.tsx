@@ -112,6 +112,17 @@ const App: React.FC = () => {
   const isAnalysisRoute = location.pathname.startsWith("/analysis");
 
   useEffect(() => {
+    if (isChatRoute) return;
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.querySelector<HTMLElement>(".main-content")?.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [isChatRoute, location.pathname]);
+
+  useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
     try {
