@@ -113,3 +113,47 @@
     padding: 16px 4px !important;
   }
 }
+
+/* Zoom-out width parity.
+ * The route workspace grows at wide effective viewports, but the landing copy
+ * and prompt grid previously stayed capped at 980px. Keep every visible Chat
+ * surface on the same width contract only when zoom-out exposes a wide CSS
+ * viewport; normal desktop, tablet and mobile geometry remains unchanged. */
+@media (min-width: 2600px) {
+  .app-wrapper--chat .page-root .empty-state-large {
+    width: 100% !important;
+    max-width: none !important;
+    padding-inline: 0 !important;
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large h3,
+  .app-wrapper--chat .page-root .empty-state-large p {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large .chips {
+    width: 100% !important;
+    max-width: none !important;
+    padding-inline: 0 !important;
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large .chip {
+    min-height: clamp(44px, 1.7vw, 60px);
+    padding-inline: clamp(14px, 1vw, 28px);
+    font-size: clamp(14px, 0.58vw, 18px);
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large h3 {
+    font-size: clamp(24px, 1.05vw, 34px);
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large p {
+    font-size: clamp(15px, 0.62vw, 19px);
+  }
+
+  .app-wrapper--chat .page-root .error[role="alert"] {
+    width: 100%;
+    max-width: none;
+  }
+}

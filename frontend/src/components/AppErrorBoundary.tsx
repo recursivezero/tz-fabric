@@ -8,17 +8,24 @@ type Props = {
 
 type State = {
   hasError: boolean;
+  errorMessage: string;
 };
 
 /**
  * Keeps a route render/lazy-load failure from blanking the entire application.
  * Changing routes resets the boundary so navigation remains usable.
  */
-export class AppErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false };
+const ROUTE_ASSET_ERROR_PATTERN =
+  /dynamically imported module|loading chunk|module script|failed to fetch/i;
 
-  static getDerivedStateFromError(): State {
-    return { hasError: true };
+export class AppErrorBoundary extends Component<Props, State> {
+  state: State = { hasError: false, errorMessage: "" };
+
+  static getDerivedStateFromError(error: unknown): State {
+    return {
+      hasError: true,
+      errorMessage: error instanceof Error ? error.message : String(error ?? ""),
+    };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -29,28 +36,38 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   componentDidUpdate(previousProps: Props) {
     if (this.state.hasError && previousProps.resetKey !== this.props.resetKey) {
-      this.setState({ hasError: false });
+      this.setState({ hasError: false, errorMessage: "" });
     }
   }
 
   private retry = () => {
-    this.setState({ hasError: false });
+    if (typeof window !== "undefined") {
+      window.location.reload();
+      return;
+    }
+
+    this.setState({ hasError: false, errorMessage: "" });
   };
 
   render() {
     if (!this.state.hasError) return this.props.children;
+
+    const routeAssetFailed = ROUTE_ASSET_ERROR_PATTERN.test(
+      this.state.errorMessage,
+    );
 
     return (
       <section className="app-error" role="alert" aria-live="assertive">
         <div className="app-error__card">
           <h1>Something went wrong</h1>
           <p>
-            This page could not be displayed. Your uploaded files and chat input
-            have not been submitted again.
+            {routeAssetFailed
+              ? "The page files could not be loaded. Disable browser request blocking or restore the network, then reload the page."
+              : "This page could not be displayed. Your uploaded files and chat input have not been submitted again."}
           </p>
           <div className="app-error__actions">
             <button type="button" onClick={this.retry}>
-              Try again
+              Reload page
             </button>
             <a href="/">Return home</a>
           </div>

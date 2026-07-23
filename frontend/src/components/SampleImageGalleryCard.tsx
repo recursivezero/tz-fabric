@@ -1,9 +1,12 @@
+import sample1Image from "../assets/sample1.jpeg";
+import sample2Image from "../assets/sample2.jpeg";
+import sample3Image from "../assets/sample3.jpeg";
 import "@/assets/styles/SampleImageGalleryCard.css";
 
 const sampleImages = [
-  { id: 1, name: "Sample 1", path: "../assets/sample1.jpeg" },
-  { id: 2, name: "Sample 2", path: "../assets/sample2.jpeg" },
-  { id: 3, name: "Sample 3", path: "../assets/sample3.jpeg" },
+  { id: 1, name: "Sample 1", path: sample1Image },
+  { id: 2, name: "Sample 2", path: sample2Image },
+  { id: 3, name: "Sample 3", path: sample3Image },
 ];
 
 type SampleImageGalleryProps = {
@@ -26,7 +29,13 @@ const SampleImageGallery = ({ onAnalyze, loading }: SampleImageGalleryProps) => 
             aria-label={`Analyze ${img.name}`}
             onClick={() => onAnalyze(img.path)}
           >
-            <img src={img.path} alt={img.name} className="sample-img" loading="lazy" decoding="async" />
+            <img
+              src={img.path}
+              alt={img.name}
+              className="sample-img"
+              loading="eager"
+              decoding="async"
+            />
             <span className="sample-card__select" aria-hidden="true">
               Select
             </span>

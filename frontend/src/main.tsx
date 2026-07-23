@@ -10,10 +10,14 @@ import "@/assets/styles/ReaderAnalysisContrastFixes.css";
 import "@/assets/styles/AnalysisUploadButtonParity.css";
 import "@/assets/styles/AnalysisHeaderVisibilityParity.css";
 import "@/assets/styles/HomeViewportNavigationFix.css";
+import "@/assets/styles/CrossRouteLayoutCompletion.css";
 
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
+  document.documentElement.dataset.appBooted = "true";
+  document.getElementById("app-boot-fallback")?.setAttribute("hidden", "");
+
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <BrowserRouter>

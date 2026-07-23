@@ -1033,3 +1033,113 @@
   border-left-color: rgba(226, 232, 240, 0.16);
   box-shadow: -14px 0 34px rgba(15, 23, 42, 0.20);
 }
+
+/* Analysis mobile + response completion (v35).
+ * Keep the route high in the viewport, make the sample picker a real mobile
+ * sheet instead of a narrow side rail, and leave desktop drawer geometry intact. */
+.analysis-page.home-container {
+  padding-top: clamp(6px, 1.2vh, 14px);
+  gap: 8px;
+}
+
+.analysis-page .animated-header {
+  min-height: 0;
+  margin-bottom: 4px;
+}
+
+.analysis-page .top-texts {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 980px) {
+  .analysis-page .drawer-panel,
+  :root[data-theme="light"] .analysis-page .drawer-panel,
+  :root[data-theme="dark"] .analysis-page .drawer-panel {
+    position: fixed;
+    inset: var(--site-header-height, 64px) 0 0;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    padding: 18px clamp(14px, 4vw, 28px) max(24px, env(safe-area-inset-bottom));
+    border-left: 0;
+    border-top: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.18));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
+    z-index: 550;
+  }
+
+  .analysis-page .drawer-panel .sample-gallery {
+    width: min(720px, 100%);
+    margin-inline: auto;
+  }
+
+  .analysis-page .drawer-panel .sample-gallery h2,
+  :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery h2,
+  :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery h2 {
+    position: static;
+    margin: 0 52px 16px;
+    padding: 8px 12px 12px;
+    border-radius: 14px;
+  }
+
+  .analysis-page .drawer-panel .sample-gallery .sample-grid,
+  :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-grid,
+  :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .analysis-page .drawer-panel .sample-gallery .sample-card,
+  :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card,
+  :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card {
+    height: clamp(170px, 31dvh, 240px);
+  }
+
+  .analysis-page .drawer-toggle-wrapper {
+    top: calc(var(--site-header-height, 64px) + 12px);
+    right: 12px !important;
+    transform: none;
+    z-index: 570;
+  }
+
+  .analysis-page .drawer-toggle-button,
+  :root[data-theme="light"] .analysis-page .drawer-toggle-button,
+  :root[data-theme="dark"] .analysis-page .drawer-toggle-button {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    font-size: 20px;
+  }
+
+  .analysis-page.drawer-open .result-wrapper.analysis-grid,
+  .analysis-page.drawer-open .result-wrapper.grid {
+    width: min(720px, calc(100vw - 32px));
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .analysis-page .drawer-panel .sample-gallery .sample-grid,
+  :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-grid,
+  :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .analysis-page .drawer-panel .sample-gallery .sample-card,
+  :root[data-theme="light"] .analysis-page .drawer-panel .sample-gallery .sample-card,
+  :root[data-theme="dark"] .analysis-page .drawer-panel .sample-gallery .sample-card {
+    height: clamp(180px, 38dvh, 250px);
+  }
+
+  .analysis-page .analysis-popup__card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .analysis-page .analysis-popup__icon,
+  .analysis-page .analysis-popup__button {
+    justify-self: center;
+  }
+}

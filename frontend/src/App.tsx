@@ -110,7 +110,6 @@ const App: React.FC = () => {
   const isHomeRoute = location.pathname === "/";
   const isChatRoute = location.pathname.startsWith("/chat");
   const isAnalysisRoute = location.pathname.startsWith("/analysis");
-  const isWorkspaceRoute = isChatRoute || isAnalysisRoute;
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -203,7 +202,7 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="header-center">
-          <NavBar />
+          <NavBar theme={theme} onToggleTheme={toggleTheme} />
         </div>
         <div className="header-right action">
           <button
@@ -236,7 +235,7 @@ const App: React.FC = () => {
         </AppErrorBoundary>
       </main>
 
-      {!isWorkspaceRoute && <Footer />}
+      {!isChatRoute && <Footer />}
     </div>
   );
 };

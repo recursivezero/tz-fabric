@@ -80,8 +80,10 @@ const DescriptionBox = ({
         <button
           type="button"
           onClick={handlePrev}
-          disabled={!hasResponses || currentIndex === 0}
-          className={`nav-btn ${!hasResponses || currentIndex === 0 ? "disabled" : ""}`}
+          disabled={loading || !hasResponses || currentIndex === 0}
+          className={`nav-btn ${
+            loading || !hasResponses || currentIndex === 0 ? "disabled" : ""
+          }`}
           title={!hasResponses ? "No responses yet" : "Previous response"}
         >
           ⬅ Prev
@@ -90,8 +92,14 @@ const DescriptionBox = ({
         <button
           type="button"
           onClick={handleNext}
-          disabled={!hasResponses || currentIndex >= responses.length - 1}
-          className={`nav-btn ${!hasResponses || currentIndex >= responses.length - 1 ? "disabled" : ""}`}
+          disabled={
+            loading || !hasResponses || currentIndex >= responses.length - 1
+          }
+          className={`nav-btn ${
+            loading || !hasResponses || currentIndex >= responses.length - 1
+              ? "disabled"
+              : ""
+          }`}
           title={!hasResponses ? "No responses yet" : "Next response"}
         >
           Next ➡

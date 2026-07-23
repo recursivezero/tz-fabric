@@ -4,7 +4,9 @@ import type { CSSProperties } from "react";
 
 const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   wrapper: {
-    minHeight: "100vh",
+    minHeight: 0,
+    width: "100%",
+    flex: "1 1 auto",
     background: "var(--reader-page-bg)",
     padding: "clamp(12px, 2vh, 20px) 20px 48px",
     fontFamily: "var(--tz-font-body)",
@@ -32,7 +34,6 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   },
   tileGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
     gap: 40,
     maxWidth: 1000,
     margin: "0 auto",
@@ -98,12 +99,6 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
     fontWeight: 500,
   },
 
-  "@media (max-width: 768px)": {
-    tileGrid: {
-      gridTemplateColumns: "1fr",
-      gap: 24,
-    },
-  },
 };
 
 const Reader = () => {
@@ -133,18 +128,19 @@ const Reader = () => {
   });
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.container}>
-        <div style={styles.header}>
+    <div className="reader-landing" style={styles.wrapper}>
+      <div className="reader-landing__container" style={styles.container}>
+        <div className="reader-landing__header" style={styles.header}>
           <h1 style={styles.title}>Select Document Type</h1>
           <p style={styles.subtitle}>
             Choose a card to scan and extract information
           </p>
         </div>
 
-        <div style={styles.tileGrid}>
+        <div className="reader-landing__grid" style={styles.tileGrid}>
           <button
             type="button"
+            className="reader-landing__tile"
             style={getTileStyle("pan")}
             onClick={() => navigate("/reader/pan")}
             onMouseEnter={() => setHoveredTile("pan")}
@@ -163,6 +159,7 @@ const Reader = () => {
 
           <button
             type="button"
+            className="reader-landing__tile"
             style={getTileStyle("aadhaar")}
             onClick={() => navigate("/reader/aadhaar")}
             onMouseEnter={() => setHoveredTile("aadhaar")}
