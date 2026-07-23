@@ -3712,3 +3712,87 @@
     overflow: visible;
   }
 }
+
+/* v40: keep the pre-search image actions visible whenever the preview panes
+   stack. The older desktop rail used a two-column grid that could leave Clear
+   and Recrop outside the visible mobile flow. At the same breakpoint used by
+   the v39 scroll container, place the actions directly below the original
+   image. Search/crop handlers and desktop geometry are unchanged. */
+@media (max-width: 900px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__frame {
+    height: auto;
+    max-height: none;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 0 0 auto;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__img {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    max-height: min(58dvh, 460px);
+    object-fit: contain;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail {
+    position: static;
+    inset: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    justify-content: stretch;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    gap: 10px;
+    transform: none;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__action-rail
+    .btn {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    justify-content: center;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:first-child {
+    top: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail {
+    grid-template-columns: 1fr;
+  }
+}

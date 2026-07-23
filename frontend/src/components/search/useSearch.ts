@@ -5,7 +5,11 @@ import {
   toUserFacingNetworkError,
 } from "../../utils/http";
 import { API_BASE, USER_FRIENDLY_SERVER_ERROR } from "./searchConfig";
-import { toResultItem } from "./searchUtils";
+import {
+  getAllImageSearchCategories,
+  shouldRetryEmptyImageSearch,
+  toResultItem,
+} from "./searchUtils";
 import type { ResultItem, SearchApiResponse } from "./types";
 
 const SEARCH_TIMEOUT_MS = 45_000;
@@ -44,37 +48,56 @@ export function useSearch() {
       setError(null);
 
       try {
-        const form = new FormData();
-        if (input.kind === "image") form.append("file", input.file);
-        else form.append("search_term", input.term);
-        form.append("limit", String(limit));
-        form.append("page", "1");
-        form.append("per_page", String(limit));
-        category?.forEach((value) => {
-          form.append("category", value);
-        });
+        const requestResults = async (
+          categories?: string[],
+        ): Promise<ResultItem[]> => {
+          const form = new FormData();
+          if (input.kind === "image") form.append("file", input.file);
+          else form.append("search_term", input.term);
+          form.append("limit", String(limit));
+          form.append("page", "1");
+          form.append("per_page", String(limit));
+          categories?.forEach((value) => {
+            form.append("category", value);
+          });
 
-        const response = await fetchWithTimeout(
-          `${API_BASE}/search`,
-          {
-            method: "POST",
-            body: form,
-            signal: controller.signal,
-          },
-          SEARCH_TIMEOUT_MS,
-        );
-        await ensureOk(response, `Search failed (${response.status}).`);
-
-        const data = (await response.json()) as SearchApiResponse;
-        const rawResults = Array.isArray(data.results) ? data.results : [];
-        const normalized = rawResults
-          .map(toResultItem)
-          .filter((item): item is ResultItem => item !== null);
-
-        if (rawResults.length > 0 && normalized.length === 0) {
-          throw new Error(
-            "The search service returned an unsupported result format.",
+          const response = await fetchWithTimeout(
+            `${API_BASE}/search`,
+            {
+              method: "POST",
+              body: form,
+              signal: controller.signal,
+            },
+            SEARCH_TIMEOUT_MS,
           );
+          await ensureOk(response, `Search failed (${response.status}).`);
+
+          const data = (await response.json()) as SearchApiResponse;
+          const rawResults = Array.isArray(data.results) ? data.results : [];
+          const normalized = rawResults
+            .map(toResultItem)
+            .filter((item): item is ResultItem => item !== null);
+
+          if (rawResults.length > 0 && normalized.length === 0) {
+            throw new Error(
+              "The search service returned an unsupported result format.",
+            );
+          }
+
+          return normalized;
+        };
+
+        let normalized = await requestResults(category);
+
+        // Some vector indexes only return tagged rows once a category predicate
+        // is present. Preserve the normal unfiltered request, but recover from an
+        // empty image response by retrying once across every visible category.
+        if (
+          input.kind === "image" &&
+          shouldRetryEmptyImageSearch(category, normalized.length) &&
+          !controller.signal.aborted
+        ) {
+          normalized = await requestResults(getAllImageSearchCategories());
         }
 
         if (requestId === requestIdRef.current) setResults(normalized);

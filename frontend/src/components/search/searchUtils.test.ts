@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   clampCropRectToBounds,
   getSearchLayoutState,
+  getAllImageSearchCategories,
+  shouldRetryEmptyImageSearch,
   toCdnUrl,
   toResultItem,
 } from "./searchUtils";
@@ -88,5 +90,23 @@ describe("search layout state", () => {
       showStickyBar: true,
       showImagePreview: false,
     });
+  });
+});
+
+describe("image search categories", () => {
+  it("provides every category for an empty image-search fallback", () => {
+    expect(getAllImageSearchCategories()).toEqual([
+      "stock",
+      "fabric",
+      "design",
+      "product",
+    ]);
+  });
+
+  it("retries only empty unfiltered image searches", () => {
+    expect(shouldRetryEmptyImageSearch(undefined, 0)).toBe(true);
+    expect(shouldRetryEmptyImageSearch([], 0)).toBe(true);
+    expect(shouldRetryEmptyImageSearch(["fabric"], 0)).toBe(false);
+    expect(shouldRetryEmptyImageSearch(undefined, 2)).toBe(false);
   });
 });

@@ -1,6 +1,23 @@
 import type { CropRect, ResultItem } from "./types";
 import { ensureOk, fetchWithTimeout } from "../../utils/http";
-import { API_BASE, ASSET_BASE, CDN_BASE, MIN_CROP_SIZE } from "./searchConfig";
+import {
+  API_BASE,
+  ASSET_BASE,
+  CATEGORIES,
+  CDN_BASE,
+  MIN_CROP_SIZE,
+} from "./searchConfig";
+
+export function getAllImageSearchCategories(): string[] {
+  return CATEGORIES.map((category) => category.id);
+}
+
+export function shouldRetryEmptyImageSearch(
+  categories: string[] | undefined,
+  resultCount: number,
+): boolean {
+  return (!categories || categories.length === 0) && resultCount === 0;
+}
 
 export interface SearchLayoutStateInput {
   hasResults: boolean;
