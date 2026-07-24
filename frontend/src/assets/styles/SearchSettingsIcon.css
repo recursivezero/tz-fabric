@@ -536,3 +536,411 @@
     margin-left: auto;
   }
 }
+
+
+/* v42: place the Original Image actions over the image itself and keep mobile
+   category choices balanced. Presentation only; Search handlers and state are
+   unchanged. */
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__img {
+  grid-column: 1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: block;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  transform: none;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn {
+  position: absolute;
+  right: 14px;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 112px;
+  min-height: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0 15px;
+  justify-content: center;
+  border-radius: 999px;
+  pointer-events: auto;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child {
+  position: absolute;
+  top: 14px;
+  bottom: auto;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #111827;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  position: absolute;
+  top: auto;
+  bottom: 14px;
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 23, 42, 0.28);
+  color: #111827;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker:not(.category-picker--compact)
+    .category-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker:not(.category-picker--compact)
+    .category-picker__chip {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn {
+    right: 10px;
+    min-width: 96px;
+    min-height: 36px;
+    height: 36px;
+    padding-inline: 12px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:first-child {
+    top: 10px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 10px;
+  }
+}
+
+
+/* v43: align preview actions with the route's theme controls, remove the
+   spacer above the post-crop workspace, and keep compact result categories in
+   the same balanced 2 × 2 mobile grid as the idle Search form. Presentation
+   only; Search state, crop handlers and filter behavior are unchanged. */
+:root[data-theme="dark"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child,
+:root[data-theme="dark"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  background: linear-gradient(
+    135deg,
+    var(--tz-action-yellow, #e0a82e),
+    var(--tz-action-yellow-hover, #f0c463)
+  );
+  border-color: var(--tz-action-yellow, #e0a82e);
+  color: #111827;
+  text-shadow: none;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.26);
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child,
+:root[data-theme="light"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  );
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+  text-shadow: none;
+  box-shadow: 0 10px 24px rgba(138, 79, 8, 0.22);
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child:hover:not(:disabled),
+:root[data-theme="dark"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-action-yellow-hover, #f0c463),
+    #facc15
+  );
+  border-color: var(--tz-action-yellow-hover, #f0c463);
+  color: #111827;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child:hover:not(:disabled),
+:root[data-theme="light"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface-hover, #a45d0a),
+    #b86a0c
+  );
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a);
+  color: #ffffff;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search--previewing {
+  padding-top: 0;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search--previewing
+  .fabric-search__body {
+  padding-top: 8px;
+}
+
+@media (min-width: 901px) {
+  :root[data-theme]
+    .fabric-search.fabric-search--previewing
+    .fabric-search__top-bar {
+    min-height: 0;
+    height: 0;
+    margin-bottom: 8px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker--compact
+    .category-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker--compact
+    .category-picker__chip {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker--compact
+    .category-picker__apply {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+
+/* v44: keep Search utilities anchored to the mobile page edge instead of
+   consuming a centred content row, and align the compact text-search CTA with
+   the right edge of its input. Presentation only; settings and Search handlers
+   are unchanged. */
+@media (max-width: 900px) {
+  .fabric-search .fabric-search__body {
+    position: relative;
+  }
+
+  .fabric-search .fabric-search__top-bar,
+  .fabric-search.fabric-search--previewing .fabric-search__top-bar {
+    position: relative;
+    z-index: 220;
+    width: 100%;
+    min-height: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .fabric-search .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .fabric-search__settings {
+    position: fixed;
+    top: calc(var(--site-header-height, 64px) + 10px);
+    right: 12px;
+    bottom: auto;
+    left: auto;
+    z-index: 320;
+    display: block;
+    width: 40px;
+    max-width: 40px;
+    margin: 0;
+    pointer-events: auto;
+  }
+
+  .fabric-search .settings-panel,
+  .fabric-search.fabric-search--previewing .settings-panel {
+    width: 40px;
+    max-width: 40px;
+    align-items: initial;
+  }
+
+  .fabric-search .settings-panel__toggle,
+  :root[data-theme="light"] .fabric-search .settings-panel__toggle,
+  :root[data-theme="dark"] .fabric-search .settings-panel__toggle {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  .fabric-search .hero__search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fabric-search .hero__search-input {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .fabric-search .hero__search-row > .btn--primary {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    flex: none;
+    margin-left: auto;
+  }
+
+  .fabric-search .hero__search-row > .hero__clear-btn {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 420px) {
+  .fabric-search .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .fabric-search__settings {
+    right: 10px;
+  }
+}
+
+/* v46: keep the compact mobile Search CTA right-aligned, but place it slightly
+   lower beneath the input and leave a deliberate gap before the Results slider.
+   Search state, validation, keyboard submission and click handlers are unchanged. */
+@media (max-width: 900px) {
+  .fabric-search .hero__search-row > .btn--primary {
+    justify-self: end;
+    margin-top: 6px;
+    margin-right: 0;
+    margin-bottom: 8px;
+    margin-left: auto;
+  }
+
+  .fabric-search .hero__search-controls > .limit-slider {
+    margin-top: 2px;
+  }
+}

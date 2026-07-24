@@ -190,7 +190,10 @@ const PanCardReader = () => {
   };
 
   return (
-    <div style={styles.wrapper}>
+    <div
+      className="document-reader-page document-reader-page--pan"
+      style={styles.wrapper}
+    >
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
@@ -721,7 +724,9 @@ const CardPreview = ({ data, loading }: CardPreviewProps) => {
 
 const styles: Record<string, CSSProperties> = {
   wrapper: {
-    minHeight: "100vh",
+    minHeight: 0,
+    width: "100%",
+    flex: "1 0 auto",
     background: "var(--document-reader-page-bg)",
     padding: "60px 20px",
     fontFamily: "var(--tz-font-body)",

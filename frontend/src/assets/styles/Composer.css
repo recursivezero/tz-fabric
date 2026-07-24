@@ -1498,3 +1498,26 @@
   margin-inline: auto;
   border-radius: 14px;
 }
+
+
+/* v42: keep the in-composer cancellation action compact without changing its
+   click behavior or the surrounding composer layout. */
+.page-root .stop-overlay-btn {
+  min-height: 36px;
+  height: 36px;
+  padding: 0 14px;
+  gap: 5px;
+  font-size: 12px;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.22);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .page-root .stop-overlay-btn {
+    min-height: 34px;
+    height: 34px;
+    padding-inline: 12px;
+    font-size: 11px;
+  }
+}

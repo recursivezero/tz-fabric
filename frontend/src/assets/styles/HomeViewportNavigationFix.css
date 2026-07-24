@@ -273,3 +273,70 @@
     margin-bottom: 0;
   }
 }
+
+
+/* v44: heavy browser zoom-out should keep the Home/Analysis overview directly
+   below the navbar. Also render the lower "How to Use FabricAI" panel with the
+   same visual weight as the feature cards instead of a faint placeholder-like
+   surface. Normal desktop and mobile layouts remain unchanged. */
+@media (min-width: 2600px) and (min-height: 1400px) {
+  .app-wrapper--home .homeV2__container {
+    justify-content: flex-start;
+    padding-block-start: 10px;
+  }
+
+  .app-wrapper--home .homeV2__hero {
+    margin-bottom: 14px;
+  }
+
+  .app-wrapper--home .homeV2__features {
+    margin-top: 0;
+  }
+
+  .app-wrapper--home .homeV2__steps {
+    content-visibility: visible;
+    margin-top: 14px;
+    background: var(--tz-panel, #11182a);
+    border-color: rgba(148, 163, 184, 0.38);
+    box-shadow:
+      0 12px 30px rgba(2, 6, 23, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .app-wrapper--home .homeV2__steps .stepCard {
+    background: var(--tz-panel-2, #182138);
+    border-color: rgba(148, 163, 184, 0.34);
+  }
+
+  :root[data-theme="light"] .app-wrapper--home .homeV2__steps {
+    background: var(--tz-upload-panel-bg, #ffffff);
+    border-color: rgba(15, 23, 42, 0.16);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.1);
+  }
+
+  :root[data-theme="light"] .app-wrapper--home .homeV2__steps .stepCard {
+    background: #f9fbff;
+    border-color: rgba(15, 23, 42, 0.14);
+  }
+}
+
+/* v46: Home should begin directly below the shared navbar at every zoom level.
+   The previous desktop rule vertically centred the full overview inside the
+   available shell, which reintroduced a large empty band above the heading at
+   ordinary zoom. Keep the same responsive sizing, but anchor the content stack
+   to the top on desktop and reduce only the leading page inset on smaller views. */
+.app-wrapper--home .homeV2__container {
+  padding-block-start: 10px;
+}
+
+@media (min-width: 901px) {
+  .app-wrapper--home .homeV2__container {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-wrapper--home .homeV2__container {
+    padding-block-start: 12px;
+  }
+}

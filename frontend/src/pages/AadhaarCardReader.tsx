@@ -204,7 +204,10 @@ const AadhaarCardReader = () => {
   };
 
   return (
-    <div style={styles.wrapper}>
+    <div
+      className="document-reader-page document-reader-page--aadhaar"
+      style={styles.wrapper}
+    >
       <style>{`
   @keyframes shimmer {
     0% { background-position: -1000px 0; }
@@ -549,7 +552,9 @@ const Field = ({ label, value }: { label: string; value?: string }) => (
 
 const styles: Record<string, CSSProperties> = {
   wrapper: {
-    minHeight: "100vh",
+    minHeight: 0,
+    width: "100%",
+    flex: "1 0 auto",
     background: "var(--document-reader-page-bg)",
     padding: "60px 20px",
     fontFamily: "var(--tz-font-body)",

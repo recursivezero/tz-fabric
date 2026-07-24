@@ -150,6 +150,18 @@
   }
 }
 
+/* v45: PAN and Aadhaar readers previously nested their own 100vh minimum
+   inside the shared header/main/footer shell. That extra viewport pushed the
+   footer below the first screen even when the idle upload card had ample room.
+   Let the reader route fill the shell's available main area instead, while
+   preserving natural page growth for crop and result states. */
+.app-wrapper:not(.app-wrapper--chat) .document-reader-page {
+  box-sizing: border-box;
+  flex: 1 0 auto;
+  min-height: 0 !important;
+  width: 100%;
+}
+
 /* Chat prompt chips: no clipped side pills, no forced single-line overflow.
    Mobile gets a readable one-column stack, tablets use two columns and desktop
    preserves the established four-column row. */
@@ -376,4 +388,68 @@
     margin: 6px auto 0;
     padding-top: 12px;
   }
+}
+
+/* v46: Analysis uses the same footer component as every other route. Explicitly
+   remove route-level dimming and restore the shared footer contrast so the
+   footer is not washed out beneath the Analysis workspace/drawer layers. */
+.app-wrapper--analysis .site-footer {
+  position: relative;
+  z-index: 600;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate;
+}
+
+.app-wrapper--analysis
+  .site-footer
+  :is(
+    .footer__brand,
+    .footer__logo,
+    .footer__title,
+    .footer__desc,
+    .footer__github,
+    .footer__cols,
+    .footer__col,
+    .footer__col h4,
+    .footer__col a,
+    .footer__rule,
+    .footer__copyright,
+    .footer__copyright a
+  ) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+:root[data-theme="dark"] .app-wrapper--analysis .site-footer {
+  background: #0c1220 !important;
+  border-top-color: rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 -8px 28px rgba(2, 6, 23, 0.28) !important;
+  color: #d2d8e3 !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-footer
+  :is(.footer__title, .footer__col h4) {
+  color: #f1f5ff !important;
+  -webkit-text-fill-color: #f1f5ff !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-footer
+  :is(
+    .footer__desc,
+    .footer__github,
+    .footer__col a,
+    .footer__copyright,
+    .footer__copyright a
+  ) {
+  color: #c7d3e3 !important;
+  -webkit-text-fill-color: #c7d3e3 !important;
 }
