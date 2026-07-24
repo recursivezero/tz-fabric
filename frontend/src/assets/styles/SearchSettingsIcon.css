@@ -426,3 +426,113 @@
     gap: 6px;
   }
 }
+
+/* v41: mobile Search containment and control alignment.
+   Keep the settings trigger in normal Search flow at stacked widths, give the
+   post-result workspace an explicit scroll owner, and make the two image-mode
+   replacement actions use identical dimensions. Search state and handlers are
+   unchanged. */
+@media (max-width: 900px) {
+  .fabric-search .fabric-search__top-bar {
+    box-sizing: border-box;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 2px 6px;
+  }
+
+  .fabric-search .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .fabric-search__settings {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+  }
+
+  .fabric-search.fabric-search--has-results {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 100%;
+    height: calc(100dvh - var(--site-header-height, 64px));
+    min-height: 0;
+    max-height: calc(100dvh - var(--site-header-height, 64px));
+    padding-top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .fabric-search.fabric-search--has-results .search-bar--sticky {
+    position: sticky;
+    top: 0;
+    z-index: 210;
+  }
+
+  .fabric-search.fabric-search--has-results .fabric-search__body--results {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: max-content;
+    padding-bottom: max(84px, calc(64px + env(safe-area-inset-bottom)));
+    overflow: visible;
+  }
+
+  .fabric-search.fabric-search--has-results .results-section,
+  .fabric-search.fabric-search--has-results .result-grid--full {
+    min-height: max-content;
+    overflow: visible;
+  }
+
+  .fabric-search .search-bar__image-row {
+    min-width: 0;
+  }
+
+  .fabric-search .search-bar__image-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    width: min(100%, 290px);
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .fabric-search .search-bar__image-actions .search-bar__image-action {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 10px;
+    justify-content: center;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .fabric-search .search-bar__inner {
+    flex-wrap: wrap;
+  }
+
+  .fabric-search .search-bar__image-row {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .fabric-search .search-bar__image-actions {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .fabric-search .search-bar__inner > .btn--ghost {
+    margin-left: auto;
+  }
+}
