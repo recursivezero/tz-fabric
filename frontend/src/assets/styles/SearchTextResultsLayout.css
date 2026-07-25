@@ -16,8 +16,13 @@
   margin-inline: auto;
 }
 
+/* v54: text-search results use the same centred canvas as the Search hero,
+   including at zoomed-out effective desktop widths. */
 .fabric-search.fabric-search--text-results .results-section {
-  margin-top: clamp(34px, 5vh, 64px);
+  box-sizing: border-box;
+  width: min(100%, 1060px);
+  max-width: 1060px;
+  margin: clamp(34px, 5vh, 64px) auto 0;
 }
 
 .fabric-search.fabric-search--text-results .fabric-search__error,

@@ -45,7 +45,6 @@ export default function Search() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isTextSearch, setIsTextSearch] = useState(false);
   const [page, setPage] = useState(1);
-  const [badImages, setBadImages] = useState<Set<string>>(new Set());
 
   // Crop / drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -168,7 +167,6 @@ export default function Search() {
     setDrawerOpen(true);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
     setNotification(null);
-    setBadImages(new Set());
     setCroppedPreviewUrl(null);
     setFile(null);
     setIsTextSearch(false);
@@ -311,7 +309,6 @@ export default function Search() {
     clear();
     setPage(1);
     setNotification(null);
-    setBadImages(new Set());
     setIsTextSearch(false);
     if (rawImageUrl) {
       try {
@@ -334,11 +331,7 @@ export default function Search() {
 
   // ── Results helpers ────────────────────────────────────────────────────────
 
-  const visibleResults = useMemo(
-    () =>
-      results.filter((item) => !item.imageSrc || !badImages.has(item.imageSrc)),
-    [results, badImages],
-  );
+  const visibleResults = results;
 
   const paginatedResults = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -625,7 +618,6 @@ export default function Search() {
     setCroppedPreviewUrl(URL.createObjectURL(croppedFile));
     setDrawerOpen(false);
     setPage(1);
-    setBadImages(new Set());
     setIsTextSearch(false);
     setNotification(null);
     // try { await runImageSearch(croppedFile, selectedCategories, searchLimit); }
@@ -790,9 +782,6 @@ export default function Search() {
             onNext={safeNext}
             onZoom={openLightbox}
             isTextSearch={isTextSearch}
-            onBadImage={(src) =>
-              setBadImages((prev) => new Set([...prev, src]))
-            }
           />
         )}
 

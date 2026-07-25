@@ -1355,3 +1355,32 @@
     bottom: 16px;
   }
 }
+
+
+/* v54: keep backend Search matches visible even when an individual remote
+   preview cannot load. The card remains in the result count and receives a
+   neutral placeholder instead of being removed and triggering a false
+   "No results found" state. Search requests and result data are unchanged. */
+.fabric-search .result-card__image-fallback {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px;
+  color: var(--tz-ui-text-muted, var(--color-muted));
+  background: var(--tz-ui-page, var(--color-bg, #0b1020));
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.fabric-search .result-card__image-fallback > span:first-child {
+  font-size: 24px;
+  line-height: 1;
+}

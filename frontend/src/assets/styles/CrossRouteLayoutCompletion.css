@@ -453,3 +453,13 @@
   color: #c7d3e3 !important;
   -webkit-text-fill-color: #c7d3e3 !important;
 }
+
+/* v53: keep the fixed Analysis sample drawer above the shared footer. The
+   Analysis page deliberately isolates its internal layers, so the footer's
+   route-level z-index could otherwise cover the drawer near the viewport
+   bottom. Lift only the Analysis main-content stacking context; document flow,
+   footer placement, drawer scrolling and all component behavior are unchanged. */
+.app-wrapper--analysis .main-content {
+  position: relative;
+  z-index: 610;
+}

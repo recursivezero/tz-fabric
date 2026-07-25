@@ -13,7 +13,6 @@ interface ResultsSectionProps {
   onPrev: () => void;
   onNext: () => void;
   onZoom: (src: string, caption: string) => void;
-  onBadImage: (src: string) => void;
 }
 
 export default function ResultsSection({
@@ -24,7 +23,6 @@ export default function ResultsSection({
   onPrev,
   onNext,
   onZoom,
-  onBadImage,
 }: ResultsSectionProps) {
   return (
     <div className="results-section">
@@ -36,11 +34,10 @@ export default function ResultsSection({
       <div className="result-grid result-grid--full">
         {paginatedResults.map((item, idx: number) => (
           <ResultCard
-            key={idx}
+            key={`${item.imageSrc}-${idx}`}
             item={item}
             index={idx}
             onZoom={onZoom}
-            onBadImage={onBadImage}
           />
         ))}
       </div>
