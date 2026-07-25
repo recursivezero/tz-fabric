@@ -3796,3 +3796,70 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v47: use the available desktop canvas instead of leaving large side gutters.
+   The Search body, preview workspace, sticky controls and results share one
+   responsive content width so inputs, sliders, categories, panes and cards grow
+   together rather than stretching only their outer borders. Mobile/tablet
+   breakpoints remain unchanged. */
+@media (min-width: 1101px) {
+  .fabric-search:not(.fabric-search--has-results) .fabric-search__body,
+  .fabric-search.fabric-search--previewing .fabric-search__body {
+    box-sizing: border-box;
+    width: min(1600px, calc(100vw - 64px));
+    max-width: min(1600px, calc(100vw - 64px));
+    padding-inline: clamp(24px, 2.5vw, 44px);
+  }
+
+  .fabric-search .hero__search-controls {
+    width: 100%;
+    max-width: none;
+  }
+
+  .fabric-search .hero__search-row,
+  .fabric-search .hero__upload-btn,
+  .fabric-search .hero__categories,
+  .fabric-search .hero__categories .category-picker,
+  .fabric-search .image-preview,
+  .fabric-search .image-preview__options,
+  .fabric-search .image-preview__search-row {
+    width: 100%;
+  }
+
+  .fabric-search
+    :is(
+      .hero__categories,
+      .image-preview__options
+    )
+    .category-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(10px, 1vw, 16px);
+  }
+
+  .fabric-search
+    :is(
+      .hero__categories,
+      .image-preview__options
+    )
+    .category-picker__chip {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .fabric-search.fabric-search--previewing .image-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(24px, 2.2vw, 38px);
+  }
+
+  .fabric-search .search-bar__inner,
+  .fabric-search .search-bar__filters,
+  .fabric-search .results-section {
+    box-sizing: border-box;
+    width: min(1600px, calc(100vw - 64px));
+    max-width: min(1600px, calc(100vw - 64px));
+    margin-inline: auto;
+  }
+}
