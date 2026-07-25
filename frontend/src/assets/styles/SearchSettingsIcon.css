@@ -1306,3 +1306,52 @@
     bottom: 10px;
   }
 }
+
+
+/* v52: add an optical safety inset below Recrop so its shadow and rounded
+   edge no longer appear attached to the Original Image border, and widen only
+   the post-crop Search CTA slightly. Presentation only; crop and Search
+   handlers, disabled states and alignment remain unchanged. */
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  bottom: 28px;
+}
+
+.fabric-search .image-preview__search-row > .btn--primary {
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+  padding-inline: 16px;
+  flex-basis: 108px;
+}
+
+@media (max-width: 900px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 20px;
+  }
+
+  .fabric-search .image-preview__search-row > .btn--primary {
+    width: 104px;
+    min-width: 104px;
+    max-width: 104px;
+    padding-inline: 14px;
+    flex-basis: 104px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 16px;
+  }
+}
