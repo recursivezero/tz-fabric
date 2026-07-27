@@ -6,6 +6,7 @@ import Header from "../components/ImageDescriptorHeader";
 import ImagePreview from "../components/ImagePreviewPanel";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
 import useImageAnalysis from "../hooks/useImageAnalysis";
+import { logger } from "../utils/logger";
 import "@/assets/styles/ImageDescription.css";
 
 const ImageDescription = () => {
@@ -55,7 +56,7 @@ const ImageDescription = () => {
       const res = handleRunAnalysis?.(file, mode);
       if (res && typeof res.then === "function") await res;
     } catch (err) {
-      console.error("Error in wrappedRunAnalysis:", err);
+      logger.error("Analysis request failed", err);
     }
   };
 

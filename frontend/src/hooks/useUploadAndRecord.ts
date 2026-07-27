@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FULL_API_URL } from "../constants";
 import { fetchWithTimeout } from "../utils/http";
+import { logger } from "../utils/logger";
 
 const SUBMIT_SERVER_ERROR =
   "Unable to connect to the server, please try after some time.";
@@ -168,7 +169,7 @@ export const useUploadAndRecord = () => {
           return;
         }
       } catch (e) {
-        console.warn("Web Audio API failed, fallback to <audio>.", e);
+        logger.warn("Web Audio API failed; using audio-element fallback", e);
       }
 
       const tempUrl = URL.createObjectURL(file);
@@ -275,7 +276,7 @@ export const useUploadAndRecord = () => {
       }, 1000);
     } catch (error) {
       errorNotification("error", "Microphone access denied or error occurred.");
-      console.error("Error accessing microphone:", error);
+      logger.error("Microphone access failed", error);
       setIsRecording(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -316,10 +317,9 @@ export const useUploadAndRecord = () => {
         } | null;
         const serverDetail = getServerMessage(data);
         const message = SUBMIT_SERVER_ERROR;
-        console.error("Submission failed:", {
+        logger.error("Submission request failed", undefined, {
           status: res.status,
-          serverDetail,
-          data,
+          hasServerDetail: Boolean(serverDetail),
         });
         setError(message);
         setNotification({ message, type: "error" });
@@ -340,7 +340,7 @@ export const useUploadAndRecord = () => {
         message: SUBMIT_SERVER_ERROR,
         type: "error",
       });
-      console.error("Submission error:", error);
+      logger.error("Submission request failed", error);
       return false;
     } finally {
       setLoading(false);

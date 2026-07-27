@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import type { RefObject } from "react";
 import type { Message } from "../services/chat_api";
 import MessageBubble from "./MessageBubble";
+import { logger } from "../utils/logger";
 import "@/assets/styles/Messages.css";
 
 interface Props {
@@ -259,7 +260,7 @@ export default function MessageList({
                           try {
                             await confirmMoreYes?.();
                           } catch (err) {
-                            console.error("confirmMoreYes error", err);
+                            logger.error("Follow-up confirmation failed", err);
                           }
                         }}
                       >
@@ -273,7 +274,7 @@ export default function MessageList({
                           try {
                             confirmMoreNo?.();
                           } catch (err) {
-                            console.error("confirmMoreNo error", err);
+                            logger.error("Follow-up rejection failed", err);
                           }
                         }}
                       >

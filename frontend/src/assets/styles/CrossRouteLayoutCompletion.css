@@ -454,12 +454,13 @@
   -webkit-text-fill-color: #c7d3e3 !important;
 }
 
-/* v53: keep the fixed Analysis sample drawer above the shared footer. The
-   Analysis page deliberately isolates its internal layers, so the footer's
-   route-level z-index could otherwise cover the drawer near the viewport
-   bottom. Lift only the Analysis main-content stacking context; document flow,
-   footer placement, drawer scrolling and all component behavior are unchanged. */
-.app-wrapper--analysis .main-content {
-  position: relative;
-  z-index: 610;
+/* v55: the desktop drawer is now constrained by the Analysis page itself, so
+   it no longer needs a route-wide stacking override. Keep the original
+   stacking protection only for the <=980px full-screen sample sheet, where the
+   drawer intentionally remains fixed above the route while it is open. */
+@media (max-width: 980px) {
+  .app-wrapper--analysis .main-content {
+    position: relative;
+    z-index: 610;
+  }
 }

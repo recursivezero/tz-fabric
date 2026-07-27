@@ -1,3 +1,5 @@
+import { logger } from "@/utils/logger";
+
 const rawBaseUrl = import.meta.env.VITE_API_URL;
 const rawApiPrefix = import.meta.env.VITE_API_PREFIX;
 const useDirectApiInDev = import.meta.env.VITE_USE_DIRECT_API === "true";
@@ -27,10 +29,11 @@ export const BASE_URL = import.meta.env.DEV && !useDirectApiInDev
 export const API_PREFIX = normalizeApiPrefix(rawApiPrefix);
 export const FULL_API_URL = `${BASE_URL}${API_PREFIX}`;
 
-if (import.meta.env.DEV) {
-  console.log('Dev mode');
-  console.log({ BASE_URL, API_PREFIX, FULL_API_URL });
-}
+logger.debug("API configuration resolved", {
+  baseUrl: BASE_URL || "same-origin",
+  apiPrefix: API_PREFIX,
+  fullApiUrl: FULL_API_URL,
+});
 
 export const NAVBAR_MENU = [
   { name: "home", path: "/" },

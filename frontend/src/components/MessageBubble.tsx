@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import type { Message } from "../services/chat_api";
 import useTypingEffect from "../utils/typingEffect";
 import { normalizeMarkdown } from "../utils/normalizeMarkdown";
+import { logger } from "../utils/logger";
 
 type Props = {
   role: Message["role"];
@@ -100,7 +101,7 @@ export default function MessageBubble({
         );
       }, 1300);
     } catch (err) {
-      console.error("copy failed", err);
+      logger.error("Message copy failed", err);
     }
   };
 

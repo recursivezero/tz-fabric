@@ -1143,3 +1143,29 @@
     justify-self: center;
   }
 }
+
+/* v55: keep the desktop sample drawer inside the Analysis document flow.
+ * The previous stacking-only fix placed the Analysis workspace above the
+ * footer, but the fixed drawer could still occupy the same viewport area as
+ * the footer. On desktop, reserve a complete main viewport for the open
+ * workspace and anchor the drawer to that workspace instead of the browser
+ * viewport. The footer therefore starts after the drawer's containing block
+ * and cannot cover its lower cards or scrollbar. */
+@media (min-width: 981px) {
+  .app-wrapper--analysis .home-container.analysis-page.drawer-open {
+    position: relative;
+    min-height: calc(100dvh - var(--site-header-height, 56px));
+    height: auto;
+    overflow: visible;
+  }
+
+  .app-wrapper--analysis
+    .home-container.analysis-page.drawer-open
+    > .drawer-panel {
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    height: auto;
+    max-height: none;
+  }
+}

@@ -5,6 +5,7 @@ import "@/assets/styles/Composer.css";
 import Loader from "./Loader";
 import SuggestionChips from "./SuggestionChips";
 import { formatFileName } from "../utils/formatFilename";
+import { logger } from "../utils/logger";
 
 type Props = {
   value: string;
@@ -26,6 +27,30 @@ type Props = {
 };
 
 const MAX_SECONDS = 60;
+
+const closeAudioContextSafely = (context: AudioContext) => {
+  try {
+    void context.close().catch(() => undefined);
+  } catch {
+    // Best-effort cleanup; the context may already be closed.
+  }
+};
+
+const revokeObjectUrlSafely = (url: string) => {
+  try {
+    URL.revokeObjectURL(url);
+  } catch {
+    // Best-effort cleanup; the object URL may already be revoked.
+  }
+};
+
+const stopMediaRecorderSafely = (recorder: MediaRecorder) => {
+  try {
+    recorder.stop();
+  } catch {
+    // Best-effort cleanup; the recorder may already be inactive.
+  }
+};
 
 type Mode = "free" | "analysis" | "submitName" | "searchK";
 
@@ -184,7 +209,7 @@ export default function Composer({
       const decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
       const duration = decoded.duration;
       if (duration <= MAX_SECONDS) {
-        ac.close().catch(() => { });
+        closeAudioContextSafely(ac);
         return file;
       }
       const sampleRate = decoded.sampleRate;
@@ -200,10 +225,10 @@ export default function Composer({
       const base = file.name.replace(/\.\w+$/, "");
       const newName = `${base} (trimto1min).wav`;
       const trimmedFile = new File([wavBlob], newName, { type: "audio/wav" });
-      ac.close().catch(() => { });
+      closeAudioContextSafely(ac);
       return trimmedFile;
     } catch (err) {
-      try { ac.close().catch(() => { }); } catch (e) { console.log(e) }
+      closeAudioContextSafely(ac);
       throw err;
     }
   };
@@ -239,13 +264,13 @@ export default function Composer({
     onUpload?.(file);
     setImageMeta({ name: file.name, size: formatSize(file.size) });
     // parent probably sets previewUrl; we still revoke local URL to avoid leak
-    try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
+    revokeObjectUrlSafely(url);
     setPendingImage(null);
   };
 
   const cancelImageUpload = () => {
     if (pendingImage) {
-      try { URL.revokeObjectURL(pendingImage.url); } catch (e) { console.log(e) }
+      revokeObjectUrlSafely(pendingImage.url);
     }
     setPendingImage(null);
   };
@@ -262,7 +287,7 @@ export default function Composer({
     audioEl.onloadedmetadata = async () => {
       try {
         const duration = audioEl.duration;
-        try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
+        revokeObjectUrlSafely(url);
         if (duration > MAX_SECONDS + 0.1) {
           // attempt to trim
           try {
@@ -275,7 +300,7 @@ export default function Composer({
               trimmed: true,
             });
           } catch (err) {
-            console.error("trimAudioFile error", err);
+            logger.error("Audio trimming failed", err);
             setError("Audio is too long and could not be trimmed. Try a shorter clip.");
             onClearAudio?.();
           }
@@ -285,7 +310,7 @@ export default function Composer({
           setError(null);
         }
       } catch (err) {
-        console.error("confirmAudioUpload error", err);
+        logger.error("Audio upload confirmation failed", err);
         setError("Failed to upload audio.");
       } finally {
         setPendingAudio(null);
@@ -293,7 +318,7 @@ export default function Composer({
     };
 
     audioEl.onerror = () => {
-      try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
+      revokeObjectUrlSafely(url);
       setError("Could not read audio file. Try again with a supported format.");
       setPendingAudio(null);
     };
@@ -301,7 +326,7 @@ export default function Composer({
 
   const cancelAudioUpload = () => {
     if (pendingAudio) {
-      try { URL.revokeObjectURL(pendingAudio.url); } catch (e) { console.log(e) }
+      revokeObjectUrlSafely(pendingAudio.url);
     }
     setPendingAudio(null);
   };
@@ -389,7 +414,7 @@ export default function Composer({
           onAudioUpload?.(file);
           setAudioMeta({ name: file.name, size: formatSize(file.size) });
         } catch (ex) {
-          console.error("onstop processing error", ex);
+          logger.error("Recorded audio processing failed", ex);
           setError("Failed to process recording.");
         } finally {
           if (streamRef.current) {
@@ -422,7 +447,7 @@ export default function Composer({
         }
       }, 250);
     } catch (err: unknown) {
-      console.error("startRecording err", err);
+      logger.error("Audio recording could not start", err);
       setError(errorMessage(err, "Could not access microphone."));
     }
   };
@@ -432,7 +457,7 @@ export default function Composer({
       const mr = mediaRecorderRef.current;
       if (mr && mr.state !== "inactive") mr.stop();
     } catch (err) {
-      console.error("stopRecording err", err);
+      logger.error("Audio recording could not stop", err);
       setError("Failed to stop recording.");
     } finally {
       setIsRecording(false);
@@ -449,7 +474,7 @@ export default function Composer({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        try { mediaRecorderRef.current.stop(); } catch (e) { console.log(e)}
+        stopMediaRecorderSafely(mediaRecorderRef.current);
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => { t.stop(); });
@@ -457,8 +482,8 @@ export default function Composer({
       }
       startTimeRef.current = null;
       // revoke any pending object URLs on unmount
-      if (pendingImage) try { URL.revokeObjectURL(pendingImage.url); } catch (e) { console.log(e) }
-      if (pendingAudio) try { URL.revokeObjectURL(pendingAudio.url); } catch (e) { console.log(e) }
+      if (pendingImage) revokeObjectUrlSafely(pendingImage.url);
+      if (pendingAudio) revokeObjectUrlSafely(pendingAudio.url);
     };
   }, [pendingImage, pendingAudio]);
 
@@ -706,7 +731,7 @@ export default function Composer({
                         e.preventDefault();
                         e.stopPropagation();
                         if (typeof stopGenerating === "function") stopGenerating();
-                        else console.warn("stopGenerating not provided");
+                        else logger.warn("Stop-generation handler is unavailable");
                       }}
                     >
                       ⏹ Stop Generating

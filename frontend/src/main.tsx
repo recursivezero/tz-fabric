@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import { logger } from "@/utils/logger";
 import "./index.css";
 import "@/assets/styles/_makeover.css";
 import "@/assets/styles/SeniorUiFixes.css";
@@ -27,5 +28,5 @@ if (rootElement) {
     </React.StrictMode>,
   );
 } else {
-  console.error("Root element not found");
+  logger.error("Root element not found");
 }

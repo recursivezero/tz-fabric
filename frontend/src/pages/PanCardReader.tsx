@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
 import { ensureOk, fetchWithTimeout } from "@/utils/http";
+import { logger } from "@/utils/logger";
 
 type PanResult = {
   type: string;
@@ -160,7 +161,7 @@ const PanCardReader = () => {
       const data = await res.json();
       setResult(data);
     } catch (error) {
-      console.error("Error processing card:", error);
+      logger.error("PAN card processing failed", error);
       setError("Failed to process PAN card. Please try again.");
     } finally {
       setLoading(false);

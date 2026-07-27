@@ -79,8 +79,6 @@ const ImagePreviewPanel = ({
     setShowConfirm(false);
   };
 
-  // console.log("ImagePreviewPanel render — showButtons:", showButtons, "hasImage:", hasImage, "canRun:", canRun);
-
   return (
     <div className="image-preview-container">
       {showButtons && (

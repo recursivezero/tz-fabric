@@ -2,6 +2,7 @@ import { useState } from "react";
 import { USER_FRIENDLY_SERVER_ERROR } from "./searchConfig";
 import { callDbEndpoint } from "./searchUtils";
 import type { DbOp, NotificationState } from "./types";
+import { logger } from "../../utils/logger";
 
 export default function DbControlPanel() {
   const [activeOp, setActiveOp] = useState<DbOp>(null);
@@ -15,7 +16,7 @@ export default function DbControlPanel() {
       const msg = await callDbEndpoint(op);
       setNotification({ message: msg, type: "success" });
     } catch (e: unknown) {
-      console.error("Database operation failed:", e);
+      logger.error("Database operation failed", e);
       setNotification({ message: USER_FRIENDLY_SERVER_ERROR, type: "error" });
     } finally {
       setActiveOp(null);

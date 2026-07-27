@@ -6,6 +6,7 @@ import MessageList from "../components/MessageList";
 import TypingIndicator from "../components/TypingIndicator";
 import useChat from "../hooks/chat";
 import { fetchWithTimeout } from "../utils/http";
+import { logger } from "../utils/logger";
 import "@/assets/styles/FabricChat.css";
 import "@/assets/styles/ChatRouteLayoutStability.css";
 
@@ -143,7 +144,7 @@ export default function Chat() {
           reader.readAsDataURL(blob);
         });
       } catch (err) {
-        console.error("fileToDataUrl failed", err);
+        logger.error("File export conversion failed", err);
         return null;
       }
     },
@@ -212,7 +213,7 @@ export default function Chat() {
       const filename = `chat-${new Date().toISOString().replace(/[:.]/g, "-")}.pdf`;
       doc.save(filename);
     } catch (err) {
-      console.error("downloadChat (PDF) failed:", err);
+      logger.error("Chat PDF export failed", err);
     }
   }, [messages, uploadedPreviewUrl, uploadedAudioUrl, fileToDataUrl]);
 

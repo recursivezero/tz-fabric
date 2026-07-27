@@ -8,6 +8,7 @@ import {
 import { FULL_API_URL } from "../constants";
 import { extractFilenameFromText } from "../utils/extractFilenameFromText";
 import { fetchWithTimeout } from "../utils/http";
+import { logger } from "../utils/logger";
 
 type Status = "idle" | "sending" | "error" | "validating";
 
@@ -248,13 +249,11 @@ export default function useChat() {
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
-          console.log(
-            "[timing] form:",
-            (tForm - t0).toFixed(0),
-            "ms | request:",
-            (tResp - tForm).toFixed(0),
-            "ms",
-          );
+          logger.debug("Image validation request timing", {
+            formMs: Math.round(tForm - t0),
+            requestMs: Math.round(tResp - tForm),
+            status: resp.status,
+          });
           return {
             ok: false as const,
             reason: `Validation service error: ${resp.status} ${txt}`,
@@ -264,15 +263,12 @@ export default function useChat() {
         const json: unknown = await resp.json().catch(() => ({}));
         const tJson = performance.now();
 
-        console.log(
-          "[timing] form:",
-          (tForm - t0).toFixed(0),
-          "ms | request:",
-          (tResp - tForm).toFixed(0),
-          "ms | json:",
-          (tJson - tResp).toFixed(0),
-          "ms",
-        );
+        logger.debug("Image validation request timing", {
+          formMs: Math.round(tForm - t0),
+          requestMs: Math.round(tResp - tForm),
+          parseMs: Math.round(tJson - tResp),
+          status: resp.status,
+        });
 
         const valid =
           typeof json === "object" &&
@@ -287,7 +283,7 @@ export default function useChat() {
           reason: "Image did not pass fabric validation.",
         };
       } catch (err: unknown) {
-        console.error("validateImageFile error:", err);
+        logger.error("Image validation request failed", err);
         return {
           ok: false as const,
           reason: errorMsg(err, "Validation request failed"),
@@ -325,7 +321,7 @@ export default function useChat() {
         setError("");
         setPendingAction(null);
       } catch (err: unknown) {
-        console.error("handleImageUpload error:", err);
+        logger.error("Image upload validation failed", err);
         setStatus("idle");
         setError(errorMsg(err, "Failed to upload image for validation."));
       }
@@ -411,8 +407,6 @@ export default function useChat() {
   const handleResponse = useCallback(
     (res: ChatResponse) => {
       const rc = res as RichChatResponse;
-      console.debug("[useChat] handleResponse rc:", rc);
-
       setMessages((prev) => {
         const next = [...prev];
 
@@ -453,7 +447,9 @@ export default function useChat() {
                   return `[tool result: ${Object.keys(obj).join(", ")}]`;
                 }
               } catch (e) {
-                console.warn("Failed to parse JSON from bot message:", e);
+                logger.debug("Bot message was not JSON", {
+                  error: e instanceof Error ? e.message : "Unknown parse error",
+                });
                 // not parseable JSON - try TextContent extraction below
               }
             }
@@ -474,7 +470,9 @@ export default function useChat() {
                   return `[tool result: ${Object.keys(innerObj).join(", ")}]`;
                 }
               } catch (e) {
-                console.warn("Failed to parse JSON from TextContent:", e);
+                logger.debug("TextContent was not JSON", {
+                  error: e instanceof Error ? e.message : "Unknown parse error",
+                });
                 return normalizeLLMText(inner);
               }
             }
@@ -510,7 +508,7 @@ export default function useChat() {
             // otherwise: normal text
             return normalizeLLMText(s);
           } catch (e) {
-            console.error("Error in sanitizeBotString:", e);
+            logger.error("Failed to sanitise assistant response", e);
             return "[tool returned non-displayable result]";
           }
         };
@@ -702,7 +700,7 @@ export default function useChat() {
       setMessages((prev) => [...prev, { role: "assistant", content: clean }]);
       setCurrentResponse(clean);
     } catch (err) {
-      console.error("[rejectAction error]", err);
+      logger.error("Alternative response request failed", err);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Failed to get a new alternative." },
@@ -840,7 +838,7 @@ export default function useChat() {
         return payload;
       } catch (err) {
         if (!(err instanceof DOMException && err.name === "AbortError")) {
-          console.error("[searchSimilar] error:", err);
+          logger.error("Similar-image search failed", err);
           setError(errorMsg(err, "Search failed"));
         }
         return null;
@@ -882,14 +880,11 @@ export default function useChat() {
       if (!forceApi) setPendingAction(null);
 
       if (status === "sending") {
-        console.warn("[send] early return: status === 'sending'");
+        logger.debug("Send ignored because a request is already in progress");
         return;
       }
       if (!text && !uploadedImageFile && !uploadedAudioFile) {
-        console.warn(
-          "[send] early return: nothing to send (no text or media). raw:",
-          JSON.stringify(raw),
-        );
+        logger.debug("Send ignored because there is no text or media");
         return;
       }
 
@@ -942,7 +937,7 @@ export default function useChat() {
               {
                 role: "assistant",
                 content:
-                  "Search did not start (see console). Please try again.",
+                  "Search did not start. Please try again.",
               },
             ]);
             return;
@@ -961,16 +956,6 @@ export default function useChat() {
           }
 
           try {
-            try {
-              const debug: Record<string, unknown> = {};
-              for (const [k, v] of form.entries()) {
-                if (v instanceof File)
-                  debug[k] = { name: v.name, type: v.type, size: v.size };
-                else debug[k] = String(v);
-              }
-              console.log("[UPLOAD DEBUG]", debug);
-            } catch { /* Best-effort cleanup or browser storage operation. */ }
-
             const upResp = await withAbort(
               fetchWithTimeout(
                 `${FULL_API_URL}/uploads/tmp_media`,
@@ -1068,7 +1053,7 @@ export default function useChat() {
             if (abortRef.current) abortRef.current = null;
             return;
           } catch (err: unknown) {
-            console.error("[upload→agent] error:", err);
+            logger.error("Media upload or agent request failed", err);
             setStatus("error");
             setError(errorMsg(err, "Failed to upload/process media."));
           } finally {
@@ -1150,7 +1135,7 @@ export default function useChat() {
           setMorePrompt({ question: String(lastUser), prompt: content });
         }
       } catch (e) {
-        console.error("onAssistantRendered error", e);
+        logger.error("Assistant follow-up detection failed", e);
       }
     },
     [messages, morePrompt],

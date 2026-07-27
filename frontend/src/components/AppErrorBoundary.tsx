@@ -1,5 +1,6 @@
 import type { ErrorInfo, ReactNode } from "react";
 import { Component } from "react";
+import { logger } from "../utils/logger";
 
 type Props = {
   children: ReactNode;
@@ -29,9 +30,9 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    if (import.meta.env.DEV) {
-      console.error("Route render failed", error, info.componentStack);
-    }
+    logger.error("Route render failed", error, {
+      componentStack: info.componentStack ?? undefined,
+    });
   }
 
   componentDidUpdate(previousProps: Props) {

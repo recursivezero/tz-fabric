@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
 import "@/assets/styles/DescriptionBox.css";
 import Loader from "./Loader";
+import { logger } from "@/utils/logger";
 
 type DescriptionBoxProps = {
   isValidImage: boolean | null;
@@ -62,15 +63,12 @@ const DescriptionBox = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.warn("Copy failed", err);
+      logger.warn("Description copy failed", err);
     }
   };
 
   // Always render the component (so nav is present). We'll show placeholder content
   // if there are no responses and not loading.
-  // Debug log (remove if you want)
-  // console.log("DescriptionBox render", { showResults, responsesLength: responses?.length, currentIndex, typedText });
-
   const hasResponses = Array.isArray(responses) && responses.length > 0;
 
   return (

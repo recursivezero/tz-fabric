@@ -6,6 +6,7 @@ import {
   validateImageAPI,
 } from "../services/analyze_api.ts";
 import { fetchImageAsFile } from "../utils/image-helper.ts";
+import { logger } from "../utils/logger";
 import {
   ANALYSIS_RESPONSE_COUNT,
   toBackendResponseIndex,
@@ -140,7 +141,7 @@ const useImageAnalysis = () => {
         setCacheKey((response as { cache_key?: string })?.cache_key ?? null);
       } catch (err) {
         if (runId !== latestRunIdRef.current) return;
-        console.error(`${mode} analysis failed:`, err);
+        logger.error(`${mode} analysis failed`, err);
         const message =
           err instanceof Error ? err.message : `${mode} analysis failed.`;
         setValidationMessage(message || `${mode} analysis failed.`);
@@ -171,7 +172,7 @@ const useImageAnalysis = () => {
           setUploadedImageUrl(imageUrl);
           await handleRunAnalysis(file, modeParam);
         } catch (err) {
-          console.error("Failed to auto-run analysis from query params:", err);
+          logger.error("Failed to auto-run analysis from query parameters", err);
         }
       })();
     }
@@ -244,7 +245,7 @@ const useImageAnalysis = () => {
       replaceUploadedImageUrl(objUrl);
       replaceSampleImageUrl(objUrl);
     } catch (err) {
-      console.error("Short analysis failed:", err);
+      logger.error("Short analysis failed", err);
       setCanUpload(true);
       setAnalysisPopupMessage("Upload a valid fabric image.");
     } finally {
@@ -277,8 +278,8 @@ const useImageAnalysis = () => {
           );
         }
       } catch (error: unknown) {
-        console.warn(
-          "Image validation failed; allowing analysis to continue.",
+        logger.warn(
+          "Image validation failed; allowing analysis to continue",
           error,
         );
         // Validation is only a guardrail. Do not block real fabric/product images
@@ -377,7 +378,7 @@ const useImageAnalysis = () => {
         );
       }
     } catch (err) {
-      console.error("Next response fetch failed:", err);
+      logger.error("Next response fetch failed", err);
       setAnalysisPopupMessage(
         "Unable to generate another response. Please try again.",
       );

@@ -5,6 +5,7 @@ import Cropper from "react-easy-crop";
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
 import { ensureOk, fetchWithTimeout } from "@/utils/http";
+import { logger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
 
 /* =======================
@@ -174,7 +175,7 @@ const AadhaarCardReader = () => {
       const data = await res.json();
       setResult(data);
     } catch (error) {
-      console.error("Error processing Aadhaar:", error);
+      logger.error("Aadhaar card processing failed", error);
       setError("Failed to process Aadhaar card. Please try again.");
     } finally {
       setLoading(false);
