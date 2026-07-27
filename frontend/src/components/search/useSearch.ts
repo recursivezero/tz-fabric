@@ -39,7 +39,6 @@ export function useSearch() {
       limit = 20,
       preserveResultsOnError = false,
     ) => {
-      console.log(input);
       requestRef.current?.abort();
       const controller = new AbortController();
       requestRef.current = controller;
