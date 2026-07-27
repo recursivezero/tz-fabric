@@ -11,5 +11,5 @@ export const CATEGORIES = [
 
 export const API_BASE = FULL_API_URL;
 export const ASSET_BASE = BASE_URL;
-export const CDN_BASE = (import.meta.env.VITE_AWS_PUBLIC_URL ?? "https://cdn.threadzip.com").replace(/\/$/, "");
+export const CDN_BASE = (import.meta.env.VITE_AWS_PUBLIC_URL ?? "https://assets.threadzip.com").replace(/\/$/, "");
 export const USER_FRIENDLY_SERVER_ERROR = "Unable to connect to the server, please try after some time.";

@@ -54,7 +54,7 @@ const applyErrorTextContrast = (root: ParentNode): void => {
 
   root
     .querySelectorAll<HTMLElement>(ERROR_TEXT_SELECTOR)
-    .forEach((errorBox) => errorBoxes.add(errorBox));
+    .forEach((errorBox) => {errorBoxes.add(errorBox)});
 
   errorBoxes.forEach(setErrorTextWhite);
 };
@@ -120,7 +120,7 @@ const App: React.FC = () => {
       left: 0,
       behavior: "auto",
     });
-  }, [isChatRoute, location.pathname]);
+  }, [isChatRoute]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
