@@ -7,6 +7,7 @@ const SITE_ORIGIN = "https://pro.threadzip.com";
 type RouteMetadata = {
   title: string;
   description: string;
+  robots?: "index,follow" | "noindex,nofollow";
 };
 
 const ROUTE_METADATA: Record<string, RouteMetadata> = {
@@ -53,6 +54,11 @@ const ROUTE_METADATA: Record<string, RouteMetadata> = {
     title: "Contact | FabricAI",
     description: "Contact the FabricAI team.",
   },
+  "/admin/lancedb": {
+    title: "LanceDB Explorer | FabricAI Admin",
+    description: "Private read-only LanceDB inspection for administrators.",
+    robots: "noindex,nofollow",
+  },
 };
 
 const FALLBACK_METADATA: RouteMetadata = {
@@ -90,6 +96,10 @@ export function useRouteMetadata() {
     setMetaContent('meta[name="twitter:title"]', metadata.title);
     setMetaContent('meta[name="twitter:description"]', metadata.description);
     setMetaContent('meta[name="twitter:url"]', canonicalUrl);
+    setMetaContent(
+      'meta[name="robots"]',
+      metadata.robots ?? "index,follow",
+    );
 
     const canonical = document.querySelector<HTMLLinkElement>(
       'link[rel="canonical"]',

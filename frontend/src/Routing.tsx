@@ -43,6 +43,7 @@ const ContactUs = lazyRoute(() =>
 const Reader = lazyRoute(() => import("./pages/Reader"));
 const CardReader = lazyRoute(() => import("./pages/PanCardReader"));
 const AadhaarCardReader = lazyRoute(() => import("./pages/AadhaarCardReader"));
+const LanceDBExplorer = lazyRoute(() => import("./pages/admin/LanceDBExplorer"));
 const NotFound = lazyRoute(() =>
   import("./components/NotFound").then((module) => ({
     default: module.NotFound,
@@ -75,6 +76,7 @@ export const Routing = () => {
         <Route path="/reader" element={<Reader />} />
         <Route path="/reader/pan" element={<CardReader />} />
         <Route path="/reader/aadhaar" element={<AadhaarCardReader />} />
+        <Route path="/admin/lancedb" element={<LanceDBExplorer />} />
         <Route
           path="/reader/adhaar"
           element={<Navigate to="/reader/aadhaar" replace />}
