@@ -13,7 +13,7 @@ afterEach(() => {
 
 describe("LanceDB administrator API", () => {
   it("sends the private secret as a header and never as a query parameter", async () => {
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) =>
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
       new Response(JSON.stringify({ tables: [{ name: "tz-fabric-table" }] }), {
         status: 200,
         headers: { "content-type": "application/json" },

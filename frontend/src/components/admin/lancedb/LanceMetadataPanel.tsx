@@ -14,7 +14,7 @@ function JsonBlock({ value, label }: { value: unknown; label: string }) {
   return (
     <div className="lance-admin-json-group">
       <h3>{label}</h3>
-      <pre tabIndex={0}>{JSON.stringify(value, null, 2)}</pre>
+      <pre>{JSON.stringify(value, null, 2)}</pre>
     </div>
   );
 }

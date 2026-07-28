@@ -132,7 +132,7 @@ export default function VectorViewer({
                 <dd>{detail.hash ?? "—"}</dd>
               </div>
             </dl>
-            <pre className="lance-vector-modal__values" tabIndex={0}>
+            <pre className="lance-vector-modal__values">
               {JSON.stringify(detail.vector.values, null, 2)}
             </pre>
             <div className="lance-vector-modal__actions">
