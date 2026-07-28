@@ -43,6 +43,18 @@ function readableError(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function useRequestRevision() {
+  const [revision, setRevision] = useState(0);
+  const currentRevision = useRef(0);
+
+  const refresh = useCallback(() => {
+    currentRevision.current += 1;
+    setRevision(currentRevision.current);
+  }, []);
+
+  return { revision, currentRevision, refresh };
+}
+
 export default function LanceDBExplorer() {
   const [secret, setSecret] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
@@ -63,9 +75,21 @@ export default function LanceDBExplorer() {
   const [rowsError, setRowsError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const [tablesRevision, setTablesRevision] = useState(0);
-  const [detailsRevision, setDetailsRevision] = useState(0);
-  const [rowsRevision, setRowsRevision] = useState(0);
+  const {
+    revision: tablesRevision,
+    currentRevision: currentTablesRevision,
+    refresh: refreshTables,
+  } = useRequestRevision();
+  const {
+    revision: detailsRevision,
+    currentRevision: currentDetailsRevision,
+    refresh: refreshDetails,
+  } = useRequestRevision();
+  const {
+    revision: rowsRevision,
+    currentRevision: currentRowsRevision,
+    refresh: refreshRows,
+  } = useRequestRevision();
 
   const [vectorRow, setVectorRow] = useState<LanceRowSummary | null>(null);
   const [vectorDetail, setVectorDetail] = useState<LanceRowDetail | null>(null);
@@ -127,12 +151,14 @@ export default function LanceDBExplorer() {
   useEffect(() => {
     if (!secret) return undefined;
 
+    const requestRevision = tablesRevision;
     const controller = new AbortController();
     setTablesLoading(true);
     setTablesError(null);
 
     void fetchLanceTables(secret, controller.signal)
       .then((response) => {
+        if (requestRevision !== currentTablesRevision.current) return;
         const available = response.tables;
         const current = selectedTableRef.current;
         setTables(available);
@@ -157,7 +183,11 @@ export default function LanceDBExplorer() {
         setVectorDetail(null);
       })
       .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
+        if (
+          controller.signal.aborted ||
+          requestRevision !== currentTablesRevision.current
+        )
+          return;
         handleRequestFailure(
           error,
           BACKEND_UNAVAILABLE_MESSAGE,
@@ -165,31 +195,45 @@ export default function LanceDBExplorer() {
         );
       })
       .finally(() => {
-        if (!controller.signal.aborted) {
+        if (
+          !controller.signal.aborted &&
+          requestRevision === currentTablesRevision.current
+        ) {
           setTablesLoading(false);
           setUnlocking(false);
         }
       });
 
     return () => controller.abort();
-  }, [handleRequestFailure, secret, tablesRevision]);
+  }, [
+    currentTablesRevision,
+    handleRequestFailure,
+    secret,
+    tablesRevision,
+  ]);
 
   useEffect(() => {
     if (!secret || !selectedTable) return undefined;
 
+    const requestRevision = detailsRevision;
     const controller = new AbortController();
     setDetailsLoading(true);
     setDetailsError(null);
 
     void fetchLanceTableDetails(selectedTable, secret, controller.signal)
       .then((response) => {
+        if (requestRevision !== currentDetailsRevision.current) return;
         setDetails(response);
       })
       .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
+        if (
+          controller.signal.aborted ||
+          requestRevision !== currentDetailsRevision.current
+        )
+          return;
         if (isMissingTableError(error)) {
           setNotice("The selected table no longer exists. Reloading available tables.");
-          setTablesRevision((revision) => revision + 1);
+          refreshTables();
           return;
         }
         handleRequestFailure(
@@ -199,15 +243,27 @@ export default function LanceDBExplorer() {
         );
       })
       .finally(() => {
-        if (!controller.signal.aborted) setDetailsLoading(false);
+        if (
+          !controller.signal.aborted &&
+          requestRevision === currentDetailsRevision.current
+        )
+          setDetailsLoading(false);
       });
 
     return () => controller.abort();
-  }, [detailsRevision, handleRequestFailure, secret, selectedTable]);
+  }, [
+    currentDetailsRevision,
+    detailsRevision,
+    handleRequestFailure,
+    refreshTables,
+    secret,
+    selectedTable,
+  ]);
 
   useEffect(() => {
     if (!secret || !selectedTable) return undefined;
 
+    const requestRevision = rowsRevision;
     const controller = new AbortController();
     setRowsLoading(true);
     setRowsError(null);
@@ -225,6 +281,7 @@ export default function LanceDBExplorer() {
       controller.signal,
     )
       .then((response) => {
+        if (requestRevision !== currentRowsRevision.current) return;
         setRowsResponse(response);
         if (response.pagination.page !== query.page) {
           setQuery((current) => ({
@@ -234,10 +291,14 @@ export default function LanceDBExplorer() {
         }
       })
       .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
+        if (
+          controller.signal.aborted ||
+          requestRevision !== currentRowsRevision.current
+        )
+          return;
         if (isMissingTableError(error)) {
           setNotice("The selected table no longer exists. Reloading available tables.");
-          setTablesRevision((revision) => revision + 1);
+          refreshTables();
           return;
         }
         handleRequestFailure(
@@ -247,11 +308,23 @@ export default function LanceDBExplorer() {
         );
       })
       .finally(() => {
-        if (!controller.signal.aborted) setRowsLoading(false);
+        if (
+          !controller.signal.aborted &&
+          requestRevision === currentRowsRevision.current
+        )
+          setRowsLoading(false);
       });
 
     return () => controller.abort();
-  }, [handleRequestFailure, query, rowsRevision, secret, selectedTable]);
+  }, [
+    currentRowsRevision,
+    handleRequestFailure,
+    query,
+    refreshTables,
+    rowsRevision,
+    secret,
+    selectedTable,
+  ]);
 
   useEffect(
     () => () => {
@@ -289,9 +362,9 @@ export default function LanceDBExplorer() {
     setDetailsError(null);
     setRowsError(null);
     setNotice(null);
-    setTablesRevision((revision) => revision + 1);
-    setDetailsRevision((revision) => revision + 1);
-    setRowsRevision((revision) => revision + 1);
+    refreshTables();
+    refreshDetails();
+    refreshRows();
   };
 
   const copyText = async (value: string, successMessage: string) => {

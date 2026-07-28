@@ -20,7 +20,7 @@ export default function LanceTableSelector({
   onLock,
 }: LanceTableSelectorProps) {
   return (
-    <div className="lance-admin-toolbar" aria-label="LanceDB table controls">
+    <section className="lance-admin-toolbar" aria-label="LanceDB table controls">
       <label className="lance-admin-field lance-admin-field--table">
         <span>Table</span>
         <select
@@ -56,6 +56,6 @@ export default function LanceTableSelector({
           Lock explorer
         </button>
       </div>
-    </div>
+    </section>
   );
 }
