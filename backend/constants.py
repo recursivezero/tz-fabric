@@ -6,14 +6,14 @@ from utils.env_config import init_env
 init_env()
 # env variables
 API_PREFIX = os.getenv("API_PREFIX", "/api/v1")
-CDN_URL = os.getenv("AWS_PUBLIC_URL", "https://cdn.threadzip.com")
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+CDN_URL = os.getenv("AWS_PUBLIC_URL", "https://assets.threadzip.com")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 API_KEY = os.getenv("INTERNAL_API_KEY", "abcd1234")
 BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
 
 IS_PROD = ENVIRONMENT == "production"
-IS_DEV = ENVIRONMENT == "development"
+IS_DEV = ENVIRONMENT in {"development", "dev", "local"}
 
 
 PROJECT_DIR = Path(__file__).parent

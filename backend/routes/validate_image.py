@@ -31,17 +31,21 @@ router = APIRouter()
 
 # ---------------- PROMPT ----------------
 VALIDATION_PROMPT = """
-You are an image validator. Accept only if BOTH:
-1) Fabric texture, weave, or material is clearly visible and fills most of the image.
-2) Image is a close-up of fabric only (no people, mannequins, body parts, worn clothing, large scenes).
+You are an image validator for a Fabric AI analyzer.
 
-Reject if:
-- Contains people, mannequins, body parts or clothing being worn.
-- Shows large background, furniture, scenes.
-- Fabric is too distant (not a close-up) or very blurry.
+Accept images when the main subject is fabric, textile, cloth, garment material,
+embroidery, print, weave, pattern, saree/kurti/dupatta/shirt material, cushion
+fabric, bedsheet, curtain, or any other textile item where the material/pattern is
+visible enough to analyze. The image does NOT need to be an extreme close-up.
+Folded fabric, stitched clothing lying on a surface, and downloaded product-style
+fabric photos are valid when the textile is the main subject.
 
-Respond **only** with valid JSON exactly in this format (no commentary):
+Reject only when:
+- There is no fabric/textile subject to analyze.
+- A person, face, mannequin, or body part is the main subject.
+- The image is extremely blurry, unreadable, or mostly non-fabric background.
 
+Respond only with JSON in this format:
 {
   "verdict": "valid" | "invalid",
   "reason": "<short reason>",
@@ -50,12 +54,13 @@ Respond **only** with valid JSON exactly in this format (no commentary):
   "pattern_full_motif": true | false
 }
 
-Also: If "texture_visible" is true and "texture_confidence" >= 0.6, do not return a reason that contradicts that (e.g., "contains scene with multiple objects"); instead set "verdict":"valid" unless there are people/mannequins. Return JSON only.
+Be permissive: if textile material or pattern is visible and there are no people,
+return "valid".
 """
 
-MAX_SIDE = 1024
-JPEG_QUALITY = 80
-GROQ_TIMEOUT_SEC = 15
+MAX_SIDE = 768
+JPEG_QUALITY = 72
+GROQ_TIMEOUT_SEC = 8
 
 # ---------------- CACHE ----------------
 _MAX_CACHE = 1024
@@ -253,6 +258,16 @@ def _is_close_up_local(metrics: Optional[dict]) -> bool:
     return count >= 2
 
 
+def _has_enough_local_texture(metrics: Optional[dict]) -> bool:
+    """Fast, permissive gate so normal fabric/product images are not blocked."""
+    if not metrics:
+        return False
+    lap_var = float(metrics.get("lap_var", 0.0) or 0.0)
+    edge_density = float(metrics.get("edge_density", 0.0) or 0.0)
+    patch_std_mean = float(metrics.get("patch_std_mean", 0.0) or 0.0)
+    return lap_var >= 25.0 and (edge_density >= 0.006 or patch_std_mean >= 6.0)
+
+
 def _reason_mentions_person_like(text: Optional[str]) -> bool:
     if not text:
         return False
@@ -275,6 +290,12 @@ def _reason_mentions_person_like(text: Optional[str]) -> bool:
 
 
 def _contains_face_bytes(image_bytes: bytes) -> bool:
+    """Conservative face check used only to block obvious non-fabric/person photos.
+
+    Haar cascades often mistake embroidery, floral motifs, and repeated print
+    patterns for faces. Treat only one or two reasonably large face detections as
+    a real face; many tiny detections usually mean decorative textile pattern.
+    """
     cv2_local = cv2
     np_local = np
     if cv2_local is None or np_local is None:
@@ -284,15 +305,57 @@ def _contains_face_bytes(image_bytes: bytes) -> bool:
         img = cv2_local.imdecode(arr, cv2_local.IMREAD_GRAYSCALE)
         if img is None:
             return False
+
+        h, w = img.shape[:2]
+        min_side = max(32, int(min(w, h) * 0.10))
         cascade = cv2_local.CascadeClassifier(
             cv2_local.data.haarcascades + "haarcascade_frontalface_default.xml"
         )
         faces = cascade.detectMultiScale(
-            img, scaleFactor=1.1, minNeighbors=4, minSize=(20, 20)
+            img, scaleFactor=1.12, minNeighbors=6, minSize=(min_side, min_side)
         )
-        return len(faces) > 0
+
+        strong_faces = []
+        image_area = float(w * h)
+        for x, y, fw, fh in faces:
+            area_ratio = float(fw * fh) / image_area
+            width_ratio = float(fw) / float(w)
+            height_ratio = float(fh) / float(h)
+            if area_ratio >= 0.015 and width_ratio >= 0.10 and height_ratio >= 0.10:
+                strong_faces.append((x, y, fw, fh))
+
+        # Repeating embroidered/printed motifs can produce many false positives.
+        if len(strong_faces) > 2:
+            return False
+        return len(strong_faces) > 0
     except Exception:
         return False
+
+
+def _allow_unparseable_validator_response(
+    reason: str,
+    response_text: str,
+    metrics: Optional[dict],
+    face_found: bool,
+) -> bool:
+    """Do not block analysis when the validator returns non-JSON/noisy text.
+
+    Validation is only a safety gate. If the local image metrics show visible
+    textile-like detail and no obvious person/face was detected, continue to
+    analysis instead of surfacing technical messages like
+    "uncertain: unparseable response from model" to the UI.
+    """
+    low_reason = (reason or "").lower()
+    low_response = (response_text or "").lower()
+    looks_unparseable = (
+        "unparseable" in low_reason
+        or "unable to parse" in low_reason
+        or "uncertain" in low_reason
+        or (not low_response.strip())
+    )
+    if not looks_unparseable or face_found:
+        return False
+    return _has_enough_local_texture(metrics) or _is_close_up_local(metrics)
 
 
 @router.post("/validate-image")
@@ -324,8 +387,8 @@ async def validate_image(image: UploadFile = File(...)):
             _texture_metrics_from_bytes(raw) if cv2 is not None else None
         )
         if local_metrics_raw is not None:
-            if local_metrics_raw.get("lap_var", 0.0) < 20:
-                reason = "blurry image (very low laplacian variance)"
+            if local_metrics_raw.get("lap_var", 0.0) < 10:
+                reason = "Image is too blurry to analyze."
                 _cache_set(
                     img_hash,
                     {
@@ -342,6 +405,24 @@ async def validate_image(image: UploadFile = File(...)):
                     }
                 )
 
+            # Most user-uploaded fabric/product photos should not wait on the
+            # vision validator. If the image has enough visible texture and no
+            # obvious face, let the analyzer run immediately.
+            if _has_enough_local_texture(
+                local_metrics_raw
+            ) and not _contains_face_bytes(raw):
+                reason = "Local fabric/texture check passed."
+                out_meta = {"metrics": local_metrics_raw, "fast_local_accept": True}
+                _cache_set(
+                    img_hash, {"verdict": "valid", "reason": reason, "meta": out_meta}
+                )
+                print(
+                    f"[validate-image] fast-local-accept total={(time.time()-t0)*1000:.0f}ms meta_metrics={local_metrics_raw}"
+                )
+                return JSONResponse(
+                    content={"valid": True, "reason": reason, "meta": out_meta}
+                )
+
         small_jpeg = await asyncio.to_thread(_resize_to_jpeg, raw)
         t2 = time.time()
 
@@ -351,10 +432,18 @@ async def validate_image(image: UploadFile = File(...)):
                 _groq_check_base64(b64), timeout=GROQ_TIMEOUT_SEC
             )
         except asyncio.TimeoutError:
-            print(f"[validate-image] timeout total={(time.time()-t0)*1000:.0f}ms")
+            # Validation is advisory. Do not block analysis just because the
+            # validator took too long.
+            reason = "Validation timed out; continuing with analysis."
+            out_meta = {"validation_timeout": True, "metrics": local_metrics_raw}
+            _cache_set(
+                img_hash, {"verdict": "valid", "reason": reason, "meta": out_meta}
+            )
+            print(
+                f"[validate-image] permissive-timeout total={(time.time()-t0)*1000:.0f}ms"
+            )
             return JSONResponse(
-                status_code=504,
-                content={"valid": False, "reason": "Validation timed out"},
+                content={"valid": True, "reason": reason, "meta": out_meta}
             )
 
         t3 = time.time()
@@ -429,6 +518,15 @@ async def validate_image(image: UploadFile = File(...)):
         if local_metrics:
             model_meta["metrics"] = local_metrics
 
+        face_found = _contains_face_bytes(small_jpeg) if cv2 is not None else False
+
+        if verdict == "invalid" and _allow_unparseable_validator_response(
+            reason, response_text, local_metrics or local_metrics_raw, face_found
+        ):
+            verdict = "valid"
+            reason = "Validator response was unclear; continuing with fabric analysis."
+            model_meta["unparseable_validator_response_allowed"] = True
+
         lower_reason = (reason or "").lower()
         model_indicated_not_closeup = any(
             kw in lower_reason
@@ -443,11 +541,10 @@ async def validate_image(image: UploadFile = File(...)):
         )
 
         mentions_person = _reason_mentions_person_like(reason)
-        face_found = _contains_face_bytes(small_jpeg) if cv2 is not None else False
 
         if verdict == "invalid":
             if texture_visible_flag is True or (
-                model_texture_conf is not None and model_texture_conf >= 0.6
+                model_texture_conf is not None and model_texture_conf >= 0.35
             ):
                 if not mentions_person and not face_found:
                     prev_reason = reason
@@ -470,6 +567,19 @@ async def validate_image(image: UploadFile = File(...)):
                         "by_local_metrics": True,
                         "metrics": local_metrics,
                     }
+
+            elif (
+                _has_enough_local_texture(local_metrics)
+                and not mentions_person
+                and not face_found
+            ):
+                prev_reason = reason
+                verdict = "valid"
+                reason = f"accepted by permissive local texture check (prev_reason='{prev_reason}')"
+                model_meta["override"] = {
+                    "by_permissive_local_texture": True,
+                    "metrics": local_metrics,
+                }
 
         out_meta = model_meta.copy()
         _cache_set(img_hash, {"verdict": verdict, "reason": reason, "meta": out_meta})

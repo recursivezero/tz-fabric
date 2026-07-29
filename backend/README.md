@@ -6,8 +6,8 @@
 ## How to start
 
 ```sh
-poetry install
-poetry install --all-extras
+poetry lock --no-cache --regenerate
+poetry install --all-extras --with dev
 ```
 
 create `.env` file and add content from `.env.local` file anc change value according to your project
@@ -17,6 +17,9 @@ Note: according to your port change the port in `frontend/vite.config.ts` and `V
 ```sh
 poetry env activate
 poetry run fabric dev
+ # to run production
+ poetry run fabric prod
+
 ```
 
 ## Lint

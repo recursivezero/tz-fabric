@@ -1,0 +1,466 @@
+/* Cross-route layout completion.
+ *
+ * This final layer standardises the shared application shell without changing
+ * route state, request handling, navigation destinations, upload/search/chat
+ * behaviour, or reader actions. Short pages use the remaining viewport space
+ * so the footer rests at the bottom; long/result pages keep natural document
+ * flow and place the footer after their content. Chat intentionally remains a
+ * footer-free, viewport-sized workspace.
+ */
+
+.app-wrapper:not(.app-wrapper--chat) {
+  min-height: 100dvh;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.app-wrapper:not(.app-wrapper--chat) .main-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+}
+
+.app-wrapper:not(.app-wrapper--chat) .main-content > * {
+  width: 100%;
+}
+
+.app-wrapper:not(.app-wrapper--chat) .site-footer {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+
+/* Analysis is a normal shell page when idle. Its existing internal panels and
+   fixed sample drawer continue to work, but the route no longer suppresses the
+   shared footer or creates a second viewport-height workspace. */
+.app-wrapper--analysis {
+  height: auto;
+  overflow: visible;
+}
+
+.app-wrapper--analysis .site-header {
+  flex: 0 0 auto;
+}
+
+.app-wrapper--analysis .main-content {
+  height: auto;
+  flex: 1 1 auto;
+  overflow: visible;
+}
+
+.app-wrapper--analysis .home-container.analysis-page {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Short-content routes fill only the shell's available main area. Existing
+   cards/results still increase the natural page height when content is added. */
+.app-wrapper:not(.app-wrapper--chat) .upload-page,
+.app-wrapper:not(.app-wrapper--chat) .grid-page,
+.app-wrapper:not(.app-wrapper--chat) .fabric-search,
+.app-wrapper:not(.app-wrapper--chat) .reader-landing {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.app-wrapper:not(.app-wrapper--chat) .fabric-search {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-wrapper:not(.app-wrapper--chat) .fabric-search .fabric-search__body {
+  flex: 1 0 auto;
+}
+
+/* FabricSearch.css contains a late idle-state viewport minimum that adds a
+   second near-viewport block inside the shared shell. Neutralise only that
+   idle/empty state so the footer is visible in one glance; result and preview
+   states retain natural content height and continue pushing the footer down. */
+.app-wrapper:not(.app-wrapper--chat)
+  .fabric-search:not(.fabric-search--has-results):not(.fabric-search--previewing)
+  .fabric-search__body {
+  min-height: 0;
+}
+
+/* Reader landing responsiveness. The original inline @media object was not a
+   valid React style rule, so the cards never stacked. */
+.reader-landing__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 768px) {
+  .reader-landing {
+    padding: 20px 16px 32px !important;
+  }
+
+  .reader-landing__header {
+    margin-bottom: 24px !important;
+  }
+
+  .reader-landing__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px !important;
+  }
+
+  .reader-landing__tile {
+    min-height: 220px !important;
+    padding: 30px 24px !important;
+  }
+}
+
+/* Compact only height-constrained desktop workspaces so their idle/empty state
+   and footer fit in one glance. Normal and content-rich layouts are unchanged. */
+@media (min-width: 901px) and (max-height: 900px) {
+  .app-wrapper:not(.app-wrapper--chat) .upload-page {
+    padding-block: 16px 22px;
+  }
+
+  .app-wrapper:not(.app-wrapper--chat) .upload-page .upload-card {
+    min-height: 0;
+    padding: 18px 22px;
+  }
+
+  .app-wrapper:not(.app-wrapper--chat) .upload-page .upload-header {
+    margin-bottom: 14px;
+  }
+
+  .app-wrapper:not(.app-wrapper--chat) .upload-page .dropzone,
+  .app-wrapper:not(.app-wrapper--chat) .upload-page .image-preview-wrap {
+    height: 190px;
+  }
+
+  .app-wrapper:not(.app-wrapper--chat) .grid-page {
+    padding-block: 12px 24px;
+  }
+
+  .app-wrapper:not(.app-wrapper--chat) .grid-page .grid-header {
+    margin-block: 14px 12px;
+  }
+
+  .app-wrapper:not(.app-wrapper--chat) .fabric-search:not(.fabric-search--has-results):not(.fabric-search--previewing)
+    .fabric-search__body {
+    padding-top: 10px;
+    padding-bottom: 22px;
+  }
+}
+
+/* v45: PAN and Aadhaar readers previously nested their own 100vh minimum
+   inside the shared header/main/footer shell. That extra viewport pushed the
+   footer below the first screen even when the idle upload card had ample room.
+   Let the reader route fill the shell's available main area instead, while
+   preserving natural page growth for crop and result states. */
+.app-wrapper:not(.app-wrapper--chat) .document-reader-page {
+  box-sizing: border-box;
+  flex: 1 0 auto;
+  min-height: 0 !important;
+  width: 100%;
+}
+
+/* Chat prompt chips: no clipped side pills, no forced single-line overflow.
+   Mobile gets a readable one-column stack, tablets use two columns and desktop
+   preserves the established four-column row. */
+.app-wrapper--chat .page-root .empty-state-large .chips,
+.app-wrapper--chat .page-root .suggestion-chips .chips-row {
+  width: min(100%, 980px);
+  max-width: 100%;
+}
+
+.app-wrapper--chat .page-root .empty-state-large .chip,
+.app-wrapper--chat .page-root .suggestion-chips .chip {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .app-wrapper--chat .page-root .empty-state-large .chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .app-wrapper--chat .page-root .empty-state-large {
+    width: 100%;
+    padding-inline: 0;
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large .chips,
+  .app-wrapper--chat .page-root .suggestion-chips .chips-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    width: min(100%, 430px);
+    margin-inline: auto;
+    padding-inline: 0;
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large .chip,
+  .app-wrapper--chat .page-root .suggestion-chips .chip {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+  }
+
+  /* The desktop theme switch stays in the desktop header. Mobile receives the
+     same live control at the end of the full-screen navigation menu. */
+  .site-header > .header-right {
+    display: none;
+  }
+
+  .site-header .header-nav ul {
+    align-items: stretch;
+    gap: 10px;
+    padding: 82px 20px max(22px, env(safe-area-inset-bottom));
+    background: var(--tz-ui-surface-raised, rgba(255, 255, 255, 0.98));
+    color: var(--tz-ui-text, #0f172a);
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  :root[data-theme="dark"] .site-header .header-nav ul {
+    background: rgba(10, 15, 29, 0.985);
+    color: #f8fafc;
+  }
+
+  .site-header .header-nav[data-open="false"] ul {
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .site-header .header-nav[data-open="true"] ul {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .site-header .mobile-menu__brand {
+    position: absolute;
+    top: max(17px, env(safe-area-inset-top));
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+  }
+
+  .site-header .mobile-menu__brand-mark {
+    display: inline-grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border-radius: 10px;
+    background: #2f6bff;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    box-shadow: 0 10px 24px rgba(47, 107, 255, 0.24);
+  }
+
+  .site-header .mobile-menu__brand-name {
+    color: inherit;
+    font-family: var(--tz-font-display, inherit);
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  .site-header .mobile-menu__route {
+    width: min(100%, 520px);
+    margin-inline: auto;
+  }
+
+  .site-header .mobile-menu__route a {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 18px;
+    border: 1px solid var(--tz-ui-border, rgba(15, 23, 42, 0.16));
+    border-radius: 14px;
+    background: var(--tz-ui-surface-subtle, rgba(248, 250, 252, 0.78));
+    color: var(--tz-ui-text, #0f172a);
+    font-size: clamp(18px, 4.4vw, 22px);
+    font-weight: 850;
+    line-height: 1.1;
+    text-align: center;
+    text-transform: capitalize;
+  }
+
+  :root[data-theme="dark"] .site-header .mobile-menu__route a {
+    background: rgba(30, 41, 59, 0.78);
+    border-color: rgba(226, 232, 240, 0.2);
+    color: #f8fafc;
+  }
+
+  .site-header .mobile-menu__route a.active,
+  :root[data-theme="dark"] .site-header .mobile-menu__route a.active {
+    background: linear-gradient(135deg, #b7791f, #d09128);
+    border-color: rgba(183, 121, 31, 0.72);
+    color: #ffffff;
+    box-shadow: 0 12px 28px rgba(183, 121, 31, 0.22);
+  }
+
+  .site-header .mobile-menu__theme {
+    display: grid;
+    width: min(100%, 520px);
+    gap: 8px;
+    margin: auto auto 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--tz-ui-border, rgba(15, 23, 42, 0.16));
+  }
+
+  .site-header .mobile-menu__theme-label {
+    color: var(--tz-ui-text-muted, #64748b);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .site-header .mobile-menu__theme-toggle {
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border: 1px solid var(--tz-ui-border, rgba(15, 23, 42, 0.16));
+    border-radius: 14px;
+    background: var(--tz-ui-control-bg, #ffffff);
+    color: var(--tz-ui-text, #0f172a);
+    font: inherit;
+    font-weight: 800;
+  }
+
+  :root[data-theme="dark"] .site-header .mobile-menu__theme-toggle {
+    background: rgba(30, 41, 59, 0.92);
+    border-color: rgba(226, 232, 240, 0.22);
+    color: #f8fafc;
+  }
+
+  .site-header .mobile-menu__theme-icon {
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+  }
+
+  .site-header .mobile-menu__theme-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .site-header .hamburger span {
+    background: var(--tz-ui-text, #0f172a);
+  }
+
+  :root[data-theme="dark"] .site-header .hamburger span {
+    background: #f8fafc;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu__brand,
+  .mobile-menu__theme {
+    display: none;
+  }
+}
+
+/* v39: keep the mobile appearance control with the route list instead of
+   pushing it to the bottom of the viewport. The menu remains independently
+   scrollable on short devices through HomeViewportNavigationFix.css. */
+@media (max-width: 768px) {
+  .site-header .mobile-menu__theme {
+    margin: 6px auto 0;
+    padding-top: 12px;
+  }
+}
+
+/* v46: Analysis uses the same footer component as every other route. Explicitly
+   remove route-level dimming and restore the shared footer contrast so the
+   footer is not washed out beneath the Analysis workspace/drawer layers. */
+.app-wrapper--analysis .site-footer {
+  position: relative;
+  z-index: 600;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate;
+}
+
+.app-wrapper--analysis
+  .site-footer
+  :is(
+    .footer__brand,
+    .footer__logo,
+    .footer__title,
+    .footer__desc,
+    .footer__github,
+    .footer__cols,
+    .footer__col,
+    .footer__col h4,
+    .footer__col a,
+    .footer__rule,
+    .footer__copyright,
+    .footer__copyright a
+  ) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+:root[data-theme="dark"] .app-wrapper--analysis .site-footer {
+  background: #0c1220 !important;
+  border-top-color: rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 -8px 28px rgba(2, 6, 23, 0.28) !important;
+  color: #d2d8e3 !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-footer
+  :is(.footer__title, .footer__col h4) {
+  color: #f1f5ff !important;
+  -webkit-text-fill-color: #f1f5ff !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-footer
+  :is(
+    .footer__desc,
+    .footer__github,
+    .footer__col a,
+    .footer__copyright,
+    .footer__copyright a
+  ) {
+  color: #c7d3e3 !important;
+  -webkit-text-fill-color: #c7d3e3 !important;
+}
+
+/* v55: the desktop drawer is now constrained by the Analysis page itself, so
+   it no longer needs a route-wide stacking override. Keep the original
+   stacking protection only for the <=980px full-screen sample sheet, where the
+   drawer intentionally remains fixed above the route while it is open. */
+@media (max-width: 980px) {
+  .app-wrapper--analysis .main-content {
+    position: relative;
+    z-index: 610;
+  }
+}

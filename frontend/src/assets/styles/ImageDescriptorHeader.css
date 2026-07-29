@@ -43,3 +43,19 @@
     opacity: 1;
   }
 }
+
+/* QA follow-up: Analysis heading must be readable in both themes. */
+.analysis-page .animated-header h1 {
+  color: var(--tz-ui-text, #f8fafc);
+  border-bottom-color: var(--tz-turmeric, #e0a82e);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-theme="light"] .analysis-page .animated-header h1 {
+  color: #0f172a;
+  text-shadow: none;
+}
+
+:root[data-theme="dark"] .analysis-page .animated-header h1 {
+  color: #f8fafc;
+}

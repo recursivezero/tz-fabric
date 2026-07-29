@@ -65,3 +65,192 @@
   background: #aeafb23f;
   border-color: #e5e7eb;
 }
+/* Senior QA: keep chat landing copy and prompt chips readable after theme changes. */
+.page-root .empty-state-large h3 {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .empty-state-large p {
+  color: var(--tz-ui-text-muted, var(--tz-muted, #cbd5e1));
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .empty-state-large .chip,
+.page-root .empty-state-large .chip:nth-child(odd),
+.page-root .empty-state-large .chip:nth-child(even) {
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-control-bg, rgba(255, 255, 255, 0.94));
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+  opacity: 1;
+  text-shadow: none;
+}
+
+:root[data-theme="dark"] .page-root .empty-state-large .chip,
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(odd),
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(even) {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="light"] .page-root .empty-state-large .chip,
+:root[data-theme="light"] .page-root .empty-state-large .chip:nth-child(odd),
+:root[data-theme="light"] .page-root .empty-state-large .chip:nth-child(even) {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+/* Senior visual-system pass: prompt chips should never look blank or disabled by accident. */
+.page-root .empty-state-large .chips {
+  gap: 12px;
+}
+
+.page-root .empty-state-large .chip,
+.page-root .empty-state-large .chip:nth-child(odd),
+.page-root .empty-state-large .chip:nth-child(even) {
+  min-height: 40px;
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-control-bg, rgba(255, 255, 255, 0.96));
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+  font-weight: 800;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+}
+
+.page-root .empty-state-large .chip:disabled {
+  opacity: 0.72;
+  color: var(--tz-ui-text-muted, #64748b);
+}
+
+:root[data-theme="dark"] .page-root .empty-state-large .chip,
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(odd),
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(even) {
+  color: var(--tz-ui-text, #f8fafc);
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.96));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+}
+
+/* QA follow-up: keep the four landing prompt buttons on one row on desktop and make each state visually distinct. */
+.page-root .empty-state-large .chips {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.page-root .empty-state-large .chip,
+.page-root .empty-state-large .chip:nth-child(odd),
+.page-root .empty-state-large .chip:nth-child(even) {
+  width: 100%;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  white-space: normal;
+  line-height: 1.18;
+  text-align: center;
+  font-weight: 850;
+}
+
+.page-root .empty-state-large .chip:nth-child(1) {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #7c2d12;
+}
+
+.page-root .empty-state-large .chip:nth-child(2) {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #312e81;
+}
+
+.page-root .empty-state-large .chip:nth-child(3) {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #064e3b;
+}
+
+.page-root .empty-state-large .chip:nth-child(4) {
+  background: #fdf2f8;
+  border-color: #fbcfe8;
+  color: #831843;
+}
+
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(1) {
+  background: rgba(251, 146, 60, 0.18);
+  border-color: rgba(251, 146, 60, 0.42);
+  color: #fed7aa;
+}
+
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(2) {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(129, 140, 248, 0.46);
+  color: #c7d2fe;
+}
+
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(3) {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(52, 211, 153, 0.42);
+  color: #bbf7d0;
+}
+
+:root[data-theme="dark"] .page-root .empty-state-large .chip:nth-child(4) {
+  background: rgba(236, 72, 153, 0.2);
+  border-color: rgba(244, 114, 182, 0.46);
+  color: #fbcfe8;
+}
+
+@media (max-width: 960px) {
+  .page-root .empty-state-large .chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .page-root .empty-state-large .chips {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Senior QA final: desktop prompts must look intentional at browser zoom levels. */
+.page-root .empty-state-large {
+  width: min(980px, 100%);
+  padding-inline: 8px;
+}
+
+.page-root .empty-state-large .chips {
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  align-items: stretch;
+}
+
+.page-root .empty-state-large .chip {
+  min-width: 0;
+  min-height: var(--tz-control-height, 44px);
+  border-radius: var(--tz-control-radius, 999px);
+  border-width: 1px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+}
+
+.page-root .empty-state-large .chip:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.14);
+}
+
+@media (min-width: 961px) and (max-width: 1180px) {
+  .page-root .empty-state-large .chips {
+    grid-template-columns: repeat(4, minmax(132px, 1fr));
+    gap: 10px;
+  }
+
+  .page-root .empty-state-large .chip {
+    padding-inline: 10px;
+    font-size: 13px;
+  }
+}

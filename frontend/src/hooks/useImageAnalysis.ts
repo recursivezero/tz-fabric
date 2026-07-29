@@ -1,9 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { analyzeImage, regenerateResponse, validateImageAPI } from "../services/analyze_api.ts";
+import {
+  analyzeImage,
+  regenerateResponse,
+  validateImageAPI,
+} from "../services/analyze_api.ts";
 import { fetchImageAsFile } from "../utils/image-helper.ts";
+import { logger } from "../utils/logger";
+import {
+  ANALYSIS_RESPONSE_COUNT,
+  toBackendResponseIndex,
+} from "../utils/analysisResponseIndex";
 
 type Mode = "short" | "long";
+
+const MOBILE_DRAWER_QUERY = "(max-width: 980px)";
+
+const getInitialDrawerState = (): boolean =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  !window.matchMedia(MOBILE_DRAWER_QUERY).matches;
 
 const extractFilename = (path: string, fallback = "fabric.jpg"): string => {
   const base = path.split(/[?#]/)[0]; // strip query/hash
@@ -23,19 +39,84 @@ const useImageAnalysis = () => {
   const [showUploadedImage, setShowUploadedImage] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [sampleImageUrl, setSampleImageUrl] = useState<string | null>(null);
-  const [showDrawer, setShowDrawer] = useState(true);
+  const [showDrawer, setShowDrawer] = useState(getInitialDrawerState);
   const [typedText, setTypedText] = useState("");
   const [isValidImage, setIsValidImage] = useState<boolean | null>(null);
   const [validationLoading, setValidationLoading] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
   const [canUpload, setCanUpload] = useState(true);
+  const [analysisPopupMessage, setAnalysisPopupMessage] = useState<
+    string | null
+  >(null);
 
   const location = useLocation();
   const latestRunIdRef = useRef(0);
+  const objectUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const mobileQuery = window.matchMedia(MOBILE_DRAWER_QUERY);
+    const closeDrawerOnMobile = (event: MediaQueryListEvent | MediaQueryList) => {
+      if (event.matches) setShowDrawer(false);
+    };
+
+    closeDrawerOnMobile(mobileQuery);
+
+    if (typeof mobileQuery.addEventListener === "function") {
+      mobileQuery.addEventListener("change", closeDrawerOnMobile);
+      return () =>
+        mobileQuery.removeEventListener("change", closeDrawerOnMobile);
+    }
+
+    mobileQuery.addListener(closeDrawerOnMobile);
+    return () => mobileQuery.removeListener(closeDrawerOnMobile);
+  }, []);
+
+  const createTrackedObjectUrl = useCallback((file: File) => {
+    const url = URL.createObjectURL(file);
+    objectUrlsRef.current.add(url);
+    return url;
+  }, []);
+
+  const releaseTrackedObjectUrl = useCallback((url: string | null) => {
+    if (!url || !objectUrlsRef.current.has(url)) return;
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      // Ignore already-revoked preview URLs.
+    } finally {
+      objectUrlsRef.current.delete(url);
+    }
+  }, []);
+
+  const replaceUploadedImageUrl = useCallback(
+    (url: string | null) => {
+      setUploadedImageUrl((prev) => {
+        if (prev !== url) releaseTrackedObjectUrl(prev);
+        return url;
+      });
+    },
+    [releaseTrackedObjectUrl],
+  );
+
+  const replaceSampleImageUrl = useCallback(
+    (url: string | null) => {
+      setSampleImageUrl((prev) => {
+        if (prev !== url) releaseTrackedObjectUrl(prev);
+        return url;
+      });
+    },
+    [releaseTrackedObjectUrl],
+  );
 
   const handleRunAnalysis = useCallback(
     async (file: File | null, mode: Mode) => {
-      if (!file) return;
+      if (!file) {
+        setCurrentFile(null);
+        setAnalysisPopupMessage("Upload a valid fabric image.");
+        return;
+      }
       const runId = ++latestRunIdRef.current;
 
       setShowResults(true);
@@ -51,7 +132,7 @@ const useImageAnalysis = () => {
         const firstObject = response.response;
         const first = (firstObject?.response as string) ?? "";
 
-        const allResponses = Array<string>(6).fill("");
+        const allResponses = Array<string>(ANALYSIS_RESPONSE_COUNT).fill("");
         allResponses[0] = first;
 
         setResponses(allResponses);
@@ -60,14 +141,20 @@ const useImageAnalysis = () => {
         setCacheKey((response as { cache_key?: string })?.cache_key ?? null);
       } catch (err) {
         if (runId !== latestRunIdRef.current) return;
-        console.error(`${mode} analysis failed:`, err);
-        alert(`${mode} analysis failed.`);
+        logger.error(`${mode} analysis failed`, err);
+        const message =
+          err instanceof Error ? err.message : `${mode} analysis failed.`;
+        setValidationMessage(message || `${mode} analysis failed.`);
         setIsValidImage(false);
+        setAnalysisPopupMessage(
+          "Unable to analyze this image. Upload a valid fabric image or try again later.",
+        );
+        setCanUpload(true);
       } finally {
         if (runId === latestRunIdRef.current) setLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Auto-run from query params (?mode=&image_url=)
@@ -85,7 +172,7 @@ const useImageAnalysis = () => {
           setUploadedImageUrl(imageUrl);
           await handleRunAnalysis(file, modeParam);
         } catch (err) {
-          console.error("Failed to auto-run analysis from query params:", err);
+          logger.error("Failed to auto-run analysis from query parameters", err);
         }
       })();
     }
@@ -104,7 +191,7 @@ const useImageAnalysis = () => {
 
     const simulatePrediction = async () => {
       while (!cancelled && index < tokens.length) {
-        await new Promise((res) => setTimeout(res, 170));
+        await new Promise((res) => setTimeout(res, 35));
         const nextToken = tokens[index];
         currentText = currentText ? `${currentText} ${nextToken}` : nextToken;
         setTypedText(currentText);
@@ -121,13 +208,13 @@ const useImageAnalysis = () => {
 
   const handleSampleShortAnalysis = async (imagePath: string) => {
     setShowDrawer(false);
-    setSampleImageUrl(imagePath);
+    replaceSampleImageUrl(imagePath);
     setShowResults(true);
     setLoading(true);
     setCanUpload(false);
     setIsValidImage(null);
     setValidationMessage("");
-    setUploadedImageUrl(null);
+    replaceUploadedImageUrl(null);
     setShowUploadedImage(false);
     setDescription("");
     setTypedText("");
@@ -143,7 +230,7 @@ const useImageAnalysis = () => {
       const firstObject = response.response;
       const first = (firstObject?.response as string) ?? "";
 
-      const allResponses = Array<string>(6).fill("");
+      const allResponses = Array<string>(ANALYSIS_RESPONSE_COUNT).fill("");
       allResponses[0] = first;
 
       setResponses(allResponses);
@@ -154,12 +241,13 @@ const useImageAnalysis = () => {
       setCurrentMode("short");
       setShowUploadedImage(true);
 
-      const objUrl = URL.createObjectURL(file);
-      setUploadedImageUrl(objUrl);
-      setSampleImageUrl(objUrl);
+      const objUrl = createTrackedObjectUrl(file);
+      replaceUploadedImageUrl(objUrl);
+      replaceSampleImageUrl(objUrl);
     } catch (err) {
-      console.error("Short analysis failed:", err);
-      alert("Upload a valid fabric image.");
+      logger.error("Short analysis failed", err);
+      setCanUpload(true);
+      setAnalysisPopupMessage("Upload a valid fabric image.");
     } finally {
       setLoading(false);
     }
@@ -181,33 +269,37 @@ const useImageAnalysis = () => {
         const data = await validateImageAPI(imageFile);
         if (data?.valid) {
           setIsValidImage(true);
+          setValidationMessage("");
         } else {
           setIsValidImage(false);
           setValidationMessage(
-            "This image doesn't focus on fabric. Please upload a close-up fabric image."
+            data?.reason ||
+              "This image does not look like usable fabric/textile content.",
           );
         }
       } catch (error: unknown) {
-        if (error instanceof Error) {
-          setValidationMessage(error.message);
-        } else {
-          setValidationMessage(String(error ?? "An unknown error occurred during image validation."));
-        }
-        setIsValidImage(false);
+        logger.warn(
+          "Image validation failed; allowing analysis to continue",
+          error,
+        );
+        // Validation is only a guardrail. Do not block real fabric/product images
+        // when the validator endpoint is slow, unavailable, or overly cautious.
+        setValidationMessage("");
+        setIsValidImage(true);
       } finally {
         setValidationLoading(false);
       }
     },
-    []
+    [],
   );
 
   const handleUploadedImage = (file: File) => {
     setShowDrawer(false);
-    setUploadedImageUrl(URL.createObjectURL(file));
+    replaceUploadedImageUrl(createTrackedObjectUrl(file));
     setCurrentFile(file);
     setShowUploadedImage(true);
     setCurrentMode(null);
-    setSampleImageUrl(null);
+    replaceSampleImageUrl(null);
     void validateImage(file);
     setDescription("");
     setShowResults(false);
@@ -219,15 +311,30 @@ const useImageAnalysis = () => {
 
   // Auto-run short analysis after validation passes for uploaded images
   useEffect(() => {
-    if (isValidImage === true && currentFile && !sampleImageUrl && !loading && currentMode === null) {
+    if (
+      isValidImage === true &&
+      currentFile &&
+      !sampleImageUrl &&
+      !loading &&
+      currentMode === null
+    ) {
       void handleRunAnalysis(currentFile, "short");
     }
-  }, [isValidImage, currentFile, loading, currentMode, sampleImageUrl, handleRunAnalysis]);
+  }, [
+    isValidImage,
+    currentFile,
+    loading,
+    currentMode,
+    sampleImageUrl,
+    handleRunAnalysis,
+  ]);
 
   const handleNext = async () => {
     const newIndex = currentIndex + 1;
 
-    // Use cached response if available
+    if (newIndex >= ANALYSIS_RESPONSE_COUNT) return;
+
+    // Use cached response if available.
     if (responses[newIndex]) {
       setCurrentIndex(newIndex);
       setDescription(responses[newIndex]);
@@ -235,31 +342,48 @@ const useImageAnalysis = () => {
     }
 
     if (!cacheKey) {
-      alert("No more responses available.");
+      setAnalysisPopupMessage("No more responses available.");
       return;
     }
 
+    setLoading(true);
     try {
-      const res = await regenerateResponse(cacheKey, String(newIndex));
-      const nextText = (res?.response as string) ?? "";
+      // The API stores variants as 1..6 while the UI array is 0..5. The old
+      // code sent the zero-based UI index, duplicated response 1, and never
+      // requested backend variation 6.
+      const backendIndex = String(toBackendResponseIndex(newIndex));
+      let res = await regenerateResponse(cacheKey, backendIndex);
+      let nextText = (res?.response as string) ?? "";
+
+      // A background variant can finish just after the server's first wait
+      // window. Retry one time so the final response does not fail at 6/6.
+      if (!nextText) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 500));
+        res = await regenerateResponse(cacheKey, backendIndex);
+        nextText = (res?.response as string) ?? "";
+      }
+
       if (nextText) {
-        const updated = [...responses];
-        // Ensure array is long enough
-        if (updated.length <= newIndex) {
-          updated.length = newIndex + 1;
-          for (let i = 0; i < updated.length; i++) {
-            if (typeof updated[i] !== "string") updated[i] = "";
-          }
-        }
+        const updated = Array.from(
+          { length: ANALYSIS_RESPONSE_COUNT },
+          (_, index) => responses[index] ?? "",
+        );
         updated[newIndex] = nextText;
         setResponses(updated);
         setCurrentIndex(newIndex);
         setDescription(nextText);
       } else {
-        alert("No more responses available.");
+        setAnalysisPopupMessage(
+          "This response is still being prepared. Please select Next again.",
+        );
       }
     } catch (err) {
-      console.error("Next response fetch failed:", err);
+      logger.error("Next response fetch failed", err);
+      setAnalysisPopupMessage(
+        "Unable to generate another response. Please try again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -272,12 +396,39 @@ const useImageAnalysis = () => {
   };
 
   const clearImage = () => {
+    latestRunIdRef.current += 1;
     setShowUploadedImage(false);
-    setUploadedImageUrl(null);
+    replaceUploadedImageUrl(null);
     setCurrentFile(null);
-    setSampleImageUrl(null);
+    replaceSampleImageUrl(null);
     setResponses([]);
+    setDescription("");
+    setTypedText("");
+    setCurrentIndex(0);
+    setCacheKey(null);
+    setCurrentMode(null);
+    setShowResults(false);
+    setLoading(false);
+    setValidationLoading(false);
+    setIsValidImage(null);
+    setValidationMessage("");
+    setCanUpload(true);
+    setAnalysisPopupMessage(null);
   };
+
+  useEffect(() => {
+    const trackedUrls = objectUrlsRef.current;
+    return () => {
+      for (const url of trackedUrls) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // Ignore stale preview URLs during teardown.
+        }
+      }
+      trackedUrls.clear();
+    };
+  }, []);
 
   return {
     showResults,
@@ -297,13 +448,15 @@ const useImageAnalysis = () => {
     validationLoading,
     validationMessage,
     canUpload,
+    analysisPopupMessage,
     setShowDrawer,
     handleSampleShortAnalysis,
     handleUploadedImage,
     handleRunAnalysis,
     handleNext,
     handlePrev,
-    clearImage
+    clearImage,
+    dismissAnalysisPopup: () => setAnalysisPopupMessage(null),
   };
 };
 

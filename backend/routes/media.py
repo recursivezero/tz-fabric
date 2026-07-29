@@ -1,15 +1,58 @@
 # routes/media.py
+import io
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 
-
+import requests  # type: ignore[import-untyped]
 from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 from constants import AUDIO_DIR, IMAGE_DIR, IS_PROD
 from utils.paths import build_audio_url, build_image_url
 
 router = APIRouter(tags=["media"])
+
+
+@router.get("/fetch-image")
+def fetch_remote_image(url: str = Query(..., min_length=8)):
+    """Fetch a remote image for the browser when direct fetch is blocked by CORS."""
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        raise HTTPException(
+            status_code=400, detail="Only http/https image URLs are allowed"
+        )
+
+    try:
+        response = requests.get(
+            url,
+            timeout=12,
+            headers={"User-Agent": "Mozilla/5.0 FabricAI/1.0"},
+        )
+    except requests.RequestException as exc:
+        raise HTTPException(
+            status_code=502, detail=f"Could not fetch remote image: {exc}"
+        ) from exc
+
+    if response.status_code >= 400:
+        raise HTTPException(
+            status_code=502, detail=f"Remote image returned {response.status_code}"
+        )
+
+    content_type = (
+        response.headers.get("content-type", "").split(";")[0].strip().lower()
+    )
+    if not content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400, detail="Remote URL did not return an image"
+        )
+
+    content = response.content
+    max_bytes = 12 * 1024 * 1024
+    if len(content) > max_bytes:
+        raise HTTPException(status_code=413, detail="Remote image is too large")
+
+    return StreamingResponse(io.BytesIO(content), media_type=content_type)
 
 
 @router.get("/assets/images/{filename}")

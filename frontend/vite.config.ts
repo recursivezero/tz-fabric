@@ -5,6 +5,10 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const backendTarget = (
+  process.env.VITE_API_PROXY_TARGET ||
+  'http://localhost:8002'
+).replace(/\/$/, '');
 
 
 // https://vite.dev/config/
@@ -13,13 +17,30 @@ export default defineConfig({
   server: {
     proxy: {
       "/api/v1": {
-        target: 'http://localhost:8002',
+        target: backendTarget,
+        changeOrigin: true
+      },
+      "/static": {
+        target: backendTarget,
+        changeOrigin: true
+      },
+      "/assets/images": {
+        target: backendTarget,
+        changeOrigin: true
+      },
+      "/assets/audios": {
+        target: backendTarget,
         changeOrigin: true
       }
     }
   },
+  esbuild: {
+    // Keep diagnostics during development, but do not leak chat/API payloads
+    // or debugger statements in production bundles.
+    drop: ["console", "debugger"],
+  },
   build: {
-    chunkSizeWarningLimit: 2000
+    chunkSizeWarningLimit: 500,
   },
   preview: {
     allowedHosts: ["pro.threadzip.com"],

@@ -5,7 +5,14 @@
   justify-content: flex-start;
   min-height: calc(100vh - 140px);
   padding: 40px 18px 60px;
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial;
   color: #f2f6fa;
   position: relative;
   box-sizing: border-box;
@@ -16,7 +23,12 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(1200px 600px at 50% -10%, rgba(14, 17, 22, 0.25), transparent 60%),
+  background:
+    radial-gradient(
+      1200px 600px at 50% -10%,
+      rgba(14, 17, 22, 0.25),
+      transparent 60%
+    ),
     linear-gradient(to bottom, rgba(14, 17, 22, 0.55), rgba(14, 17, 22, 0.65));
   z-index: -1;
 }
@@ -53,7 +65,7 @@
 
 .upload-page .grid {
   display: grid;
-  grid-template-columns: 1.0fr 1.0fr;
+  grid-template-columns: 1fr 1fr;
   gap: 28px;
   align-items: start;
 }
@@ -210,7 +222,9 @@
   background: rgba(21, 26, 33, 0.9);
   color: #f2f6fa;
   font-size: 20px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .upload-page input[type="text"]:focus {
@@ -309,8 +323,15 @@
 }
 
 .upload-page .link-btn {
-  background-color: blue;
-  color: white;
+  background: none;
+  border: none;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 2px;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .upload-page .audio-player {
@@ -325,11 +346,288 @@
   cursor: pointer;
   font-size: 14px;
   color: #ffffff;
-  transition: transform .08s ease, background .12s ease, box-shadow .12s ease;
+  transition:
+    transform 0.08s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .upload-page .audio-clear {
   display: flex;
   gap: 2px;
   margin-top: 15px;
+}
+/* Light theme: make the bottom Submit and Cancel actions match the
+   Start Recording button so they never appear as low-contrast white pills. */
+:root[data-theme="light"] .upload-page .name-field .btn.submit,
+:root[data-theme="light"] .upload-page .name-field .cancel {
+  background: var(--tz-turmeric, #b7791f) ;
+  color: #ffffff ;
+  border: 1px solid var(--tz-turmeric, #b7791f) ;
+  box-shadow: 0 4px 14px rgba(183, 121, 31, 0.22) ;
+}
+
+:root[data-theme="light"]
+  .upload-page
+  .name-field
+  .btn.submit:hover:not(:disabled),
+:root[data-theme="light"]
+  .upload-page
+  .name-field
+  .cancel:hover:not(:disabled) {
+  background: var(--tz-turmeric-soft, #d09128) ;
+  border-color: var(--tz-turmeric-soft, #d09128) ;
+  color: #ffffff ;
+}
+
+:root[data-theme="light"] .upload-page .name-field .btn.submit:disabled {
+  background: var(--tz-turmeric, #b7791f) ;
+  border-color: var(--tz-turmeric, #b7791f) ;
+  color: #ffffff ;
+  opacity: 0.58 ;
+  box-shadow: none ;
+}
+
+/* Final theme polish: Upload light-theme yellow actions keep white text. */
+:root[data-theme="light"] .upload-page .btn.primary,
+:root[data-theme="light"] .upload-page .btn.submit,
+:root[data-theme="light"] .upload-page .cancel {
+  color: #ffffff ;
+}
+
+/* Button text alignment fixes for Upload actions. */
+.upload-page .rec-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.upload-page .rec-controls .btn,
+.upload-page .btn.submit,
+.upload-page .cancel,
+.upload-page .confirm-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.upload-page .cancel {
+  min-height: 38px;
+}
+.upload-page .upload-submit-notification {
+  display: flex;
+  justify-content: center;
+  margin: -10px 0 20px;
+}
+
+.upload-page .upload-submit-notification .notification {
+  width: min(640px, 100%);
+  max-width: 640px;
+  margin: 0;
+}
+
+.upload-page .upload-submit-error-below {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 8px 0 18px;
+}
+
+.upload-page .upload-submit-error-below .notification {
+  width: min(640px, 100%);
+  max-width: 640px;
+  margin: 0;
+}
+
+.upload-page .upload-submit-status-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+}
+
+.upload-page .upload-submit-status-row .upload-submit-error-below {
+  width: min(640px, 100%);
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #b91c1c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.upload-page
+  .upload-submit-status-row
+  .upload-submit-error-below
+  .notification {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* Top-up fix: show submit/API errors directly below the upload tile area,
+   before the file-name/actions row, so 500 failures never look silent. */
+.upload-page .upload-submit-status-row {
+  margin: 16px auto 0;
+  max-width: 760px;
+}
+
+.upload-page .upload-submit-error-below {
+  box-sizing: border-box;
+  width: 100%;
+  color: #ffffff;
+  background: #dc2626;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 24px rgba(220, 38, 38, 0.18);
+}
+
+:root[data-theme="light"] .upload-page .upload-submit-error-below {
+  color: #ffffff;
+  background: #dc2626;
+  border-color: rgba(127, 29, 29, 0.22);
+}
+
+/* v39: post-selection Upload layout on narrow phones. Keep every preview,
+   audio control, file-name field and action inside the card without changing
+   upload/record/submit behavior. Tablet and desktop layouts are untouched. */
+@media (max-width: 480px) {
+  .upload-page {
+    width: 100%;
+    min-height: 0;
+    padding: 18px 10px 30px;
+  }
+
+  .upload-page .upload-card {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 16px 12px;
+    border-radius: 16px;
+    overflow: visible;
+  }
+
+  .upload-page .upload-header {
+    margin-bottom: 16px;
+  }
+
+  .upload-page .upload-header h2 {
+    font-size: clamp(20px, 6.4vw, 23px);
+  }
+
+  .upload-page .sub {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .upload-page .grid,
+  .upload-page .preview-col,
+  .upload-page .action-col,
+  .upload-page .audio-card,
+  .upload-page .audio-clear,
+  .upload-page .audio-player,
+  .upload-page .recording-area,
+  .upload-page .name-field,
+  .upload-page .name-field > div,
+  .upload-page .submit-wrapper {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .upload-page .grid {
+    gap: 16px;
+  }
+
+  .upload-page .dropzone,
+  .upload-page .image-preview-wrap {
+    height: clamp(180px, 48vw, 210px);
+  }
+
+  .upload-page .image-preview-plain {
+    object-fit: contain;
+  }
+
+  .upload-page .rec-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+
+  .upload-page .rec-controls .btn {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+    white-space: normal;
+  }
+
+  .upload-page .audio-clear {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .upload-page .audio-player {
+    margin-top: 0;
+  }
+
+  .upload-page .audio-player audio {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .upload-page .img-footer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .upload-page .audio-clear .chip.chip-clear {
+    width: min(100%, 190px);
+    white-space: normal;
+  }
+
+  .upload-page .name-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    margin-top: 18px;
+    gap: 10px;
+  }
+
+  .upload-page .name-label {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.3;
+    text-align: left;
+  }
+
+  .upload-page input[type="text"] {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .upload-page .btn.submit,
+  .upload-page .cancel {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding-inline: 14px;
+  }
 }

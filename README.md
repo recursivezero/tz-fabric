@@ -78,7 +78,7 @@ poetry run fabric dev
 backend/.env
 
 ```text
-PORT=8000
+PORT=8002
 GRQ_API_KEY=""
 MONGODB_URI="mongodb://localhost:27017"
 ```
@@ -86,7 +86,7 @@ MONGODB_URI="mongodb://localhost:27017"
 frontend/.env
 
 ```text
-VITE_API_URL="http://localhost:8000"
+VITE_API_URL="http://localhost:8002"
 ```
 
 🖼️ Screenshots

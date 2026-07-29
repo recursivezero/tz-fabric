@@ -1,21 +1,10 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import "@/assets/styles/Home.css";
 
-
-
 export default function Home() {
-  useEffect(() => {
-    const wrapper = document.querySelector(".app-wrapper");
-    wrapper?.classList.add("bg-color");
-
-    return () => {
-      wrapper?.classList.remove("bg-color");
-    };
-  }, []);
   return (
     <div className="homeV2">
-      <main className="homeV2__container">
+      <div className="homeV2__container">
         <header className="homeV2__hero">
           <h1 className="homeV2__title">
             Advanced Fabric Analysis
@@ -101,7 +90,7 @@ export default function Home() {
             </Link>
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

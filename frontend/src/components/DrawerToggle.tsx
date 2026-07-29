@@ -1,17 +1,25 @@
+import type { Dispatch, SetStateAction } from "react";
 import "@/assets/styles/DrawerToggle.css";
 
-const DrawerToggle = ({ showDrawer, setShowDrawer }) => {
+type DrawerToggleProps = {
+  showDrawer: boolean;
+  setShowDrawer: Dispatch<SetStateAction<boolean>>;
+};
+
+const DrawerToggle = ({ showDrawer, setShowDrawer }: DrawerToggleProps) => {
   return (
     <div
       className="drawer-toggle-wrapper"
-      style={{ right: showDrawer ? "250px" : "0px" }}
+      style={{ right: showDrawer ? "clamp(248px, 19vw, 272px)" : "0px" }}
     >
       <button
         type="button"
         className="drawer-toggle-button"
         onClick={() => setShowDrawer(!showDrawer)}
+        aria-label={showDrawer ? "Collapse sample image drawer" : "Expand sample image drawer"}
+        title={showDrawer ? "Collapse samples" : "Expand samples"}
       >
-        {showDrawer ? ">" : "<"}
+        <span aria-hidden="true">{showDrawer ? "❯" : "❮"}</span>
       </button>
     </div>
   );

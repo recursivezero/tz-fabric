@@ -1,0 +1,342 @@
+/* Home viewport + responsive navigation guard.
+ *
+ * Loaded after the legacy makeover layers so the Home route uses the available
+ * application shell height instead of stacking another viewport minimum below
+ * the header. Desktop Home content is vertically balanced inside that space;
+ * short desktop viewports receive a compact, readable layout so the footer is
+ * visible without a redundant page scrollbar. On mobile, the navigation menu
+ * is viewport-fixed and remains usable even after the document has scrolled.
+ */
+
+.app-wrapper--home .main-content {
+  display: flex;
+  min-height: 0;
+}
+
+.app-wrapper--home .homeV2 {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (min-width: 901px) {
+  .app-wrapper--home .homeV2__container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+/* Compact Home only when desktop viewport height is constrained. The regular
+   spacious desktop presentation remains unchanged on taller displays. */
+@media (min-width: 901px) and (max-height: 960px) {
+  .app-wrapper--home .homeV2__container {
+    padding-block: 14px 16px;
+  }
+
+  .app-wrapper--home .homeV2__hero {
+    margin: 0 0 12px;
+  }
+
+  .app-wrapper--home .homeV2__title {
+    font-size: 38px;
+    line-height: 1.1;
+  }
+
+  .app-wrapper--home .homeV2__titleAccent {
+    margin-top: 3px;
+  }
+
+  .app-wrapper--home .homeV2__subtitle {
+    max-width: 780px;
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .app-wrapper--home .homeV2__features {
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .app-wrapper--home .featureCard {
+    padding: 14px 15px;
+  }
+
+  .app-wrapper--home .featureCard__icon {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 5px;
+  }
+
+  .app-wrapper--home .featureCard__title {
+    margin: 3px 0 4px;
+  }
+
+  .app-wrapper--home .featureCard__text {
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+
+  .app-wrapper--home .homeV2__steps {
+    margin-top: 16px;
+    padding: 15px;
+  }
+
+  .app-wrapper--home .steps__heading {
+    margin-bottom: 9px;
+    font-size: 17px;
+  }
+
+  .app-wrapper--home .steps__grid {
+    gap: 11px;
+  }
+
+  .app-wrapper--home .stepCard {
+    padding: 12px;
+  }
+
+  .app-wrapper--home .stepCard__badge {
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-wrapper--home .stepCard__title {
+    margin: 7px 0 3px;
+    font-size: 14px;
+  }
+
+  .app-wrapper--home .stepCard__text {
+    margin-bottom: 6px;
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+
+  .app-wrapper--home .stepCard__link {
+    font-size: 12.5px;
+  }
+}
+
+/* Extra tightening for common 768px-tall laptop displays. */
+@media (min-width: 901px) and (max-height: 820px) {
+  .app-wrapper--home .homeV2__container {
+    padding-block: 10px 12px;
+  }
+
+  .app-wrapper--home .homeV2__hero {
+    margin-bottom: 7px;
+  }
+
+  .app-wrapper--home .homeV2__title {
+    font-size: 32px;
+    line-height: 1.06;
+  }
+
+  .app-wrapper--home .homeV2__titleAccent {
+    margin-top: 1px;
+  }
+
+  .app-wrapper--home .homeV2__subtitle {
+    max-width: 740px;
+    margin-top: 5px;
+    font-size: 13.5px;
+    line-height: 1.3;
+  }
+
+  .app-wrapper--home .homeV2__features {
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .app-wrapper--home .featureCard {
+    padding: 9px 12px;
+  }
+
+  .app-wrapper--home .featureCard__icon {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 2px;
+  }
+
+  .app-wrapper--home .featureCard__title {
+    margin: 1px 0 2px;
+    font-size: 14px;
+  }
+
+  .app-wrapper--home .featureCard__text {
+    font-size: 12.5px;
+    line-height: 1.3;
+  }
+
+  .app-wrapper--home .homeV2__steps {
+    margin-top: 9px;
+    padding: 9px 11px;
+  }
+
+  .app-wrapper--home .steps__heading {
+    margin-bottom: 6px;
+    font-size: 15px;
+  }
+
+  .app-wrapper--home .steps__grid {
+    gap: 8px;
+  }
+
+  .app-wrapper--home .stepCard {
+    padding: 8px 10px;
+  }
+
+  .app-wrapper--home .stepCard__badge {
+    width: 23px;
+    height: 23px;
+    font-size: 12px;
+  }
+
+  .app-wrapper--home .stepCard__title {
+    margin: 4px 0 1px;
+    font-size: 13px;
+  }
+
+  .app-wrapper--home .stepCard__text {
+    margin-bottom: 3px;
+    font-size: 11.5px;
+    line-height: 1.25;
+  }
+
+  .app-wrapper--home .stepCard__link {
+    font-size: 11.5px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    contain: none;
+  }
+
+  .site-header {
+    position: relative;
+    z-index: 1000;
+    overflow: visible;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .site-header .mobile-nav-wrapper {
+    position: static;
+  }
+
+  .site-header .header-nav ul {
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    box-sizing: border-box;
+    width: 100vw;
+    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .site-header .hamburger {
+    z-index: 1002;
+  }
+}
+
+/* Zoomed-out Home hierarchy.
+ *
+ * Browser zoom-out exposes a much larger effective CSS viewport. Keep the
+ * entire Home content stack together near the top while preserving its centred
+ * horizontal alignment. Common 100% desktop and mobile viewports stay on the
+ * existing v30 layout because this guard only activates beyond standard QHD
+ * dimensions.
+ */
+@media (min-width: 2600px) and (min-height: 1400px) {
+  .app-wrapper--home .homeV2__container {
+    justify-content: flex-start;
+    padding-block-start: clamp(32px, 3.5vh, 72px);
+    padding-block-end: 0;
+  }
+
+  .app-wrapper--home .homeV2__hero {
+    flex: 0 0 auto;
+    margin: 0 0 clamp(24px, 2vh, 40px);
+  }
+
+  .app-wrapper--home .homeV2__features {
+    flex: 0 0 auto;
+    margin-top: 0;
+  }
+
+  .app-wrapper--home .homeV2__steps {
+    flex: 0 0 auto;
+    margin-top: clamp(20px, 1.75vh, 32px);
+    margin-bottom: 0;
+  }
+}
+
+
+/* v44: heavy browser zoom-out should keep the Home/Analysis overview directly
+   below the navbar. Also render the lower "How to Use FabricAI" panel with the
+   same visual weight as the feature cards instead of a faint placeholder-like
+   surface. Normal desktop and mobile layouts remain unchanged. */
+@media (min-width: 2600px) and (min-height: 1400px) {
+  .app-wrapper--home .homeV2__container {
+    justify-content: flex-start;
+    padding-block-start: 10px;
+  }
+
+  .app-wrapper--home .homeV2__hero {
+    margin-bottom: 14px;
+  }
+
+  .app-wrapper--home .homeV2__features {
+    margin-top: 0;
+  }
+
+  .app-wrapper--home .homeV2__steps {
+    content-visibility: visible;
+    margin-top: 14px;
+    background: var(--tz-panel, #11182a);
+    border-color: rgba(148, 163, 184, 0.38);
+    box-shadow:
+      0 12px 30px rgba(2, 6, 23, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .app-wrapper--home .homeV2__steps .stepCard {
+    background: var(--tz-panel-2, #182138);
+    border-color: rgba(148, 163, 184, 0.34);
+  }
+
+  :root[data-theme="light"] .app-wrapper--home .homeV2__steps {
+    background: var(--tz-upload-panel-bg, #ffffff);
+    border-color: rgba(15, 23, 42, 0.16);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.1);
+  }
+
+  :root[data-theme="light"] .app-wrapper--home .homeV2__steps .stepCard {
+    background: #f9fbff;
+    border-color: rgba(15, 23, 42, 0.14);
+  }
+}
+
+/* v46: Home should begin directly below the shared navbar at every zoom level.
+   The previous desktop rule vertically centred the full overview inside the
+   available shell, which reintroduced a large empty band above the heading at
+   ordinary zoom. Keep the same responsive sizing, but anchor the content stack
+   to the top on desktop and reduce only the leading page inset on smaller views. */
+.app-wrapper--home .homeV2__container {
+  padding-block-start: 10px;
+}
+
+@media (min-width: 901px) {
+  .app-wrapper--home .homeV2__container {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-wrapper--home .homeV2__container {
+    padding-block-start: 12px;
+  }
+}

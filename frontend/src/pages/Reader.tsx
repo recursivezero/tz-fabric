@@ -1,12 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import type { CSSProperties } from "react";
 
-const styles: any = {
+const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   wrapper: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",
-    padding: "60px 20px",
-    fontFamily: "'DM Sans', -apple-system, sans-serif",
+    minHeight: 0,
+    width: "100%",
+    flex: "1 1 auto",
+    background: "var(--reader-page-bg)",
+    padding: "clamp(12px, 2vh, 20px) 20px 48px",
+    fontFamily: "var(--tz-font-body)",
   },
   container: {
     maxWidth: 1200,
@@ -14,26 +17,23 @@ const styles: any = {
   },
   header: {
     textAlign: "center",
-    marginBottom: 80,
+    marginBottom: 40,
   },
   title: {
-    fontFamily: "'Instrument Serif', serif",
-    fontSize: 56,
-    fontWeight: 400,
+    fontFamily: "var(--tz-font-display)",
+    fontSize: "clamp(2.25rem, 6vw, 3.5rem)",
+    fontWeight: 700,
     margin: "0 0 16px 0",
-    background: "linear-gradient(135deg, #fff 0%, #aaa 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "var(--reader-text)",
     letterSpacing: "-0.02em",
   },
   subtitle: {
     fontSize: 18,
-    color: "#888",
+    color: "var(--reader-muted)",
     margin: 0,
   },
   tileGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
     gap: 40,
     maxWidth: 1000,
     margin: "0 auto",
@@ -42,8 +42,8 @@ const styles: any = {
   tile: {
     padding: "60px 48px",
     borderRadius: 28,
-    background: "linear-gradient(135deg, rgba(255, 107, 53, 0.06) 0%, rgba(247, 147, 30, 0.03) 100%)",
-    border: "2px solid rgba(255, 107, 53, 0.15)",
+    background: "var(--reader-tile-bg)",
+    border: "2px solid var(--reader-tile-border)",
     cursor: "pointer",
     transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
     position: "relative",
@@ -53,6 +53,9 @@ const styles: any = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 320,
+    width: "100%",
+    font: "inherit",
+    color: "inherit",
   },
 
   tileGlow: {
@@ -61,7 +64,7 @@ const styles: any = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "radial-gradient(circle at 50% 50%, rgba(255, 107, 53, 0.12), transparent 70%)",
+    background: "var(--reader-tile-glow)",
     opacity: 0,
     transition: "opacity 0.4s ease",
   },
@@ -78,30 +81,24 @@ const styles: any = {
   tileIcon: {
     fontSize: 88,
     marginBottom: 28,
-    filter: "drop-shadow(0 8px 24px rgba(255, 107, 53, 0.4))",
+    filter: "var(--reader-icon-shadow)",
     transition: "all 0.4s ease",
   },
 
   tileTitle: {
     fontSize: 32,
     fontWeight: 700,
-    color: "#fff",
+    color: "var(--reader-text)",
     marginBottom: 12,
     letterSpacing: "-0.02em",
   },
 
   tileDesc: {
     fontSize: 16,
-    color: "#aaa",
+    color: "var(--reader-text-soft)",
     fontWeight: 500,
   },
 
-  "@media (max-width: 768px)": {
-    tileGrid: {
-      gridTemplateColumns: "1fr",
-      gap: 24,
-    },
-  },
 };
 
 const Reader = () => {
@@ -112,9 +109,9 @@ const Reader = () => {
     ...styles.tile,
     ...(hoveredTile === tileName && {
       transform: "translateY(-12px) scale(1.03)",
-      boxShadow: "0 32px 80px rgba(255, 107, 53, 0.3)",
-      borderColor: "rgba(255, 107, 53, 0.5)",
-      background: "linear-gradient(135deg, rgba(255, 107, 53, 0.12) 0%, rgba(247, 147, 30, 0.08) 100%)",
+      boxShadow: "var(--reader-tile-hover-shadow)",
+      borderColor: "var(--reader-tile-border-hover)",
+      background: "var(--reader-tile-hover-bg)",
     }),
   });
 
@@ -131,41 +128,83 @@ const Reader = () => {
   });
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.container}>
-        <div style={styles.header}>
+    <div className="reader-landing" style={styles.wrapper}>
+      <div className="reader-landing__container" style={styles.container}>
+        <div className="reader-landing__header" style={styles.header}>
           <h1 style={styles.title}>Select Document Type</h1>
-          <p style={styles.subtitle}>Choose a card to scan and extract information</p>
+          <p style={styles.subtitle}>
+            Choose a card to scan and extract information
+          </p>
         </div>
 
-        <div style={styles.tileGrid}>
-          <div
+        <div className="reader-landing__grid" style={styles.tileGrid}>
+          <button
+            type="button"
+            className="reader-landing__tile"
             style={getTileStyle("pan")}
             onClick={() => navigate("/reader/pan")}
             onMouseEnter={() => setHoveredTile("pan")}
             onMouseLeave={() => setHoveredTile(null)}
+            onFocus={() => setHoveredTile("pan")}
+            onBlur={() => setHoveredTile(null)}
+            aria-label="Open PAN card reader"
           >
             <div style={getGlowStyle("pan")} />
             <div style={styles.tileContent}>
-              <div style={getIconStyle("pan")}>🪪</div>
-              <div style={styles.tileTitle}>PAN Card</div>
-              <div style={styles.tileDesc}>Income Tax Department</div>
+              <div
+                className="reader-landing__tile-icon"
+                style={getIconStyle("pan")}
+              >
+                🪪
+              </div>
+              <div
+                className="reader-landing__tile-title"
+                style={styles.tileTitle}
+              >
+                PAN Card
+              </div>
+              <div
+                className="reader-landing__tile-description"
+                style={styles.tileDesc}
+              >
+                Income Tax Department
+              </div>
             </div>
-          </div>
+          </button>
 
-          <div
+          <button
+            type="button"
+            className="reader-landing__tile"
             style={getTileStyle("aadhaar")}
-            onClick={() => navigate("/reader/adhaar")}
+            onClick={() => navigate("/reader/aadhaar")}
             onMouseEnter={() => setHoveredTile("aadhaar")}
             onMouseLeave={() => setHoveredTile(null)}
+            onFocus={() => setHoveredTile("aadhaar")}
+            onBlur={() => setHoveredTile(null)}
+            aria-label="Open Aadhaar card reader"
           >
             <div style={getGlowStyle("aadhaar")} />
             <div style={styles.tileContent}>
-              <div style={getIconStyle("aadhaar")}>🆔</div>
-              <div style={styles.tileTitle}>Aadhaar Card</div>
-              <div style={styles.tileDesc}>UIDAI Identity</div>
+              <div
+                className="reader-landing__tile-icon"
+                style={getIconStyle("aadhaar")}
+              >
+                🆔
+              </div>
+              <div
+                className="reader-landing__tile-title"
+                style={styles.tileTitle}
+              >
+                Aadhaar Card
+              </div>
+              <div
+                className="reader-landing__tile-description"
+                style={styles.tileDesc}
+              >
+                UIDAI Identity
+              </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

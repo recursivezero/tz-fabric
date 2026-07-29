@@ -8,7 +8,7 @@ import lancedb
 import pandas as pd
 from image_search.schema import Fabric
 from utils.aws_helper import generate_cdn_url, s3_client as s3
-from constants import ALLOWED_EXTENSIONS
+from constants import ALLOWED_EXTENSIONS, BUCKET_NAME, CDN_URL
 from utils.messages import TABLE_MESSAGES
 
 # Configure logging
@@ -19,6 +19,77 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+# ---------------------------------------------------------------------------
+# Helpers: S3 pre-signed fetch URL  ↔  stable CDN URL
+# ---------------------------------------------------------------------------
+
+
+def _make_fetch_url(key: str) -> str:
+    """
+    Return a URL the SigLIP/OpenCLIP embedder can actually download.
+
+    The CDN (assets.threadzip.com) returns 403 for unauthenticated requests, so
+    we generate a short-lived pre-signed S3 URL instead.  Falls back to the
+    CDN URL on signing failure (will still fail with 403, but at least you get
+    a clear error message rather than a silent hang).
+    """
+    try:
+        return s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": BUCKET_NAME, "Key": key},
+            ExpiresIn=7200,  # 2-hour window — enough for large table builds
+        )
+    except Exception as exc:
+        logger.warning(
+            f"Pre-signed URL generation failed for {key!r}: {exc}. "
+            "Falling back to CDN URL (download may fail with 403)."
+        )
+        return generate_cdn_url(key)
+
+
+def _to_cdn_url(uri: str) -> str:
+    """
+    Normalise whatever URL ended up in image_uri back to a stable CDN URL.
+
+    Handles all four presigned URL formats boto3 can emit:
+
+      virtual-hosted  https://<bucket>.s3.<region>.amazonaws.com/<key>?X-Amz-…
+      path-style      https://s3[.<region>].amazonaws.com/<bucket>/<key>?X-Amz-…
+      global          https://s3.amazonaws.com/<bucket>/<key>?X-Amz-…
+      already CDN     https://assets.threadzip.com/<key>                   (no-op)
+      local path      /abs/or/relative/path                             (no-op)
+    """
+    parsed = urlparse(uri)
+    host = parsed.netloc
+
+    if not host:  # local path — leave unchanged
+        return uri
+
+    if "amazonaws.com" not in host:  # CDN URL or unknown — leave unchanged
+        return uri
+
+    # Virtual-hosted: <bucket>.s3[.<region>].amazonaws.com/<key>
+    if BUCKET_NAME and host.startswith(f"{BUCKET_NAME}."):
+        key = parsed.path.lstrip("/")
+        if key:
+            return f"{CDN_URL}/{key}"
+
+    # Path-style: s3[.<region>].amazonaws.com/<bucket>/<key>
+    if host.startswith("s3"):
+        parts = parsed.path.lstrip("/").split("/", 1)
+        if len(parts) == 2 and parts[0] == BUCKET_NAME:
+            return f"{CDN_URL}/{parts[1]}"
+
+    # Fallback — couldn't parse, return unchanged
+    logger.warning(f"_to_cdn_url: could not convert {uri!r} — returning as-is")
+    return uri
+
+
+# ---------------------------------------------------------------------------
+# Existing helpers (unchanged)
+# ---------------------------------------------------------------------------
 
 
 def validate_file_path(file_path: str) -> bool:
@@ -74,7 +145,12 @@ ALLOWED_ROOTS = {"stock", "fabric", "design", "product"}
 
 
 def collect_image_data(root_folder: str) -> list:
-    """Collect image info from local or S3, supports nested folders."""
+    """Collect image info from local or S3, supports nested folders.
+
+    For S3 paths the image_uri is set to a pre-signed URL so LanceDB can
+    download the image bytes to compute embeddings.  create_table() converts
+    these back to stable CDN URLs before the table is persisted.
+    """
     image_data = []
 
     if root_folder.startswith("s3://"):
@@ -98,7 +174,11 @@ def collect_image_data(root_folder: str) -> list:
                     if key.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
                         image_data.append(
                             {
-                                "image_uri": generate_cdn_url(key),
+                                # FIX: use a pre-signed URL so the SigLIP embedder
+                                # can download the image (CDN returns 403 without auth).
+                                # create_table() converts these back to CDN URLs after
+                                # embeddings have been computed.
+                                "image_uri": _make_fetch_url(key),
                                 "tag": category,
                                 "hash": obj["ETag"].strip('"'),
                                 "mtime": obj["LastModified"].timestamp(),
@@ -180,13 +260,21 @@ def create_table(db, table_name: str, schema: Type[Fabric], image_data: list):
 
     if image_data:
         logger.info(TABLE_MESSAGES.info.adding_images.format(count=len(image_data)))
+        # NOTE: image_uri values here are pre-signed S3 URLs (for S3-backed
+        # collections) so the SigLIP embedder can download them without a 403.
         table.add(pd.DataFrame(image_data))
         df = table.to_pandas()
 
-        # modify column
+        # FIX: Convert pre-signed S3 URLs → stable CDN URLs before persisting.
+        # This must happen before the table is written to disk so searches
+        # return displayable CDN URLs rather than short-lived signed ones.
+        df["image_uri"] = df["image_uri"].apply(_to_cdn_url)
+
+        # Legacy cleanup: strip everything up to and including "uploaded/" for
+        # any rows that were stored with the old upload-path format.
         df["image_uri"] = df["image_uri"].str.replace(r".*uploaded/", "", regex=True)
 
-        # recreate table with vectors still inside df
+        # Recreate table with vectors still inside df
         db.drop_table(table_name)
 
         table = db.create_table(
@@ -220,6 +308,11 @@ def update_existing_table(table, current_images: list):
 
     # Convert current images to a DataFrame for easier comparison
     current_df = pd.DataFrame(current_images)
+
+    # NOTE: current_df["image_uri"] may contain pre-signed URLs at this point
+    # (from collect_image_data). Normalise them to CDN URLs so comparisons with
+    # the existing table (which stores CDN URLs) work correctly.
+    current_df["image_uri"] = current_df["image_uri"].apply(_to_cdn_url)
 
     # Find new or modified images
     new_or_modified = []

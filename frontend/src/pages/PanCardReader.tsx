@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
+import type { CSSProperties } from "react";
 import Cropper from "react-easy-crop";
 import { useNavigate } from "react-router-dom";
 
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
-
+import { ensureOk, fetchWithTimeout } from "@/utils/http";
+import { logger } from "@/utils/logger";
 
 type PanResult = {
   type: string;
@@ -24,6 +26,7 @@ const PanCardReader = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<PanResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
@@ -36,6 +39,7 @@ const PanCardReader = () => {
   const handleFile = (f: File | null) => {
     setFile(f);
     setResult(null);
+    setError(null);
     setCroppedImage(null);
     if (f) {
       const url = URL.createObjectURL(f);
@@ -57,9 +61,12 @@ const PanCardReader = () => {
     }
   };
 
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const onCropComplete = useCallback(
+    (_croppedArea: Area, croppedAreaPixels: Area) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    [],
+  );
 
   const createCroppedImage = async (): Promise<string | null> => {
     if (!preview || !croppedAreaPixels) return null;
@@ -89,7 +96,7 @@ const PanCardReader = () => {
           0,
           0,
           croppedAreaPixels.width,
-          croppedAreaPixels.height
+          croppedAreaPixels.height,
         );
 
         // Convert to data URL
@@ -128,6 +135,7 @@ const PanCardReader = () => {
   const submit = async () => {
     if (!croppedImage && !file) return;
     setLoading(true);
+    setError(null);
 
     const fd = new FormData();
 
@@ -140,20 +148,21 @@ const PanCardReader = () => {
     }
 
     try {
-      const res = await fetch(`${FULL_API_URL}/pan`, {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      const res = await fetchWithTimeout(
+        `${FULL_API_URL}/pan`,
+        {
+          method: "POST",
+          body: fd,
+        },
+        60_000,
+      );
+      await ensureOk(res, "Failed to process PAN card.");
 
       const data = await res.json();
       setResult(data);
     } catch (error) {
-      console.error("Error processing card:", error);
-      alert("Failed to process card. Please try again.");
+      logger.error("PAN card processing failed", error);
+      setError("Failed to process PAN card. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -182,10 +191,11 @@ const PanCardReader = () => {
   };
 
   return (
-    <div style={styles.wrapper}>
+    <div
+      className="document-reader-page document-reader-page--pan"
+      style={styles.wrapper}
+    >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap');
-        
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-20px) rotate(2deg); }
@@ -247,7 +257,7 @@ const PanCardReader = () => {
         
         .upload-zone:hover {
           transform: translateY(-4px);
-          box-shadow: 0 20px 60px rgba(255, 107, 53, 0.2);
+          box-shadow: 0 20px 60px var(--document-reader-accent-border-soft);
         }
         
         .btn-primary {
@@ -258,7 +268,7 @@ const PanCardReader = () => {
         
         .btn-primary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+          box-shadow: 0 10px 30px var(--document-reader-accent-border);
         }
         
         .btn-primary::before {
@@ -302,11 +312,11 @@ const PanCardReader = () => {
         .title-shimmer {
           background: linear-gradient(
             90deg,
-            #1a1a2e 0%,
-            #FF6B35 25%,
-            #FFD700 50%,
-            #FF6B35 75%,
-            #1a1a2e 100%
+            var(--document-reader-text) 0%,
+            var(--document-reader-accent) 25%,
+            var(--document-reader-accent-hover) 50%,
+            var(--document-reader-accent) 75%,
+            var(--document-reader-text) 100%
           );
           background-size: 200% 100%;
           -webkit-background-clip: text;
@@ -321,23 +331,28 @@ const PanCardReader = () => {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #FF6B35;
+          background: var(--document-reader-accent);
           cursor: pointer;
-          box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+          box-shadow: 0 2px 8px var(--document-reader-accent-border);
         }
         
         input[type="range"]::-moz-range-thumb {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #FF6B35;
+          background: var(--document-reader-accent);
           cursor: pointer;
           border: none;
-          box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+          box-shadow: 0 2px 8px var(--document-reader-accent-border);
         }
       `}</style>
 
       <div style={styles.container}>
+        {error && (
+          <div style={styles.errorBanner} role="alert">
+            {error}
+          </div>
+        )}
         {/* Header */}
         <div style={styles.header}>
           <div
@@ -346,7 +361,7 @@ const PanCardReader = () => {
               cursor: "pointer",
               transform: hovered ? "scale(1.06)" : "scale(1)",
               boxShadow: hovered
-                ? "0 12px 40px rgba(255, 107, 53, 0.35)"
+                ? "var(--document-reader-accent-shadow)"
                 : "none",
             }}
             onMouseEnter={() => setHovered(true)}
@@ -359,7 +374,7 @@ const PanCardReader = () => {
               height="48"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#FF6B35"
+              stroke="currentColor"
               strokeWidth="2"
             >
               <rect x="1" y="4" width="22" height="16" rx="2" />
@@ -367,12 +382,13 @@ const PanCardReader = () => {
             </svg>
           </div>
 
-
           <h1 className={loading ? "title-shimmer" : ""} style={styles.title}>
             {loading ? "Processing Your Card..." : "PAN Card Reader"}
           </h1>
           <p style={styles.subtitle}>
-            {loading ? "Extracting information with AI..." : "Extract information instantly from ID cards"}
+            {loading
+              ? "Extracting information with AI..."
+              : "Extract information instantly from ID cards"}
           </p>
           <div style={styles.privacyNote}>
             <svg
@@ -387,8 +403,8 @@ const PanCardReader = () => {
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
             <span>
-              Your image is processed only in memory during this session.
-              We do <strong>not</strong> store or save images or share data.
+              Your image is processed only in memory during this session. We do{" "}
+              <strong>not</strong> store or save images or share data.
             </span>
           </div>
         </div>
@@ -418,7 +434,14 @@ const PanCardReader = () => {
 
             <label htmlFor="file-upload" style={styles.uploadLabel}>
               <div style={styles.uploadIcon}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
@@ -427,9 +450,7 @@ const PanCardReader = () => {
               <h3 style={styles.uploadTitle}>
                 {isDragging ? "Drop your card here" : "Upload PAN Card Image"}
               </h3>
-              <p style={styles.uploadText}>
-                Drag and drop or click to browse
-              </p>
+              <p style={styles.uploadText}>Drag and drop or click to browse</p>
             </label>
           </div>
         ) : (
@@ -521,7 +542,14 @@ const PanCardReader = () => {
                       </span>
                     ) : (
                       <>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                           <polyline points="14 2 14 8 20 8" />
                           <line x1="16" y1="13" x2="8" y2="13" />
@@ -544,11 +572,18 @@ const PanCardReader = () => {
             <CardPreview data={result} loading={loading} />
 
             <button
-              className="btn-primary"
+              className="btn-primary reader-result-action-button reader-download-button"
               onClick={downloadCard}
               style={styles.downloadBtn}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
@@ -557,6 +592,7 @@ const PanCardReader = () => {
             </button>
 
             <button
+              className="reader-result-action-button"
               onClick={resetUpload}
               style={styles.newUploadBtn}
             >
@@ -564,11 +600,19 @@ const PanCardReader = () => {
             </button>
 
             <div style={styles.privacyNote}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              We do not store your data. Everything runs only during this session.
+              We do not store your data. Everything runs only during this
+              session.
             </div>
           </div>
         )}
@@ -679,13 +723,14 @@ const CardPreview = ({ data, loading }: CardPreviewProps) => {
   );
 };
 
-
-const styles: any = {
+const styles: Record<string, CSSProperties> = {
   wrapper: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)",
+    minHeight: 0,
+    width: "100%",
+    flex: "1 0 auto",
+    background: "var(--document-reader-page-bg)",
     padding: "60px 20px",
-    fontFamily: "'DM Sans', -apple-system, sans-serif",
+    fontFamily: "var(--tz-font-body)",
   },
   container: {
     maxWidth: 520,
@@ -698,40 +743,39 @@ const styles: any = {
   iconWrapper: {
     display: "inline-flex",
     padding: 16,
-    background: "rgba(255, 107, 53, 0.1)",
+    color: "var(--document-reader-accent)",
+    background: "var(--document-reader-accent-soft)",
     borderRadius: 20,
     marginBottom: 24,
     transition: "all 0.2s ease",
   },
 
   title: {
-    fontFamily: "'Instrument Serif', serif",
-    fontSize: 48,
-    fontWeight: 400,
+    fontFamily: "var(--tz-font-display)",
+    fontSize: "clamp(2rem, 5vw, 3rem)",
+    fontWeight: 700,
     margin: "0 0 12px 0",
-    background: "linear-gradient(135deg, #fff 0%, #aaa 100%)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "var(--document-reader-text)",
     letterSpacing: "-0.02em",
   },
   subtitle: {
     fontSize: 16,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     margin: 0,
     fontWeight: 400,
   },
   uploadZone: {
     position: "relative" as const,
     padding: 60,
-    border: "2px dashed rgba(255, 107, 53, 0.3)",
+    border: "2px dashed var(--document-reader-accent-border)",
     borderRadius: 24,
-    background: "rgba(255, 107, 53, 0.03)",
+    background: "var(--document-reader-surface-faint)",
     cursor: "pointer",
     textAlign: "center",
   },
   uploadZoneDragging: {
-    borderColor: "#FF6B35",
-    background: "rgba(255, 107, 53, 0.08)",
+    borderColor: "var(--document-reader-accent)",
+    background: "var(--document-reader-accent-soft)",
     transform: "scale(1.02)",
   },
   fileInput: {
@@ -742,27 +786,27 @@ const styles: any = {
     display: "block",
   },
   uploadIcon: {
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     marginBottom: 24,
   },
   uploadTitle: {
     fontSize: 24,
-    fontFamily: "'Instrument Serif', serif",
+    fontFamily: "var(--tz-font-display)",
     fontWeight: 400,
-    color: "#fff",
+    color: "var(--document-reader-text)",
     margin: "0 0 8px 0",
   },
   uploadText: {
     fontSize: 15,
-    color: "#999",
+    color: "var(--document-reader-muted-strong)",
     margin: "0 0 20px 0",
   },
   previewCard: {
     marginBottom: 24,
     borderRadius: 20,
     overflow: "hidden",
-    background: "#1a1a1a",
-    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+    background: "var(--document-reader-modal-bg)",
+    boxShadow: "var(--document-reader-preview-shadow)",
   },
   previewImage: {
     width: "100%",
@@ -776,9 +820,9 @@ const styles: any = {
   recropBtn: {
     flex: 1,
     padding: "12px 20px",
-    background: "rgba(255, 107, 53, 0.1)",
-    color: "#FF6B35",
-    border: "1px solid rgba(255, 107, 53, 0.3)",
+    background: "var(--document-reader-accent-soft)",
+    color: "var(--document-reader-accent)",
+    border: "1px solid var(--document-reader-accent-border)",
     borderRadius: 12,
     fontSize: 14,
     fontWeight: 600,
@@ -788,9 +832,9 @@ const styles: any = {
   removeBtn: {
     flex: 1,
     padding: "12px 20px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 12,
     fontSize: 14,
     fontWeight: 600,
@@ -800,8 +844,8 @@ const styles: any = {
   extractBtn: {
     width: "100%",
     padding: "18px 32px",
-    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "#fff",
+    background: "var(--document-reader-primary-bg)",
+    color: "var(--document-reader-accent-contrast)",
     border: "none",
     borderRadius: 16,
     fontSize: 16,
@@ -820,8 +864,8 @@ const styles: any = {
   spinner: {
     width: 20,
     height: 20,
-    border: "3px solid rgba(255, 255, 255, 0.3)",
-    borderTopColor: "#fff",
+    border: "3px solid var(--document-reader-spinner-track)",
+    borderTopColor: "var(--document-reader-spinner-head)",
     borderRadius: "50%",
     animation: "spin 0.8s linear infinite",
     display: "inline-block",
@@ -832,8 +876,8 @@ const styles: any = {
   card: {
     padding: 32,
     borderRadius: 20,
-    background: "linear-gradient(135deg, #1a1a1a 0%, #252525 100%)",
-    border: "1px solid rgba(255, 107, 53, 0.2)",
+    background: "var(--document-reader-card-bg)",
+    border: "1px solid var(--document-reader-accent-border-soft)",
     marginBottom: 24,
     position: "relative" as const,
     overflow: "hidden",
@@ -856,7 +900,7 @@ const styles: any = {
   },
   watermarkSvg: {
     display: "block",
-    filter: "drop-shadow(0 0 10px rgba(255, 107, 53, 0.2))",
+    filter: "drop-shadow(0 0 10px var(--document-reader-accent-border-soft))",
   },
   watermarkText: {
     position: "absolute" as const,
@@ -865,9 +909,9 @@ const styles: any = {
     fontSize: 9,
     fontWeight: 700,
     letterSpacing: "0.15em",
-    color: "rgba(255, 107, 53, 0.3)",
+    color: "var(--document-reader-accent-border)",
     textTransform: "uppercase" as const,
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "var(--tz-font-body)",
   },
   cardHeader: {
     display: "flex",
@@ -875,7 +919,7 @@ const styles: any = {
     alignItems: "center",
     marginBottom: 32,
     paddingBottom: 20,
-    borderBottom: "1px solid rgba(255, 107, 53, 0.2)",
+    borderBottom: "1px solid var(--document-reader-accent-border-soft)",
     position: "relative" as const,
     zIndex: 1,
   },
@@ -883,7 +927,7 @@ const styles: any = {
     fontSize: 13,
     fontWeight: 700,
     letterSpacing: "0.1em",
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     textTransform: "uppercase" as const,
   },
   cardChip: {
@@ -894,7 +938,7 @@ const styles: any = {
   chipLine: {
     width: 32,
     height: 3,
-    background: "linear-gradient(90deg, #FF6B35 0%, #F7931E 100%)",
+    background: "var(--document-reader-primary-bg)",
     borderRadius: 2,
   },
   cardBody: {
@@ -914,14 +958,14 @@ const styles: any = {
     fontSize: 11,
     fontWeight: 600,
     letterSpacing: "0.05em",
-    color: "#888",
+    color: "var(--document-reader-muted)",
     textTransform: "uppercase" as const,
     marginBottom: 6,
   },
   fieldValue: {
     fontSize: 18,
-    fontFamily: "'Instrument Serif', serif",
-    color: "#fff",
+    fontFamily: "var(--tz-font-display)",
+    color: "var(--document-reader-text)",
     fontWeight: 400,
   },
   cardFooter: {
@@ -930,7 +974,7 @@ const styles: any = {
     left: 0,
     right: 0,
     height: 8,
-    background: "linear-gradient(90deg, #FF6B35 0%, #F7931E 50%, #FF6B35 100%)",
+    background: "linear-gradient(90deg, var(--document-reader-accent) 0%, var(--document-reader-accent-hover) 50%, var(--document-reader-accent) 100%)",
     opacity: 0.5,
   },
   securityPattern: {
@@ -939,14 +983,15 @@ const styles: any = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 11px)",
+    background:
+      "repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 11px)",
   },
   downloadBtn: {
     width: "100%",
     padding: "16px 32px",
-    background: "rgba(255, 107, 53, 0.1)",
-    color: "#FF6B35",
-    border: "1px solid rgba(255, 107, 53, 0.3)",
+    background: "var(--document-reader-accent-soft)",
+    color: "var(--document-reader-accent)",
+    border: "1px solid var(--document-reader-accent-border)",
     borderRadius: 16,
     fontSize: 15,
     fontWeight: 600,
@@ -961,9 +1006,9 @@ const styles: any = {
   newUploadBtn: {
     width: "100%",
     padding: "16px 32px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 16,
     fontSize: 15,
     fontWeight: 600,
@@ -977,12 +1022,12 @@ const styles: any = {
     justifyContent: "center",
     gap: 8,
     fontSize: 16,
-    color: "#bb0707ff",
+    color: "var(--document-reader-muted)",
     textAlign: "center",
     padding: "16px 20px",
-    background: "rgba(255, 255, 255, 0.02)",
+    background: "var(--document-reader-surface-faint)",
     borderRadius: 12,
-    border: "1px solid rgba(255, 255, 255, 0.05)",
+    border: "1px solid var(--document-reader-border-soft)",
   },
 
   // Cropper styles
@@ -992,7 +1037,7 @@ const styles: any = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "rgba(0, 0, 0, 0.95)",
+    background: "var(--document-reader-modal-overlay)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1000,7 +1045,7 @@ const styles: any = {
     padding: 20,
   },
   cropperContainer: {
-    background: "#1a1a1a",
+    background: "var(--document-reader-modal-bg)",
     borderRadius: 20,
     padding: 24,
     maxWidth: 600,
@@ -1008,14 +1053,14 @@ const styles: any = {
   },
   cropperTitle: {
     fontSize: 24,
-    fontFamily: "'Instrument Serif', serif",
-    color: "#fff",
+    fontFamily: "var(--tz-font-display)",
+    color: "var(--document-reader-text)",
     margin: "0 0 8px 0",
     textAlign: "center",
   },
   cropperSubtitle: {
     fontSize: 14,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     margin: "0 0 24px 0",
     textAlign: "center",
   },
@@ -1023,17 +1068,17 @@ const styles: any = {
     position: "relative" as const,
     width: "100%",
     height: 400,
-    background: "#000",
+    background: "var(--document-reader-crop-bg)",
     borderRadius: 12,
     overflow: "hidden",
     marginBottom: 20,
   },
   reactEasyCropContainer: {
-    background: "#000",
+    background: "var(--document-reader-crop-bg)",
   },
   reactEasyCropMedia: {},
   reactEasyCropArea: {
-    border: "2px solid #FF6B35",
+    border: "2px solid var(--document-reader-accent)",
     boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
   },
   zoomControl: {
@@ -1042,12 +1087,12 @@ const styles: any = {
     gap: 12,
     marginBottom: 20,
     padding: "12px 16px",
-    background: "rgba(255, 255, 255, 0.03)",
+    background: "var(--document-reader-surface-subtle)",
     borderRadius: 12,
   },
   zoomLabel: {
     fontSize: 14,
-    color: "#888",
+    color: "var(--document-reader-muted)",
     fontWeight: 600,
     minWidth: 50,
   },
@@ -1057,8 +1102,8 @@ const styles: any = {
     alignItems: "center",
     paddingTop: 8,
     marginTop: 12,
-    borderTop: "1px dashed rgba(255, 107, 53, 0.25)",
-    fontFamily: "'DM Sans', sans-serif",
+    borderTop: "1px dashed var(--document-reader-accent-border-soft)",
+    fontFamily: "var(--tz-font-body)",
     position: "relative" as const,
     zIndex: 1,
   },
@@ -1068,13 +1113,13 @@ const styles: any = {
     fontWeight: 700,
     letterSpacing: "0.12em",
     textTransform: "uppercase" as const,
-    color: "rgba(255, 107, 53, 0.6)",
+    color: "var(--document-reader-accent-muted)",
   },
 
   timestampValue: {
     fontSize: 12,
     fontWeight: 500,
-    color: "#ddd",
+    color: "var(--document-reader-text)",
     letterSpacing: "0.04em",
   },
 
@@ -1082,7 +1127,7 @@ const styles: any = {
     flex: 1,
     height: 4,
     borderRadius: 2,
-    background: "rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-border)",
     outline: "none",
     appearance: "none" as const,
     WebkitAppearance: "none",
@@ -1090,7 +1135,7 @@ const styles: any = {
   },
   zoomValue: {
     fontSize: 14,
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     fontWeight: 600,
     minWidth: 45,
     textAlign: "right" as const,
@@ -1102,9 +1147,9 @@ const styles: any = {
   cancelBtn: {
     flex: 1,
     padding: "14px 24px",
-    background: "rgba(255, 255, 255, 0.05)",
-    color: "#fff",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    background: "var(--document-reader-surface-soft)",
+    color: "var(--document-reader-text)",
+    border: "1px solid var(--document-reader-border)",
     borderRadius: 12,
     fontSize: 15,
     fontWeight: 600,
@@ -1114,8 +1159,8 @@ const styles: any = {
   cropBtn: {
     flex: 1,
     padding: "14px 24px",
-    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "#fff",
+    background: "var(--document-reader-primary-bg)",
+    color: "var(--document-reader-accent-contrast)",
     border: "none",
     borderRadius: 12,
     fontSize: 15,
@@ -1124,6 +1169,17 @@ const styles: any = {
     transition: "all 0.2s ease",
   },
 
+  errorBanner: {
+    width: "100%",
+    maxWidth: "720px",
+    margin: "0 auto 18px",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    color: "var(--document-reader-danger-text)",
+    background: "var(--document-reader-danger-bg)",
+    border: "1px solid var(--document-reader-danger-border)",
+    fontWeight: 600,
+  },
 };
 
 export default PanCardReader;
