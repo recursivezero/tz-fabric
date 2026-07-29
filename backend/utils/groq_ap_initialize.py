@@ -13,5 +13,9 @@ def groq_initialize() -> Groq:
     if not api_key:
         raise RuntimeError("GROQ_API_KEY environment variable not set")
 
-    client = Groq(api_key=api_key)
+    timeout = float(os.getenv("GROQ_ANALYSIS_TIMEOUT", "16"))
+    try:
+        client = Groq(api_key=api_key, timeout=timeout)
+    except TypeError:
+        client = Groq(api_key=api_key)
     return client

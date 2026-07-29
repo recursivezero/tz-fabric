@@ -11,10 +11,10 @@
 .footer__inner {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 26px 20px;
+  padding: 14px 20px;
   display: grid;
   grid-template-columns: 1.4fr 1fr;
-  gap: 32px;
+  gap: 20px;
 }
 
 @media (max-width: 900px) {
@@ -26,13 +26,13 @@
 
 .footer__brand {
   display: grid;
-  grid-template-columns: 42px 1fr;
+  grid-template-columns: 36px 1fr;
   gap: 12px;
 }
 
 .footer__logo {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   display: inline-flex;
   align-items: center;
@@ -51,7 +51,7 @@
   margin: 0;
   color: #b7c1d6;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.35;
 }
 
 .footer__github {
@@ -59,7 +59,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 6px 9px;
   border-radius: 10px;
   text-decoration: none;
   color: #c7d3ea;
@@ -77,7 +77,7 @@
 .footer__cols {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 28px;
+  gap: 18px;
 }
 
 .footer__col h4 {
@@ -117,7 +117,7 @@
 
 .footer__copyright {
   max-width: var(--container-max);
-  margin: 10px auto 18px;
+  margin: 8px auto 10px;
   text-align: center;
   color: #a8b4cc;
   font-size: 13px;

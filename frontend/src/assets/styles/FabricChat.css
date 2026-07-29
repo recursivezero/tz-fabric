@@ -26,7 +26,7 @@
 .chat-scroll-area {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto !important;
+  overflow: auto ;
 }
 
 .chat-card-topbar {
@@ -123,8 +123,8 @@
 .btn:disabled {
   opacity: .5;
   cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
+  transform: none ;
+  box-shadow: none ;
 }
 
 .btn-secondary {
@@ -215,6 +215,14 @@
   margin: 8px auto 0;
 }
 
+/* Keep server failures readable after lazy-loaded Chat styles are inserted. */
+.app-wrapper--chat .page-root .error[role="alert"],
+.app-wrapper--chat .page-root .error[role="alert"] * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+}
+
 @media (max-width: 720px) {
   .page-root {
     padding: 72px 12px 28px;
@@ -240,7 +248,7 @@
 }
 
 .chat-scroll-area {
-  overflow: visible !important;
+  overflow: visible ;
   max-height: none;
   padding: 12px 0 0;
   background: transparent;
@@ -258,11 +266,11 @@
 }
 
 .page-root.is-empty .chat-scroll-area::before {
-  display: none !important;
+  display: none ;
 }
 
 .page-root.is-empty .chat-scroll-area {
-  background: radial-gradient(600px 280px at 50% 0%, #eef2ff 0%, transparent 70%) !important;
+  background: radial-gradient(600px 280px at 50% 0%, #eef2ff 0%, transparent 70%) ;
 }
 
 .page-root {
@@ -279,11 +287,416 @@
 .chat-scroll-area {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto !important;
+  overflow: auto ;
   padding: 12px 0 140px;
 }
 
 .content-col {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* Final chat layout overrides: keep the conversation visible and the composer compact. */
+.page-root {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #081126;
+}
+
+.chat-card-topbar {
+  flex: 0 0 auto;
+  width: min(1120px, calc(100% - 32px));
+  margin: 10px auto 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+}
+
+.chat-card-title .main {
+  color: #f8fafc;
+}
+
+.chat-body {
+  flex: 1 1 auto;
+  height: auto ;
+  min-height: 0;
+  width: min(1120px, calc(100% - 32px));
+  margin: 10px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.chat-scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto ;
+  overflow-x: hidden ;
+  padding: 14px 8px 18px ;
+  scrollbar-width: thin;
+}
+
+.chat-scroll-area::-webkit-scrollbar {
+  display: initial;
+  width: 8px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+.page-root.is-empty .chat-scroll-area {
+  background: transparent ;
+}
+
+@media (max-width: 720px) {
+  .page-root {
+    padding: 0;
+  }
+
+  .chat-card-topbar,
+  .chat-body {
+    width: calc(100% - 20px);
+  }
+
+  .chat-card-actions {
+    gap: 6px;
+  }
+
+  .page-root .btn {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+
+.chat-action-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.chat-card-actions .btn span {
+  line-height: 1;
+}
+
+@media (max-width: 420px) {
+  .chat-card-actions .btn span {
+    display: none;
+  }
+
+  .chat-card-actions .btn {
+    width: 36px;
+    justify-content: center;
+    padding: 0 ;
+  }
+}
+
+/* Senior QA patch: Chat text contrast after theme toggle.
+   Keeps empty-state heading/subtitle, topbar labels, composer text and action labels readable. */
+.page-root .chat-card-topbar,
+.page-root .chat-body,
+.page-root .empty-state-large,
+.page-root .composer {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.page-root .chat-card-title .main,
+.page-root .empty-state-large h3 {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .empty-state-large p,
+.page-root .audio-label,
+.page-root .stop-text {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .chat-card-actions .btn,
+.page-root .chat-card-actions .btn span,
+.page-root .chat-card-actions .chat-action-icon {
+  color: inherit;
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .chat-card-actions .btn-secondary {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #171101;
+}
+
+.page-root .chat-card-actions .btn-ghost {
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.94));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+:root[data-theme="light"] .page-root .chat-card-title .main,
+:root[data-theme="light"] .page-root .empty-state-large h3,
+:root[data-theme="light"] .page-root .chat-card-actions .btn-ghost {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .page-root .empty-state-large p,
+:root[data-theme="light"] .page-root .audio-label,
+:root[data-theme="light"] .page-root .stop-text {
+  color: #475569;
+}
+
+:root[data-theme="light"] .page-root .chat-card-actions .btn-ghost {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+/* Senior QA: chat readability and bottom-control clipping fixes without forced-priority rules. */
+.page-root .chat-card-topbar,
+.page-root .chat-body,
+.page-root .empty-state-large,
+.page-root .composer {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.page-root .chat-card-title .main,
+.page-root .empty-state-large h3 {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .empty-state-large p,
+.page-root .audio-label,
+.page-root .stop-text {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .chat-card-actions .btn,
+.page-root .chat-card-actions .btn span,
+.page-root .chat-card-actions .chat-action-icon {
+  color: inherit;
+  opacity: 1;
+  text-shadow: none;
+}
+
+.page-root .chat-card-actions .btn-secondary {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #171101;
+}
+
+.page-root .chat-card-actions .btn-ghost {
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.94));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+.page-root .chat-body {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.page-root .chat-scroll-area {
+  padding-bottom: 24px;
+}
+
+.page-root .composer {
+  flex: 0 0 auto;
+  padding: 8px 8px max(14px, env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+}
+
+.page-root .composer-audio-row {
+  margin-top: 8px;
+  margin-right: 8px;
+  padding-bottom: 2px;
+}
+
+.page-root .record-btn,
+.page-root .audio-label,
+.page-root .stop-text {
+  line-height: 1.2;
+}
+
+:root[data-theme="light"] .page-root .chat-card-title .main,
+:root[data-theme="light"] .page-root .empty-state-large h3,
+:root[data-theme="light"] .page-root .chat-card-actions .btn-ghost {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .page-root .empty-state-large p,
+:root[data-theme="light"] .page-root .audio-label,
+:root[data-theme="light"] .page-root .stop-text {
+  color: #475569;
+}
+
+:root[data-theme="light"] .page-root .chat-card-actions .btn-ghost {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+/* Senior visual-system pass: chat should read as one stable product surface. */
+.page-root {
+  min-height: calc(100dvh - 64px);
+  background: var(--tz-ui-page, var(--tz-app-bg));
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.page-root .chat-card-topbar {
+  width: min(1048px, calc(100vw - 32px));
+  margin: clamp(10px, 2vh, 18px) auto 12px;
+  padding: 12px 14px;
+  background: var(--tz-ui-surface, rgba(15, 23, 42, 0.78));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.2));
+  border-radius: 18px;
+  box-shadow: var(--tz-ui-shadow-panel, 0 18px 48px rgba(0, 0, 0, 0.22));
+}
+
+.page-root .chat-body {
+  width: min(1048px, calc(100vw - 32px));
+  height: auto;
+  min-height: calc(100dvh - 162px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-root.is-empty .chat-scroll-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: clamp(24px, 6vh, 66px);
+  padding-bottom: 20px;
+}
+
+.page-root .empty-state-large h3 {
+  color: var(--tz-ui-text, #f8fafc);
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing: -0.025em;
+}
+
+.page-root .empty-state-large p {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  font-size: 15px;
+}
+
+.page-root .chat-card-actions .btn {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.page-root .composer {
+  width: 100%;
+  margin: auto auto 0;
+  background: var(--tz-ui-surface, rgba(15, 23, 42, 0.78));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.2));
+  box-shadow: var(--tz-ui-shadow-panel, 0 18px 48px rgba(0, 0, 0, 0.22));
+}
+
+.page-root .composer-audio-row {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--tz-ui-text-muted, #cbd5e1);
+}
+
+:root[data-theme="light"] .page-root .chat-card-topbar,
+:root[data-theme="light"] .page-root .composer {
+  background: var(--tz-ui-surface-raised, rgba(255, 255, 255, 0.96));
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+@media (max-height: 760px) {
+  .page-root.is-empty .chat-scroll-area {
+    padding-top: 18px;
+  }
+
+  .page-root .empty-state-large h3 {
+    font-size: 22px;
+  }
+}
+
+/* Senior QA final: stabilize chat layout on 1366x768 and 125% browser zoom. */
+.page-root {
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
+}
+
+.page-root .chat-card-topbar {
+  flex: 0 0 auto;
+}
+
+.page-root .chat-body {
+  min-height: min(680px, calc(100dvh - 154px));
+  padding-bottom: 6px;
+}
+
+.page-root.is-empty .chat-scroll-area {
+  justify-content: center;
+  padding-top: clamp(18px, 4.4vh, 42px);
+  padding-bottom: clamp(16px, 3vh, 34px);
+}
+
+.page-root .chat-card-actions .btn {
+  min-height: var(--tz-control-height, 44px);
+  border-radius: var(--tz-control-radius, 999px);
+  font-weight: 850;
+}
+
+.page-root .chat-card-actions .btn-secondary:hover:not(:disabled),
+.page-root .chat-card-actions .btn-ghost:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+@media (max-height: 760px) {
+  .page-root .chat-card-topbar {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding-block: 10px;
+  }
+
+  .page-root .chat-body {
+    min-height: calc(100dvh - 144px);
+  }
+
+  .page-root.is-empty .chat-scroll-area {
+    justify-content: flex-start;
+  }
+}
+
+/* Final senior QA top-up: make the Chat empty state feel intentional, not empty. */
+.page-root.is-empty .chat-scroll-area {
+  justify-content: center;
+  padding-top: clamp(22px, 4vh, 48px);
+  padding-bottom: clamp(22px, 4vh, 48px);
+}
+
+.page-root .empty-state-large {
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+.page-root .empty-state-large .sample-prompts,
+.page-root .sample-prompts {
+  gap: clamp(10px, 1.2vw, 16px);
+}
+
+.page-root .chat-body {
+  min-height: min(700px, calc(100dvh - 150px));
+}
+
+@media (max-height: 760px) {
+  .page-root .chat-body {
+    min-height: calc(100dvh - 138px);
+  }
 }

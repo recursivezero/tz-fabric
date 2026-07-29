@@ -1,13 +1,55 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FULL_API_URL } from "../constants";
+import { fetchWithTimeout } from "../utils/http";
+import { logger } from "../utils/logger";
+
+const SUBMIT_SERVER_ERROR =
+  "Unable to connect to the server, please try after some time.";
+const MISSING_SUBMIT_MEDIA_ERROR =
+  "Please upload a valid fabric image and audio before submitting.";
+
+type UploadNotification = {
+  message: string;
+  type: "success" | "error";
+} | null;
+
+const isObjectUrl = (url: string | null | undefined) =>
+  Boolean(url?.startsWith("blob:"));
+
+const revokeObjectUrl = (url: string | null | undefined) => {
+  if (!isObjectUrl(url)) return;
+  try {
+    URL.revokeObjectURL(url as string);
+  } catch {
+    // Ignore stale object URLs.
+  }
+};
+
+const getServerMessage = (
+  data: { detail?: unknown; message?: unknown; error?: unknown } | null,
+) => {
+  if (typeof data?.detail === "string") return data.detail;
+  if (typeof data?.message === "string") return data.message;
+  if (typeof data?.error === "string") return data.error;
+  return "";
+};
 
 export const useUploadAndRecord = () => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const audioNotificationTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const imageUrlRef = useRef<string | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
+
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrlState] = useState<string | null>(null);
 
   const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioUrl, setAudioUrlState] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -17,41 +59,66 @@ export const useUploadAndRecord = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const [notification, setNotification] = useState<UploadNotification>(null);
+  const [audioNotification, setAudioNotification] =
+    useState<UploadNotification>(null);
 
-  const [audioNotification, setAudioNotification] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const replaceImageUrl = useCallback((nextUrl: string | null) => {
+    setImageUrlState((prevUrl) => {
+      if (prevUrl !== nextUrl) revokeObjectUrl(prevUrl);
+      imageUrlRef.current = nextUrl;
+      return nextUrl;
+    });
+  }, []);
+
+  const replaceAudioUrl = useCallback((nextUrl: string | null) => {
+    setAudioUrlState((prevUrl) => {
+      if (prevUrl !== nextUrl) revokeObjectUrl(prevUrl);
+      audioUrlRef.current = nextUrl;
+      return nextUrl;
+    });
+  }, []);
+
+  const showNotification = useCallback(
+    (message: string, type: "success" | "error") => {
+      if (notificationTimerRef.current)
+        clearTimeout(notificationTimerRef.current);
+      setNotification({ type, message });
+      notificationTimerRef.current = setTimeout(() => {
+        setNotification(null);
+        notificationTimerRef.current = null;
+      }, 2000);
+    },
+    [],
+  );
 
   const successNotification = useCallback(
     (type: "success" | "error", message: string) => {
-      setNotification({ type, message });
-      setTimeout(() => {
-        setNotification(null);
-      }, 2000);
+      showNotification(message, type);
     },
-    []
+    [showNotification],
   );
 
   const errorNotification = useCallback((type: "error", message: string) => {
+    if (audioNotificationTimerRef.current)
+      clearTimeout(audioNotificationTimerRef.current);
     setAudioNotification({ type, message });
     setError(message);
 
-    setTimeout(() => {
+    audioNotificationTimerRef.current = setTimeout(() => {
       setAudioNotification(null);
+      audioNotificationTimerRef.current = null;
     }, 2000);
   }, []);
 
-  const handleImageUpload = (file: File) => {
-    setImageFile(null);
-    setImageUrl("");
-    setImageFile(file);
-    setImageUrl(URL.createObjectURL(file));
-  };
+  const handleImageUpload = useCallback(
+    (file: File) => {
+      setError(null);
+      setImageFile(file);
+      replaceImageUrl(URL.createObjectURL(file));
+    },
+    [replaceImageUrl],
+  );
 
   const handleAudioUpload = useCallback(
     async (file: File) => {
@@ -65,13 +132,19 @@ export const useUploadAndRecord = () => {
       ]);
 
       if (!file.type.startsWith("audio/") && !allowedMimeTypes.has(file.type)) {
-        errorNotification("error", "Please upload a valid audio file (mp3, wav, webm, or mp4).");
+        setAudioFile(null);
+        replaceAudioUrl(null);
+        errorNotification(
+          "error",
+          "Please upload a valid audio file (mp3, wav, webm, or mp4).",
+        );
         return;
       }
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-        setAudioUrl(null);
-      }
+
+      setError(null);
+      setAudioFile(null);
+      replaceAudioUrl(null);
+
       try {
         const arrayBuffer = await file.arrayBuffer();
         const AudioCtx =
@@ -91,13 +164,12 @@ export const useUploadAndRecord = () => {
             return;
           }
 
-          const url = URL.createObjectURL(file);
-          setAudioUrl(url);
           setAudioFile(file);
+          replaceAudioUrl(URL.createObjectURL(file));
           return;
         }
       } catch (e) {
-        console.warn("Web Audio API failed, fallback to <audio>.", e);
+        logger.warn("Web Audio API failed; using audio-element fallback", e);
       }
 
       const tempUrl = URL.createObjectURL(file);
@@ -110,34 +182,53 @@ export const useUploadAndRecord = () => {
         probe.onloadedmetadata = () => {
           const dur = probe.duration;
           if (Number.isFinite(dur) && dur <= 60) {
-            setAudioUrl(tempUrl);
+            setAudioFile(file);
+            replaceAudioUrl(tempUrl);
           } else {
-            URL.revokeObjectURL(tempUrl);
+            revokeObjectUrl(tempUrl);
+            setAudioFile(null);
             errorNotification(
               "error",
               Number.isFinite(dur)
                 ? "Audio is longer than 1 minute."
-                : "Audio duration could not be determined. Please try a different file."
+                : "Audio duration could not be determined. Please try a different file.",
             );
           }
           cleanup();
           resolve();
         };
         probe.onerror = () => {
-          URL.revokeObjectURL(tempUrl);
-          errorNotification("error", "Could not read audio. Please try a different file.");
+          revokeObjectUrl(tempUrl);
+          setAudioFile(null);
+          errorNotification(
+            "error",
+            "Could not read audio. Please try a different file.",
+          );
           cleanup();
           resolve();
         };
         probe.src = tempUrl;
       });
     },
-    [audioUrl, errorNotification]
+    [errorNotification, replaceAudioUrl],
   );
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   const startRecording = async () => {
     try {
-      setAudioUrl(null);
+      setError(null);
+      setAudioFile(null);
+      replaceAudioUrl(null);
       setRecordTime(0);
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -153,15 +244,18 @@ export const useUploadAndRecord = () => {
         const file = new File([blob], "recorded_audio.webm", {
           type: "audio/webm",
         });
-        const url = URL.createObjectURL(blob);
         setAudioFile(file);
-        setAudioUrl(url);
+        replaceAudioUrl(URL.createObjectURL(file));
         setIsRecording(false);
         setRecordTime(0);
 
         if (timerRef.current) {
           clearInterval(timerRef.current);
           timerRef.current = null;
+        }
+
+        for (const track of stream.getTracks()) {
+          track.stop();
         }
       };
 
@@ -182,7 +276,7 @@ export const useUploadAndRecord = () => {
       }, 1000);
     } catch (error) {
       errorNotification("error", "Microphone access denied or error occurred.");
-      console.error("Error accessing microphone:", error);
+      logger.error("Microphone access failed", error);
       setIsRecording(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -191,19 +285,12 @@ export const useUploadAndRecord = () => {
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === "recording") {
-      mediaRecorderRef.current.stop();
+  const handleSubmit = async (name?: string): Promise<boolean> => {
+    if (!imageFile || !audioFile) {
+      setError(MISSING_SUBMIT_MEDIA_ERROR);
+      setNotification({ message: MISSING_SUBMIT_MEDIA_ERROR, type: "error" });
+      return false;
     }
-
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const handleSubmit = async (name?: string) => {
-    if (!imageFile || !audioFile) return;
 
     const formData = new FormData();
     formData.append("image", imageFile);
@@ -212,47 +299,87 @@ export const useUploadAndRecord = () => {
     if (name?.trim()) formData.append("name", name.trim());
     setLoading(true);
     setNotification(null);
-
-    setLoading(true);
-    setNotification(null);
     try {
-      const res = await fetch(`${FULL_API_URL}/submit`, {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetchWithTimeout(
+        `${FULL_API_URL}/submit`,
+        {
+          method: "POST",
+          body: formData,
+        },
+        90_000,
+      );
 
-      if (res.ok) {
-        const data = await res.json();
-        successNotification("success", `Submitted! Saved as ${data.base}`);
-      } else {
-        errorNotification("error", "Submission failed");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as {
+          detail?: unknown;
+          message?: unknown;
+          error?: unknown;
+        } | null;
+        const serverDetail = getServerMessage(data);
+        const message = SUBMIT_SERVER_ERROR;
+        logger.error("Submission request failed", undefined, {
+          status: res.status,
+          hasServerDetail: Boolean(serverDetail),
+        });
+        setError(message);
+        setNotification({ message, type: "error" });
+        return false;
       }
+
+      const data = await res.json();
+      setError(null);
+      successNotification("success", `Submitted! Saved as ${data.base}`);
       setImageFile(null);
       setAudioFile(null);
-      setImageUrl(null);
-      setAudioUrl(null);
+      replaceImageUrl(null);
+      replaceAudioUrl(null);
+      return true;
     } catch (error) {
-      setNotification({ message: "Error submitting files", type: "error" });
-      console.error("Submission error:", error);
+      setError(SUBMIT_SERVER_ERROR);
+      setNotification({
+        message: SUBMIT_SERVER_ERROR,
+        type: "error",
+      });
+      logger.error("Submission request failed", error);
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
   const handleBack = () => {
-    setAudioUrl(null);
+    stopRecording();
+    setAudioFile(null);
+    replaceAudioUrl(null);
     setIsRecording(false);
     setRecordTime(0);
   };
 
   const clearImage = () => {
     setImageFile(null);
-    setImageUrl(null);
+    replaceImageUrl(null);
   };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (notificationTimerRef.current)
+        clearTimeout(notificationTimerRef.current);
+      if (audioNotificationTimerRef.current)
+        clearTimeout(audioNotificationTimerRef.current);
+      revokeObjectUrl(imageUrlRef.current);
+      revokeObjectUrl(audioUrlRef.current);
+    };
+  }, []);
 
   return {
     imageUrl,
     audioUrl,
+    imageFile,
+    audioFile,
+    hasImageFile: Boolean(imageFile),
+    hasAudioFile: Boolean(audioFile),
+    canSubmitFiles: Boolean(imageFile && audioFile),
     isRecording,
     recordTime,
     searchInput,
@@ -262,8 +389,8 @@ export const useUploadAndRecord = () => {
     setNotification,
     audioNotification,
     setAudioNotification,
-    setImageUrl,
-    setAudioUrl,
+    setImageUrl: replaceImageUrl,
+    setAudioUrl: replaceAudioUrl,
     setSearchInput,
     handleImageUpload,
     handleAudioUpload,

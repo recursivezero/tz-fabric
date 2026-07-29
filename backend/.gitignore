@@ -49,3 +49,4 @@ htmlcov/
 .ipynb_checkpoints/
 docs/_build/
 !.flake8
+database/

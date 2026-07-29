@@ -133,7 +133,6 @@
 }
 
 .image-preview-container .btn {
-  padding: 8px 12px;
   border-radius: 8px;
   min-width: 90px;
   cursor: pointer;
@@ -148,4 +147,283 @@
 .image-preview-container .btn-confirm {
   background: #e53e3e;
   color: #fff;
+}
+/* Analysis page upload card polish. */
+.analysis-page .image-preview-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.analysis-page .preview-visual {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.analysis-page .dropzone.big-drop {
+  width: 100%;
+  min-height: clamp(260px, 42dvh, 440px);
+  height: auto;
+  border: 1.5px dashed rgba(148, 163, 184, 0.48);
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.76);
+  color: #e5e7eb;
+  box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.04), 0 18px 50px rgba(0, 0, 0, 0.24);
+}
+
+.analysis-page .dz-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  margin-bottom: 10px;
+  border-radius: 16px;
+  background: rgba(251, 191, 36, 0.13);
+  font-size: 22px;
+}
+
+.analysis-page .dz-text {
+  font-size: 16px;
+  color: #dbeafe;
+}
+
+.analysis-page .dz-text .link {
+  color: #fbbf24;
+  font-weight: 800;
+}
+
+.analysis-page .preview-wrap,
+.analysis-page .preview-image {
+  width: 100%;
+}
+
+.analysis-page .preview-image {
+  height: clamp(260px, 42dvh, 440px);
+  object-fit: contain;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.analysis-page .filesize-name {
+  min-height: 22px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.analysis-page .filename,
+.analysis-page .validation-text {
+  color: #cbd5e1;
+}
+
+.analysis-page .preview-buttons-container {
+  margin-top: 10px;
+  gap: 10px;
+}
+
+.analysis-page .analysis-btn {
+  min-width: 142px;
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 0 18px;
+  font-weight: 800;
+  transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+}
+
+.analysis-page .analysis-btn:not(.disabled):hover {
+  transform: translateY(-1px);
+}
+
+.analysis-page .analysis-btn.short {
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  background: rgba(30, 41, 59, 0.86);
+  color: #e5e7eb;
+}
+
+.analysis-page .analysis-btn.long {
+  background: linear-gradient(135deg, #facc15, #d97706);
+  color: #111827;
+  box-shadow: 0 14px 34px rgba(217, 119, 6, 0.26);
+}
+
+.analysis-page .analysis-btn.disabled {
+  opacity: 0.48;
+  box-shadow: none;
+}
+
+/* Keep analysis action buttons directly below the preview instead of letting
+   grid stretch push them to the bottom of the page. */
+.analysis-page .image-preview-container {
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-page .preview-visual {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.analysis-page .preview-wrap {
+  flex: 0 0 auto;
+}
+
+.analysis-page .filesize-name,
+.analysis-page .preview-buttons-container {
+  flex: 0 0 auto;
+}
+
+.analysis-page .preview-buttons-container {
+  align-self: center;
+  margin-top: 12px;
+}
+
+/* Final repair: image/drop card height mirrors the Analysis result card. */
+.analysis-page .image-preview-container,
+.analysis-page .preview-visual,
+.analysis-page .preview-wrap {
+  height: auto ;
+  min-height: 0 ;
+  flex: 0 0 auto ;
+}
+
+.analysis-page .dropzone.big-drop,
+.analysis-page .preview-image {
+  box-sizing: border-box ;
+  width: 100% ;
+  height: clamp(260px, 42dvh, 440px) ;
+  min-height: clamp(260px, 42dvh, 440px) ;
+  max-height: clamp(260px, 42dvh, 440px) ;
+}
+
+.analysis-page .preview-buttons-container {
+  flex: 0 0 auto ;
+  align-self: center ;
+  margin-top: 16px ;
+}
+
+/* Final theme polish: Analysis buttons are yellow in both themes, but text
+   switches for readability: dark text in dark theme, white text in light theme. */
+:root[data-theme="dark"] .analysis-page .analysis-btn,
+:root[data-theme="dark"] .analysis-page .analysis-btn.short,
+:root[data-theme="dark"] .analysis-page .analysis-btn.long {
+  color: #171101 ;
+  text-shadow: none ;
+}
+
+:root[data-theme="light"] .analysis-page .analysis-btn,
+:root[data-theme="light"] .analysis-page .analysis-btn.short,
+:root[data-theme="light"] .analysis-page .analysis-btn.long {
+  color: #ffffff ;
+}
+
+/* QA follow-up: Analysis action buttons align with Prev/Next and stay yellow in both themes. */
+.analysis-page .preview-buttons-container {
+  margin-top: 18px;
+  transform: none;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.analysis-page .preview-buttons-container .analysis-btn,
+.analysis-page .preview-buttons-container .analysis-btn.short,
+.analysis-page .preview-buttons-container .analysis-btn.long {
+  min-height: 44px;
+  min-width: 150px;
+  border-radius: 999px;
+  border: 1px solid var(--tz-turmeric, #e0a82e);
+  background: linear-gradient(135deg, var(--tz-turmeric, #e0a82e), var(--tz-turmeric-soft, #f59e0b));
+  color: #ffffff;
+  font-weight: 850;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.24);
+}
+
+:root[data-theme="dark"] .analysis-page .preview-buttons-container .analysis-btn,
+:root[data-theme="dark"] .analysis-page .preview-buttons-container .analysis-btn.short,
+:root[data-theme="dark"] .analysis-page .preview-buttons-container .analysis-btn.long {
+  color: #171101;
+}
+
+/* Senior QA final: Short/Long controls align visually with Prev/Next and keep one button language. */
+.analysis-page .preview-buttons-container {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+  transform: translateY(2px);
+}
+
+.analysis-page .analysis-btn,
+.analysis-page .analysis-btn.short,
+.analysis-page .analysis-btn.long {
+  min-height: 44px;
+  min-width: 142px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--tz-action-yellow, #e0a82e);
+  background: linear-gradient(135deg, var(--tz-action-yellow, #e0a82e), var(--tz-action-yellow-hover, #f0c463));
+  color: var(--tz-action-yellow-text, #171101);
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.24);
+}
+
+.analysis-page .analysis-btn:not(.disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(224, 168, 46, 0.30);
+}
+
+.analysis-page .analysis-btn.disabled,
+.analysis-page .analysis-btn:disabled {
+  opacity: 0.68;
+  color: rgba(23, 17, 1, 0.72);
+  box-shadow: none;
+}
+
+@media (max-width: 720px) {
+  .analysis-page .preview-buttons-container {
+    flex-wrap: wrap;
+  }
+}
+
+/* Senior QA top-up: Short/Long buttons stay readable and vertically synced with Prev/Next. */
+.analysis-page .preview-buttons-container {
+  margin-top: 18px;
+  min-height: 46px;
+}
+
+.analysis-page .analysis-btn,
+.analysis-page .analysis-btn.short,
+.analysis-page .analysis-btn.long {
+  color: var(--tz-action-yellow-text, #171101);
+}
+
+:root[data-theme="light"] .analysis-page .analysis-btn,
+:root[data-theme="light"] .analysis-page .analysis-btn.short,
+:root[data-theme="light"] .analysis-page .analysis-btn.long {
+  color: #171101;
+  background: linear-gradient(135deg, #e0a82e, #d9900d);
+}
+
+:root[data-theme="dark"] .analysis-page .analysis-btn,
+:root[data-theme="dark"] .analysis-page .analysis-btn.short,
+:root[data-theme="dark"] .analysis-page .analysis-btn.long {
+  color: #171101;
+}
+
+/* Analysis-page layout: keep the primary analysis actions above the image card.
+   The component markup follows the same visual order, so keyboard navigation
+   and screen-reader reading order remain predictable. */
+.analysis-page .image-preview-container > .preview-buttons-container {
+  margin: 0 0 18px;
+  transform: none;
 }

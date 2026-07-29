@@ -71,6 +71,7 @@ ALLOW_LOCAL = os.getenv("ALLOW_LOCAL_ORIGINS", "false").lower() == "true"
 DEV_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:8000",
+    "http://localhost:8002",
     "http://localhost:3000",
 ]
 
@@ -145,6 +146,17 @@ app.mount("/assets/images", StaticFiles(directory=IMAGE_DIR), name="assets_image
 app.mount("/assets/audios", StaticFiles(directory=AUDIO_DIR), name="assets_audios")
 
 templates = Jinja2Templates(directory="templates")
+
+
+@app.get("/health", tags=["Meta"])
+@app.get(f"{API_PREFIX}/health", tags=["Meta"])
+def health_check():
+    return {
+        "status": "ok",
+        "api_prefix": API_PREFIX,
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "routes": len(app.routes),
+    }
 
 
 @app.get("/__routes", tags=["Meta"])

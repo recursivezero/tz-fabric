@@ -5,6 +5,7 @@ import "@/assets/styles/Composer.css";
 import Loader from "./Loader";
 import SuggestionChips from "./SuggestionChips";
 import { formatFileName } from "../utils/formatFilename";
+import { logger } from "../utils/logger";
 
 type Props = {
   value: string;
@@ -26,6 +27,30 @@ type Props = {
 };
 
 const MAX_SECONDS = 60;
+
+const closeAudioContextSafely = (context: AudioContext) => {
+  try {
+    void context.close().catch(() => undefined);
+  } catch {
+    // Best-effort cleanup; the context may already be closed.
+  }
+};
+
+const revokeObjectUrlSafely = (url: string) => {
+  try {
+    URL.revokeObjectURL(url);
+  } catch {
+    // Best-effort cleanup; the object URL may already be revoked.
+  }
+};
+
+const stopMediaRecorderSafely = (recorder: MediaRecorder) => {
+  try {
+    recorder.stop();
+  } catch {
+    // Best-effort cleanup; the recorder may already be inactive.
+  }
+};
 
 type Mode = "free" | "analysis" | "submitName" | "searchK";
 
@@ -77,6 +102,7 @@ export default function Composer({
 
   const [imageMeta, setImageMeta] = useState<{ name: string; size: string } | null>(null);
   const [audioMeta, setAudioMeta] = useState<{ name: string; size: string; trimmed?: boolean } | null>(null);
+  const hasAttachedMedia = Boolean(previewUrl || audioUrl);
 
   const FILE_NAME_MAX = 20;
   // A: new state
@@ -176,12 +202,14 @@ export default function Composer({
 
   const trimAudioFile = async (file: File): Promise<File> => {
     const arrayBuffer = await file.arrayBuffer();
-    const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextClass =
+      window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ac = new AudioContextClass();
     try {
       const decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
       const duration = decoded.duration;
       if (duration <= MAX_SECONDS) {
-        ac.close().catch(() => { });
+        closeAudioContextSafely(ac);
         return file;
       }
       const sampleRate = decoded.sampleRate;
@@ -197,10 +225,10 @@ export default function Composer({
       const base = file.name.replace(/\.\w+$/, "");
       const newName = `${base} (trimto1min).wav`;
       const trimmedFile = new File([wavBlob], newName, { type: "audio/wav" });
-      ac.close().catch(() => { });
+      closeAudioContextSafely(ac);
       return trimmedFile;
     } catch (err) {
-      try { ac.close().catch(() => { }); } catch (e) { console.log(e) }
+      closeAudioContextSafely(ac);
       throw err;
     }
   };
@@ -236,13 +264,13 @@ export default function Composer({
     onUpload?.(file);
     setImageMeta({ name: file.name, size: formatSize(file.size) });
     // parent probably sets previewUrl; we still revoke local URL to avoid leak
-    try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
+    revokeObjectUrlSafely(url);
     setPendingImage(null);
   };
 
   const cancelImageUpload = () => {
     if (pendingImage) {
-      try { URL.revokeObjectURL(pendingImage.url); } catch (e) { console.log(e) }
+      revokeObjectUrlSafely(pendingImage.url);
     }
     setPendingImage(null);
   };
@@ -259,7 +287,7 @@ export default function Composer({
     audioEl.onloadedmetadata = async () => {
       try {
         const duration = audioEl.duration;
-        try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
+        revokeObjectUrlSafely(url);
         if (duration > MAX_SECONDS + 0.1) {
           // attempt to trim
           try {
@@ -272,7 +300,7 @@ export default function Composer({
               trimmed: true,
             });
           } catch (err) {
-            console.error("trimAudioFile error", err);
+            logger.error("Audio trimming failed", err);
             setError("Audio is too long and could not be trimmed. Try a shorter clip.");
             onClearAudio?.();
           }
@@ -282,7 +310,7 @@ export default function Composer({
           setError(null);
         }
       } catch (err) {
-        console.error("confirmAudioUpload error", err);
+        logger.error("Audio upload confirmation failed", err);
         setError("Failed to upload audio.");
       } finally {
         setPendingAudio(null);
@@ -290,7 +318,7 @@ export default function Composer({
     };
 
     audioEl.onerror = () => {
-      try { URL.revokeObjectURL(url); } catch (e) { console.log(e) }
+      revokeObjectUrlSafely(url);
       setError("Could not read audio file. Try again with a supported format.");
       setPendingAudio(null);
     };
@@ -298,13 +326,17 @@ export default function Composer({
 
   const cancelAudioUpload = () => {
     if (pendingAudio) {
-      try { URL.revokeObjectURL(pendingAudio.url); } catch (e) { console.log(e) }
+      revokeObjectUrlSafely(pendingAudio.url);
     }
     setPendingAudio(null);
   };
 
   // NOTE: keep the rest of your logic unchanged (recording functions etc.)
-  const handleChipActionDefault = (actionId: string, _opts?: { name?: string }) => {
+  const handleChipActionDefault = (
+    actionId: string,
+    opts?: { name?: string },
+  ) => {
+    void opts;
     if (actionId === "image:analyze_short") {
       setMode("analysis");
       onChange(textForAnalysisShort);
@@ -347,7 +379,7 @@ export default function Composer({
   const startRecording = async () => {
     setError(null);
     setInfo(null);
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (!navigator.mediaDevices?.getUserMedia) {
       setError("Microphone not supported in this browser.");
       return;
     }
@@ -382,7 +414,7 @@ export default function Composer({
           onAudioUpload?.(file);
           setAudioMeta({ name: file.name, size: formatSize(file.size) });
         } catch (ex) {
-          console.error("onstop processing error", ex);
+          logger.error("Recorded audio processing failed", ex);
           setError("Failed to process recording.");
         } finally {
           if (streamRef.current) {
@@ -415,7 +447,7 @@ export default function Composer({
         }
       }, 250);
     } catch (err: unknown) {
-      console.error("startRecording err", err);
+      logger.error("Audio recording could not start", err);
       setError(errorMessage(err, "Could not access microphone."));
     }
   };
@@ -425,7 +457,7 @@ export default function Composer({
       const mr = mediaRecorderRef.current;
       if (mr && mr.state !== "inactive") mr.stop();
     } catch (err) {
-      console.error("stopRecording err", err);
+      logger.error("Audio recording could not stop", err);
       setError("Failed to stop recording.");
     } finally {
       setIsRecording(false);
@@ -442,7 +474,7 @@ export default function Composer({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        try { mediaRecorderRef.current.stop(); } catch (e) { console.log(e)}
+        stopMediaRecorderSafely(mediaRecorderRef.current);
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => { t.stop(); });
@@ -450,10 +482,9 @@ export default function Composer({
       }
       startTimeRef.current = null;
       // revoke any pending object URLs on unmount
-      if (pendingImage) try { URL.revokeObjectURL(pendingImage.url); } catch (e) { console.log(e) }
-      if (pendingAudio) try { URL.revokeObjectURL(pendingAudio.url); } catch (e) { console.log(e) }
+      if (pendingImage) revokeObjectUrlSafely(pendingImage.url);
+      if (pendingAudio) revokeObjectUrlSafely(pendingAudio.url);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingImage, pendingAudio]);
 
   useEffect(() => {
@@ -515,6 +546,7 @@ export default function Composer({
       {/* --- NEW: Confirmation modal for image upload --- */}
       {pendingImage && (
         <div
+          className="composer-modal-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Confirm image upload"
@@ -529,19 +561,19 @@ export default function Composer({
             padding: 16,
           }}
         >
-          <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <div style={{ flex: "0 0 120px" }}>
-                <img src={pendingImage.url} alt="Confirm preview" style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 6 }} />
+          <div className="composer-modal composer-modal--confirm-upload">
+            <div className="composer-modal__layout composer-modal__layout--image">
+              <div className="composer-modal__media">
+                <img src={pendingImage.url} alt="Confirm preview" className="composer-modal__thumb" />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>Upload this image?</div>
-                <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingImage.file.name} — {formatSize(pendingImage.file.size)}</div>
-                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                  <button onClick={confirmImageUpload} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>
+              <div className="composer-modal__content">
+                <div className="composer-modal__title">Upload this image?</div>
+                <div className="composer-modal__meta">{pendingImage.file.name} — {formatSize(pendingImage.file.size)}</div>
+                <div className="composer-modal__actions">
+                  <button onClick={confirmImageUpload} type="button" className="composer-modal__button composer-modal__button--confirm">
                     Confirm
                   </button>
-                  <button onClick={cancelImageUpload} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>
+                  <button onClick={cancelImageUpload} type="button" className="composer-modal__button composer-modal__button--cancel">
                     Cancel
                   </button>
                 </div>
@@ -552,6 +584,7 @@ export default function Composer({
       )}
       {pendingAudio && (
         <div
+          className="composer-modal-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Confirm audio upload"
@@ -566,22 +599,22 @@ export default function Composer({
             padding: 16,
           }}
         >
-          <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <div style={{ flex: "0 0 120px" }}>
-                <audio controls src={pendingAudio.url} style={{ width: 120 }} controlsList="nodownload" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>Upload this audio?</div>
-                <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingAudio.file.name} — {formatSize(pendingAudio.file.size)}</div>
-                <div style={{ marginTop: 8, fontSize: 13, color: "rgba(0,0,0,0.6)" }}>
+          <div className="composer-modal composer-modal--confirm-upload composer-modal--audio-confirm">
+            <div className="composer-modal__layout composer-modal__layout--audio">
+              <div className="composer-modal__content composer-modal__content--audio">
+                <div className="composer-modal__title">Upload this audio?</div>
+                <div className="composer-modal__meta">{pendingAudio.file.name} — {formatSize(pendingAudio.file.size)}</div>
+                <div className="composer-modal__audio-player">
+                  <audio controls src={pendingAudio.url} controlsList="nodownload" />
+                </div>
+                <div className="composer-modal__hint">
                   If longer than 1 minute we will trim it automatically.
                 </div>
-                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                  <button onClick={confirmAudioUpload} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>
+                <div className="composer-modal__actions">
+                  <button onClick={confirmAudioUpload} type="button" className="composer-modal__button composer-modal__button--confirm">
                     Confirm
                   </button>
-                  <button onClick={cancelAudioUpload} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>
+                  <button onClick={cancelAudioUpload} type="button" className="composer-modal__button composer-modal__button--cancel">
                     Cancel
                   </button>
                 </div>
@@ -591,7 +624,14 @@ export default function Composer({
         </div>
       )}
 
-      <div className="composer" style={{ paddingTop: isRecording ? 48 : undefined }}>
+      <div
+        className={[
+          "composer",
+          hasAttachedMedia ? "composer--has-upload" : "",
+          showAttachMenu ? "composer--attach-open" : "",
+        ].filter(Boolean).join(" ")}
+        style={{ paddingTop: isRecording ? 48 : undefined }}
+      >
         {status === "validating" && !previewUrl && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Loader />
@@ -601,10 +641,10 @@ export default function Composer({
         {(previewUrl || audioUrl) && (
           <div className="upload-previews" role="region" aria-label="Upload previews">
             {previewUrl && (
-              <div className="upload-preview image-preview">
+              <div className="upload-preview upload-preview--image">
                 <img src={previewUrl} className="upload-thumb" alt="image preview" />
                 {imageMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={imageMeta.name}>
+                  <div className="upload-preview__meta" title={imageMeta.name}>
                     {formatFileName(imageMeta.name, NAME_MAX)} ({imageMeta.size})
                   </div>
                 )}
@@ -620,10 +660,10 @@ export default function Composer({
             )}
 
             {audioUrl && (
-              <div className="upload-preview audio-preview">
+              <div className="upload-preview upload-preview--audio">
                 <audio controls src={audioUrl} />
                 {audioMeta && (
-                  <div style={{ color: "black", fontSize: 18, marginTop: 4 }} title={audioMeta.name}>
+                  <div className="upload-preview__meta" title={audioMeta.name}>
                     {formatFileName(audioMeta.name, NAME_MAX)} ({audioMeta.size})
                     {audioMeta.trimmed ? " — trimmed to 1min" : ""}
                   </div>
@@ -674,7 +714,6 @@ export default function Composer({
                     onSend(value);
                   }
                 }}
-                style={{ color: "black" }}
                 rows={1}
                 readOnly={mode !== "free"}
               />
@@ -692,7 +731,7 @@ export default function Composer({
                         e.preventDefault();
                         e.stopPropagation();
                         if (typeof stopGenerating === "function") stopGenerating();
-                        else console.warn("stopGenerating not provided");
+                        else logger.warn("Stop-generation handler is unavailable");
                       }}
                     >
                       ⏹ Stop Generating
@@ -718,14 +757,20 @@ export default function Composer({
                   <button
                     className="attach-menu-item"
                     type="button"
-                    onClick={() => imageInputRef.current?.click()}
+                    onClick={() => {
+                      imageInputRef.current?.click();
+                      setShowAttachMenu(false);
+                    }}
                   >
                     🖼️ Upload image
                   </button>
                   <button
                     className="attach-menu-item"
                     type="button"
-                    onClick={() => audioInputRef.current?.click()}
+                    onClick={() => {
+                      audioInputRef.current?.click();
+                      setShowAttachMenu(false);
+                    }}
                   >
                     🎙️ Upload audio
                   </button>
@@ -753,7 +798,6 @@ export default function Composer({
         {!audioUrl && (
           <div className="composer-audio-row">
             <button
-              style={{ color: "black" }}
               type="button"
               onClick={stopRecording}
               disabled={!isRecording}
@@ -765,7 +809,6 @@ export default function Composer({
             </button>
 
             <button
-              style={{ color: "black" }}
               type="button"
               onClick={startRecording}
               disabled={isRecording}
@@ -796,8 +839,9 @@ export default function Composer({
               flexWrap: "wrap",
             }}
           >
-            <label style={{ fontSize: 16, color: "black" }}>Type File name:</label>
+            <label className="locked-control-label">Type File name:</label>
             <input
+              className="locked-control-input"
               type="text"
               value={nameOnly}
               onChange={(e) => {
@@ -806,33 +850,19 @@ export default function Composer({
               }}
               placeholder="NeonFabric"
               maxLength={FILE_NAME_MAX}
-              style={{
-                padding: "8px 8px",
-                borderRadius: 6,
-                border: "1px solid #000000ff",
-                minWidth: 200,
-              }}
               aria-label={`File name (max ${FILE_NAME_MAX} chars)`}
             />
-            <div style={{ fontSize: 13, color: "rgba(0,0,0,0.6)", marginLeft: 6 }}>
+            <div className="locked-control-count">
               {nameOnly.length}/{FILE_NAME_MAX}
             </div>
             <button
+              className="locked-control-btn locked-control-btn--confirm"
               type="button"
               onClick={() => {
                 const nm = nameOnly.trim().slice(0, FILE_NAME_MAX);
                 setFileName?.(nm);
                 onSend(textForSubmitName(nm));
                 setMode("free");
-              }}
-              style={{
-                padding: "6px 12px",
-                borderRadius: 8,
-                border: "1px solid #0f172a",
-                background: "#0f172a",
-                color: "#fff",
-                cursor: "pointer",
-                fontWeight: 700,
               }}
               aria-label="Confirm name"
               title="Confirm name"
@@ -842,16 +872,9 @@ export default function Composer({
             </button>
 
             <button
+              className="locked-control-btn locked-control-btn--cancel"
               type="button"
               onClick={() => setMode("free")}
-              style={{
-                padding: "6px 10px",
-                borderRadius: 8,
-                border: "1px solid #e5e7eb",
-                background: "#fff",
-                color: "#111827",
-                cursor: "pointer",
-              }}
               aria-label="Cancel"
               title="Cancel"
             >
@@ -881,20 +904,41 @@ export default function Composer({
           }}
         />
         {pendingRemove && (
-          <div role="dialog" aria-modal="true" aria-label={`Confirm remove ${pendingRemove.kind}`} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300, background: "rgba(0,0,0,0.4)", padding: 16 }}>
-            <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 520, width: "100%" }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ flex: "0 0 84px" }}>
-                  <div style={{ width: 84, height: 84, background: "#f3f4f6", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>
-                    {pendingRemove.kind === "image" ? "Image" : "Audio"}
-                  </div>
+          <div
+            className="composer-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Confirm remove ${pendingRemove.kind}`}
+          >
+            <div className="composer-modal composer-modal--remove-attachment">
+              <div className="composer-remove-dialog__layout">
+                <div className="composer-remove-dialog__media" aria-hidden="true">
+                  {pendingRemove.kind === "image" ? "Image" : "Audio"}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>{pendingRemove.kind === "image" ? "Remove this image?" : "Remove this audio?"}</div>
-                  {pendingRemove.name && <div style={{ color: "rgba(0,0,0,0.7)" }}>{pendingRemove.name}</div>}
-                  <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-                    <button onClick={confirmRemove} type="button" style={{ padding: "8px 12px", background: "#0f172a", color: "#fff", borderRadius: 6 }}>Confirm</button>
-                    <button onClick={cancelRemove} type="button" style={{ padding: "8px 12px", background: "#fff", color: "#111827", borderRadius: 6, border: "1px solid #e5e7eb" }}>Cancel</button>
+                <div className="composer-remove-dialog__content">
+                  <div className="composer-remove-dialog__title">
+                    {pendingRemove.kind === "image" ? "Remove this image?" : "Remove this audio?"}
+                  </div>
+                  {pendingRemove.name && (
+                    <div className="composer-remove-dialog__filename">
+                      {pendingRemove.name}
+                    </div>
+                  )}
+                  <div className="composer-remove-dialog__actions">
+                    <button
+                      onClick={confirmRemove}
+                      type="button"
+                      className="composer-remove-dialog__button composer-remove-dialog__button--confirm"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={cancelRemove}
+                      type="button"
+                      className="composer-remove-dialog__button composer-remove-dialog__button--cancel"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               </div>

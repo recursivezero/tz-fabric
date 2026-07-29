@@ -1,0 +1,582 @@
+/*
+ * Analysis route accent parity with the Upload route.
+ *
+ * This stylesheet is intentionally loaded after ReaderAnalysisContrastFixes.css
+ * so the Analysis navbar pill and primary controls use the same theme surfaces
+ * as Upload without changing any component behaviour or disabled state.
+ */
+
+/* Active Analysis navbar item: match the active Upload navbar treatment. */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  .header-nav
+  a.active {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  ) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  .header-nav
+  a.active {
+  background: var(--tz-accent-control-surface, #e0a82e) !important;
+  border-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Short/Long and Prev/Next: match Upload's Start Recording surface exactly. */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ) {
+  background: var(--tz-accent-control-surface, #8a4f08) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ) {
+  background: var(--tz-accent-control-surface, #e0a82e) !important;
+  border-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* Preserve disabled functionality while preventing legacy opacity/background
+   rules from changing the requested Upload-matched hue. The not-allowed cursor
+   and removed shadow continue to communicate that the control is unavailable. */
+:root[data-theme]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ):is(:disabled, .disabled) {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ):hover:not(:disabled):not(.disabled) {
+  background: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  ):hover:not(:disabled):not(.disabled) {
+  background: var(--tz-accent-control-surface-hover, #f0c463) !important;
+  border-color: var(--tz-accent-control-surface-hover, #f0c463) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.app-wrapper--analysis
+  .analysis-page
+  :is(
+    .preview-buttons-container .analysis-btn,
+    .description-wrapper .nav-buttons .nav-btn
+  )
+  svg {
+  color: currentColor !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/*
+ * Final Analysis navbar parity guard.
+ *
+ * NavLink exposes aria-current="page" on the active route. Targeting that
+ * semantic state prevents older route-specific navbar rules from restoring
+ * the muted brown Analysis pill after the page-level styles are loaded.
+ * The values below intentionally mirror the active Upload route treatment.
+ */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  background-image: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  ) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  background-image: none !important;
+  border-color: var(--tz-accent-control-surface, #e0a82e) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:hover,
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:focus-visible {
+  background-color: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  background-image: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface-hover, #a45d0a),
+    var(--tz-accent-control-surface, #8a4f08)
+  ) !important;
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:hover,
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:focus-visible {
+  background-color: var(--tz-accent-control-surface-hover, #f0c463) !important;
+  background-image: none !important;
+  border-color: var(--tz-accent-control-surface-hover, #f0c463) !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+/*
+ * Analysis header visibility parity (compatibility form).
+ *
+ * Keep this correction in the already-imported Analysis parity stylesheet so
+ * it applies cleanly even when a branch already contains the earlier standalone
+ * AnalysisHeaderVisibilityParity.css file or a different main.tsx import list.
+ */
+.app-wrapper--analysis
+  .site-header
+  :is(
+    .header-left,
+    .header-center,
+    .header-right,
+    .mobile-nav-wrapper,
+    .header-nav,
+    .header-nav ul,
+    .brand-name,
+    .logo-mark
+  ) {
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  visibility: visible !important;
+}
+
+.app-wrapper--analysis .site-header .brand-name {
+  color: var(--tz-cotton) !important;
+  -webkit-text-fill-color: var(--tz-cotton) !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a:not(.active) {
+  color: var(--tz-muted) !important;
+  -webkit-text-fill-color: var(--tz-muted) !important;
+  font-weight: 650 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a:not(.active):is(:hover, :focus-visible) {
+  color: var(--tz-cotton) !important;
+  -webkit-text-fill-color: var(--tz-cotton) !important;
+}
+
+.app-wrapper--analysis .site-header #theme.theme-toggle {
+  background: linear-gradient(
+    135deg,
+    var(--tz-button-ghost-bg),
+    var(--tz-panel-2)
+  ) !important;
+  border-color: var(--tz-line) !important;
+  color: var(--tz-cotton) !important;
+  box-shadow: var(--tz-shadow-soft) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  visibility: visible !important;
+}
+
+.app-wrapper--analysis .site-header #theme.theme-toggle:hover {
+  background: linear-gradient(
+    135deg,
+    var(--tz-button-ghost-hover-bg),
+    var(--tz-panel-3)
+  ) !important;
+  border-color: var(--tz-turmeric) !important;
+  color: var(--tz-cotton) !important;
+  box-shadow: var(--tz-shadow-soft) !important;
+}
+
+.app-wrapper--analysis .site-header #theme.theme-toggle:focus-visible {
+  outline: 2px solid var(--tz-ui-accent, var(--tz-turmeric)) !important;
+  outline-offset: 3px !important;
+  box-shadow:
+    var(--tz-shadow-soft),
+    var(--tz-focus) !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #theme.theme-toggle
+  :is(.theme-toggle__track, .theme-toggle__icon, .theme-toggle__thumb) {
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  visibility: visible !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #theme.theme-toggle
+  .theme-toggle__icon {
+  opacity: 0.54 !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #theme.theme-toggle
+  .theme-toggle__thumb {
+  opacity: 1 !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2) !important;
+}
+
+.app-wrapper--analysis
+  .site-header
+  #theme.theme-toggle
+  :is(.theme-toggle__icon, .theme-toggle__thumb)
+  svg {
+  color: currentColor !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/*
+ * Final Analysis navbar/action colour parity.
+ *
+ * Keep the active Analysis NavLink and all four Analysis action controls on one
+ * shared surface declaration. Using one rule avoids small colour differences
+ * caused by separate gradients, shadows, inherited opacity, or route-specific
+ * filter rules. This is visual-only; disabled state and click behaviour remain
+ * owned by the existing components.
+ */
+:root[data-theme="light"] .app-wrapper--analysis {
+  --analysis-action-parity-surface: #8a4f08;
+  --analysis-action-parity-hover: #a45d0a;
+  --analysis-action-parity-border: #8a4f08;
+  --analysis-action-parity-foreground: #ffffff;
+  --analysis-action-parity-shadow: 0 10px 24px rgba(138, 79, 8, 0.24);
+}
+
+:root[data-theme="dark"] .app-wrapper--analysis {
+  --analysis-action-parity-surface: #e0a82e;
+  --analysis-action-parity-hover: #f0c463;
+  --analysis-action-parity-border: #e0a82e;
+  --analysis-action-parity-foreground: #111827;
+  --analysis-action-parity-shadow: 0 10px 24px rgba(224, 168, 46, 0.24);
+}
+
+/* Reset the desktop header ancestry so no route-level opacity/filter can mute
+   the active pill after its own colour has been resolved. Do not touch the
+   mobile menu <ul> transform/opacity that controls opening and closing. */
+.app-wrapper--analysis .site-header,
+.app-wrapper--analysis .site-header .header-center,
+.app-wrapper--analysis .site-header .mobile-nav-wrapper,
+.app-wrapper--analysis .site-header #primary-navigation.header-nav,
+.app-wrapper--analysis .site-header #primary-navigation.header-nav > ul > li {
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+:root[data-theme]
+  .app-wrapper--analysis
+  :is(
+    .site-header
+      #primary-navigation.header-nav
+      a.active[aria-current="page"],
+    .analysis-page .preview-buttons-container .analysis-btn,
+    .analysis-page .description-wrapper .nav-buttons .nav-btn
+  ) {
+  background-color: var(--analysis-action-parity-surface) !important;
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  border-color: var(--analysis-action-parity-border) !important;
+  color: var(--analysis-action-parity-foreground) !important;
+  -webkit-text-fill-color: var(
+    --analysis-action-parity-foreground
+  ) !important;
+  box-shadow:
+    inset 0 0 0 999px var(--analysis-action-parity-surface),
+    var(--analysis-action-parity-shadow) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  font-weight: 800 !important;
+}
+
+:root[data-theme]
+  .app-wrapper--analysis
+  :is(
+    .site-header
+      #primary-navigation.header-nav
+      a.active[aria-current="page"],
+    .analysis-page .preview-buttons-container .analysis-btn,
+    .analysis-page .description-wrapper .nav-buttons .nav-btn
+  ):hover:not(:disabled):not(.disabled),
+:root[data-theme]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:focus-visible {
+  background-color: var(--analysis-action-parity-hover) !important;
+  background-image: none !important;
+  border-color: var(--analysis-action-parity-hover) !important;
+  color: var(--analysis-action-parity-foreground) !important;
+  -webkit-text-fill-color: var(
+    --analysis-action-parity-foreground
+  ) !important;
+  box-shadow:
+    inset 0 0 0 999px var(--analysis-action-parity-hover),
+    var(--analysis-action-parity-shadow) !important;
+}
+
+/*
+ * Workspace zoom-out stability.
+ *
+ * Browser zoom-out increases the effective CSS viewport. The legacy Analysis
+ * drawer rule pinned the result grid to a fixed left margin, while the empty
+ * Chat body was allowed to flex across the entire enlarged viewport height.
+ * Keep both workspaces bounded and centred without changing component logic.
+ */
+
+/* Analysis: centre the complete workspace inside the area that remains beside
+   the fixed sample drawer. The shared variable also keeps the reserved space
+   and the actual drawer width in lock-step. */
+.analysis-page {
+  --analysis-drawer-inline-size: clamp(248px, 19vw, 272px);
+  --analysis-drawer-gutter: clamp(18px, 2vw, 32px);
+}
+
+.analysis-page .drawer-panel {
+  width: var(--analysis-drawer-inline-size);
+}
+
+@media (min-width: 981px) {
+  .home-container.analysis-page.drawer-open {
+    padding-inline-start: var(--analysis-drawer-gutter);
+    padding-inline-end: calc(
+      var(--analysis-drawer-inline-size) + var(--analysis-drawer-gutter)
+    );
+  }
+
+  .analysis-page.drawer-open .result-wrapper.analysis-grid,
+  .analysis-page.drawer-open .result-wrapper.grid {
+    width: min(1120px, 100%) !important;
+    margin-inline: auto !important;
+  }
+}
+
+/* Chat: the landing state is one coherent shell. Cap its vertical growth and
+   centre the top bar + body as a unit so zoom-out cannot send the header to the
+   top, prompts to the middle, and composer to the bottom of the viewport. */
+.app-wrapper--chat .page-root.is-empty {
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  padding-block: clamp(10px, 2vh, 24px);
+}
+
+.app-wrapper--chat .page-root.is-empty .chat-card-topbar,
+.app-wrapper--chat .page-root.is-empty .chat-body {
+  width: min(1048px, calc(100% - 32px));
+  margin-inline: auto;
+}
+
+.app-wrapper--chat .page-root.is-empty .chat-card-topbar {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.app-wrapper--chat .page-root.is-empty .chat-body {
+  flex: 0 1 auto;
+  height: min(700px, calc(100dvh - var(--site-header-height, 56px) - 98px));
+  min-height: 0;
+  max-height: 700px;
+  margin-top: 0;
+}
+
+.app-wrapper--chat .page-root.is-empty .chat-scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
+}
+
+@media (max-width: 720px) {
+  .app-wrapper--chat .page-root.is-empty {
+    justify-content: flex-start;
+    padding-block: 10px;
+  }
+
+  .app-wrapper--chat .page-root.is-empty .chat-card-topbar,
+  .app-wrapper--chat .page-root.is-empty .chat-body {
+    width: calc(100% - 20px);
+  }
+
+  .app-wrapper--chat .page-root.is-empty .chat-body {
+    height: calc(100dvh - var(--site-header-height, 56px) - 92px);
+    max-height: none;
+  }
+}
+
+
+/*
+ * Analysis header stacking and native navbar parity.
+ *
+ * The Analysis workspace contains fixed layers with high z-index values. Keep
+ * the shared site header above those layers, then let its selected route use
+ * the same theme surfaces as every other navbar item. This replaces the
+ * runtime computed-style copy, which could not correct a layer painted above
+ * the header and made the result timing-dependent on lazy route mounting.
+ */
+.app-wrapper--analysis .site-header {
+  position: relative;
+  z-index: 1100;
+  isolation: isolate;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  ) !important;
+  border-color: var(--tz-accent-control-surface, #8a4f08) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"] {
+  background: var(--tz-turmeric, #e0a82e) !important;
+  border-color: var(--tz-turmeric, #e0a82e) !important;
+  color: #171101 !important;
+  -webkit-text-fill-color: #171101 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:is(:hover, :focus-visible) {
+  background: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a) !important;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  #primary-navigation.header-nav
+  a.active[aria-current="page"]:is(:hover, :focus-visible) {
+  background: var(--tz-turmeric-soft, #f0c463) !important;
+  border-color: var(--tz-turmeric-soft, #f0c463) !important;
+}

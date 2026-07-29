@@ -19,5 +19,15 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      "no-console": "error",
+      "no-debugger": "error",
+    },
+  },
+  {
+    files: ["src/utils/logger.ts"],
+    rules: {
+      "no-console": "off",
+    },
   },
 ])

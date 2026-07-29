@@ -326,3 +326,1198 @@
 .send-btn.inside {
   z-index: 100;
 }
+
+/* Compact bottom composer for chat: no giant white block, correctly aligned send button. */
+.composer {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px 18px 0 0;
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.25);
+  z-index: 20;
+}
+
+.composer-row {
+  gap: 0;
+  align-items: center;
+}
+
+.composer-input-wrapper {
+  margin-inline: 0;
+  align-items: stretch;
+}
+
+.composer-input {
+  min-height: 46px;
+  max-height: 132px;
+  padding: 12px 58px 12px 52px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #f8fafc;
+  color: #0f172a ;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.attach-btn.inside {
+  top: 7px;
+  left: 8px;
+  transform: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #e2e8f0;
+  color: #334155;
+  z-index: 3;
+}
+
+.send-btn.inside {
+  top: 6px;
+  right: 8px;
+  transform: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  padding: 0;
+  z-index: 4;
+}
+
+.send-icon {
+  width: 19px;
+  height: 19px;
+}
+
+.composer-audio-row {
+  justify-content: flex-end;
+  flex-direction: row;
+  gap: 8px;
+  margin: 8px 0 0;
+  min-height: 34px;
+}
+
+.audio-label {
+  order: 0;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.start-btn {
+  order: 1;
+}
+
+.stop-btn {
+  order: 2;
+}
+
+.record-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: #f8fafc;
+  font-size: 13px;
+}
+
+.upload-previews {
+  margin: 0 0 8px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.stop-overlay {
+  border-radius: 14px;
+}
+
+@media (max-width: 720px) {
+  .composer {
+    padding: 8px 8px 10px;
+  }
+
+  .composer-input {
+    font-size: 15px;
+  }
+
+  .composer-audio-row {
+    flex-wrap: wrap;
+  }
+}
+
+/* Keep uploaded attachment filenames readable in both chat themes. */
+.upload-preview__meta {
+  color: #0f172a;
+  font-size: 18px;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+:root[data-theme="dark"] .upload-preview__meta {
+  color: #f8fafc;
+}
+
+/* Theme-safe uploaded attachment chips. Do not rely on one text-color override only. */
+:root[data-theme="light"] .upload-preview {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.2);
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .upload-preview {
+  background: rgba(15, 23, 42, 0.94);
+  border-color: rgba(226, 232, 240, 0.28);
+  color: #f8fafc;
+}
+
+:root[data-theme="light"] .upload-preview__meta {
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .upload-preview__meta {
+  color: #f8fafc;
+}
+
+:root[data-theme="light"] .upload-remove {
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .upload-remove {
+  background: rgba(248, 250, 252, 0.14);
+  color: #f8fafc;
+}
+
+/* Professional top-up: attachment menu + composer theme consistency.
+   The previous image/audio preview reused the global `.image-preview` class, which
+   let Search-page CSS bleed into Chat. The component now uses scoped modifiers;
+   keep the menu and previews readable in both runtime themes. */
+.composer .attach-menu {
+  min-width: 190px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.32) ;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22) ;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.composer .attach-menu-item {
+  min-height: 42px;
+  justify-content: flex-start;
+  border: 1px solid transparent ;
+  font-weight: 800;
+  line-height: 1.15;
+  opacity: 1 ;
+  text-shadow: none ;
+}
+
+:root[data-theme="light"] .composer .attach-menu {
+  background: rgba(255, 255, 255, 0.96) ;
+}
+
+:root[data-theme="light"] .composer .attach-menu-item {
+  background: #f8fafc ;
+  color: #0f172a ;
+  border-color: rgba(15, 23, 42, 0.1) ;
+}
+
+:root[data-theme="light"] .composer .attach-menu-item:hover,
+:root[data-theme="light"] .composer .attach-menu-item:focus-visible {
+  background: #e2e8f0 ;
+  color: #0f172a ;
+  border-color: rgba(71, 85, 105, 0.28) ;
+}
+
+:root[data-theme="dark"] .composer .attach-menu {
+  background: rgba(15, 23, 42, 0.96) ;
+}
+
+:root[data-theme="dark"] .composer .attach-menu-item {
+  background: rgba(30, 41, 59, 0.96) ;
+  color: #f8fafc ;
+  border-color: rgba(226, 232, 240, 0.18) ;
+}
+
+:root[data-theme="dark"] .composer .attach-menu-item:hover,
+:root[data-theme="dark"] .composer .attach-menu-item:focus-visible {
+  background: rgba(51, 65, 85, 0.98) ;
+  color: #ffffff ;
+  border-color: rgba(226, 232, 240, 0.38) ;
+}
+
+.composer .upload-previews {
+  max-width: min(560px, calc(100vw - 32px));
+  border: 1px solid rgba(148, 163, 184, 0.26) ;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16) ;
+}
+
+.composer .upload-preview {
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+  color: inherit ;
+}
+
+.composer .upload-preview__meta {
+  min-width: 0;
+  max-width: 260px;
+  color: inherit ;
+  opacity: 1 ;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-shadow: none ;
+}
+
+:root[data-theme="dark"] .composer .upload-previews,
+:root[data-theme="dark"] .composer .upload-preview {
+  background: rgba(15, 23, 42, 0.95) ;
+  border-color: rgba(226, 232, 240, 0.24) ;
+  color: #f8fafc ;
+}
+
+:root[data-theme="light"] .composer .upload-previews,
+:root[data-theme="light"] .composer .upload-preview {
+  background: rgba(255, 255, 255, 0.96) ;
+  border-color: rgba(15, 23, 42, 0.12) ;
+  color: #0f172a ;
+}
+
+/* ============================================================
+   QA patch: shared theme-safe composer styles
+   - fixes invisible confirm modal titles/meta in both themes
+   - prevents uploaded image/audio previews from squeezing filenames vertically
+   - keeps the submit-with-name label/input/actions readable without inline color hacks
+   ============================================================ */
+.composer-modal-overlay {
+  background: rgba(8, 11, 20, 0.58) ;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.composer-modal {
+  background: var(--tz-panel, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) ;
+  border-radius: var(--tz-radius, 16px) ;
+  box-shadow: var(--tz-shadow, 0 18px 50px rgba(0, 0, 0, 0.24)) ;
+}
+
+.composer-modal,
+.composer-modal *:not(button):not(svg):not(path) {
+  color: var(--tz-cotton, #0f172a) ;
+  text-shadow: none ;
+}
+
+.composer-modal__thumb,
+.composer-modal img {
+  object-fit: contain ;
+  background: var(--tz-ink-2, #f8fafc) ;
+  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) ;
+}
+
+.composer-modal audio {
+  min-width: 180px;
+  max-width: 100%;
+}
+
+.composer-modal button {
+  color: inherit ;
+  opacity: 1 ;
+}
+
+.composer-modal button:first-of-type {
+  background: var(--tz-turmeric, #e0a82e) ;
+  color: #171101 ;
+  border: 1px solid var(--tz-turmeric, #e0a82e) ;
+}
+
+.composer-modal button:last-of-type {
+  background: var(--tz-button-ghost-bg, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) ;
+}
+
+.composer .upload-previews {
+  display: flex ;
+  align-items: stretch ;
+  flex-wrap: wrap ;
+  gap: 10px ;
+  width: 100% ;
+  max-width: min(760px, calc(100vw - 32px)) ;
+}
+
+.composer .upload-preview {
+  display: grid ;
+  grid-template-columns: auto minmax(0, 1fr) auto ;
+  align-items: center ;
+  gap: 10px ;
+  flex: 1 1 320px ;
+  min-width: min(300px, 100%) ;
+  max-width: 100% ;
+  overflow: hidden ;
+}
+
+.composer .upload-preview--image {
+  flex-basis: 360px ;
+}
+
+.composer .upload-preview--audio {
+  flex-basis: 380px ;
+}
+
+.composer .upload-thumb {
+  width: 72px ;
+  height: 72px ;
+  flex: 0 0 72px ;
+  object-fit: contain ;
+  background: var(--tz-ink-2, #f8fafc) ;
+}
+
+.composer .upload-preview audio {
+  min-width: 180px ;
+  width: min(240px, 100%) ;
+  max-width: 100% ;
+}
+
+.composer .upload-preview__meta {
+  min-width: 0 ;
+  max-width: 100% ;
+  white-space: nowrap ;
+  overflow: hidden ;
+  text-overflow: ellipsis ;
+  overflow-wrap: normal ;
+  word-break: normal ;
+  font-size: 14px ;
+  line-height: 1.25 ;
+}
+
+.composer .upload-remove {
+  flex: 0 0 auto ;
+  white-space: nowrap ;
+  min-height: 34px ;
+  padding: 6px 12px ;
+}
+
+.composer .locked-controls,
+.composer .locked-controls label,
+.composer .locked-controls div {
+  color: var(--tz-cotton, #0f172a) ;
+  text-shadow: none ;
+}
+
+.composer .locked-controls input {
+  background: var(--tz-ink-2, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border-color: var(--tz-line, rgba(15, 23, 42, 0.14)) ;
+}
+
+.composer .locked-controls button {
+  color: var(--tz-cotton, #0f172a) ;
+  opacity: 1 ;
+}
+
+.composer .locked-controls button:first-of-type {
+  background: var(--tz-turmeric, #e0a82e) ;
+  color: #171101 ;
+  border-color: var(--tz-turmeric, #e0a82e) ;
+}
+
+.composer .locked-controls button:last-of-type {
+  background: var(--tz-button-ghost-bg, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border-color: var(--tz-line, rgba(15, 23, 42, 0.14)) ;
+}
+
+.composer .record-btn {
+  color: var(--tz-cotton, #0f172a) ;
+}
+
+:root[data-theme="light"] .composer-modal,
+:root[data-theme="light"] .composer .locked-controls,
+:root[data-theme="light"] .composer .upload-preview,
+:root[data-theme="light"] .composer .upload-previews {
+  color: #0f172a ;
+}
+
+:root[data-theme="dark"] .composer-modal,
+:root[data-theme="dark"] .composer .locked-controls,
+:root[data-theme="dark"] .composer .upload-preview,
+:root[data-theme="dark"] .composer .upload-previews {
+  color: #f8fafc ;
+}
+
+@media (max-width: 620px) {
+  .composer .upload-preview {
+    grid-template-columns: auto minmax(0, 1fr) ;
+  }
+
+  .composer .upload-remove {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+.composer .locked-control-label {
+  font-size: 16px ;
+  font-weight: 750 ;
+  color: var(--tz-cotton, #0f172a) ;
+}
+
+.composer .locked-control-input {
+  min-width: 200px ;
+  padding: 8px 10px ;
+  border-radius: 8px ;
+}
+
+.composer .locked-control-count {
+  margin-left: 6px;
+  font-size: 13px ;
+  color: var(--tz-muted, #64748b) ;
+}
+
+.composer .locked-control-btn {
+  min-height: 34px ;
+  padding: 6px 12px ;
+  border-radius: 999px ;
+  cursor: pointer ;
+  font-weight: 800 ;
+}
+
+.composer .locked-control-btn--confirm {
+  background: var(--tz-turmeric, #e0a82e) ;
+  color: #171101 ;
+  border: 1px solid var(--tz-turmeric, #e0a82e) ;
+}
+
+.composer .locked-control-btn--cancel {
+  background: var(--tz-button-ghost-bg, #ffffff) ;
+  color: var(--tz-cotton, #0f172a) ;
+  border: 1px solid var(--tz-line, rgba(15, 23, 42, 0.14)) ;
+}
+
+/* ============================================================
+   QA hotfix: uploaded image/audio filename visibility
+   ============================================================
+   This lives in Composer.css instead of the global makeover layer because
+   Composer.css can load after global CSS during Vite/HMR. Keep preview text
+   bound to shared theme tokens and force readable contrast after live theme
+   switching in both dark and light modes. */
+:root {
+  --tz-chat-upload-preview-bg: var(--tz-ui-surface, var(--tz-panel-2, rgba(15, 23, 42, 0.95)));
+  --tz-chat-upload-preview-border: var(--tz-ui-border, var(--tz-line, rgba(226, 232, 240, 0.24)));
+  --tz-chat-upload-preview-text: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+  --tz-chat-upload-preview-muted: var(--tz-ui-text-muted, var(--tz-muted, #cbd5e1));
+  --tz-chat-upload-remove-bg: var(--tz-ui-control-bg, var(--tz-button-ghost-bg, rgba(248, 250, 252, 0.14)));
+  --tz-chat-upload-remove-text: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+:root[data-theme="light"] {
+  --tz-chat-upload-preview-bg: rgba(255, 255, 255, 0.98);
+  --tz-chat-upload-preview-border: rgba(15, 23, 42, 0.16);
+  --tz-chat-upload-preview-text: #0f172a;
+  --tz-chat-upload-preview-muted: #334155;
+  --tz-chat-upload-remove-bg: #f8fafc;
+  --tz-chat-upload-remove-text: #0f172a;
+}
+
+:root[data-theme="dark"] {
+  --tz-chat-upload-preview-bg: rgba(15, 23, 42, 0.95);
+  --tz-chat-upload-preview-border: rgba(226, 232, 240, 0.24);
+  --tz-chat-upload-preview-text: #f8fafc;
+  --tz-chat-upload-preview-muted: #cbd5e1;
+  --tz-chat-upload-remove-bg: rgba(248, 250, 252, 0.14);
+  --tz-chat-upload-remove-text: #f8fafc;
+}
+
+.composer .upload-previews,
+:root[data-theme="light"] .composer .upload-previews,
+:root[data-theme="dark"] .composer .upload-previews {
+  background: transparent ;
+  color: var(--tz-chat-upload-preview-text) ;
+  border-color: var(--tz-chat-upload-preview-border) ;
+}
+
+.composer .upload-preview,
+:root[data-theme="light"] .composer .upload-preview,
+:root[data-theme="dark"] .composer .upload-preview {
+  background: var(--tz-chat-upload-preview-bg) ;
+  color: var(--tz-chat-upload-preview-text) ;
+  border-color: var(--tz-chat-upload-preview-border) ;
+  text-shadow: none ;
+}
+
+.composer .upload-preview__meta,
+.composer .upload-preview .upload-preview__meta,
+:root[data-theme="light"] .composer .upload-preview__meta,
+:root[data-theme="light"] .composer .upload-preview .upload-preview__meta,
+:root[data-theme="dark"] .composer .upload-preview__meta,
+:root[data-theme="dark"] .composer .upload-preview .upload-preview__meta {
+  display: block ;
+  visibility: visible ;
+  opacity: 1 ;
+  color: var(--tz-chat-upload-preview-text) ;
+  -webkit-text-fill-color: var(--tz-chat-upload-preview-text) ;
+  text-shadow: none ;
+  mix-blend-mode: normal ;
+  background: transparent ;
+  font-weight: 800 ;
+  line-height: 1.2 ;
+  white-space: nowrap ;
+  overflow: hidden ;
+  text-overflow: ellipsis ;
+  max-width: min(42vw, 360px) ;
+  min-width: 0 ;
+  position: relative ;
+  z-index: 2 ;
+}
+
+.composer .upload-preview--audio .upload-preview__meta,
+:root[data-theme="light"] .composer .upload-preview--audio .upload-preview__meta,
+:root[data-theme="dark"] .composer .upload-preview--audio .upload-preview__meta {
+  color: var(--tz-chat-upload-preview-text) ;
+  -webkit-text-fill-color: var(--tz-chat-upload-preview-text) ;
+}
+
+.composer .upload-remove,
+:root[data-theme="light"] .composer .upload-remove,
+:root[data-theme="dark"] .composer .upload-remove {
+  background: var(--tz-chat-upload-remove-bg) ;
+  color: var(--tz-chat-upload-remove-text) ;
+  -webkit-text-fill-color: var(--tz-chat-upload-remove-text) ;
+  border: 1px solid var(--tz-chat-upload-preview-border) ;
+  opacity: 1 ;
+  text-shadow: none ;
+}
+
+/* ============================================================
+   QA top-up: keep attachment menu from colliding with upload previews
+   ============================================================
+   When an image/audio preview already exists, the paperclip menu used to open
+   upward into the preview card. That made the uploaded filename look like it was
+   part of the upload-image/audio selection menu. In upload mode, open the menu
+   below the input instead and keep previews on their own layer. */
+.composer.composer--has-upload .upload-previews {
+  position: relative ;
+  z-index: 1 ;
+}
+
+.composer.composer--has-upload .composer-input-wrapper {
+  position: relative ;
+  z-index: 20 ;
+}
+
+.composer.composer--has-upload .attach-menu {
+  top: calc(100% + 8px) ;
+  bottom: auto ;
+  left: 8px ;
+  z-index: 6000 ;
+  max-width: min(240px, calc(100vw - 32px)) ;
+}
+
+.composer.composer--has-upload .attach-menu::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 18px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  background: inherit;
+  border-left: 1px solid var(--tz-chat-upload-preview-border, rgba(148, 163, 184, 0.24));
+  border-top: 1px solid var(--tz-chat-upload-preview-border, rgba(148, 163, 184, 0.24));
+}
+
+.composer.composer--has-upload .upload-preview__meta {
+  align-self: center ;
+}
+
+/* ============================================================
+   QA top-up 2: robust attached-media picker layout
+   ============================================================
+   The previous attached-media popover was absolutely positioned below the
+   composer input. On short laptop screens and browser zoom changes it could be
+   clipped by the chat body's overflow boundary, hiding the lower half of the
+   Upload image/audio menu. When media is already attached, render this menu as
+   part of the composer flow so it remains fully visible and clickable. */
+.composer.composer--has-upload.composer--attach-open {
+  overflow: visible ;
+  padding-bottom: 14px ;
+}
+
+.composer.composer--has-upload.composer--attach-open .composer-row,
+.composer.composer--has-upload.composer--attach-open .composer-middle {
+  overflow: visible ;
+}
+
+.composer.composer--has-upload.composer--attach-open .composer-input-wrapper {
+  display: grid ;
+  grid-template-columns: minmax(0, 1fr) ;
+  align-items: stretch ;
+  gap: 8px ;
+  overflow: visible ;
+  isolation: isolate;
+}
+
+.composer.composer--has-upload.composer--attach-open .composer-input {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.composer.composer--has-upload.composer--attach-open .attach-menu {
+  position: relative ;
+  top: auto ;
+  right: auto ;
+  bottom: auto ;
+  left: auto ;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-self: start ;
+  justify-self: start ;
+  width: max-content ;
+  min-width: 190px ;
+  max-width: min(280px, calc(100% - 8px)) ;
+  margin: 0 ;
+  z-index: 30 ;
+  transform: none ;
+  animation: none ;
+}
+
+.composer.composer--has-upload.composer--attach-open .attach-menu::before {
+  display: none ;
+}
+
+.composer .attach-btn.inside {
+  box-sizing: border-box ;
+  flex: 0 0 auto ;
+  overflow: visible ;
+  clip-path: none ;
+}
+
+.composer .attach-btn.inside svg {
+  display: block ;
+  width: 22px ;
+  height: 22px ;
+  flex: 0 0 auto ;
+  pointer-events: none ;
+}
+
+.composer.composer--has-upload .attach-menu-item {
+  width: 100% ;
+  white-space: nowrap ;
+}
+
+@media (max-width: 620px) {
+  .composer.composer--has-upload.composer--attach-open .attach-menu {
+    width: 100% ;
+    max-width: 100% ;
+  }
+}
+
+/* Senior QA patch: Composer readability guard after global theme changes. */
+.composer .composer-input {
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-surface, #ffffff);
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+  opacity: 1;
+}
+
+.composer .composer-input::placeholder {
+  color: var(--tz-ui-text-muted, #64748b);
+  opacity: 1;
+}
+
+.composer .attach-btn.inside,
+.composer .record-btn {
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-control-bg, #ffffff);
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+:root[data-theme="dark"] .composer .composer-input {
+  color: #f8fafc;
+  background: rgba(10, 15, 29, 0.92);
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="dark"] .composer .composer-input::placeholder {
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .composer .attach-btn.inside,
+:root[data-theme="dark"] .composer .record-btn {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+/* Senior QA: Composer readability guard after global theme changes. */
+.composer .composer-input {
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-surface, #ffffff);
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+  opacity: 1;
+}
+
+.composer .composer-input::placeholder {
+  color: var(--tz-ui-text-muted, #64748b);
+  opacity: 1;
+}
+
+.composer .attach-btn.inside,
+.composer .record-btn {
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-control-bg, #ffffff);
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+:root[data-theme="dark"] .composer .composer-input {
+  color: #f8fafc;
+  background: rgba(10, 15, 29, 0.92);
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="dark"] .composer .composer-input::placeholder {
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .composer .attach-btn.inside,
+:root[data-theme="dark"] .composer .record-btn {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+/* QA follow-up: make upload-confirm modal titles readable after theme switching. */
+.composer-modal--confirm-upload {
+  width: min(520px, calc(100vw - 32px));
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--tz-ui-surface-raised, #ffffff);
+  color: var(--tz-ui-text, #0f172a);
+}
+
+.composer-modal__layout {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.composer-modal__layout--audio {
+  align-items: flex-start;
+}
+
+.composer-modal__media {
+  flex: 0 0 128px;
+  min-width: 0;
+}
+
+.composer-modal__content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.composer-modal__title {
+  margin-bottom: 7px;
+  color: var(--tz-ui-text, #0f172a);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.composer-modal__meta,
+.composer-modal__hint {
+  color: var(--tz-ui-text-muted, #475569);
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.composer-modal__hint {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.composer-modal__actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.composer-modal__button {
+  min-height: 36px;
+  padding: 8px 13px;
+  border-radius: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.composer-modal__button--confirm {
+  background: var(--tz-turmeric, #e0a82e);
+  border: 1px solid var(--tz-turmeric, #e0a82e);
+  color: #171101;
+}
+
+.composer-modal__button--cancel {
+  background: var(--tz-ui-control-bg, #ffffff);
+  border: 1px solid var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+  color: var(--tz-ui-text, #0f172a);
+}
+
+.composer-modal__thumb {
+  width: 128px;
+  height: 128px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.composer-modal__media audio {
+  width: 128px;
+  max-width: 100%;
+}
+
+:root[data-theme="dark"] .composer-modal--confirm-upload {
+  background: rgba(15, 23, 42, 0.98);
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="dark"] .composer-modal__title {
+  color: #f8fafc;
+}
+
+:root[data-theme="dark"] .composer-modal__meta,
+:root[data-theme="dark"] .composer-modal__hint {
+  color: #cbd5e1;
+}
+
+:root[data-theme="dark"] .composer-modal__button--cancel {
+  background: rgba(30, 41, 59, 0.96);
+  border-color: rgba(226, 232, 240, 0.24);
+  color: #f8fafc;
+}
+
+:root[data-theme="light"] .stop-overlay-btn {
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.22);
+}
+
+:root[data-theme="light"] .stop-overlay-inner {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(220, 38, 38, 0.22);
+}
+
+@media (max-width: 560px) {
+  .composer-modal__layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .composer-modal__media {
+    flex-basis: auto;
+  }
+}
+
+/* Senior QA final: composer, stop control, and upload-confirm modals stay readable in both themes. */
+.page-root .composer {
+  padding: 10px 10px max(16px, env(safe-area-inset-bottom));
+  border-radius: 18px;
+}
+
+.page-root .composer-row {
+  align-items: center;
+}
+
+.page-root .composer-input-wrapper {
+  border-radius: 16px;
+  background: var(--tz-ui-control-bg, rgba(255, 255, 255, 0.96));
+  border: 1px solid var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+.page-root .composer-input {
+  color: var(--tz-ui-text, #0f172a);
+  background: transparent;
+  border: 0;
+  min-height: 50px;
+}
+
+.page-root .composer-input::placeholder {
+  color: var(--tz-ui-text-faint, #64748b);
+  opacity: 1;
+}
+
+:root[data-theme="dark"] .page-root .composer-input-wrapper {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(226, 232, 240, 0.20);
+}
+
+:root[data-theme="dark"] .page-root .composer-input {
+  color: #f8fafc;
+}
+
+.page-root .attach-btn.inside,
+.page-root .send-btn.inside {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.page-root .attach-btn.inside {
+  color: var(--tz-ui-text-muted, #475569);
+  background: var(--tz-ui-surface-subtle, #f1f5f9);
+  border: 1px solid var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+:root[data-theme="dark"] .page-root .attach-btn.inside {
+  color: #e2e8f0;
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(226, 232, 240, 0.20);
+}
+
+.page-root .composer-audio-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.page-root .record-btn {
+  min-height: 38px;
+  border-radius: 999px;
+  padding: 0 14px;
+  font-weight: 800;
+  color: var(--tz-ui-text, #0f172a);
+  background: var(--tz-ui-control-bg, #ffffff);
+  border: 1px solid var(--tz-ui-border, rgba(15, 23, 42, 0.16));
+}
+
+:root[data-theme="dark"] .page-root .record-btn {
+  color: #f8fafc;
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(226, 232, 240, 0.20);
+}
+
+.page-root .stop-overlay-btn {
+  min-height: var(--tz-control-height, 44px);
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(185, 28, 28, 0.42);
+  background: linear-gradient(135deg, var(--tz-danger, #dc2626), var(--tz-danger-hover, #b91c1c));
+  color: var(--tz-danger-text, #ffffff);
+  font-weight: 900;
+  box-shadow: 0 12px 28px rgba(220, 38, 38, 0.26);
+}
+
+:root[data-theme="light"] .page-root .stop-overlay-btn {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #ffffff;
+  border-color: rgba(127, 29, 29, 0.46);
+}
+
+.composer-modal-overlay .composer-modal--confirm-upload {
+  background: var(--tz-ui-surface-raised, #ffffff);
+  color: var(--tz-ui-text, #0f172a);
+  border: 1px solid var(--tz-ui-border-strong, rgba(15, 23, 42, 0.24));
+  box-shadow: var(--tz-ui-shadow-panel, 0 18px 48px rgba(15, 23, 42, 0.22));
+}
+
+.composer-modal-overlay .composer-modal__title {
+  color: var(--tz-ui-text, #0f172a);
+  font-weight: 900;
+}
+
+.composer-modal-overlay .composer-modal__meta,
+.composer-modal-overlay .composer-modal__hint {
+  color: var(--tz-ui-text-muted, #475569);
+  opacity: 1;
+}
+
+:root[data-theme="dark"] .composer-modal-overlay .composer-modal--confirm-upload {
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="dark"] .composer-modal-overlay .composer-modal__title {
+  color: #f8fafc;
+}
+
+:root[data-theme="dark"] .composer-modal-overlay .composer-modal__meta,
+:root[data-theme="dark"] .composer-modal-overlay .composer-modal__hint {
+  color: #cbd5e1;
+}
+
+@media (max-height: 760px) {
+  .page-root .composer {
+    padding-top: 8px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .page-root .composer-input {
+    min-height: 46px;
+  }
+}
+
+/* Senior QA top-up: upload confirmation audio preview must never overlap title/meta. */
+.composer-modal--audio-confirm {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.composer-modal--audio-confirm .composer-modal__layout--audio {
+  display: block;
+}
+
+.composer-modal--audio-confirm .composer-modal__content--audio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.composer-modal--audio-confirm .composer-modal__title {
+  margin: 0;
+  width: 100%;
+  color: var(--tz-ui-text, #0f172a);
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.composer-modal--audio-confirm .composer-modal__meta {
+  width: min(420px, 100%);
+  color: var(--tz-ui-text-muted, #475569);
+  overflow-wrap: anywhere;
+}
+
+.composer-modal__audio-player {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 4px;
+}
+
+.composer-modal__audio-player audio {
+  width: min(360px, 100%);
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+}
+
+.composer-modal--audio-confirm .composer-modal__actions {
+  justify-content: center;
+}
+
+:root[data-theme="dark"] .composer-modal--audio-confirm .composer-modal__title {
+  color: #f8fafc;
+}
+
+:root[data-theme="dark"] .composer-modal--audio-confirm .composer-modal__meta,
+:root[data-theme="dark"] .composer-modal--audio-confirm .composer-modal__hint {
+  color: #cbd5e1;
+}
+
+@media (max-width: 520px) {
+  .composer-modal--confirm-upload {
+    padding: 16px;
+  }
+
+  .composer-modal__layout--image {
+    display: grid;
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .composer-modal__layout--image .composer-modal__media {
+    justify-self: center;
+  }
+
+  .composer-modal__layout--image .composer-modal__actions {
+    justify-content: center;
+  }
+}
+
+
+/* Strict senior QA follow-up: upload confirm modals should read cleanly, not like a noisy blurred glitch. */
+.composer-modal-overlay {
+  background: rgba(8, 11, 20, 0.54);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+:root[data-theme="light"] .composer-modal-overlay {
+  background: rgba(15, 23, 42, 0.34);
+}
+
+.composer-modal--confirm-upload {
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.composer-modal--audio-confirm .composer-modal__content--audio {
+  gap: 12px;
+}
+
+.composer-modal--audio-confirm .composer-modal__audio-player {
+  order: 2;
+  margin: 4px 0;
+}
+
+.composer-modal--audio-confirm .composer-modal__title {
+  order: 1;
+  text-align: center;
+}
+
+.composer-modal--audio-confirm .composer-modal__meta {
+  order: 3;
+  max-width: 440px;
+  text-align: center;
+}
+
+.composer-modal--audio-confirm .composer-modal__hint {
+  order: 4;
+  text-align: center;
+}
+
+.composer-modal--audio-confirm .composer-modal__actions {
+  order: 5;
+  margin-top: 4px;
+}
+
+.page-root .composer-audio-row {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.page-root .error,
+.page-root .composer-error,
+.page-root .chat-error {
+  max-width: min(900px, calc(100vw - 48px));
+  margin-inline: auto;
+  border-radius: 14px;
+}
+
+
+/* v42: keep the in-composer cancellation action compact without changing its
+   click behavior or the surrounding composer layout. */
+.page-root .stop-overlay-btn {
+  min-height: 36px;
+  height: 36px;
+  padding: 0 14px;
+  gap: 5px;
+  font-size: 12px;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.22);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .page-root .stop-overlay-btn {
+    min-height: 34px;
+    height: 34px;
+    padding-inline: 12px;
+    font-size: 11px;
+  }
+}

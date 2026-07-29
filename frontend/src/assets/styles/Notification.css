@@ -16,7 +16,8 @@
 }
 
 .notification.error {
-  background-color: #ffe0e0;
-  color: #c00;
-  border: 1px solid #e88;
+  background-color: #dc2626;
+  color: #ffffff;
+  border: 1px solid #991b1b;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.24);
 }

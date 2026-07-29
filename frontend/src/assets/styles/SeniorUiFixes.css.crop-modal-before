@@ -1,0 +1,2289 @@
+/*
+ * Scoped UI corrections requested during senior review.
+ *
+ * This file is imported after the existing theme/makeover layer so these
+ * narrowly targeted rules win without increasing selector priority across
+ * unrelated pages.
+ */
+
+/* Shared foreground for accent-filled controls. Keep this token limited to
+   controls whose surface is also an accent colour. Applying it to neutral
+   cards/chips caused unreadable white-on-white and black-on-navy states. */
+:root {
+  --tz-accent-control-foreground: #171101;
+  --tz-filled-control-foreground: var(--tz-accent-control-foreground);
+  --tz-action-yellow-text: var(--tz-accent-control-foreground);
+  --tz-ui-accent-contrast: var(--tz-accent-control-foreground);
+  --tz-accent-control-surface: #e0a82e;
+  --tz-accent-control-surface-hover: #f0c463;
+}
+
+:root[data-theme="light"] {
+  --tz-accent-control-foreground: #ffffff;
+  --tz-accent-control-surface: #8a4f08;
+  --tz-accent-control-surface-hover: #a45d0a;
+}
+
+:root[data-theme="dark"] {
+  --tz-accent-control-foreground: #111827;
+  --tz-accent-control-surface: #e0a82e;
+  --tz-accent-control-surface-hover: #f0c463;
+}
+
+/* Only true accent actions inherit the requested theme-dependent foreground.
+   Neutral/ghost controls and coloured information chips define their own
+   contrast-safe foregrounds below. */
+:root[data-theme]
+  :is(
+    .analysis-page .analysis-btn,
+    .analysis-page .description-wrapper .nav-btn,
+    .analysis-page .drawer-toggle-button,
+    .analysis-page .sample-gallery .analyze-button,
+    .app-wrapper--chat .page-root .chat-card-actions .btn-secondary,
+    .app-wrapper--chat .suggestion-chips .chip.primary,
+    .message-wrapper .inline-quick-replies .chip,
+    .fabric-search .btn--primary,
+    .fabric-search .category-picker__apply.btn.btn--primary,
+    .grid-page .grid-controls.inline button:not(:disabled),
+    .upload-page .btn.primary,
+    .upload-page .btn.submit,
+    .upload-page .name-field .cancel,
+    .composer-modal__button--confirm,
+    .composer .locked-control-btn--confirm,
+    .composer-modal-overlay
+      .composer-modal--remove-attachment
+      .composer-remove-dialog__button--confirm
+  ) {
+  color: var(--tz-accent-control-foreground);
+}
+
+/* Light-mode white labels require a darker amber surface than the legacy
+   turmeric token. Set foreground and surface together for every accent-filled
+   control, including active navigation and search/category actions. */
+:root[data-theme="light"]
+  :is(
+    .header-nav a.active,
+    .analysis-page .analysis-btn,
+    .analysis-page .description-wrapper .nav-btn,
+    .analysis-page .drawer-toggle-button,
+    .analysis-page .sample-gallery .analyze-button,
+    .app-wrapper--chat .page-root .chat-card-actions .btn-secondary,
+    .app-wrapper--chat .suggestion-chips .chip.primary,
+    .message-wrapper .inline-quick-replies .chip,
+    .fabric-search .btn--primary,
+    .fabric-search .btn-primary,
+    .fabric-search .search-btn,
+    .fabric-search .category-picker__chip--active,
+    .fabric-search .category-picker__apply.btn.btn--primary,
+    .grid-page .grid-controls.inline button:not(:disabled),
+    .upload-page .btn.primary,
+    .upload-page .btn.submit,
+    .upload-page .name-field .cancel,
+    .composer-modal__button--confirm,
+    .composer .locked-control-btn--confirm,
+    .composer-modal-overlay
+      .composer-modal--remove-attachment
+      .composer-remove-dialog__button--confirm
+  ) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface),
+    var(--tz-accent-control-surface-hover)
+  );
+  border-color: var(--tz-accent-control-surface);
+  color: var(--tz-accent-control-foreground);
+  text-shadow: none;
+}
+
+/* Analysis: keep each action pair above its own card and anchor the actions to
+   the card's outer corners. These rules support both the original and the
+   already-reordered component markup. */
+.analysis-page .image-preview-container > .preview-buttons-container,
+.analysis-page .description-wrapper > .nav-buttons {
+  order: 1;
+  align-self: stretch;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 16px;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transform: none;
+}
+
+/* Short and Long remain a single left-aligned action group. Prev/Next keep
+   their separate corner-aligned result navigation below. */
+.analysis-page .image-preview-container > .preview-buttons-container {
+  justify-content: flex-start;
+}
+
+.analysis-page .image-preview-container > .preview-visual,
+.analysis-page .description-wrapper > .description-box {
+  order: 2;
+}
+
+.analysis-page .image-preview-container > .filesize-name {
+  order: 3;
+}
+
+.analysis-page .preview-buttons-container > .validation-text {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+/* Do not let legacy centering/flex rules pull the corner controls inward. */
+.analysis-page .preview-buttons-container > .analysis-btn,
+.analysis-page .description-wrapper > .nav-buttons > .nav-btn {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* Chat: slightly reduce visual weight and vertical density. This keeps the
+   existing layout and interaction model while fitting more conversation in the
+   viewport and reducing unnecessary scrolling on laptop screens. */
+.app-wrapper--chat .page-root .chat-card-title .main {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.app-wrapper--chat .page-root .chat-card-actions .btn {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-wrapper--chat .page-root .empty-state-large h3 {
+  margin-bottom: 7px;
+  font-size: clamp(20px, 2vw, 24px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.app-wrapper--chat .page-root .empty-state-large p {
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.app-wrapper--chat .page-root .empty-state-large .chip,
+.app-wrapper--chat .page-root .empty-state-large .chip:nth-child(odd),
+.app-wrapper--chat .page-root .empty-state-large .chip:nth-child(even) {
+  min-height: 42px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.app-wrapper--chat .message-wrapper .msg-row {
+  margin-block: 6px;
+}
+
+.app-wrapper--chat .assistant-block,
+.app-wrapper--chat .bubble.user {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.app-wrapper--chat .assistant-block--with-copy {
+  padding: 9px 44px 9px 12px;
+}
+
+.app-wrapper--chat .assistant-block .assistant-content p {
+  margin-bottom: 0.5rem;
+}
+
+.app-wrapper--chat .assistant-block ul,
+.app-wrapper--chat .assistant-block ol {
+  margin-block: 6px 9px;
+  line-height: 1.45;
+}
+
+.app-wrapper--chat .assistant-block li {
+  margin-block: 4px;
+  font-size: 14px;
+}
+
+.app-wrapper--chat .assistant-block h1,
+.app-wrapper--chat .assistant-block h2,
+.app-wrapper--chat .assistant-block h3,
+.app-wrapper--chat .assistant-block h4 {
+  margin: 0.65rem 0 0.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.app-wrapper--chat .assistant-block h1 {
+  font-size: 1.35rem;
+}
+
+.app-wrapper--chat .assistant-block h2 {
+  font-size: 1.2rem;
+}
+
+.app-wrapper--chat .assistant-block h3,
+.app-wrapper--chat .assistant-block h4 {
+  font-size: 1.08rem;
+}
+
+/* Attachment preview: center the Remove label geometrically inside its pill.
+   Explicit sizing prevents inherited global button line-height/padding rules
+   from nudging the text vertically. */
+.app-wrapper--chat .composer .upload-remove {
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .analysis-page .image-preview-container > .preview-buttons-container,
+  .analysis-page .description-wrapper > .nav-buttons {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .analysis-page .preview-buttons-container > .analysis-btn,
+  .analysis-page .description-wrapper > .nav-buttons > .nav-btn {
+    flex: 0 1 48%;
+    min-width: 0;
+    padding-inline: 12px;
+  }
+
+  .app-wrapper--chat .page-root .empty-state-large h3 {
+    font-size: 20px;
+  }
+}
+
+/* Follow-up: legacy Analysis CSS still centers the result navigation in some
+   viewport/theme combinations. The repeated class raises specificity above
+   route-level centering rules even when that stylesheet loads later. */
+.analysis-page .description-wrapper > .nav-buttons.nav-buttons {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  justify-content: stretch;
+  transform: none;
+}
+
+.analysis-page
+  .description-wrapper
+  > .nav-buttons.nav-buttons
+  > .nav-btn:first-child {
+  justify-self: start;
+}
+
+.analysis-page
+  .description-wrapper
+  > .nav-buttons.nav-buttons
+  > .nav-btn:last-child {
+  justify-self: end;
+}
+
+/* Chat attachment removal confirmation: remove hard-coded light-theme inline
+   colours while preserving the existing state and click handlers. */
+.composer-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.composer-modal-overlay .composer-modal--remove-attachment {
+  --remove-dialog-surface: #ffffff;
+  --remove-dialog-text: #0f172a;
+  --remove-dialog-muted: #475569;
+  --remove-dialog-media: #f1f5f9;
+  --remove-dialog-border: rgba(15, 23, 42, 0.16);
+  --remove-dialog-media-border: rgba(15, 23, 42, 0.12);
+  --remove-dialog-cancel: #ffffff;
+
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 32px));
+  max-width: 100%;
+  padding: 18px;
+  border: 1px solid var(--remove-dialog-border);
+  border-radius: 16px;
+  background: var(--remove-dialog-surface);
+  color: var(--remove-dialog-text);
+  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.28);
+}
+
+:root[data-theme="dark"]
+  .composer-modal-overlay
+  .composer-modal--remove-attachment {
+  --remove-dialog-surface: #0f172a;
+  --remove-dialog-text: #f8fafc;
+  --remove-dialog-muted: #cbd5e1;
+  --remove-dialog-media: #1e293b;
+  --remove-dialog-border: rgba(226, 232, 240, 0.24);
+  --remove-dialog-media-border: rgba(226, 232, 240, 0.2);
+  --remove-dialog-cancel: #1e293b;
+
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.5);
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__layout {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__media {
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--remove-dialog-media-border);
+  border-radius: 10px;
+  background: var(--remove-dialog-media);
+  color: var(--remove-dialog-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__content {
+  min-width: 0;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__title {
+  margin: 0 0 6px;
+  color: var(--remove-dialog-text);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__filename {
+  color: var(--remove-dialog-muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__button {
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__button--confirm {
+  border: 1px solid var(--tz-turmeric, #e0a82e);
+  background: var(--tz-turmeric, #e0a82e);
+  color: #171101;
+}
+
+.composer-modal-overlay
+  .composer-modal--remove-attachment
+  .composer-remove-dialog__button--cancel {
+  border: 1px solid var(--remove-dialog-border);
+  background: var(--remove-dialog-cancel);
+  color: var(--remove-dialog-text);
+}
+
+@media (max-width: 520px) {
+  .composer-modal-overlay
+    .composer-modal--remove-attachment
+    .composer-remove-dialog__layout {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .composer-modal-overlay
+    .composer-modal--remove-attachment
+    .composer-remove-dialog__media {
+    justify-self: center;
+  }
+
+  .composer-modal-overlay
+    .composer-modal--remove-attachment
+    .composer-remove-dialog__actions {
+    justify-content: center;
+  }
+}
+
+/* ============================================================
+   Theme contrast regression guard
+   ============================================================
+   These rules repair the controls shown in the supplied screenshots and the
+   same semantic control families elsewhere. They intentionally set surface and
+   foreground together so a future text-only theme override cannot recreate the
+   contrast failures. */
+
+/* Analysis sample cards are neutral controls, not accent buttons. */
+:root[data-theme="light"]
+  .analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card
+  .sample-card__select {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+:root[data-theme="dark"]
+  .analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card
+  .sample-card__select {
+  background: #f8fafc;
+  color: #111827;
+  border-color: rgba(248, 250, 252, 0.92);
+}
+
+:root[data-theme]
+  .analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card.sample-card:hover
+  .sample-card__select,
+:root[data-theme]
+  .analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card.sample-card:focus-visible
+  .sample-card__select {
+  background: linear-gradient(135deg, #e0a82e, #f0c463);
+  color: #171101;
+  border-color: #f0c463;
+}
+
+/* Chat landing prompts: pair each foreground with a deliberate surface.
+   Light mode uses strong coloured boxes with white labels; dark mode uses
+   pastel boxes with black labels, matching the requested theme direction. */
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(1) {
+  background: #9a3412;
+  border-color: #c2410c;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(2) {
+  background: #4338ca;
+  border-color: #4f46e5;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(3) {
+  background: #047857;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(4) {
+  background: #be185d;
+  border-color: #db2777;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(1) {
+  background: #fed7aa;
+  border-color: #fb923c;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(2) {
+  background: #c7d2fe;
+  border-color: #818cf8;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(3) {
+  background: #a7f3d0;
+  border-color: #34d399;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:nth-child(4) {
+  background: #fbcfe8;
+  border-color: #f472b6;
+  color: #111827;
+}
+
+:root[data-theme]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chip:disabled {
+  color: inherit;
+  opacity: 0.62;
+}
+
+/* Assistant replies now follow the active theme instead of remaining a white
+   card in dark mode. Markdown content inherits the same readable foreground. */
+:root[data-theme="light"] .app-wrapper--chat .assistant-block {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="dark"] .app-wrapper--chat .assistant-block {
+  background: #171f33;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.22);
+}
+
+:root[data-theme]
+  .app-wrapper--chat
+  .assistant-block
+  :is(.assistant-content, p, li, h1, h2, h3, h4, strong) {
+  color: inherit;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .assistant-block--with-copy
+  .copy-btn {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .assistant-block--with-copy
+  .copy-btn {
+  background: #24304d;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.22);
+}
+
+/* Upload primary action had black text on a translucent purple surface in dark
+   mode. Use the accent surface whenever the accent foreground token is used. */
+:root[data-theme="light"] .upload-page .btn.primary {
+  background: var(--tz-accent-control-surface, #8a4f08);
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .upload-page .btn.primary {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #111827;
+}
+
+:root[data-theme="light"] .upload-page .btn.submit,
+:root[data-theme="light"] .upload-page .name-field .cancel {
+  background: var(--tz-accent-control-surface, #8a4f08);
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .upload-page .btn.submit {
+  background: #38bdf8;
+  border-color: #38bdf8;
+  color: #111827;
+}
+
+:root[data-theme="dark"] .upload-page .name-field .cancel {
+  background: #f8fafc;
+  border: 1px solid rgba(248, 250, 252, 0.86);
+  color: #111827;
+}
+
+:root[data-theme="dark"] .upload-page .btn:not(.primary):not(.submit),
+:root[data-theme="dark"] .upload-page .confirm-actions .btn-cancel {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme="light"] .upload-page .btn:not(.primary):not(.submit),
+:root[data-theme="light"] .upload-page .confirm-actions .btn-cancel {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+/* Confirmation dialogs and locked composer controls use the same semantic
+   accent/neutral split in both themes. */
+:root[data-theme="light"] .composer-modal--confirm-upload,
+:root[data-theme="light"] .upload-page .confirm-modal {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+:root[data-theme="dark"] .composer-modal--confirm-upload,
+:root[data-theme="dark"] .upload-page .confirm-modal {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+:root[data-theme]
+  .composer-modal--confirm-upload
+  :is(.composer-modal__title, .composer-modal__meta, .composer-modal__hint) {
+  color: inherit;
+}
+
+:root[data-theme="light"]
+  .composer-modal--confirm-upload
+  .composer-modal__button--confirm,
+:root[data-theme="light"] .composer .locked-control-btn--confirm {
+  background: var(--tz-accent-control-surface, #8a4f08);
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .composer-modal--confirm-upload
+  .composer-modal__button--confirm,
+:root[data-theme="dark"] .composer .locked-control-btn--confirm {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #111827;
+}
+
+:root[data-theme="light"]
+  .composer-modal--confirm-upload
+  .composer-modal__button--cancel,
+:root[data-theme="light"] .composer .locked-control-btn--cancel {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+:root[data-theme="dark"]
+  .composer-modal--confirm-upload
+  .composer-modal__button--cancel,
+:root[data-theme="dark"] .composer .locked-control-btn--cancel {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: rgba(226, 232, 240, 0.24);
+}
+
+/* ============================================================
+   Analysis response position and Upload action hierarchy
+   ============================================================ */
+
+/* Keep the response position beside the copy action in the lower-right corner
+   of the result card. The value is derived from the existing response history,
+   so Prev/Next behavior and regeneration logic remain unchanged. */
+.analysis-page .description-wrapper .response-copy-only {
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.analysis-page .description-wrapper .response-copy-only .response-position {
+  min-width: 46px;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-page .description-wrapper .response-copy-only .copy-btn {
+  margin-left: 0;
+}
+
+/* Submit is the primary Upload action; Cancel is deliberately secondary.
+   Surface and foreground are always paired to avoid theme contrast regressions. */
+:root[data-theme="light"] .upload-page .name-field .btn.submit {
+  background: var(--tz-accent-control-surface, #8a4f08);
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(138, 79, 8, 0.22);
+}
+
+:root[data-theme="light"] .upload-page .name-field .cancel {
+  background: #ffffff;
+  border: 1px solid rgba(138, 79, 8, 0.48);
+  color: #7c4707;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="dark"] .upload-page .name-field .btn.submit {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #111827;
+  box-shadow: 0 6px 20px rgba(224, 168, 46, 0.22);
+}
+
+:root[data-theme="dark"] .upload-page .name-field .cancel {
+  background: #1e293b;
+  border: 1px solid rgba(224, 168, 46, 0.48);
+  color: #f8fafc;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="light"]
+  .upload-page
+  .name-field
+  .btn.submit:hover:not(:disabled) {
+  background: var(--tz-accent-control-surface-hover, #a45d0a);
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a);
+}
+
+:root[data-theme="light"]
+  .upload-page
+  .name-field
+  .cancel:hover:not(:disabled) {
+  background: #fff7ed;
+  border-color: #8a4f08;
+  color: #6b3b05;
+}
+
+:root[data-theme="dark"]
+  .upload-page
+  .name-field
+  .btn.submit:hover:not(:disabled) {
+  background: var(--tz-accent-control-surface-hover, #f0c463);
+  border-color: var(--tz-accent-control-surface-hover, #f0c463);
+}
+
+:root[data-theme="dark"] .upload-page .name-field .cancel:hover:not(:disabled) {
+  background: #293548;
+  border-color: rgba(240, 196, 99, 0.72);
+  color: #ffffff;
+}
+
+:root[data-theme] .upload-page .name-field .btn.submit:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+/* ============================================================
+   Requested cross-page control alignment and theme visibility
+   ============================================================
+   Keep the latest review changes semantic and narrowly scoped. White-on-gold
+   actions use a deeper accessible gold; selected categories use a theme-aware
+   foreground so dark mode can retain dark ink on the brighter yellow. */
+:root {
+  --tz-white-on-gold-surface: #a65f00;
+  --tz-white-on-gold-surface-hover: #8a4f08;
+}
+
+:root[data-theme="light"] {
+  --tz-selected-category-surface: #a65f00;
+  --tz-selected-category-foreground: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --tz-selected-category-surface: var(--tz-turmeric, #e0a82e);
+  --tz-selected-category-foreground: #111827;
+}
+
+/* Search image workspace: pin Clear Search and Recrop to the requested outer
+   corners of the Original Image frame, independent of image dimensions. */
+.fabric-search.fabric-search .image-preview__frame {
+  position: relative;
+}
+
+.fabric-search.fabric-search .image-preview__frame-actions--top {
+  inset: 14px 14px auto auto;
+  margin: 0;
+}
+
+.fabric-search.fabric-search .image-preview__frame-actions--bottom {
+  inset: auto 14px 14px auto;
+  margin: 0;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__frame-actions
+  .btn,
+:root[data-theme]
+  .fabric-search.fabric-search
+  .search-bar__image-actions
+  :is(.btn--outline, .btn--ghost) {
+  background: var(--tz-white-on-gold-surface);
+  border-color: var(--tz-white-on-gold-surface);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(138, 79, 8, 0.24);
+  text-shadow: none;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__frame-actions
+  .btn:hover:not(:disabled),
+:root[data-theme]
+  .fabric-search.fabric-search
+  .search-bar__image-actions
+  :is(.btn--outline, .btn--ghost):hover:not(:disabled) {
+  background: var(--tz-white-on-gold-surface-hover);
+  border-color: var(--tz-white-on-gold-surface-hover);
+  color: #ffffff;
+}
+
+/* Selected Search categories: light theme uses white labels; dark theme uses
+   dark labels on the brighter yellow requested during review. */
+:root[data-theme]
+  .fabric-search.fabric-search
+  .category-picker__chip.category-picker__chip--active,
+:root[data-theme]
+  .fabric-search.fabric-search
+  .category-picker__chip.category-picker__chip--active:hover {
+  background: var(--tz-selected-category-surface);
+  border-color: var(--tz-selected-category-surface);
+  color: var(--tz-selected-category-foreground);
+  box-shadow: 0 10px 24px rgba(166, 95, 0, 0.2);
+  text-shadow: none;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .category-picker__chip.category-picker__chip--active
+  :is(
+    .category-picker__chip-check,
+    .category-picker__chip-icon,
+    .category-picker__chip-label
+  ) {
+  color: inherit;
+  opacity: 1;
+}
+
+/* Search crop confirmation is intentionally white-on-gold in both themes. */
+:root[data-theme]
+  .fabric-search.fabric-search
+  .crop-drawer__actions
+  .btn.btn--primary {
+  background: var(--tz-white-on-gold-surface);
+  border-color: var(--tz-white-on-gold-surface);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(138, 79, 8, 0.24);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .crop-drawer__actions
+  .btn.btn--primary:hover:not(:disabled) {
+  background: var(--tz-white-on-gold-surface-hover);
+  border-color: var(--tz-white-on-gold-surface-hover);
+  color: #ffffff;
+}
+
+/* Upload dark theme: Submit and Cancel now share the exact Start Recording
+   surface and foreground while retaining their existing handlers/states. */
+:root[data-theme="dark"]
+  .upload-page.upload-page
+  :is(
+    .rec-controls .btn.primary,
+    .name-field .btn.submit,
+    .name-field .cancel
+  ) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-turmeric, #e0a82e),
+    var(--tz-turmeric-soft, #f0c463)
+  );
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #111827;
+  box-shadow: 0 8px 20px rgba(224, 168, 46, 0.22);
+  text-shadow: none;
+}
+
+:root[data-theme="dark"]
+  .upload-page.upload-page
+  :is(
+    .rec-controls .btn.primary,
+    .name-field .btn.submit,
+    .name-field .cancel
+  ):hover:not(:disabled) {
+  background: var(--tz-turmeric-soft, #f0c463);
+  border-color: var(--tz-turmeric-soft, #f0c463);
+  color: #111827;
+}
+
+/* Analysis sample-image selection: light-theme hover/focus uses the requested
+   white label on a yellow surface. */
+:root[data-theme="light"]
+  .analysis-page.analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card.sample-card:hover
+  .sample-card__select,
+:root[data-theme="light"]
+  .analysis-page.analysis-page
+  .drawer-panel
+  .sample-gallery
+  .sample-card.sample-card:focus-visible
+  .sample-card__select {
+  background: var(--tz-white-on-gold-surface);
+  border-color: var(--tz-white-on-gold-surface);
+  color: #ffffff;
+}
+
+/* Analysis image-removal confirmation: both requested light-theme actions are
+   white-on-gold, with the dialog surface itself left unchanged. */
+:root[data-theme="light"]
+  .analysis-page.analysis-page
+  .confirm-actions
+  :is(.btn.btn-cancel, .btn.btn-confirm) {
+  background: var(--tz-white-on-gold-surface);
+  border-color: var(--tz-white-on-gold-surface);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(138, 79, 8, 0.2);
+}
+
+:root[data-theme="light"]
+  .analysis-page.analysis-page
+  .confirm-actions
+  :is(.btn.btn-cancel, .btn.btn-confirm):hover:not(:disabled) {
+  background: var(--tz-white-on-gold-surface-hover);
+  border-color: var(--tz-white-on-gold-surface-hover);
+  color: #ffffff;
+}
+
+/* Analysis header/navigation was inheriting muted route colours. Restore the
+   same strong, theme-aware typography used by the other application pages. */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  :is(.brand-name, .header-nav a:not(.active)) {
+  color: #1f2937;
+  font-weight: 750;
+  opacity: 1;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  :is(.brand-name, .header-nav a:not(.active)) {
+  color: #f1f5f9;
+  font-weight: 750;
+  opacity: 1;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .site-header
+  .header-nav
+  a.active {
+  background: var(--tz-white-on-gold-surface);
+  border-color: var(--tz-white-on-gold-surface);
+  color: #ffffff;
+  font-weight: 800;
+  opacity: 1;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .site-header
+  .header-nav
+  a.active {
+  background: var(--tz-turmeric, #e0a82e);
+  border-color: var(--tz-turmeric, #e0a82e);
+  color: #111827;
+  font-weight: 800;
+  opacity: 1;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(.animated-header h1, .top-texts) {
+  color: #0f172a;
+  opacity: 1;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--analysis
+  .analysis-page
+  :is(.animated-header h1, .top-texts) {
+  color: #f8fafc;
+  opacity: 1;
+}
+
+/* Chat sample prompts remain distinguishable but use balanced, less muddy
+   colours in both themes. */
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:nth-child(1) {
+  background: #b45309;
+  border-color: #d97706;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:nth-child(2) {
+  background: #4f46e5;
+  border-color: #6366f1;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:nth-child(3) {
+  background: #0f766e;
+  border-color: #0d9488;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:nth-child(4) {
+  background: #be185d;
+  border-color: #db2777;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:nth-child(1) {
+  background: #fdba74;
+  border-color: #fb923c;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:nth-child(2) {
+  background: #a5b4fc;
+  border-color: #818cf8;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:nth-child(3) {
+  background: #6ee7b7;
+  border-color: #34d399;
+  color: #111827;
+}
+
+:root[data-theme="dark"]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:nth-child(4) {
+  background: #f9a8d4;
+  border-color: #f472b6;
+  color: #111827;
+}
+
+:root[data-theme]
+  .app-wrapper--chat
+  .page-root
+  .empty-state-large
+  .chips
+  > .chip:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   Search preview structure and compact category action follow-up
+   ============================================================
+   Keep the title and its actions inside each image frame so their alignment is
+   independent of the uploaded image's aspect ratio. These rules are scoped to
+   the Search preview and do not affect result cards or the sticky toolbar. */
+:root[data-theme] .fabric-search.fabric-search .category-picker__toggle-all {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 14px;
+  line-height: 1;
+}
+
+:root[data-theme] .fabric-search.fabric-search .image-preview__frame {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-items: initial;
+}
+
+:root[data-theme] .fabric-search.fabric-search .image-preview__frame-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 50px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--tz-ui-border, rgba(100, 116, 139, 0.22));
+  background: transparent;
+}
+
+:root[data-theme] .fabric-search.fabric-search .image-preview__pane-title {
+  grid-column: 2;
+  justify-self: center;
+  align-self: center;
+  display: block;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--tz-ui-text, #f8fafc);
+  font-family: var(--font-sans, Inter, system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow: none;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .image-preview__pane-title {
+  color: #0f172a;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__frame-header
+  .image-preview__frame-actions--top {
+  position: static;
+  grid-column: 3;
+  justify-self: end;
+  inset: auto;
+  margin: 0;
+}
+
+:root[data-theme] .fabric-search.fabric-search .image-preview__media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 1 1 auto;
+  min-height: 210px;
+  overflow: hidden;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__media
+  .image-preview__img {
+  height: min(410px, calc(52vh - 50px));
+  max-height: min(410px, calc(52vh - 50px));
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__media
+  .image-preview__frame-actions--bottom {
+  position: absolute;
+  inset: auto 14px 14px auto;
+  margin: 0;
+}
+
+/* Light mode uses a deeper accessible gold because the requested white label
+   does not meet contrast on the brighter dark-theme yellow. */
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .crop-drawer__actions
+  .btn.btn--primary {
+  background: #a16207;
+  border-color: #a16207;
+  color: #ffffff;
+  text-shadow: none;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .crop-drawer__actions
+  .btn.btn--primary
+  span {
+  color: inherit;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .crop-drawer__actions
+  .btn.btn--primary:hover:not(:disabled) {
+  background: #854d0e;
+  border-color: #854d0e;
+  color: #ffffff;
+}
+
+/* Clear/Recrop retain the project's theme convention: white on accessible gold
+   in light mode, dark ink on bright yellow in dark mode. */
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .image-preview__frame-actions
+  .btn {
+  background: #a16207;
+  border-color: #a16207;
+  color: #ffffff;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .image-preview__frame-actions
+  .btn:hover:not(:disabled) {
+  background: #854d0e;
+  border-color: #854d0e;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .image-preview__frame-actions
+  .btn {
+  background: var(--tz-turmeric-soft, #f0c463);
+  border-color: var(--tz-turmeric-soft, #f0c463);
+  color: #111827;
+  text-shadow: none;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .image-preview__frame-actions
+  .btn:hover:not(:disabled) {
+  background: #f6d889;
+  border-color: #f6d889;
+  color: #111827;
+}
+
+@media (max-height: 700px) {
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .image-preview__media
+    .image-preview__img {
+    height: calc(42vh - 50px);
+    max-height: calc(42vh - 50px);
+  }
+}
+
+/* ============================================================
+   Search render stability, text contrast, pagination, and shared
+   destructive-confirmation dialog follow-up
+   ============================================================ */
+
+/* The hero upload control previously relied on hover styles to establish its
+   visible surface. Give it a complete non-hover state and avoid backdrop/GPU
+   effects that can leave the wide control partially unpainted until pointer
+   movement on some Windows/Chromium configurations. */
+:root[data-theme]
+  .fabric-search.fabric-search
+  .hero
+  .hero__search-controls
+  .hero__upload-btn.btn.btn--ghost {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  isolation: isolate;
+  box-shadow: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .hero
+  .hero__search-controls
+  .hero__upload-btn.btn.btn--ghost {
+  background: #ffffff;
+  border: 1px solid rgba(138, 79, 8, 0.42);
+  color: #172033;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .hero
+  .hero__search-controls
+  .hero__upload-btn.btn.btn--ghost:hover:not(:disabled) {
+  background: #fffaf0;
+  border-color: #a16207;
+  color: #172033;
+  box-shadow: 0 8px 22px rgba(138, 79, 8, 0.12);
+  transform: none;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .hero
+  .hero__search-controls
+  .hero__upload-btn.btn.btn--ghost {
+  background: #111827;
+  border: 1px solid rgba(240, 196, 99, 0.48);
+  color: #f8fafc;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .hero
+  .hero__search-controls
+  .hero__upload-btn.btn.btn--ghost:hover:not(:disabled) {
+  background: #172033;
+  border-color: #f0c463;
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(224, 168, 46, 0.14);
+  transform: none;
+}
+
+/* Apply Filter follows the requested light-theme white-on-gold treatment.
+   Explicit child colours prevent older compact-toolbar rules from restoring
+   black text after lazy stylesheet loading. */
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .category-picker.category-picker--compact
+  .category-picker__apply.btn.btn--primary {
+  background: linear-gradient(135deg, #a16207 0%, #b45309 100%);
+  border-color: #a16207;
+  color: #ffffff;
+  text-shadow: none;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .category-picker.category-picker--compact
+  .category-picker__apply.btn.btn--primary
+  :is(.category-picker__apply-label, .category-picker__apply-arrow) {
+  color: #ffffff;
+  text-shadow: none;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .category-picker.category-picker--compact
+  .category-picker__apply.btn.btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #854d0e 0%, #a16207 100%);
+  border-color: #854d0e;
+  color: #ffffff;
+}
+
+/* Search pagination should read as navigation text, not as another pair of
+   pill buttons. Keep the controls transparent and borderless while preserving
+   keyboard focus and clear enabled/disabled states in both themes. */
+:root[data-theme]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn {
+  min-height: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  text-shadow: none;
+  transform: none;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn {
+  color: #334155;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn {
+  color: #f1f5f9;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:not(:disabled):hover {
+  border: 0;
+  background: transparent;
+  color: #b7791f;
+  box-shadow: none;
+  transform: none;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:not(:disabled):hover {
+  color: #f0c463;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:disabled {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  opacity: 0.42;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:focus-visible {
+  outline: 2px solid #e0a82e;
+  outline-offset: 2px;
+}
+
+/* Upload and Analysis use the same destructive-confirmation language. A
+   neutral charcoal surface avoids the previous blue-vs-black inconsistency;
+   destructive intent remains red and Cancel remains neutral in both themes. */
+:root[data-theme]
+  :is(
+    .analysis-page.analysis-page .image-preview-container,
+    .upload-page.upload-page
+  )
+  .confirm-overlay {
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+:root[data-theme]
+  :is(
+    .analysis-page.analysis-page .image-preview-container,
+    .upload-page.upload-page
+  )
+  .confirm-modal {
+  width: min(420px, calc(100vw - 40px));
+  max-width: 420px;
+  padding: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  background: #111827;
+  color: #f8fafc;
+  box-shadow: 0 18px 48px rgba(2, 6, 23, 0.5);
+}
+
+:root[data-theme]
+  :is(
+    .analysis-page.analysis-page .image-preview-container,
+    .upload-page.upload-page
+  )
+  :is(.confirm-title, .confirm-body) {
+  color: #f8fafc;
+  opacity: 1;
+  text-shadow: none;
+}
+
+:root[data-theme]
+  :is(
+    .analysis-page.analysis-page .image-preview-container,
+    .upload-page.upload-page
+  )
+  .confirm-actions
+  .btn.btn-cancel {
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+:root[data-theme]
+  :is(
+    .analysis-page.analysis-page .image-preview-container,
+    .upload-page.upload-page
+  )
+  .confirm-actions
+  .btn.btn-confirm {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+:root[data-theme]
+  :is(
+    .analysis-page.analysis-page .image-preview-container,
+    .upload-page.upload-page
+  )
+  .confirm-actions
+  .btn.btn-cancel:hover:not(:disabled) {
+  background: #4b5563;
+  border-color: #64748b;
+  color: #ffffff;
+}
+
+:root[data-theme]
+  :is(
+    .analysis-page.analysis-page .image-preview-container,
+    .upload-page.upload-page
+  )
+  .confirm-actions
+  .btn.btn-confirm:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+/* ============================================================
+   Search pagination, preview action spacing, and upload dialog centering
+   ============================================================
+   These follow-up rules deliberately override the earlier transparent
+   pagination treatment and the absolute preview actions. They are limited to
+   the Search result controls and the Upload confirmation overlay. */
+
+/* Prev/Next use the same filled accent language as the other Search actions.
+   The foreground follows the requested theme convention: white in light mode,
+   dark ink in dark mode. */
+:root[data-theme]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn {
+  min-height: 38px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(138, 79, 8, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  text-shadow: none;
+  transform: none;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn {
+  background: #a16207;
+  border-color: #a16207;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn {
+  background: var(--tz-turmeric-soft, #f0c463);
+  border-color: var(--tz-turmeric-soft, #f0c463);
+  color: #111827;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:not(:disabled):hover {
+  background: #854d0e;
+  border-color: #854d0e;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(133, 77, 14, 0.24);
+  transform: translateY(-1px);
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:not(:disabled):hover {
+  background: #f6d889;
+  border-color: #f6d889;
+  color: #111827;
+  box-shadow: 0 10px 24px rgba(240, 196, 99, 0.2);
+  transform: translateY(-1px);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:disabled {
+  border-color: currentColor;
+  box-shadow: none;
+  opacity: 0.5;
+  transform: none;
+}
+
+/* Reserve a real action rail beside the Original Image instead of absolutely
+   pinning controls against the frame edge. This keeps Clear slightly below the
+   title, lifts Recrop away from the clipped lower edge, and remains stable for
+   tall, square, and landscape source images. */
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__media--with-actions {
+  grid-template-columns: minmax(0, 1fr) minmax(112px, 132px);
+  gap: 12px;
+  padding: 12px 14px;
+  overflow: hidden;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__media--with-actions
+  .image-preview__img {
+  grid-column: 1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  object-fit: contain;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__media--with-actions
+  .image-preview__action-rail {
+  position: static;
+  inset: auto;
+  grid-column: 2;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-evenly;
+  gap: 18px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px 0;
+  z-index: 3;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__action-rail
+  .btn {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .image-preview__media--with-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .image-preview__media--with-actions
+    .image-preview__action-rail {
+    grid-column: 1;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 0;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .image-preview__action-rail
+    .btn {
+    width: auto;
+    min-width: 104px;
+  }
+}
+
+/* Keep Upload remove confirmations centered in the visible viewport even when
+   the page is scrolled. Dynamic viewport units avoid the dialog drifting low
+   when browser chrome changes the available height. */
+:root[data-theme] .upload-page.upload-page > .confirm-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  min-width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  justify-content: center;
+  margin: 0;
+  padding: 24px;
+  overflow: auto;
+  z-index: 10000;
+}
+
+:root[data-theme] .upload-page.upload-page > .confirm-overlay > .confirm-modal {
+  position: relative;
+  inset: auto;
+  margin: 0;
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  transform: none;
+}
+
+/* ============================================================
+   Search pagination persistence, preview action balance, and Clear Audio
+   ============================================================
+   Keep disabled pagination controls visible, balance the Original Image
+   actions in a stable rail, and give Clear Audio the same visual hierarchy as
+   the Upload form actions. These rules are intentionally page-scoped. */
+
+/* Both pagination controls remain visible on every page. Disabled state is
+   communicated through cursor and a softer surface—not by disappearing. */
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn,
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:disabled,
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:disabled:hover {
+  background: #a16207;
+  border-color: #a16207;
+  color: #ffffff;
+  opacity: 1;
+  visibility: visible;
+  box-shadow: 0 8px 20px rgba(138, 79, 8, 0.18);
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn,
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:disabled,
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:disabled:hover {
+  background: var(--tz-turmeric-soft, #f0c463);
+  border-color: var(--tz-turmeric-soft, #f0c463);
+  color: #111827;
+  opacity: 1;
+  visibility: visible;
+  box-shadow: 0 8px 20px rgba(240, 196, 99, 0.18);
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:not(:disabled):hover {
+  background: #854d0e;
+  border-color: #854d0e;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:not(:disabled):hover {
+  background: #f6d889;
+  border-color: #f6d889;
+  color: #111827;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .results-section
+  .pagination
+  .pagination__btn:disabled {
+  cursor: not-allowed;
+  filter: saturate(0.72);
+}
+
+/* Center Clear and Recrop as one balanced vertical group. The rail remains
+   independent from image dimensions, so neither action can be clipped. */
+:root[data-theme]
+  .fabric-search.fabric-search
+  .image-preview__media--with-actions
+  .image-preview__action-rail {
+  justify-content: center;
+  gap: 28px;
+  padding: 12px 0;
+}
+
+/* Clear Audio is an actual action, not a bare text link. Match the Upload
+   primary/secondary action language while keeping destructive confirmation in
+   the modal itself. */
+:root[data-theme]
+  .upload-page.upload-page
+  .audio-clear
+  .img-footer
+  .chip.chip-clear {
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: none;
+  box-shadow: 0 6px 18px rgba(138, 79, 8, 0.2);
+  transform: none;
+}
+
+:root[data-theme="light"]
+  .upload-page.upload-page
+  .audio-clear
+  .img-footer
+  .chip.chip-clear {
+  background: #a16207;
+  border: 1px solid #a16207;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"]
+  .upload-page.upload-page
+  .audio-clear
+  .img-footer
+  .chip.chip-clear {
+  background: var(--tz-turmeric-soft, #f0c463);
+  border: 1px solid var(--tz-turmeric-soft, #f0c463);
+  color: #111827;
+}
+
+:root[data-theme="light"]
+  .upload-page.upload-page
+  .audio-clear
+  .img-footer
+  .chip.chip-clear:hover:not(:disabled) {
+  background: #854d0e;
+  border-color: #854d0e;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="dark"]
+  .upload-page.upload-page
+  .audio-clear
+  .img-footer
+  .chip.chip-clear:hover:not(:disabled) {
+  background: #f6d889;
+  border-color: #f6d889;
+  color: #111827;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 680px) {
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .image-preview__media--with-actions
+    .image-preview__action-rail {
+    justify-content: center;
+    gap: 12px;
+    padding: 0;
+  }
+}
+
+/* Final Search preview alignment: lift only the Clear action while preserving
+   the balanced Recrop position and all existing image/action behavior. */
+@media (min-width: 681px) {
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:first-child {
+    position: relative;
+    top: -28px;
+  }
+}
+
+/* ============================================================
+   Sticky image-search action visibility
+   ============================================================
+   Recrop and New Image live in the fixed Search results toolbar. Give these
+   controls dedicated classes and a complete theme state so generic ghost /
+   outline rules cannot make them transparent or unreadable in dark mode. */
+:root[data-theme]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions {
+  opacity: 1;
+  visibility: visible;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  opacity: 1;
+  visibility: visible;
+  filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  text-shadow: none;
+  transform: none;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn {
+  background: #a16207;
+  border-color: #a16207;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(138, 79, 8, 0.18);
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn {
+  background: var(--tz-turmeric-soft, #f0c463);
+  border-color: var(--tz-turmeric-soft, #f0c463);
+  color: #111827;
+  box-shadow: 0 8px 20px rgba(240, 196, 99, 0.2);
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn:hover:not(:disabled),
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn:focus-visible {
+  background: #854d0e;
+  border-color: #854d0e;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(133, 77, 14, 0.24);
+  transform: translateY(-1px);
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn:hover:not(:disabled),
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn:focus-visible {
+  background: #f6d889;
+  border-color: #f6d889;
+  color: #111827;
+  box-shadow: 0 10px 24px rgba(240, 196, 99, 0.24);
+  transform: translateY(-1px);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn:focus-visible {
+  outline: 3px solid rgba(224, 168, 46, 0.34);
+  outline-offset: 2px;
+}
+
+/* Final sticky image-action foreground guard.
+   These controls intentionally own their presentation instead of inheriting
+   generic ghost/outline button colors from route styles loaded later. */
+:root[data-theme="light"]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search
+  .search-bar.search-bar--sticky
+  .search-bar__image-actions
+  .search-bar__image-action.btn {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+/* ============================================================
+   Search crop dialog viewport containment
+   ============================================================
+   Render the crop dialog through a document-level portal so transformed or
+   animated Search containers cannot redefine the containing block for its
+   fixed overlay. Keep the complete title, crop stage and actions visible in
+   the viewport; only the crop stage may scroll on unusually short screens. */
+.fabric-search-modal-root {
+  display: contents;
+}
+
+:root[data-theme]
+  .fabric-search-modal-root.fabric-search
+  > .crop-drawer.crop-drawer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000;
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  padding: clamp(10px, 2vh, 20px) !important;
+  display: flex;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain;
+}
+
+:root[data-theme]
+  .fabric-search-modal-root.fabric-search
+  > .crop-drawer.crop-drawer
+  > .crop-drawer__inner {
+  box-sizing: border-box;
+  width: min(720px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 20px) !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
+:root[data-theme] .fabric-search-modal-root.fabric-search .crop-drawer__stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+:root[data-theme]
+  .fabric-search-modal-root.fabric-search
+  :is(.crop-drawer__image-wrap, .crop-drawer__image) {
+  max-height: min(56dvh, calc(100dvh - 230px)) !important;
+}
+
+:root[data-theme]
+  .fabric-search-modal-root.fabric-search
+  .crop-drawer__actions {
+  flex: 0 0 auto;
+}
+
+@media (max-height: 680px) {
+  :root[data-theme]
+    .fabric-search-modal-root.fabric-search
+    > .crop-drawer.crop-drawer {
+    align-items: center !important;
+    padding: 8px !important;
+  }
+
+  :root[data-theme]
+    .fabric-search-modal-root.fabric-search
+    > .crop-drawer.crop-drawer
+    > .crop-drawer__inner {
+    max-height: calc(100dvh - 16px) !important;
+    gap: 10px;
+    padding: 14px !important;
+  }
+
+  :root[data-theme]
+    .fabric-search-modal-root.fabric-search
+    :is(.crop-drawer__image-wrap, .crop-drawer__image) {
+    max-height: calc(100dvh - 190px) !important;
+  }
+}
+
+
+/* ============================================================
+   Unified user-facing connection errors
+   ============================================================
+   Keep Search, Chat and List failures consistent and readable. The paired
+   foreground/background colors intentionally follow the requested theme rule:
+   white text in light mode and dark text in dark mode. */
+:root[data-theme]
+  :is(
+    .fabric-search.fabric-search .fabric-search__error,
+    .page-root .error[role="alert"],
+    .grid-page .grid-error[role="alert"]
+  ) {
+  box-sizing: border-box;
+  width: min(100%, 1180px);
+  min-height: 52px;
+  margin: 18px auto 0;
+  padding: 13px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.45;
+  border-radius: 10px;
+  text-wrap: balance;
+}
+
+:root[data-theme="light"]
+  :is(
+    .fabric-search.fabric-search .fabric-search__error,
+    .page-root .error[role="alert"],
+    .grid-page .grid-error[role="alert"]
+  ) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #b91c1c !important;
+  border: 1px solid #991b1b !important;
+  box-shadow: 0 10px 24px rgba(185, 28, 28, 0.22) !important;
+}
+
+:root[data-theme="dark"]
+  :is(
+    .fabric-search.fabric-search .fabric-search__error,
+    .page-root .error[role="alert"],
+    .grid-page .grid-error[role="alert"]
+  ) {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  background: #b91c1c !important;
+  border: 1px solid #991b1b !important;
+  box-shadow: 0 10px 24px rgba(185, 28, 28, 0.22) !important;
+}
+
+:root[data-theme]
+  :is(
+    .fabric-search.fabric-search .fabric-search__error,
+    .page-root .error[role="alert"],
+    .grid-page .grid-error[role="alert"]
+  ) * {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+@media (max-width: 680px) {
+  :root[data-theme]
+    :is(
+      .fabric-search.fabric-search .fabric-search__error,
+      .page-root .error[role="alert"],
+      .grid-page .grid-error[role="alert"]
+    ) {
+    width: calc(100% - 24px);
+    padding-inline: 14px;
+    font-size: 0.92rem;
+  }
+}

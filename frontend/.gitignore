@@ -10,3 +10,4 @@ dist/
 # --- Local Tooling ---
 .pnpm-debug.log*
 lerna-debug.log*
+database/*

@@ -1,76 +1,114 @@
 import { FULL_API_URL } from "../constants";
+import {
+  ensureOk,
+  fetchWithTimeout,
+  toUserFacingNetworkError,
+} from "../utils/http";
 
-export async function analyzeImage(file, analysisType) {
+export type AnalysisMode = "short" | "long";
+
+export type AnalyzeResponse = {
+  response?: {
+    response?: string;
+    [key: string]: unknown;
+  };
+  cache_key?: string;
+  [key: string]: unknown;
+};
+
+export type ValidationResponse = {
+  valid?: boolean;
+  reason?: string;
+  [key: string]: unknown;
+};
+
+export async function analyzeImage(
+  file: File,
+  analysisType: AnalysisMode,
+): Promise<AnalyzeResponse> {
   const formData = new FormData();
   formData.append("image", file);
   formData.append("analysis_type", analysisType);
 
   try {
-    const res = await fetch(`${FULL_API_URL}/analyse`, {
-      method: "POST",
-      body: formData,
-    });
+    const response = await fetchWithTimeout(
+      `${FULL_API_URL}/analyse`,
+      {
+        method: "POST",
+        body: formData,
+      },
+      90_000,
+    );
 
-    if (!res.ok) {
-      if (res.status === 503) {
-        throw new Error("Server unavailable — check your network");
-      }
-      if (res.status === 400) {
-        throw new Error("Invalid image — please upload a proper fabric image.");
-      }
-      if (res.status === 500) {
-        throw new Error("Server error during analysis — try again later.");
-      }
+    const fallback =
+      response.status === 400
+        ? "Invalid image — please upload a proper fabric image."
+        : response.status === 503
+          ? "Analysis service unavailable. Please try again shortly."
+          : "Server error during analysis. Please try again later.";
+    await ensureOk(response, fallback);
 
-      throw new Error(`Unexpected error (${res.status})`);
+    const data = (await response.json()) as AnalyzeResponse;
+    const text = data.response?.response;
+    if (typeof text !== "string" || !text.trim()) {
+      throw new Error(
+        "The server returned an empty analysis. Please retry the request.",
+      );
     }
 
-    return await res.json();
-
-  } catch (err: any) {
-    console.error("Error analyzing image:", err);
-    throw new Error("Cannot reach the server. Check your network");
-  }
-}
-
-export async function regenerateResponse(cache_key:string, index:string) {
-  try {
-    const res = await fetch(
-      `${FULL_API_URL}/regenerate?key=${cache_key}&index=${index}`,
-      {
-        method: "GET",
-      },
-    );
-    const data = await res.json();
     return data;
   } catch (error) {
-    console.error("failed to regenerate to other responses", error);
+    throw toUserFacingNetworkError(
+      error,
+      "Unable to reach the analysis service. Check your connection and try again.",
+    );
   }
-  return null;
 }
 
-export async function validateImageAPI(imageFile) {
+export async function regenerateResponse(
+  cacheKey: string,
+  index: string,
+): Promise<Record<string, unknown>> {
+  try {
+    const response = await fetchWithTimeout(
+      `${FULL_API_URL}/regenerate?key=${encodeURIComponent(cacheKey)}&index=${encodeURIComponent(index)}`,
+      { method: "GET" },
+      35_000,
+    );
+    await ensureOk(
+      response,
+      `Unable to generate another response (${response.status}).`,
+    );
+    return (await response.json()) as Record<string, unknown>;
+  } catch (error) {
+    throw toUserFacingNetworkError(
+      error,
+      "Unable to generate another response. Please try again.",
+    );
+  }
+}
+
+export async function validateImageAPI(
+  imageFile: File,
+): Promise<ValidationResponse> {
   const formData = new FormData();
   formData.append("image", imageFile);
 
   try {
-    const res = await fetch(`${FULL_API_URL}/validate-image`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!res.ok) {
-      if (res.status === 503) throw new Error("Validation service unavailable — check server.");
-      if (res.status === 500) throw new Error("Validation failed on server.");
-      if (res.status === 400) throw new Error("Invalid image file.");
-      throw new Error(`Unexpected error (${res.status})`);
-    }
-
-    return await res.json();
-
-  } catch (err) {
-    console.error("Error validating image:", err);
-    throw new Error("Cannot reach the server. Check your network.");
+    const response = await fetchWithTimeout(
+      `${FULL_API_URL}/validate-image`,
+      {
+        method: "POST",
+        body: formData,
+      },
+      30_000,
+    );
+    await ensureOk(response, "Unable to validate this image.");
+    return (await response.json()) as ValidationResponse;
+  } catch (error) {
+    throw toUserFacingNetworkError(
+      error,
+      "Unable to reach the image validation service.",
+    );
   }
 }
-
