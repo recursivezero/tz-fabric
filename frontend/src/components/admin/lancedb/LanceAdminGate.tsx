@@ -38,6 +38,7 @@ export default function LanceAdminGate({
           type="password"
           value={value}
           onChange={(event) => setValue(event.target.value)}
+          placeholder="abcd1234"
           autoComplete="off"
           spellCheck={false}
           autoCapitalize="none"
