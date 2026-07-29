@@ -1,8 +1,8 @@
 {
   "name": "tz-fabric",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "type": "module",
-  "homepage": "https://threadzip.com",
+  "homepage": "https://pro.threadzip.com",
   "description": "A AI enabled fabric analysis, chatbot integration with image search",
   "license": "MIT",
   "publisher": "recursivezero",

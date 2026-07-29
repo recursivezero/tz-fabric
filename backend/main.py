@@ -71,6 +71,7 @@ ALLOW_LOCAL = os.getenv("ALLOW_LOCAL_ORIGINS", "false").lower() == "true"
 DEV_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:8000",
+    "http://localhost:8002",
     "http://localhost:3000",
 ]
 

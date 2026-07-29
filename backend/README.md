@@ -18,7 +18,7 @@ Note: according to your port change the port in `frontend/vite.config.ts` and `V
 poetry env activate
 poetry run fabric dev
  # to run production
- poetry run fabric prod
+poetry run fabric prod
 
 ```
 
