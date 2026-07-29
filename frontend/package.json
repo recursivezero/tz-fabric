@@ -58,7 +58,9 @@
     "fix": " biome format . --write",
     "preview": "vite preview",
     "clean": "rm -rf dist rm -rf build",
-    "nuke": "rm -rf node_modules && rm -f package-lock.json && npm run clean"
+    "nuke": "rm -rf node_modules && rm -f package-lock.json && npm run clean",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "axios": "^1.11.0",
@@ -87,6 +89,7 @@
     "globals": "^16.3.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
-    "vite": "^7.0.4"
+    "vite": "^7.0.4",
+    "vitest": "^4.1.10"
   }
 }
