@@ -16,13 +16,16 @@ export default function SuggestionChips({
   onAction,
   hint,
   name = null,
+  resetKey = null,
 }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
+  const chipResetKey = `${resetKey ?? "initial"}:${hasImage ? 1 : 0}:${hasAudio ? 1 : 0}`;
 
-  
   useEffect(() => {
-    setSelected(null);
-  });
+    if (chipResetKey) {
+      setSelected(null);
+    }
+  }, [chipResetKey]);
 
   const chips = useMemo(() => {
     if (hasImage && !hasAudio) {

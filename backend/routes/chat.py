@@ -155,6 +155,31 @@ CHITCHAT_HINTS = [
 
 REFUSAL_MESSAGE = "Sorry — I can only answer fabric/textile questions. Please try a fabric-related question."
 CHITCHAT_RESPONSE = "Hi — I can help with fabric/textile questions or how to use this app. Ask about GSM, knit vs woven, or upload an image."
+APP_USAGE_RESPONSE = (
+    "To use FabricAI, open Analysis, upload or browse a fabric image, then choose Short Analysis or Long Analysis. "
+    "You can also use Search to find similar fabrics, List to review saved results, and Chat to ask fabric-related questions."
+)
+
+APP_USAGE_PATTERNS = [
+    r"\bhow\s+(can|do)\s+i\s+use\s+(fabric\s*ai|fabricai|this\s+app|the\s+app)\b",
+    r"\bhow\s+to\s+use\s+(fabric\s*ai|fabricai|this\s+app|the\s+app)\b",
+    r"\b(use|using|get\s+started|start)\b.*\b(fabric\s*ai|fabricai|this\s+app|the\s+app)\b",
+    r"\b(fabric\s*ai|fabricai)\b.*\b(use|using|get\s+started|start)\b",
+]
+
+
+def _is_app_usage_question(text: str) -> bool:
+    """Detect app-how-to questions locally so they never fall through to refusal/LLM issues."""
+    raw = (text or "").strip().lower()
+    if not raw:
+        return False
+    compact = raw.replace("fabric ai", "fabricai")
+    candidates = {raw, compact}
+    return any(
+        re.search(pattern, candidate, re.IGNORECASE)
+        for candidate in candidates
+        for pattern in APP_USAGE_PATTERNS
+    )
 
 
 def _fuzzy_contains(text: str, hints: List[str], cutoff: float = 0.72) -> bool:
@@ -753,6 +778,18 @@ def chat_endpoint(body: ChatRequest):
     force_long = False
     category: str = "blocked"
     try:
+        if _is_app_usage_question(last_user):
+            return _build_response(
+                _make_reply(APP_USAGE_RESPONSE),
+                None,
+                None,
+                None,
+                None,
+                False,
+                APP_USAGE_RESPONSE,
+                force_long,
+            )
+
         lower_last_user = (str(last_user or "")).strip().lower()
         ask_more_idx: Optional[int] = None
         for idx in range(len(body.messages) - 1, -1, -1):

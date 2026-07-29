@@ -99,8 +99,12 @@ class FakeQuery:
         self.ordering = ordering
 
         order = ordering[0]
+
         if isinstance(order, tuple):
             column, direction = order
+        elif isinstance(order, dict):
+            column = str(order["column_name"])
+            direction = "asc" if bool(order["ascending"]) else "desc"
         else:
             column = str(order.column_name)
             direction = "asc" if bool(order.ascending) else "desc"

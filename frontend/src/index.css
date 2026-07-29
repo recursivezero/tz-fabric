@@ -3,8 +3,8 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: #e7ecf3;
+  background-color: #0e1322;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -12,8 +12,21 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+  color: #111827;
+  background-color: #f8fafc;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  color: #e7ecf3;
+  background-color: #0e1322;
+}
+
 body.app-background {
   background-image: url('/fabric_background.png');
+  background-image: image-set(url('/fabric_background.webp') type('image/webp'), url('/fabric_background.png') type('image/png'));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -29,6 +42,8 @@ body {
   padding: 0;
   height: 100%;
   box-sizing: border-box;
+  background-color: inherit;
+  color: inherit;
   contain: content;
 }
 
@@ -44,7 +59,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #111827;
+  color: #f8fafc;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -55,19 +71,22 @@ button:hover {
 
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+:root[data-theme="light"] button {
+  background-color: #ffffff;
+  color: #111827;
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
-    background-color: #ffffff;
+  :root:not([data-theme]) {
+    color: #111827;
+    background-color: #f8fafc;
   }
 
   a:hover {
     color: #747bff;
-  }
-
-  button {
-    background-color: #f9f9f9;
   }
 }

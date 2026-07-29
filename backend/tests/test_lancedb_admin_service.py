@@ -3,10 +3,7 @@ from __future__ import annotations
 import tests.bootstrap  # noqa: F401
 
 import math
-import sys
 import unittest
-from types import ModuleType
-from unittest.mock import patch
 
 from services.lancedb_admin_service import (
     LanceDBAdminService,
@@ -148,48 +145,29 @@ class LanceDBAdminServiceTests(unittest.TestCase):
         detail = self.service.get_row("tz-fabric-table", 0)
         self.assertEqual(detail.vector.values, [0.1, None, None, None])
 
-    def test_native_ordering_uses_lance_column_ordering_contract(self) -> None:
-        class StubColumnOrdering:
-            def __init__(
-                self,
-                column_name: str,
-                ascending: bool = True,
-                nulls_first: bool = False,
-            ) -> None:
-                self.column_name = column_name
-                self.ascending = ascending
-                self.nulls_first = nulls_first
+    def test_native_ordering_uses_lance_ordering_contract(self) -> None:
+        query = self.table.search()
 
-        class CapturingQuery:
-            def __init__(self) -> None:
-                self.ordering = None
-
-            def order_by(self, ordering):
-                self.ordering = ordering
-                return self
-
-        lancedb_module = ModuleType("lancedb")
-        query_module = ModuleType("lancedb.query")
-        query_module.ColumnOrdering = StubColumnOrdering  # type: ignore[attr-defined]
-        lancedb_module.query = query_module  # type: ignore[attr-defined]
-        query = CapturingQuery()
-
-        with patch.dict(
-            sys.modules,
-            {
-                "lancedb": lancedb_module,
-                "lancedb.query": query_module,
-            },
-        ):
-            result = self.service._apply_ordering(query, "mtime", "desc")
+        result = self.service._apply_ordering(
+            query,
+            "mtime",
+            "desc",
+        )
 
         self.assertIs(result, query)
         self.assertIsNotNone(query.ordering)
         assert query.ordering is not None
-        ordering = query.ordering[0]
-        self.assertEqual(ordering.column_name, "mtime")
-        self.assertFalse(ordering.ascending)
-        self.assertFalse(ordering.nulls_first)
+
+        self.assertEqual(
+            query.ordering,
+            [
+                {
+                    "column_name": "mtime",
+                    "ascending": False,
+                    "nulls_first": False,
+                }
+            ],
+        )
 
     def test_sorts_only_whitelisted_scalar_columns(self) -> None:
         response = self.service.get_rows(

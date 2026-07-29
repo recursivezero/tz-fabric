@@ -1,5 +1,5 @@
-// src/services/chat_api.ts
 import { FULL_API_URL } from "../constants";
+import { fetchWithTimeout } from "../utils/http";
 
 export type Role = "user" | "assistant" | "system";
 
@@ -25,102 +25,274 @@ export interface ChatResponse {
   analysis_responses?: AnalysisItem[];
 }
 
-// ---------------- TYPE GUARDS (unchanged) ----------------
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null;
+export interface ChatRequestOptions {
+  /** Retry one temporary transport/gateway failure for idempotent text chat. */
+  retryTransient?: boolean;
+  signal?: AbortSignal;
 }
 
-function isRole(v: unknown): v is Role {
-  return v === "user" || v === "assistant" || v === "system";
+const API_READY_DELAYS_MS = [0, 250, 500, 1000] as const;
+const API_READY_TIMEOUT_MS = 1500;
+const CHAT_REQUEST_TIMEOUT_MS = 60_000;
+const CHAT_RETRY_DELAY_MS = 400;
+const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+let apiReady = false;
+let apiReadinessPromise: Promise<void> | null = null;
+
+class ChatApiError extends Error {
+  readonly retryable: boolean;
+  readonly status?: number;
+
+  constructor(
+    message: string,
+    options?: { retryable?: boolean; status?: number },
+  ) {
+    super(message);
+    this.name = "ChatApiError";
+    this.retryable = options?.retryable ?? false;
+    this.status = options?.status;
+  }
 }
 
-function isMessage(v: unknown): v is Message {
-  return isRecord(v) && isRole(v.role) && typeof v.content === "string";
+const delay = (milliseconds: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+
+    const timer = window.setTimeout(resolve, milliseconds);
+    const onAbort = () => {
+      window.clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+
+const errorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  return "Unknown connection error";
+};
+
+async function probeApiHealth(): Promise<void> {
+  const response = await fetchWithTimeout(
+    `${FULL_API_URL}/health`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    },
+    API_READY_TIMEOUT_MS,
+  );
+
+  if (!response.ok) {
+    throw new ChatApiError(
+      `API readiness check failed with status ${response.status}`,
+      {
+        retryable: RETRYABLE_STATUS_CODES.has(response.status),
+        status: response.status,
+      },
+    );
+  }
 }
 
-function isAction(v: unknown): v is Action {
-  return isRecord(v) && typeof v.type === "string";
+async function ensureApiReady(): Promise<void> {
+  if (apiReady) return;
+  if (apiReadinessPromise) return apiReadinessPromise;
+
+  apiReadinessPromise = (async () => {
+    let lastError: unknown = new Error("API readiness check did not run");
+
+    for (const waitMilliseconds of API_READY_DELAYS_MS) {
+      if (waitMilliseconds > 0) await delay(waitMilliseconds);
+
+      try {
+        await probeApiHealth();
+        apiReady = true;
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw new ChatApiError(`Cannot reach server — ${errorMessage(lastError)}`, {
+      retryable: true,
+    });
+  })();
+
+  try {
+    await apiReadinessPromise;
+  } finally {
+    apiReadinessPromise = null;
+  }
 }
 
-function isStringArray(v: unknown): v is string[] {
-  return Array.isArray(v) && v.every(x => typeof x === "string");
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
-function isAnalysisItem(v: unknown): v is AnalysisItem {
+function isRole(value: unknown): value is Role {
+  return value === "user" || value === "assistant" || value === "system";
+}
+
+function isMessage(value: unknown): value is Message {
   return (
-    isRecord(v) &&
-    (typeof v.id === "string" || typeof v.id === "number" || typeof v.id === "undefined") &&
-    (typeof v.text === "string" || typeof v.text === "undefined")
+    isRecord(value) && isRole(value.role) && typeof value.content === "string"
   );
 }
 
-function isAnalysisArray(v: unknown): v is AnalysisItem[] {
-  return Array.isArray(v) && v.every(isAnalysisItem);
+function isAction(value: unknown): value is Action {
+  return isRecord(value) && typeof value.type === "string";
 }
 
-function coerceChatResponse(u: unknown): ChatResponse {
-  if (!isRecord(u)) return {};
-  const out: ChatResponse = {};
-
-  if (isMessage(u.reply)) out.reply = u.reply;
-  if (isAction(u.action)) out.action = u.action as Action;
-  if (isStringArray(u.bot_messages)) out.bot_messages = u.bot_messages;
-  if (isAnalysisArray(u.analysis_responses)) out.analysis_responses = u.analysis_responses;
-
-  return out;
+function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
 }
 
-export async function chatOnce(messages: Message[]): Promise<ChatResponse> {
-  console.log("chatOnce called, messages:", messages);
+function isAnalysisItem(value: unknown): value is AnalysisItem {
+  return (
+    isRecord(value) &&
+    (typeof value.id === "string" ||
+      typeof value.id === "number" ||
+      typeof value.id === "undefined") &&
+    (typeof value.text === "string" || typeof value.text === "undefined")
+  );
+}
 
-  let res: Response;
+function isAnalysisArray(value: unknown): value is AnalysisItem[] {
+  return Array.isArray(value) && value.every(isAnalysisItem);
+}
+
+function coerceChatResponse(value: unknown): ChatResponse {
+  if (!isRecord(value)) return {};
+  const response: ChatResponse = {};
+
+  if (isMessage(value.reply)) response.reply = value.reply;
+  if (isAction(value.action)) response.action = value.action;
+  if (isStringArray(value.bot_messages)) {
+    response.bot_messages = value.bot_messages;
+  }
+  if (isAnalysisArray(value.analysis_responses)) {
+    response.analysis_responses = value.analysis_responses;
+  }
+
+  return response;
+}
+
+function extractServerMessage(raw: unknown, status: number): string {
+  if (isRecord(raw) && typeof raw.detail === "string" && raw.detail.trim()) {
+    return raw.detail.slice(0, 320);
+  }
+  if (isRecord(raw) && typeof raw.message === "string" && raw.message.trim()) {
+    return raw.message.slice(0, 320);
+  }
+
+  if (status === 503) {
+    return "Chat service unavailable. Please try again shortly.";
+  }
+  return `Chat request failed (${status}).`;
+}
+
+async function requestChat(
+  messages: Message[],
+  signal?: AbortSignal,
+): Promise<ChatResponse> {
+  let response: Response;
 
   try {
-    // fetch request
-    res = await fetch(`${FULL_API_URL}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages }),
+    response = await fetchWithTimeout(
+      `${FULL_API_URL}/chat`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+        signal,
+      },
+      CHAT_REQUEST_TIMEOUT_MS,
+    );
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError")
+      throw error;
+    apiReady = false;
+    throw new ChatApiError("Cannot reach server — check your network", {
+      retryable: true,
     });
-  } catch (err) {
-    console.error("Network error in /chat:", err);
-    throw new Error("Cannot reach server — check your network ");
   }
 
-  console.log("/api/chat status:", res.status);
+  const rawText = await response.text();
+  let raw: unknown = null;
 
-  let raw: unknown;
-  try {
-    raw = await res.json();
-    console.log("/api/chat json:", raw);
-  } catch (e) {
-    console.error("Failed to parse /chat JSON", e);
-    throw new Error(`Failed to parse server response (status ${res.status})`);
+  if (rawText) {
+    try {
+      raw = JSON.parse(rawText) as unknown;
+    } catch {
+      if (!response.ok) {
+        const retryable = RETRYABLE_STATUS_CODES.has(response.status);
+        if (retryable) apiReady = false;
+        throw new ChatApiError(`Chat request failed (${response.status}).`, {
+          retryable,
+          status: response.status,
+        });
+      }
+      throw new ChatApiError("The chat service returned an invalid response.", {
+        status: response.status,
+      });
+    }
   }
 
-  if (!res.ok) {
-    let message = `Request failed with status ${res.status}`;
-
-    if (res.status === 503) {
-      message = "Chat service unavailable — check backend or network.";
-    }
-
-    if (isRecord(raw) && typeof raw.detail === "string") {
-      message = raw.detail;
-    } else if (typeof raw === "string") {
-      message = raw;
-    }
-
-    throw new Error(message);
+  if (!response.ok) {
+    const retryable = RETRYABLE_STATUS_CODES.has(response.status);
+    if (retryable) apiReady = false;
+    throw new ChatApiError(extractServerMessage(raw, response.status), {
+      retryable,
+      status: response.status,
+    });
   }
 
   const parsed = coerceChatResponse(raw);
-
   if (!parsed.reply && !parsed.bot_messages && !parsed.analysis_responses) {
-    const sample = isRecord(raw) ? JSON.stringify(raw) : String(raw);
-    throw new Error(`Unexpected response shape from /chat: ${sample}`);
+    throw new ChatApiError(
+      "The chat service returned an unsupported response.",
+    );
   }
 
   return parsed;
+}
+
+export async function chatOnce(
+  messages: Message[],
+  options: ChatRequestOptions = {},
+): Promise<ChatResponse> {
+  if (options.signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+
+  await ensureApiReady();
+
+  const maxAttempts = options.retryTransient ? 2 : 1;
+  let lastError: unknown = new Error("Chat request did not run");
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await requestChat(messages, options.signal);
+    } catch (error) {
+      lastError = error;
+      const canRetry =
+        attempt < maxAttempts &&
+        error instanceof ChatApiError &&
+        error.retryable &&
+        !options.signal?.aborted;
+
+      if (!canRetry) throw error;
+
+      await delay(CHAT_RETRY_DELAY_MS, options.signal);
+      await ensureApiReady();
+    }
+  }
+
+  throw lastError;
 }

@@ -1,10 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { HttpError } from "@/utils/http";
 import {
   buildLanceRowsUrl,
   fetchLanceTables,
   isAdminAccessError,
 } from "./lancedbAdmin";
-import { HttpError } from "@/utils/http";
+
+type FetchFunction = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -13,24 +18,35 @@ afterEach(() => {
 
 describe("LanceDB administrator API", () => {
   it("sends the private secret as a header and never as a query parameter", async () => {
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
-      new Response(JSON.stringify({ tables: [{ name: "tz-fabric-table" }] }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      }),
+    const fetchMock = vi.fn<FetchFunction>();
+
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          tables: [{ name: "tz-fabric-table" }],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        },
+      ),
     );
+
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(fetchLanceTables("private-secret")).resolves.toEqual({
       tables: [{ name: "tz-fabric-table" }],
     });
 
-    const [url, init] = fetchMock.mock.calls[0];
+    const [url, requestInit] = fetchMock.mock.calls[0];
+
     expect(String(url)).not.toContain("private-secret");
-    expect(new Headers(init?.headers).get("X-Internal-Secret")).toBe(
+    expect(new Headers(requestInit?.headers).get("X-Internal-Secret")).toBe(
       "private-secret",
     );
-    expect(init?.cache).toBe("no-store");
+    expect(requestInit?.cache).toBe("no-store");
   });
 
   it("builds a server-pagination URL with encoded table and exact tag filter", () => {
@@ -51,7 +67,10 @@ describe("LanceDB administrator API", () => {
   });
 
   it("maps network failures to a stable administrator message", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("raw"))));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Promise.reject(new TypeError("raw"))),
+    );
 
     await expect(fetchLanceTables("private-secret")).rejects.toThrow(
       "LanceDB could not be reached. Try refreshing.",

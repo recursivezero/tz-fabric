@@ -99,3 +99,319 @@
 .description-wrapper .copy-btn:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
+/* Analysis page result card fixes. */
+.analysis-page .description-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.analysis-page .description-wrapper .nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.analysis-page .description-wrapper .nav-btn {
+  min-width: 106px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(30, 41, 59, 0.82);
+  color: #f8fafc;
+  font-weight: 800;
+}
+
+.analysis-page .description-wrapper .nav-btn.disabled {
+  background: rgba(148, 163, 184, 0.22);
+  color: rgba(248, 250, 252, 0.66);
+}
+
+.analysis-page .description-wrapper .description-box {
+  flex: 1 1 auto;
+  min-height: clamp(260px, 42dvh, 440px);
+  height: auto;
+  max-height: none;
+  overflow: hidden;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.92),
+    rgba(15, 23, 42, 0.78)
+  );
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  color: #f8fafc;
+  line-height: 1.65;
+}
+
+.analysis-page .description-wrapper .description-content {
+  flex: 1 1 auto;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 10px;
+  color: #e5e7eb;
+  scrollbar-width: thin;
+}
+
+.analysis-page .description-wrapper .description-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.analysis-page
+  .description-wrapper
+  .description-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.34);
+}
+
+.analysis-page .description-wrapper .placeholder-title {
+  margin: 0 0 14px;
+  color: #f8fafc;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.analysis-page .description-wrapper .placeholder-body {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: clamp(16px, 1.8vw, 22px);
+  line-height: 1.55;
+}
+
+.analysis-page .description-wrapper .response-counter {
+  color: #cbd5e1;
+}
+
+.analysis-page .description-wrapper .copy-btn {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.55);
+  color: #f8fafc;
+}
+
+/* Match the result card height to the image preview without forcing the whole
+   column to stretch; this keeps both analysis tiles visually aligned. */
+.analysis-page .description-wrapper {
+  height: auto;
+  min-height: 0;
+}
+
+.analysis-page .description-wrapper .description-box {
+  flex: 0 0 auto;
+  height: clamp(260px, 42dvh, 440px);
+  min-height: clamp(260px, 42dvh, 440px);
+}
+
+/* Final repair: keep Analysis result card equal to image/drop card and place Prev/Next below it. */
+.analysis-page .description-wrapper {
+  height: auto ;
+  min-height: 0 ;
+  align-self: start ;
+}
+
+.analysis-page .description-wrapper .description-box {
+  order: 1 ;
+  box-sizing: border-box ;
+  flex: 0 0 auto ;
+  width: 100% ;
+  height: clamp(260px, 42dvh, 440px) ;
+  min-height: clamp(260px, 42dvh, 440px) ;
+  max-height: clamp(260px, 42dvh, 440px) ;
+}
+
+.analysis-page .description-wrapper .nav-buttons {
+  order: 2 ;
+  margin: 16px 0 0 ;
+  flex: 0 0 auto ;
+}
+
+/* Final theme polish: Prev/Next use dark text on yellow in dark theme and
+   white text on yellow in light theme, matching the Analysis action buttons. */
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-btn {
+  color: #171101 ;
+  text-shadow: none ;
+}
+
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-btn {
+  color: #ffffff ;
+}
+
+/* Keep the Analysis card clean: show only the copy icon, not "Viewing response X of Y". */
+.analysis-page .description-wrapper .response-copy-only {
+  justify-content: flex-end ;
+}
+
+.analysis-page .description-wrapper .response-copy-only .copy-btn {
+  margin-left: auto ;
+}
+
+/* Keep the Analysis response copy icon visible in light theme. */
+:root[data-theme="light"] .analysis-page .description-wrapper .copy-btn {
+  background: rgba(15, 23, 42, 0.08) ;
+  border-color: rgba(15, 23, 42, 0.22) ;
+  color: #0f172a ;
+}
+
+:root[data-theme="light"] .analysis-page .description-wrapper .copy-btn svg {
+  color: #0f172a ;
+  fill: currentColor ;
+}
+/* Top-up fix: the Analysis result card stays dark even when the app is in
+   light theme, so keep the copy action high-contrast instead of inheriting
+   the light-theme dark icon color. */
+.analysis-page .description-wrapper .response-copy-only .copy-btn,
+:root[data-theme="light"]
+  .analysis-page
+  .description-wrapper
+  .response-copy-only
+  .copy-btn {
+  min-width: 38px ;
+  min-height: 34px ;
+  display: inline-flex ;
+  align-items: center ;
+  justify-content: center ;
+  background: rgba(15, 23, 42, 0.88) ;
+  border: 1px solid rgba(255, 255, 255, 0.42) ;
+  color: #ffffff ;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.28) ;
+  opacity: 1 ;
+  visibility: visible ;
+}
+
+.analysis-page .description-wrapper .response-copy-only .copy-btn svg,
+:root[data-theme="light"]
+  .analysis-page
+  .description-wrapper
+  .response-copy-only
+  .copy-btn
+  svg {
+  width: 18px ;
+  height: 18px ;
+  color: #ffffff ;
+  fill: currentColor ;
+  stroke: currentColor ;
+  opacity: 1 ;
+  visibility: visible ;
+}
+
+/* QA follow-up: Prev/Next should visually share the same row level as Short/Long. */
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 18px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transform: translateY(2px);
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn {
+  min-height: 44px;
+  min-width: 132px;
+  border-radius: 999px;
+  border: 1px solid var(--tz-turmeric, #e0a82e);
+  background: linear-gradient(135deg, var(--tz-turmeric, #e0a82e), var(--tz-turmeric-soft, #f59e0b));
+  color: #ffffff;
+  font-weight: 850;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.24);
+}
+
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-buttons .nav-btn {
+  color: #171101;
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn.disabled,
+.analysis-page .description-wrapper .nav-buttons .nav-btn:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Senior QA final: Prev/Next match Analysis buttons and sit on the same visual segment. */
+.analysis-page .description-wrapper .nav-buttons {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+  transform: translateY(2px);
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn {
+  min-height: 44px;
+  min-width: 142px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--tz-action-yellow, #e0a82e);
+  background: linear-gradient(135deg, var(--tz-action-yellow, #e0a82e), var(--tz-action-yellow-hover, #f0c463));
+  color: var(--tz-action-yellow-text, #171101);
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.24);
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn:not(:disabled):not(.disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(224, 168, 46, 0.30);
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn.disabled,
+.analysis-page .description-wrapper .nav-buttons .nav-btn:disabled {
+  opacity: 0.68;
+  color: rgba(23, 17, 1, 0.72);
+  box-shadow: none;
+}
+
+/* Senior QA top-up: Prev/Next disabled state remains intentional and aligned. */
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 18px;
+  min-height: 46px;
+}
+
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-buttons .nav-btn,
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-buttons .nav-btn {
+  color: #171101;
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn.disabled,
+.analysis-page .description-wrapper .nav-buttons .nav-btn:disabled {
+  background: linear-gradient(135deg, rgba(224, 168, 46, 0.58), rgba(240, 196, 99, 0.58));
+  border-color: rgba(224, 168, 46, 0.66);
+  color: rgba(23, 17, 1, 0.72);
+}
+
+
+/* Strict senior QA follow-up: keep Prev/Next visually synced with Short/Long. */
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 18px;
+  min-height: 46px;
+  align-items: center;
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn,
+.analysis-page .description-wrapper .nav-buttons .nav-btn.disabled,
+.analysis-page .description-wrapper .nav-buttons .nav-btn:disabled {
+  min-height: 44px;
+  min-width: 142px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+/* Analysis-page layout: navigation belongs above the analysis result card.
+   These direct-child rules intentionally override the legacy below-card order
+   without affecting DescriptionBox in any other page or context. */
+.analysis-page .description-wrapper > .nav-buttons {
+  order: 1;
+  margin: 0 0 18px;
+  transform: none;
+}
+
+.analysis-page .description-wrapper > .description-box {
+  order: 2;
+}

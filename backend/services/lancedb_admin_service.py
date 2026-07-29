@@ -350,16 +350,18 @@ class LanceDBAdminService:
         return sort_by, sort_order
 
     @staticmethod
-    def _apply_ordering(query: Any, sort_by: str, sort_order: SortOrder) -> Any:
+    def _apply_ordering(
+        query: Any,
+        sort_by: str,
+        sort_order: SortOrder,
+    ) -> Any:
         """Apply LanceDB's native scalar ordering contract."""
 
-        from lancedb.query import ColumnOrdering
-
-        ordering = ColumnOrdering(
-            column_name=sort_by,
-            ascending=sort_order == "asc",
-            nulls_first=False,
-        )
+        ordering = {
+            "column_name": sort_by,
+            "ascending": sort_order == "asc",
+            "nulls_first": False,
+        }
         return query.order_by([ordering])
 
     @classmethod

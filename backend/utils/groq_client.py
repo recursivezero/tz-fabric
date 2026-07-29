@@ -35,7 +35,7 @@ def groq_vision_check(image_base64: str, prompt: str) -> str:
                     ],
                 }
             ],
-            max_tokens=512,
+            max_tokens=120,
         )
 
         # Safe extraction
