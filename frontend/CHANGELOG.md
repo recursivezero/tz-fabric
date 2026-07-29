@@ -37,4 +37,9 @@ All notable changes to this repository will be documented in this file.
 - Fabric Search UI updated with category filter
 - Added Google Analytics
 
+## [1.6.0] Thu, July 29, 2026
+
+- Added Dark theme
+- Mobile viewport compatible
+
 [Unreleased]

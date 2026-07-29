@@ -32,4 +32,8 @@ All notable changes to this repository will be documented in this file.
 
 - Added Fabric Search with filter
 
+## [1.6.0] Thu, July 30, 2026
+
+- Added Dark Theme
+
 [Unreleased]
