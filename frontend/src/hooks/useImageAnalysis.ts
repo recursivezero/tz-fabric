@@ -6,8 +6,20 @@ import {
   validateImageAPI,
 } from "../services/analyze_api.ts";
 import { fetchImageAsFile } from "../utils/image-helper.ts";
+import { logger } from "../utils/logger";
+import {
+  ANALYSIS_RESPONSE_COUNT,
+  toBackendResponseIndex,
+} from "../utils/analysisResponseIndex";
 
 type Mode = "short" | "long";
+
+const MOBILE_DRAWER_QUERY = "(max-width: 980px)";
+
+const getInitialDrawerState = (): boolean =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  !window.matchMedia(MOBILE_DRAWER_QUERY).matches;
 
 const extractFilename = (path: string, fallback = "fabric.jpg"): string => {
   const base = path.split(/[?#]/)[0]; // strip query/hash
@@ -27,7 +39,7 @@ const useImageAnalysis = () => {
   const [showUploadedImage, setShowUploadedImage] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [sampleImageUrl, setSampleImageUrl] = useState<string | null>(null);
-  const [showDrawer, setShowDrawer] = useState(true);
+  const [showDrawer, setShowDrawer] = useState(getInitialDrawerState);
   const [typedText, setTypedText] = useState("");
   const [isValidImage, setIsValidImage] = useState<boolean | null>(null);
   const [validationLoading, setValidationLoading] = useState(false);
@@ -40,6 +52,26 @@ const useImageAnalysis = () => {
   const location = useLocation();
   const latestRunIdRef = useRef(0);
   const objectUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const mobileQuery = window.matchMedia(MOBILE_DRAWER_QUERY);
+    const closeDrawerOnMobile = (event: MediaQueryListEvent | MediaQueryList) => {
+      if (event.matches) setShowDrawer(false);
+    };
+
+    closeDrawerOnMobile(mobileQuery);
+
+    if (typeof mobileQuery.addEventListener === "function") {
+      mobileQuery.addEventListener("change", closeDrawerOnMobile);
+      return () =>
+        mobileQuery.removeEventListener("change", closeDrawerOnMobile);
+    }
+
+    mobileQuery.addListener(closeDrawerOnMobile);
+    return () => mobileQuery.removeListener(closeDrawerOnMobile);
+  }, []);
 
   const createTrackedObjectUrl = useCallback((file: File) => {
     const url = URL.createObjectURL(file);
@@ -100,7 +132,7 @@ const useImageAnalysis = () => {
         const firstObject = response.response;
         const first = (firstObject?.response as string) ?? "";
 
-        const allResponses = Array<string>(6).fill("");
+        const allResponses = Array<string>(ANALYSIS_RESPONSE_COUNT).fill("");
         allResponses[0] = first;
 
         setResponses(allResponses);
@@ -109,7 +141,7 @@ const useImageAnalysis = () => {
         setCacheKey((response as { cache_key?: string })?.cache_key ?? null);
       } catch (err) {
         if (runId !== latestRunIdRef.current) return;
-        console.error(`${mode} analysis failed:`, err);
+        logger.error(`${mode} analysis failed`, err);
         const message =
           err instanceof Error ? err.message : `${mode} analysis failed.`;
         setValidationMessage(message || `${mode} analysis failed.`);
@@ -140,7 +172,7 @@ const useImageAnalysis = () => {
           setUploadedImageUrl(imageUrl);
           await handleRunAnalysis(file, modeParam);
         } catch (err) {
-          console.error("Failed to auto-run analysis from query params:", err);
+          logger.error("Failed to auto-run analysis from query parameters", err);
         }
       })();
     }
@@ -198,7 +230,7 @@ const useImageAnalysis = () => {
       const firstObject = response.response;
       const first = (firstObject?.response as string) ?? "";
 
-      const allResponses = Array<string>(6).fill("");
+      const allResponses = Array<string>(ANALYSIS_RESPONSE_COUNT).fill("");
       allResponses[0] = first;
 
       setResponses(allResponses);
@@ -213,7 +245,7 @@ const useImageAnalysis = () => {
       replaceUploadedImageUrl(objUrl);
       replaceSampleImageUrl(objUrl);
     } catch (err) {
-      console.error("Short analysis failed:", err);
+      logger.error("Short analysis failed", err);
       setCanUpload(true);
       setAnalysisPopupMessage("Upload a valid fabric image.");
     } finally {
@@ -246,8 +278,8 @@ const useImageAnalysis = () => {
           );
         }
       } catch (error: unknown) {
-        console.warn(
-          "Image validation failed; allowing analysis to continue.",
+        logger.warn(
+          "Image validation failed; allowing analysis to continue",
           error,
         );
         // Validation is only a guardrail. Do not block real fabric/product images
@@ -300,7 +332,9 @@ const useImageAnalysis = () => {
   const handleNext = async () => {
     const newIndex = currentIndex + 1;
 
-    // Use cached response if available
+    if (newIndex >= ANALYSIS_RESPONSE_COUNT) return;
+
+    // Use cached response if available.
     if (responses[newIndex]) {
       setCurrentIndex(newIndex);
       setDescription(responses[newIndex]);
@@ -312,30 +346,44 @@ const useImageAnalysis = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      const res = await regenerateResponse(cacheKey, String(newIndex));
-      const nextText = (res?.response as string) ?? "";
+      // The API stores variants as 1..6 while the UI array is 0..5. The old
+      // code sent the zero-based UI index, duplicated response 1, and never
+      // requested backend variation 6.
+      const backendIndex = String(toBackendResponseIndex(newIndex));
+      let res = await regenerateResponse(cacheKey, backendIndex);
+      let nextText = (res?.response as string) ?? "";
+
+      // A background variant can finish just after the server's first wait
+      // window. Retry one time so the final response does not fail at 6/6.
+      if (!nextText) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 500));
+        res = await regenerateResponse(cacheKey, backendIndex);
+        nextText = (res?.response as string) ?? "";
+      }
+
       if (nextText) {
-        const updated = [...responses];
-        // Ensure array is long enough
-        if (updated.length <= newIndex) {
-          updated.length = newIndex + 1;
-          for (let i = 0; i < updated.length; i++) {
-            if (typeof updated[i] !== "string") updated[i] = "";
-          }
-        }
+        const updated = Array.from(
+          { length: ANALYSIS_RESPONSE_COUNT },
+          (_, index) => responses[index] ?? "",
+        );
         updated[newIndex] = nextText;
         setResponses(updated);
         setCurrentIndex(newIndex);
         setDescription(nextText);
       } else {
-        setAnalysisPopupMessage("No more responses available.");
+        setAnalysisPopupMessage(
+          "This response is still being prepared. Please select Next again.",
+        );
       }
     } catch (err) {
-      console.error("Next response fetch failed:", err);
+      logger.error("Next response fetch failed", err);
       setAnalysisPopupMessage(
-        "Unable to generate another response. Please try after some time.",
+        "Unable to generate another response. Please try again.",
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -369,15 +417,16 @@ const useImageAnalysis = () => {
   };
 
   useEffect(() => {
+    const trackedUrls = objectUrlsRef.current;
     return () => {
-      for (const url of objectUrlsRef.current) {
+      for (const url of trackedUrls) {
         try {
           URL.revokeObjectURL(url);
         } catch {
           // Ignore stale preview URLs during teardown.
         }
       }
-      objectUrlsRef.current.clear();
+      trackedUrls.clear();
     };
   }, []);
 

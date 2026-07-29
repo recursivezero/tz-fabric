@@ -299,3 +299,119 @@
   opacity: 1 ;
   visibility: visible ;
 }
+
+/* QA follow-up: Prev/Next should visually share the same row level as Short/Long. */
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 18px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transform: translateY(2px);
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn {
+  min-height: 44px;
+  min-width: 132px;
+  border-radius: 999px;
+  border: 1px solid var(--tz-turmeric, #e0a82e);
+  background: linear-gradient(135deg, var(--tz-turmeric, #e0a82e), var(--tz-turmeric-soft, #f59e0b));
+  color: #ffffff;
+  font-weight: 850;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.24);
+}
+
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-buttons .nav-btn {
+  color: #171101;
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn.disabled,
+.analysis-page .description-wrapper .nav-buttons .nav-btn:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Senior QA final: Prev/Next match Analysis buttons and sit on the same visual segment. */
+.analysis-page .description-wrapper .nav-buttons {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+  transform: translateY(2px);
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn {
+  min-height: 44px;
+  min-width: 142px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--tz-action-yellow, #e0a82e);
+  background: linear-gradient(135deg, var(--tz-action-yellow, #e0a82e), var(--tz-action-yellow-hover, #f0c463));
+  color: var(--tz-action-yellow-text, #171101);
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.24);
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn:not(:disabled):not(.disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(224, 168, 46, 0.30);
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn.disabled,
+.analysis-page .description-wrapper .nav-buttons .nav-btn:disabled {
+  opacity: 0.68;
+  color: rgba(23, 17, 1, 0.72);
+  box-shadow: none;
+}
+
+/* Senior QA top-up: Prev/Next disabled state remains intentional and aligned. */
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 18px;
+  min-height: 46px;
+}
+
+:root[data-theme="light"] .analysis-page .description-wrapper .nav-buttons .nav-btn,
+:root[data-theme="dark"] .analysis-page .description-wrapper .nav-buttons .nav-btn {
+  color: #171101;
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn.disabled,
+.analysis-page .description-wrapper .nav-buttons .nav-btn:disabled {
+  background: linear-gradient(135deg, rgba(224, 168, 46, 0.58), rgba(240, 196, 99, 0.58));
+  border-color: rgba(224, 168, 46, 0.66);
+  color: rgba(23, 17, 1, 0.72);
+}
+
+
+/* Strict senior QA follow-up: keep Prev/Next visually synced with Short/Long. */
+.analysis-page .description-wrapper .nav-buttons {
+  margin-top: 18px;
+  min-height: 46px;
+  align-items: center;
+}
+
+.analysis-page .description-wrapper .nav-buttons .nav-btn,
+.analysis-page .description-wrapper .nav-buttons .nav-btn.disabled,
+.analysis-page .description-wrapper .nav-buttons .nav-btn:disabled {
+  min-height: 44px;
+  min-width: 142px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+/* Analysis-page layout: navigation belongs above the analysis result card.
+   These direct-child rules intentionally override the legacy below-card order
+   without affecting DescriptionBox in any other page or context. */
+.analysis-page .description-wrapper > .nav-buttons {
+  order: 1;
+  margin: 0 0 18px;
+  transform: none;
+}
+
+.analysis-page .description-wrapper > .description-box {
+  order: 2;
+}

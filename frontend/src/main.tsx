@@ -3,28 +3,30 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
-import { usePageTracking } from "./hooks/usePageTracking";
+import { logger } from "@/utils/logger";
 import "./index.css";
 import "@/assets/styles/_makeover.css";
+import "@/assets/styles/SeniorUiFixes.css";
+import "@/assets/styles/ReaderAnalysisContrastFixes.css";
+import "@/assets/styles/AnalysisUploadButtonParity.css";
+import "@/assets/styles/AnalysisHeaderVisibilityParity.css";
+import "@/assets/styles/HomeViewportNavigationFix.css";
+import "@/assets/styles/CrossRouteLayoutCompletion.css";
+import "@/assets/styles/MobileViewportStability.css";
 
 const rootElement = document.getElementById("root");
 
-// eslint-disable-next-line react-refresh/only-export-components
-const TrackingProvider = ({ children }: { children: React.ReactNode }) => {
-  usePageTracking(); // This tracks every route change automatically
-  return <>{children}</>;
-};
-
 if (rootElement) {
+  document.documentElement.dataset.appBooted = "true";
+  document.getElementById("app-boot-fallback")?.setAttribute("hidden", "");
+
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <BrowserRouter>
-        <TrackingProvider>
-          <App />
-        </TrackingProvider>
+        <App />
       </BrowserRouter>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 } else {
-  console.error("Root element not found");
+  logger.error("Root element not found");
 }

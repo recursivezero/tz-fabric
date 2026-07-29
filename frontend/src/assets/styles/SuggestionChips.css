@@ -82,3 +82,57 @@
   color: #f8fafc ;
   background: rgba(30, 41, 59, 0.96) ;
 }
+
+/* Senior QA top-up: desktop prompt chips must stay aligned and readable at 100-125% zoom. */
+.page-root.is-empty .empty-state-large .sample-prompts,
+.page-root.is-empty .prompt-buttons,
+.page-root.is-empty .quick-question-row,
+.page-root.is-empty .empty-state-actions {
+  width: min(1120px, calc(100vw - 56px));
+  margin-inline: auto;
+}
+
+.page-root.is-empty .empty-state-large .chip,
+.page-root.is-empty .sample-prompts .chip,
+.page-root.is-empty .prompt-buttons button,
+.page-root.is-empty .quick-question-row button {
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+
+@media (min-width: 980px) {
+  .page-root.is-empty .empty-state-large .sample-prompts,
+  .page-root.is-empty .prompt-buttons,
+  .page-root.is-empty .quick-question-row,
+  .page-root.is-empty .empty-state-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .page-root.is-empty .empty-state-large .chip,
+  .page-root.is-empty .sample-prompts .chip,
+  .page-root.is-empty .prompt-buttons button,
+  .page-root.is-empty .quick-question-row button {
+    width: 100%;
+    max-width: none;
+    padding-inline: 14px;
+    font-size: clamp(13px, 0.95vw, 16px);
+  }
+}
+
+@media (max-width: 979px) {
+  .page-root.is-empty .empty-state-large .sample-prompts,
+  .page-root.is-empty .prompt-buttons,
+  .page-root.is-empty .quick-question-row,
+  .page-root.is-empty .empty-state-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+}

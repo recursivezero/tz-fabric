@@ -1,0 +1,99 @@
+/*
+ * Narrow visual corrections loaded after SeniorUiFixes.css.
+ * No reader, OCR, crop, validation, API, or download behaviour is changed.
+ */
+
+/* PAN and Aadhaar result actions use the same filled accent treatment as the
+   rest of the application. The shared accent tokens intentionally provide a
+   darker amber surface with white text in light mode and a brighter turmeric
+   surface with dark text in dark mode. */
+.reader-result-action-button {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, var(--tz-turmeric)),
+    var(--tz-accent-control-surface-hover, var(--tz-turmeric-soft))
+  ) !important;
+  border-color: var(
+    --tz-accent-control-surface,
+    var(--tz-turmeric)
+  ) !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="light"] .reader-result-action-button {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .reader-result-action-button {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.reader-result-action-button:hover {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface-hover, var(--tz-turmeric-soft)),
+    var(--tz-accent-control-surface, var(--tz-turmeric))
+  ) !important;
+  border-color: var(
+    --tz-accent-control-surface-hover,
+    var(--tz-turmeric-soft)
+  ) !important;
+}
+
+.reader-result-action-button svg {
+  color: currentColor !important;
+  fill: none !important;
+  stroke: currentColor !important;
+}
+
+/* Analysis-only accent correction. SeniorUiFixes intentionally uses a darker
+   light-theme amber globally; the Analysis workspace should match the lighter
+   turmeric treatment already used by the rest of the site. */
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  :is(
+    .header-nav a.active,
+    .analysis-page .preview-buttons-container .analysis-btn,
+    .analysis-page .description-wrapper .nav-buttons .nav-btn
+  ) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-turmeric),
+    var(--tz-turmeric-soft)
+  ) !important;
+  border-color: var(--tz-turmeric) !important;
+  color: #171101 !important;
+  -webkit-text-fill-color: #171101 !important;
+  text-shadow: none !important;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  :is(
+    .analysis-page .preview-buttons-container .analysis-btn,
+    .analysis-page .description-wrapper .nav-buttons .nav-btn
+  )
+  svg {
+  color: currentColor !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme="light"]
+  .app-wrapper--analysis
+  :is(
+    .header-nav a.active,
+    .analysis-page .preview-buttons-container .analysis-btn,
+    .analysis-page .description-wrapper .nav-buttons .nav-btn
+  ):hover:not(:disabled):not(.disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-turmeric-soft),
+    var(--tz-turmeric)
+  ) !important;
+  border-color: var(--tz-turmeric-soft) !important;
+  color: #171101 !important;
+  -webkit-text-fill-color: #171101 !important;
+}

@@ -1,22 +1,52 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, type ComponentType } from "react";
 import Home from "./pages/Home";
-import { Route, Routes } from "react-router-dom";
-import { usePageTracking } from "./hooks/usePageTracking";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-const ImageDescription = lazy(() => import("./pages/ImageDescriptor"));
-const UploadPage = lazy(() => import("./pages/AudioForm"));
-const ContentGrid = lazy(() => import("./pages/FabricList"));
-const Search = lazy(() => import("./pages/FabricSearch"));
-const Chat = lazy(() => import("./pages/FabricChat"));
-const ComingSoon = lazy(() => import("./pages/ComingSoon"));
-const ContactUs = lazy(() =>
+type RouteModule = { default: ComponentType };
+type RouteLoader = () => Promise<RouteModule>;
+
+const ROUTE_IMPORT_RETRY_DELAY_MS = 250;
+
+/**
+ * Retry one transient route-module fetch before handing the error to the route
+ * boundary. This keeps a temporary dev-server or network interruption from
+ * immediately replacing the page with the fatal fallback.
+ */
+const loadRouteWithRetry = async (loader: RouteLoader): Promise<RouteModule> => {
+  try {
+    return await loader();
+  } catch (firstError) {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, ROUTE_IMPORT_RETRY_DELAY_MS);
+    });
+
+    try {
+      return await loader();
+    } catch {
+      throw firstError;
+    }
+  }
+};
+
+const lazyRoute = (loader: RouteLoader) =>
+  lazy(() => loadRouteWithRetry(loader));
+
+const ImageDescription = lazyRoute(() => import("./pages/ImageDescriptor"));
+const UploadPage = lazyRoute(() => import("./pages/AudioForm"));
+const ContentGrid = lazyRoute(() => import("./pages/FabricList"));
+const Search = lazyRoute(() => import("./pages/FabricSearch"));
+const Chat = lazyRoute(() => import("./pages/FabricChat"));
+const ComingSoon = lazyRoute(() => import("./pages/ComingSoon"));
+const ContactUs = lazyRoute(() =>
   import("./pages/Contact").then((module) => ({ default: module.ContactUs })),
 );
-const Reader = lazy(() => import("./pages/Reader"));
-const CardReader = lazy(() => import("./pages/PanCardReader"));
-const AadhaarCardReader = lazy(() => import("./pages/AadhaarCardReader"));
-const NotFound = lazy(() =>
-  import("./components/NotFound").then((module) => ({ default: module.NotFound })),
+const Reader = lazyRoute(() => import("./pages/Reader"));
+const CardReader = lazyRoute(() => import("./pages/PanCardReader"));
+const AadhaarCardReader = lazyRoute(() => import("./pages/AadhaarCardReader"));
+const NotFound = lazyRoute(() =>
+  import("./components/NotFound").then((module) => ({
+    default: module.NotFound,
+  })),
 );
 
 const RouteFallback = () => (
@@ -26,7 +56,6 @@ const RouteFallback = () => (
 );
 
 export const Routing = () => {
-  usePageTracking();
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
@@ -45,7 +74,11 @@ export const Routing = () => {
         <Route path="*" element={<NotFound />} />
         <Route path="/reader" element={<Reader />} />
         <Route path="/reader/pan" element={<CardReader />} />
-        <Route path="/reader/adhaar" element={<AadhaarCardReader />} />
+        <Route path="/reader/aadhaar" element={<AadhaarCardReader />} />
+        <Route
+          path="/reader/adhaar"
+          element={<Navigate to="/reader/aadhaar" replace />}
+        />
       </Routes>
     </Suspense>
   );

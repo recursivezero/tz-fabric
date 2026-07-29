@@ -149,6 +149,14 @@ figcaption {
   color: #ff0000;
 }
 
+/* Error text must remain white on the shared red failure surface. */
+.grid-page .grid-error,
+.grid-page .grid-error * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+}
+
 .lb-backdrop {
   position: fixed;
   inset: 0;
@@ -384,4 +392,561 @@ figcaption {
     max-width: calc(100% - 24px);
     bottom: 58px;
   }
+}
+
+/* Senior QA patch: Fabric List contrast fixes without !important.
+   Keep pagination, totals, card meta, and audio labels readable in both themes. */
+.grid-page .grid-header,
+.grid-page .grid-controls.inline,
+.grid-page .media-card,
+.grid-page .audio-box {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.grid-page .grid-title-text,
+.grid-page .grid-count-inline,
+.grid-page .grid-controls.inline .grid-page {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .grid-count-inline {
+  font-weight: 850;
+}
+
+.grid-page .grid-controls.inline .grid-page {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  border-radius: 8px;
+  background: var(--tz-ui-surface-raised, rgba(30, 41, 59, 0.96));
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.grid-page .grid-controls.inline button {
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.94));
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+.grid-page .grid-controls.inline button:hover:not(:disabled) {
+  background: var(--tz-ui-control-hover-bg, rgba(51, 65, 85, 0.98));
+}
+
+.grid-page .audio-box {
+  background: var(--tz-ui-surface-raised, rgba(30, 41, 59, 0.96));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+}
+
+.grid-page .audio-label {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .media-meta,
+.grid-page .media-meta time,
+.grid-page .grid-page-subtitle {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+}
+
+:root[data-theme="light"] .grid-page .grid-title-text,
+:root[data-theme="light"] .grid-page .grid-count-inline,
+:root[data-theme="light"] .grid-page .grid-controls.inline .grid-page,
+:root[data-theme="light"] .grid-page .audio-label {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .grid-page .audio-box,
+:root[data-theme="light"] .grid-page .grid-controls.inline .grid-page {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="light"] .grid-page .media-meta,
+:root[data-theme="light"] .grid-page .media-meta time,
+:root[data-theme="light"] .grid-page .grid-page-subtitle {
+  color: #475569;
+}
+
+/* Senior QA: Fabric List contrast fixes without forced-priority rules.
+   Keep pagination, totals, card meta, and audio labels readable in both themes. */
+.grid-page .grid-header,
+.grid-page .grid-controls.inline,
+.grid-page .media-card,
+.grid-page .audio-box {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+}
+
+.grid-page .grid-title-text,
+.grid-page .grid-count-inline,
+.grid-page .grid-controls.inline .grid-page-indicator {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .grid-count-inline {
+  font-weight: 850;
+}
+
+.grid-page .grid-controls.inline .grid-page-indicator {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  border-radius: 8px;
+  background: var(--tz-ui-surface-raised, rgba(30, 41, 59, 0.96));
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.grid-page .grid-controls.inline button {
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  background: var(--tz-ui-control-bg, rgba(30, 41, 59, 0.94));
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+.grid-page .grid-controls.inline button:hover:not(:disabled) {
+  background: var(--tz-ui-control-hover-bg, rgba(51, 65, 85, 0.98));
+}
+
+.grid-page .audio-box {
+  background: var(--tz-ui-surface-raised, rgba(30, 41, 59, 0.96));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+}
+
+.grid-page .audio-label {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .media-meta,
+.grid-page .media-meta time,
+.grid-page .grid-page-subtitle {
+  color: var(--tz-ui-text-muted, #cbd5e1);
+  opacity: 1;
+}
+
+:root[data-theme="light"] .grid-page .grid-title-text,
+:root[data-theme="light"] .grid-page .grid-count-inline,
+:root[data-theme="light"] .grid-page .grid-controls.inline .grid-page-indicator,
+:root[data-theme="light"] .grid-page .audio-label {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .grid-page .audio-box,
+:root[data-theme="light"] .grid-page .grid-controls.inline .grid-page-indicator {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+:root[data-theme="light"] .grid-page .media-meta,
+:root[data-theme="light"] .grid-page .media-meta time,
+:root[data-theme="light"] .grid-page .grid-page-subtitle {
+  color: #475569;
+}
+
+/* Senior visual-system pass: list page readable metadata, intentional disabled state, consistent card rhythm. */
+.grid-page {
+  color: var(--tz-ui-text, var(--tz-cotton, #f8fafc));
+  min-height: calc(100dvh - 68px);
+  padding-block: clamp(18px, 3vh, 32px) 48px;
+}
+
+.grid-page .grid-header {
+  align-items: center;
+  margin: 24px 0 18px;
+}
+
+.grid-page .grid-title-text,
+.grid-page .grid-count-inline,
+.grid-page .grid-controls.inline .grid-page-indicator {
+  color: var(--tz-ui-text, #f8fafc);
+}
+
+.grid-page .grid-controls.inline button:disabled {
+  opacity: 1;
+  color: var(--tz-ui-text-faint, #94a3b8);
+  background: var(--tz-ui-surface-subtle, rgba(30, 41, 59, 0.58));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.2));
+  cursor: not-allowed;
+}
+
+.grid-page .media-grid {
+  align-items: stretch;
+}
+
+.grid-page .media-card {
+  background: var(--tz-ui-surface-raised, rgba(23, 31, 51, 0.96));
+  border-color: var(--tz-ui-border, rgba(226, 232, 240, 0.22));
+  box-shadow: var(--tz-ui-shadow-panel, 0 18px 48px rgba(0, 0, 0, 0.22));
+}
+
+.grid-page .media-thumb img {
+  height: 250px;
+  object-fit: cover;
+}
+
+.grid-page .media-name {
+  min-height: 34px;
+  padding: 8px 12px;
+  color: var(--tz-ui-text, #f8fafc);
+  background: rgba(15, 23, 42, 0.72);
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.grid-page .media-meta {
+  border-top-color: var(--tz-ui-border, rgba(226, 232, 240, 0.22));
+  color: var(--tz-ui-text-muted, #cbd5e1);
+}
+
+.grid-page .audio-label {
+  color: var(--tz-ui-text, #f8fafc);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+:root[data-theme="light"] .grid-page .media-card,
+:root[data-theme="light"] .grid-page .audio-box {
+  background: var(--tz-ui-surface-raised, #ffffff);
+  border-color: var(--tz-ui-border, rgba(15, 23, 42, 0.14));
+}
+
+:root[data-theme="light"] .grid-page .media-name {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+:root[data-theme="light"] .grid-page .grid-controls.inline button:disabled {
+  color: #64748b;
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+/* Senior QA final: Fabric List card rhythm, filename readability, and zoom toolbar polish. */
+.grid-page {
+  max-width: min(1180px, calc(100vw - 32px));
+  padding-bottom: clamp(52px, 8vh, 86px);
+}
+
+.grid-page .grid-header {
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.grid-page .grid-left {
+  min-width: 0;
+}
+
+.grid-page .grid-title-text,
+.grid-page .grid-count-inline,
+.grid-page .grid-controls.inline .grid-page-indicator,
+.grid-page .audio-label,
+.grid-page .media-meta,
+.grid-page .media-meta time {
+  opacity: 1;
+  text-shadow: none;
+}
+
+.grid-page .grid-controls.inline button,
+.grid-page .grid-controls.inline .grid-page-indicator {
+  min-height: 40px;
+  border-radius: 999px;
+  font-weight: 850;
+}
+
+.grid-page .grid-controls.inline button:not(:disabled) {
+  background: linear-gradient(135deg, var(--tz-action-yellow, #e0a82e), var(--tz-action-yellow-hover, #f0c463));
+  border-color: var(--tz-action-yellow, #e0a82e);
+  color: var(--tz-action-yellow-text, #171101);
+}
+
+.grid-page .grid-controls.inline button:disabled {
+  opacity: 0.74;
+}
+
+.grid-page .media-grid {
+  gap: 20px;
+}
+
+.grid-page .media-card {
+  min-height: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.grid-page .media-thumb {
+  width: 100%;
+  max-width: none;
+}
+
+.grid-page .media-name {
+  min-height: 44px;
+  padding: 10px 14px;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+}
+
+.grid-page .zoom-icon {
+  top: 12px;
+  right: 12px;
+  bottom: auto;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+}
+
+.grid-page .audio-box {
+  padding: 10px 12px;
+  gap: 8px;
+}
+
+.grid-page .lb-stage {
+  width: min(94vw, 1180px);
+  height: min(86dvh, 820px);
+  border-radius: 22px;
+  padding: clamp(12px, 2vw, 22px);
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.22);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+}
+
+.grid-page .lb-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transform-origin: center center;
+}
+
+.grid-page .lb-controls {
+  left: 50%;
+  right: auto;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.22);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(12px);
+}
+
+.grid-page .lb-controls button {
+  min-width: 42px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.26);
+  background: rgba(30, 41, 59, 0.92);
+  color: #f8fafc;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.grid-page .lb-controls button:hover:not(:disabled) {
+  background: rgba(51, 65, 85, 0.98);
+  transform: translateY(-1px);
+}
+
+.grid-page .lb-controls button:disabled {
+  opacity: 0.46;
+}
+
+.grid-page .lb-controls .lb-close {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #ffffff;
+  border-color: rgba(248, 113, 113, 0.72);
+}
+
+.grid-page .lb-caption {
+  left: 18px;
+  bottom: 18px;
+  max-width: min(420px, calc(100% - 44px));
+  font-size: 14px;
+  font-weight: 850;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.80);
+  border: 1px solid rgba(226, 232, 240, 0.18);
+}
+
+@media (max-width: 720px) {
+  .grid-page .grid-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grid-page .grid-controls.inline {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .grid-page .lb-controls {
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+    overflow-x: auto;
+  }
+
+  .grid-page .lb-caption {
+    display: none;
+  }
+}
+
+/* Senior QA top-up: List captions must show a clean user-facing filename, not generated storage suffixes. */
+.grid-page .media-name {
+  min-height: 46px;
+  padding-inline: 12px;
+  font-size: clamp(14px, 1.05vw, 17px);
+  line-height: 1.18;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: none;
+}
+
+.grid-page .media-card {
+  background: var(--tz-ui-surface-raised, rgba(15, 23, 42, 0.94));
+}
+
+:root[data-theme="light"] .grid-page .media-name {
+  color: #0f172a;
+}
+
+:root[data-theme="dark"] .grid-page .media-name {
+  color: #f8fafc;
+}
+
+@media (min-width: 1080px) {
+  .grid-page .media-grid {
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
+  }
+}
+
+
+/* Strict senior QA follow-up: clean List titles and prevent awkward generated-name wrapping. */
+.grid-page .media-name {
+  min-height: 42px;
+  padding: 10px 14px;
+  display: block;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
+  font-size: clamp(13px, 0.95vw, 16px);
+  line-height: 1.25;
+}
+
+.grid-page .media-audio {
+  padding: 12px 14px 10px;
+}
+
+.grid-page .audio-box {
+  min-height: 92px;
+  border-radius: 18px;
+}
+
+.grid-page .zoom-icon {
+  top: 10px;
+  right: 10px;
+  width: 42px;
+  height: 42px;
+}
+
+.grid-page .media-grid {
+  padding-bottom: clamp(42px, 6vh, 72px);
+}
+
+.grid-page .lb-controls {
+  min-height: 54px;
+  max-width: min(440px, calc(100vw - 28px));
+  overflow: visible;
+}
+
+.grid-page .lb-controls button {
+  flex: 0 0 auto;
+  min-width: 42px;
+}
+
+.grid-page .lb-controls button:nth-child(2) {
+  min-width: 96px;
+}
+
+@media (max-width: 720px) {
+  .grid-page .media-name {
+    font-size: 14px;
+  }
+
+  .grid-page .lb-controls {
+    gap: 6px;
+    overflow-x: auto;
+  }
+}
+
+/* Final senior QA top-up: product-grade List titles and lightbox controls. */
+.grid-page .media-name {
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: none;
+}
+
+.grid-page .media-name::first-letter {
+  text-transform: uppercase;
+}
+
+.grid-page .lb-controls {
+  min-height: 52px;
+  gap: 8px;
+  padding: 8px;
+}
+
+.grid-page .lb-controls button {
+  height: 42px;
+  min-width: 42px;
+  border-radius: 999px;
+}
+
+.grid-page .lb-controls button:nth-child(2) {
+  min-width: 96px;
 }

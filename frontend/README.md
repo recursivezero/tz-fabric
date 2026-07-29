@@ -1,12 +1,36 @@
-# TZ-Fabric
+# TZ-Fabric frontend
 
-![Node Version](https://badgen.net/badge/Node/20+/blue)
+## Requirements
+
+- Node.js `^20.19.0` or `>=22.12.0`
+- npm 10 or newer
+
+## Development
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Note: create `.env` file and put content from `.env.sample` file
+Copy `.env.sample` to `.env` and configure the documented `VITE_` variables.
+The development proxy target can be changed with `VITE_API_PROXY_TARGET`.
 
-NOTE: the `VITE_API_URL` and it should be same as _vite.config.ts_
+## Quality checks
+
+```sh
+npm run lint
+npm test
+npm run build
+```
+
+## Production preview process
+
+Build first, then serve the generated `dist` directory on port 5173:
+
+```sh
+npm run build
+npm start
+```
+
+`npm start` is intended for the repository's existing PM2 deployment workflow.
+A dedicated static web server or CDN is preferable for a larger production setup.

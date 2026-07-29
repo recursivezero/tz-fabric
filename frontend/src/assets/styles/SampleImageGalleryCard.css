@@ -245,3 +245,32 @@
   color: #171101 ;
   border-color: #f0c463 ;
 }
+
+/* QA follow-up: keep the sample drawer title visible in dark theme. */
+.analysis-page .sample-gallery h2,
+:root[data-theme="dark"] .analysis-page .sample-gallery h2 {
+  color: var(--tz-ui-text, #f8fafc);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-theme="light"] .analysis-page .sample-gallery h2 {
+  color: #0f172a;
+  text-shadow: none;
+}
+
+/* Senior QA final: sample drawer title and cards remain visible and balanced in dark mode. */
+.analysis-page .sample-gallery h2 {
+  color: var(--tz-ui-text, #f8fafc);
+  font-size: clamp(20px, 2vw, 24px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+:root[data-theme="light"] .analysis-page .sample-gallery h2 {
+  color: #0f172a;
+}
+
+.analysis-page .sample-gallery .sample-card {
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.20));
+  background: var(--tz-ui-surface-raised, rgba(15, 23, 42, 0.92));
+}

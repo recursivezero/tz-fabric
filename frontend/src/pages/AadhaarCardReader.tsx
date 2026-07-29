@@ -4,6 +4,8 @@ import Cropper from "react-easy-crop";
 
 import * as htmlToImage from "html-to-image";
 import { FULL_API_URL } from "@/constants";
+import { ensureOk, fetchWithTimeout } from "@/utils/http";
+import { logger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
 
 /* =======================
@@ -52,7 +54,6 @@ const AadhaarCardReader = () => {
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [originalPreview, setOriginalPreview] = useState<string | null>(null);
 
-
   // react-easy-crop state
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -65,7 +66,7 @@ const AadhaarCardReader = () => {
     setCroppedImage(null);
     if (f) {
       const url = URL.createObjectURL(f);
-      setOriginalPreview(url);   // 🔥 ADD
+      setOriginalPreview(url); // 🔥 ADD
       setPreview(url);
       setShowCropper(true);
     }
@@ -80,20 +81,16 @@ const AadhaarCardReader = () => {
     }
   };
 
-  const onCropComplete = useCallback(
-    (_: Area, croppedPixels: Area) => {
-      setCroppedAreaPixels(croppedPixels);
-    },
-    []
-  );
-
+  const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
 
   const createCroppedImage = async (): Promise<string | null> => {
     if (!originalPreview || !croppedAreaPixels) return null;
 
     return new Promise((resolve) => {
       const image = new Image();
-      image.src = originalPreview; 
+      image.src = originalPreview;
       image.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
@@ -111,7 +108,7 @@ const AadhaarCardReader = () => {
           0,
           0,
           canvas.width,
-          canvas.height
+          canvas.height,
         );
 
         resolve(canvas.toDataURL("image/jpeg"));
@@ -119,7 +116,6 @@ const AadhaarCardReader = () => {
       image.src = originalPreview;
     });
   };
-
 
   const handleApplyCrop = async () => {
     const croppedDataUrl = await createCroppedImage();
@@ -134,7 +130,6 @@ const AadhaarCardReader = () => {
     setCroppedImage(null);
     setShowCropper(true);
   };
-
 
   const dataURLtoFile = (dataUrl: string, filename: string): File => {
     const arr = dataUrl.split(",");
@@ -167,19 +162,20 @@ const AadhaarCardReader = () => {
     fd.append("side", side);
 
     try {
-      const res = await fetch(`${FULL_API_URL}/adhaar`, {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      const res = await fetchWithTimeout(
+        `${FULL_API_URL}/adhaar`,
+        {
+          method: "POST",
+          body: fd,
+        },
+        60_000,
+      );
+      await ensureOk(res, "Failed to process Aadhaar card.");
 
       const data = await res.json();
       setResult(data);
     } catch (error) {
-      console.error("Error processing Aadhaar:", error);
+      logger.error("Aadhaar card processing failed", error);
       setError("Failed to process Aadhaar card. Please try again.");
     } finally {
       setLoading(false);
@@ -209,7 +205,10 @@ const AadhaarCardReader = () => {
   };
 
   return (
-    <div style={styles.wrapper}>
+    <div
+      className="document-reader-page document-reader-page--aadhaar"
+      style={styles.wrapper}
+    >
       <style>{`
   @keyframes shimmer {
     0% { background-position: -1000px 0; }
@@ -232,8 +231,6 @@ const AadhaarCardReader = () => {
   }
 `}</style>
 
-      
-
       <div style={styles.container}>
         {error && (
           <div style={styles.errorBanner} role="alert">
@@ -246,7 +243,7 @@ const AadhaarCardReader = () => {
             cursor: "pointer",
             transform: hovered ? "scale(1.06)" : "scale(1)",
             boxShadow: hovered
-              ? "0 12px 40px rgba(255, 107, 53, 0.35)"
+              ? "var(--document-reader-accent-shadow)"
               : "none",
           }}
           onMouseEnter={() => setHovered(true)}
@@ -259,7 +256,7 @@ const AadhaarCardReader = () => {
             height="48"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#FF6B35"
+            stroke="currentColor"
             strokeWidth="2"
           >
             <rect x="1" y="4" width="22" height="16" rx="2" />
@@ -267,7 +264,9 @@ const AadhaarCardReader = () => {
           </svg>
         </div>
         <h1 style={styles.title}>Aadhaar Card Reader</h1>
-        <p style={styles.subtitle}>Choose side → upload aadhar card → crop → extract</p>
+        <p style={styles.subtitle}>
+          Choose side → upload aadhar card → crop → extract
+        </p>
         <div style={styles.privacyNote}>
           <svg
             width="16"
@@ -281,8 +280,8 @@ const AadhaarCardReader = () => {
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
           <span>
-            Your image is processed only in memory during this session.
-            We do <strong>not</strong> store or save images or share data.
+            Your image is processed only in memory during this session. We do{" "}
+            <strong>not</strong> store or save images or share data.
           </span>
         </div>
 
@@ -333,18 +332,25 @@ const AadhaarCardReader = () => {
 
             <label htmlFor="file-upload" style={styles.uploadLabel}>
               <div style={styles.uploadIcon}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
               </div>
               <h3 style={styles.uploadTitle}>
-                {isDragging ? "Drop your card here" : "Upload Adhaar Card Image"}
+                {isDragging
+                  ? "Drop your card here"
+                  : "Upload Adhaar Card Image"}
               </h3>
-              <p style={styles.uploadText}>
-                Drag and drop or click to browse
-              </p>
+              <p style={styles.uploadText}>Drag and drop or click to browse</p>
             </label>
           </div>
         ) : (
@@ -405,7 +411,11 @@ const AadhaarCardReader = () => {
             {/* CROPPED IMAGE PREVIEW */}
             {croppedImage && !showCropper && (
               <div style={styles.previewCard}>
-                <img src={croppedImage} style={styles.previewImage} alt="Cropped Aadhaar" />
+                <img
+                  src={croppedImage}
+                  style={styles.previewImage}
+                  alt="Cropped Aadhaar"
+                />
                 <div style={styles.actionButtons}>
                   <button onClick={handleRecrop} style={styles.recropBtn}>
                     ✂️ Re-crop
@@ -414,7 +424,11 @@ const AadhaarCardReader = () => {
                     🗑️ Remove
                   </button>
                 </div>
-                <button onClick={submit} disabled={loading} style={styles.extractBtn}>
+                <button
+                  onClick={submit}
+                  disabled={loading}
+                  style={styles.extractBtn}
+                >
                   {loading ? "Processing..." : "Extract Details"}
                 </button>
               </div>
@@ -425,18 +439,22 @@ const AadhaarCardReader = () => {
         {/* RESULT */}
         {(loading || result) && (
           <>
-            <AadhaarCardPreview
-              data={result}
-              side={side}
-              loading={loading}
-            />
+            <AadhaarCardPreview data={result} side={side} loading={loading} />
 
             {!loading && (
               <>
-                <button onClick={downloadCard} style={styles.downloadBtn}>
+                <button
+                  className="reader-result-action-button reader-download-button"
+                  onClick={downloadCard}
+                  style={styles.downloadBtn}
+                >
                   💾 Download Card Image
                 </button>
-                <button onClick={resetUpload} style={styles.newUploadBtn}>
+                <button
+                  className="reader-result-action-button"
+                  onClick={resetUpload}
+                  style={styles.newUploadBtn}
+                >
                   📤 Upload New Aadhaar Card
                 </button>
               </>
@@ -460,11 +478,7 @@ type AadhaarPreviewProps = {
 
 const SKELETON = "████████";
 
-const AadhaarCardPreview = ({
-  data,
-  side,
-  loading,
-}: AadhaarPreviewProps) => {
+const AadhaarCardPreview = ({ data, side, loading }: AadhaarPreviewProps) => {
   const timestamp = new Intl.DateTimeFormat("en-IN", {
     timeZone: "Asia/Kolkata",
     year: "numeric",
@@ -491,9 +505,7 @@ const AadhaarCardPreview = ({
       {loading && <div className="card-shimmer" />}
 
       <div style={styles.cardHeader}>
-        <div style={styles.cardType}>
-          {loading ? SKELETON : "AADHAAR CARD"}
-        </div>
+        <div style={styles.cardType}>{loading ? SKELETON : "AADHAAR CARD"}</div>
       </div>
 
       <div style={styles.cardBody}>
@@ -510,10 +522,7 @@ const AadhaarCardPreview = ({
         )}
 
         {side === "back" && (
-          <Field
-            label="Address"
-            value={loading ? SKELETON : data?.address}
-          />
+          <Field label="Address" value={loading ? SKELETON : data?.address} />
         )}
       </div>
 
@@ -531,7 +540,6 @@ const AadhaarCardPreview = ({
   );
 };
 
-
 const Field = ({ label, value }: { label: string; value?: string }) => (
   <div style={styles.cardField}>
     <div style={styles.fieldLabel}>{label}</div>
@@ -545,11 +553,12 @@ const Field = ({ label, value }: { label: string; value?: string }) => (
 
 const styles: Record<string, CSSProperties> = {
   wrapper: {
-    minHeight: "100vh",
+    minHeight: 0,
+    width: "100%",
+    flex: "1 0 auto",
     background: "var(--document-reader-page-bg)",
     padding: "60px 20px",
-    fontFamily: "'DM Sans', -apple-system, sans-serif",
-    
+    fontFamily: "var(--tz-font-body)",
   },
   container: {
     maxWidth: 520,
@@ -557,13 +566,11 @@ const styles: Record<string, CSSProperties> = {
     textAlign: "center",
   },
   title: {
-    fontFamily: "'Instrument Serif', serif",
-    fontSize: 48,
-    fontWeight: 400,
+    fontFamily: "var(--tz-font-display)",
+    fontSize: "clamp(2rem, 5vw, 3rem)",
+    fontWeight: 700,
     margin: "0 0 12px 0",
-    background: "var(--document-reader-title-gradient)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "var(--document-reader-text)",
     letterSpacing: "-0.02em",
     textAlign: "center",
   },
@@ -595,23 +602,23 @@ const styles: Record<string, CSSProperties> = {
     transition: "all 0.2s ease",
   },
   sideBtnActive: {
-    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "var(--document-reader-text)",
+    background: "var(--document-reader-primary-bg)",
+    color: "var(--document-reader-accent-contrast)",
   },
   uploadZone: {
     position: "relative" as const,
     padding: 60,
-    border: "2px dashed rgba(255, 107, 53, 0.3)",
+    border: "2px dashed var(--document-reader-accent-border)",
     borderRadius: 24,
-    background: "rgba(255, 107, 53, 0.03)",
+    background: "var(--document-reader-surface-faint)",
     cursor: "pointer",
     textAlign: "center",
     marginBottom: 20,
     transition: "all 0.3s ease",
   },
   uploadZoneDragging: {
-    borderColor: "#FF6B35",
-    background: "rgba(255, 107, 53, 0.08)",
+    borderColor: "var(--document-reader-accent)",
+    background: "var(--document-reader-accent-soft)",
     transform: "scale(1.02)",
   },
   fileInput: {
@@ -622,7 +629,7 @@ const styles: Record<string, CSSProperties> = {
     display: "block",
   },
   uploadIcon: {
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     marginBottom: 16,
   },
   uploadTitle: {
@@ -655,9 +662,9 @@ const styles: Record<string, CSSProperties> = {
   recropBtn: {
     flex: 1,
     padding: "12px 20px",
-    background: "rgba(255, 107, 53, 0.1)",
-    color: "#FF6B35",
-    border: "1px solid rgba(255, 107, 53, 0.3)",
+    background: "var(--document-reader-accent-soft)",
+    color: "var(--document-reader-accent)",
+    border: "1px solid var(--document-reader-accent-border)",
     borderRadius: 12,
     fontSize: 14,
     fontWeight: 600,
@@ -679,8 +686,8 @@ const styles: Record<string, CSSProperties> = {
   extractBtn: {
     width: "100%",
     padding: "18px 32px",
-    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "var(--document-reader-text)",
+    background: "var(--document-reader-primary-bg)",
+    color: "var(--document-reader-accent-contrast)",
     border: "none",
     borderRadius: 16,
     fontSize: 16,
@@ -693,7 +700,7 @@ const styles: Record<string, CSSProperties> = {
     padding: 32,
     borderRadius: 20,
     background: "var(--document-reader-card-bg)",
-    border: "1px solid rgba(255, 107, 53, 0.2)",
+    border: "1px solid var(--document-reader-accent-border-soft)",
     marginBottom: 24,
     position: "relative" as const,
     overflow: "hidden",
@@ -703,7 +710,7 @@ const styles: Record<string, CSSProperties> = {
     top: 16,
     right: 16,
     fontSize: 10,
-    color: "rgba(255, 107, 53, 0.3)",
+    color: "var(--document-reader-accent-border)",
     fontWeight: 600,
     letterSpacing: "0.1em",
     textTransform: "uppercase" as const,
@@ -711,13 +718,13 @@ const styles: Record<string, CSSProperties> = {
   cardHeader: {
     marginBottom: 32,
     paddingBottom: 20,
-    borderBottom: "1px solid rgba(255, 107, 53, 0.2)",
+    borderBottom: "1px solid var(--document-reader-accent-border-soft)",
   },
   cardType: {
     fontSize: 13,
     fontWeight: 700,
     letterSpacing: "0.1em",
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     textTransform: "uppercase" as const,
   },
   cardBody: {
@@ -736,16 +743,16 @@ const styles: Record<string, CSSProperties> = {
   },
   fieldValue: {
     fontSize: 18,
-    fontFamily: "'Instrument Serif', serif",
+    fontFamily: "var(--tz-font-display)",
     color: "var(--document-reader-text)",
     fontWeight: 400,
   },
   downloadBtn: {
     width: "100%",
     padding: "16px 32px",
-    background: "rgba(255, 107, 53, 0.1)",
-    color: "#FF6B35",
-    border: "1px solid rgba(255, 107, 53, 0.3)",
+    background: "var(--document-reader-accent-soft)",
+    color: "var(--document-reader-accent)",
+    border: "1px solid var(--document-reader-accent-border)",
     borderRadius: 16,
     fontSize: 15,
     fontWeight: 600,
@@ -789,7 +796,7 @@ const styles: Record<string, CSSProperties> = {
   },
   cropperTitle: {
     fontSize: 24,
-    fontFamily: "'Instrument Serif', serif",
+    fontFamily: "var(--tz-font-display)",
     color: "var(--document-reader-text)",
     margin: "0 0 8px 0",
     textAlign: "center",
@@ -800,8 +807,8 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     paddingTop: 8,
     marginTop: 12,
-    borderTop: "1px dashed rgba(255, 107, 53, 0.25)",
-    fontFamily: "'DM Sans', sans-serif",
+    borderTop: "1px dashed var(--document-reader-accent-border-soft)",
+    fontFamily: "var(--tz-font-body)",
     position: "relative" as const,
     zIndex: 1,
   },
@@ -811,7 +818,7 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 700,
     letterSpacing: "0.12em",
     textTransform: "uppercase" as const,
-    color: "rgba(255, 107, 53, 0.6)",
+    color: "var(--document-reader-accent-muted)",
   },
 
   timestampValue: {
@@ -841,7 +848,7 @@ const styles: Record<string, CSSProperties> = {
   },
   reactEasyCropMedia: {},
   reactEasyCropArea: {
-    border: "2px solid #FF6B35",
+    border: "2px solid var(--document-reader-accent)",
     boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
   },
   zoomControl: {
@@ -865,7 +872,7 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "center",
     gap: 10,
     fontSize: 16,
-    color: "#b70d0dff",
+    color: "var(--document-reader-muted)",
     textAlign: "center",
     padding: "16px 20px",
     background: "var(--document-reader-surface-faint)",
@@ -885,7 +892,7 @@ const styles: Record<string, CSSProperties> = {
   },
   zoomValue: {
     fontSize: 14,
-    color: "#FF6B35",
+    color: "var(--document-reader-accent)",
     fontWeight: 600,
     minWidth: 45,
     textAlign: "right" as const,
@@ -897,7 +904,8 @@ const styles: Record<string, CSSProperties> = {
   iconWrapper: {
     display: "inline-flex",
     padding: 16,
-    background: "rgba(255, 107, 53, 0.1)",
+    color: "var(--document-reader-accent)",
+    background: "var(--document-reader-accent-soft)",
     borderRadius: 20,
     marginBottom: 24,
     transition: "all 0.2s ease",
@@ -919,8 +927,8 @@ const styles: Record<string, CSSProperties> = {
   cropBtn: {
     flex: 1,
     padding: "14px 24px",
-    background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-    color: "var(--document-reader-text)",
+    background: "var(--document-reader-primary-bg)",
+    color: "var(--document-reader-accent-contrast)",
     border: "none",
     borderRadius: 12,
     fontSize: 15,
@@ -934,9 +942,9 @@ const styles: Record<string, CSSProperties> = {
     margin: "0 auto 18px",
     padding: "12px 16px",
     borderRadius: "12px",
-    color: "#991b1b",
-    background: "rgba(254, 226, 226, 0.95)",
-    border: "1px solid rgba(220, 38, 38, 0.35)",
+    color: "var(--document-reader-danger-text)",
+    background: "var(--document-reader-danger-bg)",
+    border: "1px solid var(--document-reader-danger-border)",
     fontWeight: 600,
   },
 };

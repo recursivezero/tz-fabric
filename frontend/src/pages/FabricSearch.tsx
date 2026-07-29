@@ -1,961 +1,40 @@
-import {  useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { BASE_URL, FULL_API_URL } from "../constants";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { fetchWithTimeout } from "../utils/http";
+import type { ChangeEvent, MouseEventHandler, WheelEventHandler } from "react";
 
 import Loader from "../components/Loader";
 import Notification from "../components/Notification";
+import CropDrawer from "../components/search/CropDrawer";
+import ImagePreview from "../components/search/ImagePreview";
+import Lightbox from "../components/search/Lightbox";
+import ResultsSection from "../components/search/ResultsSection";
+import SettingsPanel from "../components/search/SettingsPanel";
+import SearchHero from "../components/search/SearchHero";
+import StickySearchBar from "../components/search/StickySearchBar";
+import { MIN_CROP_SIZE } from "../components/search/searchConfig";
+import {
+  clampCropRectToBounds,
+  getSearchLayoutState,
+} from "../components/search/searchUtils";
+import type { CropRect, NotificationState } from "../components/search/types";
+import { useSearch } from "../components/search/useSearch";
 import { throttle } from "../utils/throttle";
 import "@/assets/styles/FabricSearch.css";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type NotificationState = { message: string; type: "success" | "error" } | null;
-type DbOp = "create" | "update" | null;
-
-interface ResultItem {
-  imageSrc: string;
-  filename: string;
-  audioSrc?: string;
-}
-
-interface SearchApiResponse {
-  message: string;
-  results: string[];
-  pagination: {
-    page: number;
-    per_page: number;
-    total_results: number;
-    total_pages: number;
-    has_next: boolean;
-    has_prev: boolean;
-  };
-}
-
-type CropRect = { x: number; y: number; w: number; h: number };
-
-const MIN_CROP_SIZE = 40;
-
-function clampCropRectToBounds(rect: CropRect, imgWidth: number, imgHeight: number): CropRect {
-  if (imgWidth <= 0 || imgHeight <= 0) return rect;
-
-  const maxW = Math.max(MIN_CROP_SIZE, imgWidth);
-  const maxH = Math.max(MIN_CROP_SIZE, imgHeight);
-  const w = Math.min(Math.max(MIN_CROP_SIZE, rect.w), maxW);
-  const h = Math.min(Math.max(MIN_CROP_SIZE, rect.h), maxH);
-  const x = Math.min(Math.max(0, rect.x), Math.max(0, imgWidth - w));
-  const y = Math.min(Math.max(0, rect.y), Math.max(0, imgHeight - h));
-
-  return {
-    x: Math.round(x),
-    y: Math.round(y),
-    w: Math.round(w),
-    h: Math.round(h),
-  };
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  { id: "stock", label: "Stock", icon: "📦" },
-  { id: "fabric", label: "Fabric", icon: "🧵" },
-  { id: "design", label: "Design", icon: "🎨" },
-  { id: "product", label: "Product", icon: "🖼️" },
-];
-
-const API_BASE = FULL_API_URL;
-const ASSET_BASE = BASE_URL;
-const CDN_BASE = (import.meta.env.VITE_AWS_PUBLIC_URL ?? "https://cdn.threadzip.com").replace(/\/$/, "");
-const USER_FRIENDLY_SERVER_ERROR = "Unable to connect to the server, please try after some time.";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function toCdnUrl(src: string | undefined): string {
-  if (!src) return "";
-
-  const clean = String(src).trim();
-
-  if (/^(https?:|blob:|data:)/i.test(clean)) {
-    return clean;
-  }
-
-  if (clean.startsWith("/api/") || clean.startsWith("/assets/")) {
-    return `${ASSET_BASE}${clean}`;
-  }
-
-  if (clean.startsWith("images/")) {
-    return `${CDN_BASE}/${clean}`;
-  }
-
-  return `${CDN_BASE}/images/${clean.replace(/^\/+/, "")}`;
-}
-
-function toResultItem(raw: string): ResultItem {
-  const filename = raw.split("/").pop() ?? raw;
-  return { imageSrc: raw, filename };
-}
-
-function cleanName(filename: string): string {
-  return filename ? filename.split("_")[0].split(".")[0] : "";
-}
-
-// ─── useSearch hook ───────────────────────────────────────────────────────────
-
-function useSearch() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<ResultItem[]>([]);
-
-  const runImageSearch = useCallback(async (file: File, category?: string[], limit = 20, preserveResultsOnError = false) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("limit", String(limit));
-      form.append("page", "1");
-      form.append("per_page", String(limit));
-      if (category?.length) category.forEach((c) => { form.append("category", c) });
-      const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail ?? `Search failed (${res.status})`);
-      }
-      const data: SearchApiResponse = await res.json();
-      setResults((data.results ?? []).map(toResultItem));
-    } catch (e) {
-      console.error("Image search failed:", e);
-      setError(USER_FRIENDLY_SERVER_ERROR);
-      if (!preserveResultsOnError) setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const runTextSearch = useCallback(async (term: string, category?: string[], limit = 20, preserveResultsOnError = false) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.append("search_term", term);
-      form.append("limit", String(limit));
-      form.append("page", "1");
-      form.append("per_page", String(limit));
-      if (category?.length) category.forEach((c) => { form.append("category", c) });
-      const res = await fetch(`${API_BASE}/search`, { method: "POST", body: form });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.detail ?? `Search failed (${res.status})`);
-      }
-      const data: SearchApiResponse = await res.json();
-      setResults((data.results ?? []).map(toResultItem));
-    } catch (e) {
-      console.error("Text search failed:", e);
-      setError(USER_FRIENDLY_SERVER_ERROR);
-      if (!preserveResultsOnError) setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const clear = useCallback(() => {
-    setResults([]);
-    setError(null);
-  }, []);
-
-  return { loading, error, results, runImageSearch, runTextSearch, clear };
-}
-
-// ─── DB endpoint ──────────────────────────────────────────────────────────────
-
-async function callDbEndpoint(op: "create" | "update"): Promise<string> {
-  const url =
-    op === "create"
-      ? `${API_BASE}/database/create/table`
-      : `${API_BASE}/database/update/table`;
-  const res = await fetch(url, { method: "PUT" });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.detail ?? `Request failed (${res.status})`);
-  return data?.message ?? "Done.";
-}
-
-// ─── CategoryPicker ───────────────────────────────────────────────────────────
-
-interface CategoryPickerProps {
-  selected: string[];
-  onChange: (cats: string[]) => void;
-  compact?: boolean;
-}
-
-function CategoryPicker({ selected, onChange, compact = false }: CategoryPickerProps) {
-  const [tempSelected, setTempSelected] = useState(selected);
-  const toggle = (id: string) => {
-    const next = tempSelected.includes(id)
-      ? tempSelected.filter((c) => c !== id)
-      : [...tempSelected, id];
-    setTempSelected(next);
-    // Non-compact (Hero / ImagePreview): propagate immediately so the parent's
-    // selectedCategories stays in sync. Compact mode defers to the Apply button.
-    if (!compact) {
-      onChange(next);
-    }
-  };
-  const allOn = tempSelected.length === CATEGORIES.length;
-  const toggleAll = () => {
-    const next = allOn ? [] : CATEGORIES.map((c) => c.id);
-    setTempSelected(next);
-    if (!compact) {
-      onChange(next);
-    }
-  };
-
-  const applySearch = () => {
-    onChange(tempSelected);
-  };
-
-  useEffect(() => {
-    setTempSelected(selected);
-  }, [selected]);
-
-  return (
-    <div className={`category-picker${compact ? " category-picker--compact" : ""}`}>
-      <div className="category-picker__header">
-        <span className="category-picker__title">Filter by Category</span>
-        <button className="category-picker__toggle-all" onClick={toggleAll} type="button">
-          {allOn ? "Clear all" : "Select all"}
-        </button>
-      </div>
-
-      <div className="category-picker__grid">
-        {CATEGORIES.map((cat) => {
-          const active = tempSelected.includes(cat.id);
-          return (
-            <button
-              key={cat.id}
-              className={`category-picker__chip${active ? " category-picker__chip--active" : ""}`}
-              onClick={() => toggle(cat.id)}
-              type="button"
-            >
-              {active && <span className="category-picker__chip-check">✓</span>}
-              <span className="category-picker__chip-icon">{cat.icon}</span>
-              <span className="category-picker__chip-label">{cat.label}</span>
-            </button>
-          );
-        })}
-        {compact && (
-          <button className="btn btn-primary" onClick={()=> applySearch()} type="button">
-            {'Apply filter →'}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── DbControlPanel ───────────────────────────────────────────────────────────
-
-function DbControlPanel() {
-  const [activeOp, setActiveOp] = useState<DbOp>(null);
-  const [notification, setNotification] = useState<NotificationState>(null);
-
-  const handleOp = async (op: "create" | "update") => {
-    if (activeOp) return;
-    setActiveOp(op);
-    setNotification(null);
-    try {
-      const msg = await callDbEndpoint(op);
-      setNotification({ message: msg, type: "success" });
-    } catch (e: unknown) {
-      console.error("Database operation failed:", e);
-      setNotification({ message: USER_FRIENDLY_SERVER_ERROR, type: "error" });
-    } finally {
-      setActiveOp(null);
-    }
-  };
-
-  return (
-    <div className="db-panel">
-      <div className="db-panel__header">
-        <span className="db-panel__pulse" />
-        <span className="db-panel__label">Vector Database</span>
-      </div>
-
-      <div className="db-panel__actions">
-        <button
-          className={`db-panel__btn db-panel__btn--create${activeOp === "create" ? " db-panel__btn--loading" : ""}`}
-          onClick={() => handleOp("create")}
-          disabled={!!activeOp}
-          title="Rebuild vector table from scratch"
-        >
-          {activeOp === "create"
-            ? <span className="db-panel__spinner" />
-            : <span className="db-panel__btn-icon">⬡</span>}
-          Create Table
-        </button>
-
-        <button
-          className={`db-panel__btn db-panel__btn--update${activeOp === "update" ? " db-panel__btn--loading" : ""}`}
-          onClick={() => handleOp("update")}
-          disabled={!!activeOp}
-          title="Add new images to existing table"
-        >
-          {activeOp === "update"
-            ? <span className="db-panel__spinner" />
-            : <span className="db-panel__btn-icon">↻</span>}
-          Update Table
-        </button>
-      </div>
-
-      {notification && (
-        <div className={`db-panel__notification db-panel__notification--${notification.type}`}>
-          {notification.message}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── SettingsPanel ────────────────────────────────────────────────────────────
-
-function SettingsPanel() {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="settings-panel">
-      <button
-        className="settings-panel__toggle"
-        onClick={() => setOpen((v) => !v)}
-        type="button"
-        aria-expanded={open}
-        title="Settings"
-      >
-        ⚙️ &nbsp;Settings
-        <span className="settings-panel__chevron">{open ? "▲" : "▼"}</span>
-      </button>
-
-      {open && (
-        <div className="settings-panel__content">
-          <DbControlPanel />
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── StickySearchBar ──────────────────────────────────────────────────────────
-
-interface StickySearchBarProps {
-  textQuery: string;
-  setTextQuery: (v: string) => void;
-  onSearch: () => void;
-  onClear: () => void;
-  loading: boolean;
-  isImageMode: boolean;
-  previewUrl: string | null;
-  onRecrop: () => void;
-  fileInputId: string;
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  selectedCategories: string[];
-  onSetCategories: (cats: string[]) => void;
-  searchLimit: number;
-  onSetLimit: (v: number) => void;
-}
-
-function StickySearchBar({
-  textQuery,
-  setTextQuery,
-  onSearch,
-  onClear,
-  loading,
-  isImageMode,
-  previewUrl,
-  onRecrop,
-  fileInputId,
-  onFileChange,
-
-  selectedCategories,
-  onSetCategories,
-  searchLimit,
-  onSetLimit,
-}: StickySearchBarProps) {
-  return (
-    <div className="search-bar search-bar--sticky">
-      <div className="search-bar__inner">
-
-        {isImageMode && previewUrl ? (
-          <div className="search-bar__image-row">
-            <div className="search-bar__thumb-wrap">
-              <img src={previewUrl} alt="query" className="search-bar__thumb" />
-            </div>
-
-            <div className="search-bar__image-actions">
-              <button className="btn btn--outline btn--sm" onClick={onRecrop}>
-                ✂️ Recrop
-              </button>
-
-              <input
-                id={fileInputId}
-                type="file"
-                accept="image/*"
-                onChange={onFileChange}
-                className="search-bar__file-input"
-              />
-
-              <button
-                className="btn btn--ghost btn--sm"
-                onClick={() => document.getElementById(fileInputId)?.click()}
-              >
-                📷 New Image
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="search-bar__text-row">
-            <div className="search-bar__input-wrap">
-              <input
-                type="text"
-                className="search-bar__input"
-                placeholder="Refine search…"
-                value={textQuery}
-                onChange={(e) => setTextQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && onSearch()}
-              />
-            </div>
-
-            <button
-              className="btn btn--primary btn--sm"
-              onClick={onSearch}
-              disabled={loading || !textQuery.trim()}
-            >
-              Search
-            </button>
-          </div>
-        )}
-
-        <button className="btn btn--ghost btn--sm" onClick={onClear} type="button">
-          <span aria-hidden="true">✕</span>
-          <span>Clear</span>
-        </button>
-      </div>
-
-      {/* ✅ NEW: filters always visible */}
-      <div className="search-bar__filters">
-        <CategoryPicker
-          selected={selectedCategories}
-          onChange={onSetCategories}
-          compact
-        />
-
-        <LimitSlider
-          value={searchLimit}
-          onChange={onSetLimit}
-          label="Limit"
-        />
-      </div>
-    </div>
-  );
-}
-// ─── Pagination ───────────────────────────────────────────────────────────────
-
-interface PaginationProps {
-  page: number;
-  totalPages: number;
-  onPrev: () => void;
-  onNext: () => void;
-  variant?: "inline" | "bottom";
-}
-
-function Pagination({ page, totalPages, onPrev, onNext, variant = "bottom" }: PaginationProps) {
-  return (
-    <div className={`pagination pagination--${variant}`}>
-      <button className="pagination__btn" onClick={onPrev} disabled={page === 1}>
-        ← Prev
-      </button>
-      <span className="pagination__label">Page {page} / {totalPages}</span>
-      <button className="pagination__btn" onClick={onNext} disabled={page === totalPages}>
-        Next →
-      </button>
-    </div>
-  );
-}
-
-// ─── ResultCard ───────────────────────────────────────────────────────────────
-
-interface ResultCardProps {
-  item: ResultItem;
-  index: number;
-  onZoom: (src: string, caption: string) => void;
-  onBadImage: (src: string) => void;
-}
-
-function ResultCard({ item, index, onZoom, onBadImage }: ResultCardProps) {
-  const handleClick = () => {
-    if (!item.imageSrc) return;
-    onZoom(toCdnUrl(item.imageSrc), cleanName(item.filename));
-  };
-
-  return (
-    <article
-      className="result-card"
-      style={{ animationDelay: `${index * 40}ms` }}
-    >
-      <div className="result-card__thumb">
-        <img
-          src={toCdnUrl(item.imageSrc)}
-          alt={item.filename}
-          loading="lazy"
-          decoding="async"
-          onError={() => onBadImage(item.imageSrc)}
-          onClick={handleClick}
-        />
-        <button
-          type="button"
-          className="result-card__zoom-btn"
-          aria-label="Zoom"
-          onClick={(e) => { e.stopPropagation(); handleClick(); }}
-        >
-          🔍
-        </button>
-      </div>
-
-      <div className="result-card__name" onClick={handleClick}>
-        {cleanName(item.filename)}
-      </div>
-
-      {item.audioSrc && (
-        <div className="result-card__audio">
-          <audio controls src={item.audioSrc} preload="metadata" controlsList="nodownload" />
-        </div>
-      )}
-    </article>
-  );
-}
-
-// ─── ResultsSection ───────────────────────────────────────────────────────────
-
-interface ResultsSectionProps {
-  results: ResultItem[];
-  paginatedResults: ResultItem[];
-  page: number;
-  totalPages: number;
-  selectedCategories: string[];
-  isTextSearch: boolean;
-  onSetCategories: (cats: string[]) => void;
-  onPrev: () => void;
-  onNext: () => void;
-  onZoom: (src: string, caption: string) => void;
-  onBadImage: (src: string) => void;
-}
-
-function ResultsSection({
-  results,
-  paginatedResults,
-  page,
-  totalPages,
-  onPrev,
-  onNext,
-  onZoom,
-  onBadImage,
-}: ResultsSectionProps) {
-  return (
-    <div className="results-section">
-
-      <div className="results-section__meta">
-        <div>{results.length} results</div>
-        <Pagination page={page} totalPages={totalPages} onPrev={onPrev} onNext={onNext} />
-      </div>
-
-      {/* ✅ ALWAYS visible */}
-      {/* <div className="results-section__filters one">
-        <CategoryPicker selected={selectedCategories} onChange={onSetCategories} compact />
-      </div> */}
-
-      <div className="result-grid result-grid--full">
-        {paginatedResults.map((item, idx: number) => (
-          <ResultCard
-            key={idx}
-            item={item}
-            index={idx}
-            onZoom={onZoom}
-            onBadImage={onBadImage}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── LimitSlider ──────────────────────────────────────────────────────────────
-
-interface LimitSliderProps {
-  value: number;
-  onChange: (v: number) => void;
-  label?: string;
-}
-
-function LimitSlider({ value, onChange, label = "Results" }: LimitSliderProps) {
-  return (
-    <div className="limit-slider">
-      <span className="limit-slider__label">{label}</span>
-      <div className="limit-slider__track">
-        <div
-          className="limit-slider__fill"
-          style={{ width: `${((value - 5) / 95) * 100}%` }}
-        />
-        <input
-          type="range"
-          className="limit-slider__input"
-          min={5} max={100} step={5}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-        />
-      </div>
-      <span className="limit-slider__value">{value}</span>
-    </div>
-  );
-}
-
-// ─── Lightbox ─────────────────────────────────────────────────────────────────
-
-interface LightboxProps {
-  src: string;
-  caption: string | null;
-  scale: number;
-  offset: { x: number; y: number };
-  onClose: () => void;
-  onWheel: React.WheelEventHandler<HTMLDivElement>;
-  onMouseDown: React.MouseEventHandler<HTMLDivElement>;
-  onMouseMove: React.MouseEventHandler<HTMLDivElement>;
-  onMouseUp: React.MouseEventHandler<HTMLDivElement>;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onReset: () => void;
-}
-
-function Lightbox({
-  src, caption, scale, offset,
-  onClose, onWheel, onMouseDown, onMouseMove, onMouseUp,
-  onZoomIn, onZoomOut, onReset,
-}: LightboxProps) {
-  return (
-    <div
-      className="lightbox"
-      role="dialog"
-      aria-modal="true"
-      aria-label={caption ? `Preview: ${caption}` : "Image preview"}
-      onClick={(e) => {
-        if ((e.target as HTMLElement).classList.contains("lightbox")) onClose();
-      }}
-    >
-      <div
-        className="lightbox__stage"
-        onWheel={onWheel}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-      >
-        <img
-          src={src}
-          alt={caption ?? "preview"}
-          className="lightbox__image"
-          style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }}
-          draggable={false}
-        />
-
-        {caption && <div className="lightbox__caption">{caption}</div>}
-
-        <div
-          className="lightbox__controls"
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            className="lightbox__control-btn"
-            onClick={onZoomOut}
-            type="button"
-            aria-label="Zoom out"
-          >
-            −
-          </button>
-          <button
-            className="lightbox__control-btn lightbox__control-btn--reset"
-            onClick={onReset}
-            type="button"
-            aria-label="Reset zoom"
-          >
-            <span aria-hidden="true">↺</span>
-            <span>Reset</span>
-          </button>
-          <button
-            className="lightbox__control-btn"
-            onClick={onZoomIn}
-            type="button"
-            aria-label="Zoom in"
-          >
-            +
-          </button>
-          <button
-            className="lightbox__control-btn lightbox__control-btn--close"
-            onClick={onClose}
-            type="button"
-            aria-label="Close preview"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── CropDrawer ───────────────────────────────────────────────────────────────
-
-interface CropDrawerProps {
-  rawImageUrl: string;
-  cropRect: { x: number; y: number; w: number; h: number };
-  imgRef: React.RefObject<HTMLImageElement | null>;
-  onImageLoad: () => void;
-  onDragStart: (e: React.MouseEvent) => void;
-  onResizeStart: (e: React.MouseEvent) => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-function CropDrawer({
-  rawImageUrl, cropRect, imgRef,
-  onImageLoad, onDragStart, onResizeStart,
-  onConfirm, onCancel,
-}: CropDrawerProps) {
-  return (
-    <div className="crop-drawer" role="dialog" aria-modal="true">
-      <div className="crop-drawer__inner">
-        <h3 className="crop-drawer__title">Crop &amp; Confirm</h3>
-
-        <div className="crop-drawer__stage">
-          <div className="crop-drawer__image-wrap">
-            <img
-              ref={imgRef}
-              src={rawImageUrl}
-              alt="Select crop area"
-              className="crop-drawer__image"
-              onLoad={onImageLoad}
-              draggable={false}
-            />
-            <div
-              className="crop-drawer__rect"
-              style={{
-                left: `${cropRect.x}px`,
-                top: `${cropRect.y}px`,
-                width: `${cropRect.w}px`,
-                height: `${cropRect.h}px`,
-              }}
-              onMouseDown={(e) => { e.preventDefault(); onDragStart(e); }}
-            >
-              <div
-                className="crop-drawer__handle"
-                onMouseDown={(e) => { e.stopPropagation(); onResizeStart(e); }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="crop-drawer__actions">
-          <button
-            className="btn btn--ghost crop-drawer__action-btn"
-            onClick={onCancel}
-            type="button"
-          >
-            <span aria-hidden="true">✕</span>
-            <span>Cancel</span>
-          </button>
-          <button
-            className="btn btn--primary crop-drawer__action-btn"
-            onClick={onConfirm}
-            type="button"
-          >
-            <span aria-hidden="true">✓</span>
-            <span>Crop &amp; Search</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── ImagePreview (pre-results, post-crop) ────────────────────────────────────
-
-interface ImagePreviewProps {
-  originalUrl: string;
-  croppedUrl: string | null;
-  searchLimit: number;
-  selectedCategories: string[];
-  loading: boolean;
-  onClear: () => void;
-  onRecrop: () => void;
-  onSetCategories: (cats: string[]) => void;
-  onSetLimit: (v: number) => void;
-  onSearch: () => void;
-}
-
-function ImagePreview({
-  originalUrl, croppedUrl, searchLimit,
-  selectedCategories, loading,
-  onClear, onRecrop, onSetCategories, onSetLimit, onSearch,
-}: ImagePreviewProps) {
-  return (
-    <div className="image-preview">
-      {/* Original */}
-      <div className="image-preview__pane">
-        <p className="image-preview__pane-title">Original Image</p>
-        <div className="image-preview__frame">
-          <img className="image-preview__img" src={originalUrl} alt="original" />
-          <div className="image-preview__frame-actions image-preview__frame-actions--top">
-            <button
-              className="btn btn--primary btn--sm"
-              onClick={onClear}
-              type="button"
-            >
-              <span aria-hidden="true">🗑️</span>
-              <span>Clear Search</span>
-            </button>
-          </div>
-          <div className="image-preview__frame-actions image-preview__frame-actions--bottom">
-            <button className="btn btn--outline btn--sm" onClick={onRecrop} type="button">
-              <span aria-hidden="true">✂️</span>
-              <span>Recrop</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Cropped */}
-      {croppedUrl && (
-        <>
-          <div className="image-preview__pane">
-            <p className="image-preview__pane-title">Cropped Image</p>
-            <div className="image-preview__frame">
-              <img className="image-preview__img" src={croppedUrl} alt="cropped" />
-            </div>
-          </div>
-
-          <div className="image-preview__options">
-            <CategoryPicker selected={selectedCategories} onChange={onSetCategories} />
-          </div>
-
-          <div className="image-preview__search-row">
-            <LimitSlider value={searchLimit} onChange={onSetLimit} label="Limit" />
-            <button
-              className="btn btn--primary"
-              onClick={onSearch}
-              disabled={loading}
-              type="button"
-            >
-              <span aria-hidden="true">🔎</span>
-              <span>Search</span>
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-
-interface HeroProps {
-  textQuery: string;
-  setTextQuery: (v: string) => void;
-  onTextSearch: () => void;
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  fileInputId: string;
-  searchLimit: number;
-  onSetLimit: (v: number) => void;
-  selectedCategories: string[];
-  onSetCategories: (cats: string[]) => void;
-  loading: boolean;
-}
-
-function Hero({
-  textQuery, setTextQuery, onTextSearch,
-  onFileChange, fileInputId,
-  searchLimit, onSetLimit,
-  selectedCategories, onSetCategories,
-  loading,
-}: HeroProps) {
-  return (
-    <div className="hero">
-      <header className="hero__header">
-  <div className="hero__eyebrow">Fabric Intelligence</div>
-
-  <h1 className="hero__title">
-    Find the clothing
-    <br />
-    <span className="hero__title-accent">
-      you couldn't find.
-    </span>
-  </h1>
-
-  <p className="hero__subtitle">
-    Visual &amp; semantic search — powered by vectors
-  </p>
-</header>
-
-      <div className="hero__search-controls">
-        {/* Text search */}
-        <div className="hero__search-row">
-          <input
-            type="text"
-            className="hero__search-input"
-            placeholder="Search by name, fabric or color"
-            value={textQuery}
-            onChange={(e) => setTextQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onTextSearch()}
-          />
-          <button
-            className="btn btn--primary"
-            onClick={onTextSearch}
-            disabled={loading || !textQuery.trim()}
-            type="button"
-          >
-            Search
-          </button>
-        </div>
-
-        {/* Limit */}
-        <LimitSlider value={searchLimit} onChange={onSetLimit} />
-
-        {/* Divider */}
-        <div className="hero__divider">or</div>
-
-        {/* Image upload */}
-        <input
-          id={fileInputId}
-          type="file"
-          accept="image/*"
-          onChange={onFileChange}
-          className="hero__file-input"
-        />
-        <button
-          className="btn btn--ghost hero__upload-btn"
-          onClick={() => document.getElementById(fileInputId)?.click()}
-          type="button"
-        >
-          <span aria-hidden="true">📷</span>
-          <span>Drop your Image</span>
-        </button>
-      </div>
-
-      {/* Category filter */}
-      <div className="hero__categories">
-        <CategoryPicker selected={selectedCategories} onChange={onSetCategories} />
-      </div>
-    </div>
-  );
-}
+import "@/assets/styles/SearchTextResultsLayout.css";
+import "@/assets/styles/SearchSettingsIcon.css";
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Search() {
-  const { loading, error, results, runImageSearch, runTextSearch, clear } = useSearch();
+  const { loading, error, results, runImageSearch, runTextSearch, clear } =
+    useSearch();
 
   const [file, setFile] = useState<File | null>(null);
   const [textQuery, setTextQuery] = useState("");
@@ -966,13 +45,19 @@ export default function Search() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isTextSearch, setIsTextSearch] = useState(false);
   const [page, setPage] = useState(1);
-  const [badImages, setBadImages] = useState<Set<string>>(new Set());
 
   // Crop / drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [cropRect, setCropRect] = useState<CropRect>({ x: 20, y: 20, w: 160, h: 160 });
+  const [cropRect, setCropRect] = useState<CropRect>({
+    x: 20,
+    y: 20,
+    w: 160,
+    h: 160,
+  });
   const [rawImageUrl, setRawImageUrl] = useState<string | null>(null);
-  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(
+    null,
+  );
   const imgRef = useRef<HTMLImageElement | null>(null);
   const draggingRef = useRef(false);
   const resizingRef = useRef(false);
@@ -987,40 +72,90 @@ export default function Search() {
   const [lbOffset, setLbOffset] = useState({ x: 0, y: 0 });
   const draggingLbRef = useRef(false);
   const lastLbPosRef = useRef({ x: 0, y: 0 });
-  const MIN_SCALE = 0.5, MAX_SCALE = 6, ZOOM_STEP = 0.2;
+  const MIN_SCALE = 0.5,
+    MAX_SCALE = 6,
+    ZOOM_STEP = 0.2;
+
+  const clampLightboxOffset = useCallback(
+    (next: { x: number; y: number }) => {
+      const viewportWidth =
+        typeof window === "undefined" ? 1200 : window.innerWidth;
+      const viewportHeight =
+        typeof window === "undefined" ? 800 : window.innerHeight;
+      const scaleAllowance = Math.max(1, lbScale);
+      const maxX = Math.round(
+        Math.min(viewportWidth * 0.42, 460 * scaleAllowance),
+      );
+      const maxY = Math.round(
+        Math.min(viewportHeight * 0.42, 360 * scaleAllowance),
+      );
+
+      return {
+        x: Math.max(-maxX, Math.min(maxX, next.x)),
+        y: Math.max(-maxY, Math.min(maxY, next.y)),
+      };
+    },
+    [lbScale],
+  );
 
   // Misc
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const heroFileId = useId();
   const stickyFileId = useId();
-  const categoryParam = selectedCategories.length > 0 ? selectedCategories : undefined;
+  const categoryParam =
+    selectedCategories.length > 0 ? selectedCategories : undefined;
   const PAGE_SIZE = 12;
 
   // ── Object URL helpers ─────────────────────────────────────────────────────
 
-  const setOriginalObjectUrl = useCallback((f: File | null) => {
-    if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } }
-    setPreviewUrlOrig(f ? (() => { try { return URL.createObjectURL(f); } catch { return null; } })() : null);
-  }, [previewUrlOrig]);
+  const setOriginalObjectUrl = useCallback(
+    (f: File | null) => {
+      if (previewUrlOrig) {
+        try {
+          URL.revokeObjectURL(previewUrlOrig);
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
+      }
+      setPreviewUrlOrig(
+        f
+          ? (() => {
+              try {
+                return URL.createObjectURL(f);
+              } catch {
+                return null;
+              }
+            })()
+          : null,
+      );
+    },
+    [previewUrlOrig],
+  );
 
-  const dataUrlToFile = useCallback(async (dataUrl: string, filename = "query.png"): Promise<File> => {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    return new File([blob], filename, { type: blob.type || "image/png" });
-  }, []);
+  const dataUrlToFile = useCallback(
+    async (dataUrl: string, filename = "query.png"): Promise<File> => {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return new File([blob], filename, { type: blob.type || "image/png" });
+    },
+    [],
+  );
 
-  const urlToFile = useCallback(async (url: string, filename = "query.jpg"): Promise<File> => {
-    const res = await fetch(url, { credentials: "omit" });
-    if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
-    const blob = await res.blob();
-    const ext = (blob.type?.split("/")[1]) || "jpg";
-    const name = filename.endsWith(`.${ext}`) ? filename : `${filename}.${ext}`;
-    return new File([blob], name, { type: blob.type || "image/jpeg" });
-  }, []);
+  const urlToFile = useCallback(
+    async (url: string, filename = "query.jpg"): Promise<File> => {
+      const res = await fetchWithTimeout(url, { credentials: "omit" }, 20_000);
+      if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+      const blob = await res.blob();
+      const ext = blob.type?.split("/")[1] || "jpg";
+      const name = filename.endsWith(`.${ext}`)
+        ? filename
+        : `${filename}.${ext}`;
+      return new File([blob], name, { type: blob.type || "image/jpeg" });
+    },
+    [],
+  );
 
   // ── File input ─────────────────────────────────────────────────────────────
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     e.target.value = "";
     if (!f) return;
@@ -1032,11 +167,12 @@ export default function Search() {
     setDrawerOpen(true);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
     setNotification(null);
-    setBadImages(new Set());
     setCroppedPreviewUrl(null);
     setFile(null);
     setIsTextSearch(false);
-    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
+    try {
+      window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
+    } catch { /* Best-effort cleanup or browser storage operation. */ }
   };
 
   // ── Auto-run ───────────────────────────────────────────────────────────────
@@ -1047,7 +183,12 @@ export default function Search() {
     const params = new URLSearchParams(window.location.search);
     const urlImage = params.get("image_url");
 
-    const afterRun = () => { try { localStorage.removeItem("mcp_last_search"); } catch { } setPage(1); };
+    const afterRun = () => {
+      try {
+        localStorage.removeItem("mcp_last_search");
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+      setPage(1);
+    };
 
     if (urlImage) {
       didAutoRun.current = true;
@@ -1059,8 +200,14 @@ export default function Search() {
           setFile(f);
           setIsTextSearch(false);
           await runImageSearch(f, selectedCategories, searchLimit);
-        } catch { setNotification({ message: "Could not auto-run search from URL.", type: "error" }); }
-        finally { afterRun(); }
+        } catch {
+          setNotification({
+            message: "Could not auto-run search from URL.",
+            type: "error",
+          });
+        } finally {
+          afterRun();
+        }
       })();
       return;
     }
@@ -1073,19 +220,37 @@ export default function Search() {
         try {
           const parsed = JSON.parse(raw);
           let f: File | null = null;
-          if (parsed?.imageUrl) f = await urlToFile(parsed.imageUrl, `query-${Date.now()}`);
-          else if (parsed?.queryPreview) f = await dataUrlToFile(parsed.queryPreview, `query-${Date.now()}.png`);
+          if (parsed?.imageUrl)
+            f = await urlToFile(parsed.imageUrl, `query-${Date.now()}`);
+          else if (parsed?.queryPreview)
+            f = await dataUrlToFile(
+              parsed.queryPreview,
+              `query-${Date.now()}.png`,
+            );
           if (!f) throw new Error("No usable image in payload.");
           originalFileRef.current = f;
           setOriginalObjectUrl(f);
           setFile(f);
           setIsTextSearch(false);
           await runImageSearch(f, selectedCategories, searchLimit);
-        } catch { setNotification({ message: "Could not auto-run search payload.", type: "error" }); }
-        finally { afterRun(); }
+        } catch {
+          setNotification({
+            message: "Could not auto-run search payload.",
+            type: "error",
+          });
+        } finally {
+          afterRun();
+        }
       })();
-    } catch { }
-  }, [runImageSearch, dataUrlToFile, urlToFile, setOriginalObjectUrl, searchLimit, selectedCategories]);
+    } catch { /* Best-effort cleanup or browser storage operation. */ }
+  }, [
+    runImageSearch,
+    dataUrlToFile,
+    urlToFile,
+    setOriginalObjectUrl,
+    searchLimit,
+    selectedCategories,
+  ]);
 
   // ── Search handlers ────────────────────────────────────────────────────────
 
@@ -1093,16 +258,24 @@ export default function Search() {
     if (!file) return;
     setNotification(null);
     setIsTextSearch(false);
-    try { await runImageSearch(file, categoryParam, searchLimit); setPage(1); }
-    catch { setNotification({ message: "Search failed.", type: "error" }); }
+    try {
+      await runImageSearch(file, categoryParam, searchLimit);
+      setPage(1);
+    } catch {
+      setNotification({ message: "Search failed.", type: "error" });
+    }
   };
 
   const handleTextSearch = async () => {
     if (!textQuery.trim()) return;
     setNotification(null);
     setIsTextSearch(true);
-    try { await runTextSearch(textQuery.trim(), categoryParam, searchLimit); setPage(1); }
-    catch { setNotification({ message: "Search failed.", type: "error" }); }
+    try {
+      await runTextSearch(textQuery.trim(), categoryParam, searchLimit);
+      setPage(1);
+    } catch {
+      setNotification({ message: "Search failed.", type: "error" });
+    }
   };
 
   const handleCategoryChange = async (cats: string[]) => {
@@ -1114,9 +287,19 @@ export default function Search() {
     const effectiveCats = cats.length > 0 ? cats : undefined;
 
     if (file && !isTextSearch) {
-      await runImageSearch(file, effectiveCats, searchLimit, /* preserveResultsOnError */ true);
+      await runImageSearch(
+        file,
+        effectiveCats,
+        searchLimit,
+        /* preserveResultsOnError */ true,
+      );
     } else if (textQuery.trim()) {
-      await runTextSearch(textQuery.trim(), effectiveCats, searchLimit, /* preserveResultsOnError */ true);
+      await runTextSearch(
+        textQuery.trim(),
+        effectiveCats,
+        searchLimit,
+        /* preserveResultsOnError */ true,
+      );
     }
   };
 
@@ -1126,21 +309,29 @@ export default function Search() {
     clear();
     setPage(1);
     setNotification(null);
-    setBadImages(new Set());
     setIsTextSearch(false);
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } setRawImageUrl(null); }
-    if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } setPreviewUrlOrig(null); }
-    try { window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action")); } catch { }
+    if (rawImageUrl) {
+      try {
+        URL.revokeObjectURL(rawImageUrl);
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+      setRawImageUrl(null);
+    }
+    if (previewUrlOrig) {
+      try {
+        URL.revokeObjectURL(previewUrlOrig);
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+      setPreviewUrlOrig(null);
+    }
+    try {
+      window.dispatchEvent(new CustomEvent("fabricai:clear-pending-action"));
+    } catch { /* Best-effort cleanup or browser storage operation. */ }
     originalFileRef.current = null;
     setCroppedPreviewUrl(null);
   };
 
   // ── Results helpers ────────────────────────────────────────────────────────
 
-  const visibleResults = useMemo(
-    () => results.filter((item) => !item.imageSrc || !badImages.has(item.imageSrc)),
-    [results, badImages]
-  );
+  const visibleResults = results;
 
   const paginatedResults = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -1149,20 +340,56 @@ export default function Search() {
 
   const totalPages = Math.max(1, Math.ceil(visibleResults.length / PAGE_SIZE));
 
-  const safePrev = useMemo(() => throttle(() => setPage((p) => Math.max(1, p - 1)), 1000), []);
-  const safeNext = useMemo(() => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000), [totalPages]);
+  const safePrev = useMemo(
+    () => throttle(() => setPage((p) => Math.max(1, p - 1)), 1000),
+    [],
+  );
+  const safeNext = useMemo(
+    () => throttle(() => setPage((p) => Math.min(totalPages, p + 1)), 1000),
+    [totalPages],
+  );
 
   // ── Preview URL for cropped file ───────────────────────────────────────────
 
   useEffect(() => {
     let cur: string | null = null;
-    if (file) { try { cur = URL.createObjectURL(file); setPreviewUrl(cur); } catch { setPreviewUrl(null); } }
-    else setPreviewUrl(null);
-    return () => { if (cur) { try { URL.revokeObjectURL(cur); } catch { } } };
+    if (file) {
+      try {
+        cur = URL.createObjectURL(file);
+        setPreviewUrl(cur);
+      } catch {
+        setPreviewUrl(null);
+      }
+    } else setPreviewUrl(null);
+    return () => {
+      if (cur) {
+        try {
+          URL.revokeObjectURL(cur);
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
+      }
+    };
   }, [file]);
 
-  useEffect(() => () => { if (previewUrlOrig) { try { URL.revokeObjectURL(previewUrlOrig); } catch { } } }, [previewUrlOrig]);
-  useEffect(() => () => { if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } } }, [rawImageUrl]);
+  useEffect(
+    () => () => {
+      if (previewUrlOrig) {
+        try {
+          URL.revokeObjectURL(previewUrlOrig);
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
+      }
+    },
+    [previewUrlOrig],
+  );
+  useEffect(
+    () => () => {
+      if (rawImageUrl) {
+        try {
+          URL.revokeObjectURL(rawImageUrl);
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
+      }
+    },
+    [rawImageUrl],
+  );
 
   useEffect(() => {
     const wrapper = document.querySelector(".app-wrapper");
@@ -1206,7 +433,9 @@ export default function Search() {
 
       if (drawerOpen) {
         if (rawImageUrl) {
-          try { URL.revokeObjectURL(rawImageUrl); } catch { }
+          try {
+            URL.revokeObjectURL(rawImageUrl);
+          } catch { /* Best-effort cleanup or browser storage operation. */ }
           setRawImageUrl(null);
         }
         setDrawerOpen(false);
@@ -1223,22 +452,29 @@ export default function Search() {
     };
   }, [lightboxOpen, drawerOpen, rawImageUrl]);
 
-  const onLbWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
+  const onLbWheel: WheelEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
-    setLbScale((s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP))));
+    setLbScale((s) =>
+      Math.min(
+        MAX_SCALE,
+        Math.max(MIN_SCALE, s + (e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP)),
+      ),
+    );
   };
-  const onLbMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
+  const onLbMouseDown: MouseEventHandler<HTMLDivElement> = (e) => {
     draggingLbRef.current = true;
     lastLbPosRef.current = { x: e.clientX, y: e.clientY };
   };
-  const onLbMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) => {
+  const onLbMouseMove: MouseEventHandler<HTMLDivElement> = (e) => {
     if (!draggingLbRef.current) return;
     const dx = e.clientX - lastLbPosRef.current.x;
     const dy = e.clientY - lastLbPosRef.current.y;
     lastLbPosRef.current = { x: e.clientX, y: e.clientY };
-    setLbOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
+    setLbOffset((o) => clampLightboxOffset({ x: o.x + dx, y: o.y + dy }));
   };
-  const onLbMouseUp = () => { draggingLbRef.current = false; };
+  const onLbMouseUp = () => {
+    draggingLbRef.current = false;
+  };
 
   // ── Crop mouse events ──────────────────────────────────────────────────────
 
@@ -1258,7 +494,7 @@ export default function Search() {
           return clampCropRectToBounds(
             { ...prev, x: prev.x + dx, y: prev.y + dy },
             imgWidth,
-            imgHeight
+            imgHeight,
           );
         }
 
@@ -1266,23 +502,30 @@ export default function Search() {
           return clampCropRectToBounds(
             { ...prev, w: prev.w + dx, h: prev.h + dy },
             imgWidth,
-            imgHeight
+            imgHeight,
           );
         }
 
         return prev;
       });
     };
-    const onUp = () => { draggingRef.current = false; resizingRef.current = false; };
+    const onUp = () => {
+      draggingRef.current = false;
+      resizingRef.current = false;
+    };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
-    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
   }, []);
 
   const onCropImageLoad = () => {
     const img = imgRef.current;
     if (!img) return;
-    const dispW = img.clientWidth, dispH = img.clientHeight;
+    const dispW = img.clientWidth,
+      dispH = img.clientHeight;
     if (dispW <= 0 || dispH <= 0) {
       setSelectingImage(false);
       return;
@@ -1292,10 +535,15 @@ export default function Search() {
     const size = Math.max(MIN_CROP_SIZE, Math.round(short * 0.55));
     setCropRect(
       clampCropRectToBounds(
-        { x: Math.round((dispW - size) / 2), y: Math.round((dispH - size) / 2), w: size, h: size },
+        {
+          x: Math.round((dispW - size) / 2),
+          y: Math.round((dispH - size) / 2),
+          w: size,
+          h: size,
+        },
         dispW,
-        dispH
-      )
+        dispH,
+      ),
     );
     setSelectingImage(false);
   };
@@ -1303,8 +551,10 @@ export default function Search() {
   const makeCroppedPreview = async (): Promise<void> => {
     if (!rawImageUrl || !imgRef.current) return;
     const imgEl = imgRef.current;
-    const dispW = imgEl.clientWidth, dispH = imgEl.clientHeight;
-    const natW = imgEl.naturalWidth, natH = imgEl.naturalHeight;
+    const dispW = imgEl.clientWidth,
+      dispH = imgEl.clientHeight;
+    const natW = imgEl.naturalWidth,
+      natH = imgEl.naturalHeight;
     const boundedCropRect = clampCropRectToBounds(cropRect, dispW, dispH);
     if (
       boundedCropRect.x !== cropRect.x ||
@@ -1324,26 +574,50 @@ export default function Search() {
     canvas.width = sw;
     canvas.height = sh;
     const ctx = canvas.getContext("2d");
-    if (!ctx) { setNotification({ message: "Could not crop image.", type: "error" }); return; }
+    if (!ctx) {
+      setNotification({ message: "Could not crop image.", type: "error" });
+      return;
+    }
 
     const imgObj = new Image();
     imgObj.crossOrigin = "anonymous";
     imgObj.src = rawImageUrl;
-    try { await new Promise<void>((res, rej) => { imgObj.onload = () => res(); imgObj.onerror = () => rej(); }); }
-    catch { setNotification({ message: "Could not load image for cropping.", type: "error" }); return; }
+    try {
+      await new Promise<void>((res, rej) => {
+        imgObj.onload = () => res();
+        imgObj.onerror = () => rej();
+      });
+    } catch {
+      setNotification({
+        message: "Could not load image for cropping.",
+        type: "error",
+      });
+      return;
+    }
 
     ctx.drawImage(imgObj, sx, sy, sw, sh, 0, 0, sw, sh);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-    if (!blob) { setNotification({ message: "Could not generate cropped image.", type: "error" }); return; }
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.92),
+    );
+    if (!blob) {
+      setNotification({
+        message: "Could not generate cropped image.",
+        type: "error",
+      });
+      return;
+    }
 
-    const croppedFile = new File([blob], `query-cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
-    try { URL.revokeObjectURL(rawImageUrl); } catch { }
+    const croppedFile = new File([blob], `query-cropped-${Date.now()}.jpg`, {
+      type: "image/jpeg",
+    });
+    try {
+      URL.revokeObjectURL(rawImageUrl);
+    } catch { /* Best-effort cleanup or browser storage operation. */ }
     setRawImageUrl(null);
     setFile(croppedFile);
     setCroppedPreviewUrl(URL.createObjectURL(croppedFile));
     setDrawerOpen(false);
     setPage(1);
-    setBadImages(new Set());
     setIsTextSearch(false);
     setNotification(null);
     // try { await runImageSearch(croppedFile, selectedCategories, searchLimit); }
@@ -1351,7 +625,12 @@ export default function Search() {
   };
 
   const cancelCropAndClose = () => {
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } setRawImageUrl(null); }
+    if (rawImageUrl) {
+      try {
+        URL.revokeObjectURL(rawImageUrl);
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+      setRawImageUrl(null);
+    }
     setDrawerOpen(false);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
     setSelectingImage(false);
@@ -1359,8 +638,18 @@ export default function Search() {
 
   const openRecrop = () => {
     const orig = originalFileRef.current;
-    if (!orig) { setNotification({ message: "Original image not available.", type: "error" }); return; }
-    if (rawImageUrl) { try { URL.revokeObjectURL(rawImageUrl); } catch { } }
+    if (!orig) {
+      setNotification({
+        message: "Original image not available.",
+        type: "error",
+      });
+      return;
+    }
+    if (rawImageUrl) {
+      try {
+        URL.revokeObjectURL(rawImageUrl);
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
+    }
     setRawImageUrl(URL.createObjectURL(orig));
     setDrawerOpen(true);
     setCropRect({ x: 20, y: 20, w: 160, h: 160 });
@@ -1369,16 +658,26 @@ export default function Search() {
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const hasResults = visibleResults.length > 0;
-  const showHero = !file && !drawerOpen && !hasResults && !loading;
-  const showStickyBar = hasResults || (loading && (!!file || isTextSearch));
-  const showImagePreview = !!file && !drawerOpen && !hasResults && !loading;
+  const {
+    keepTextSearchWorkspace,
+    showHero,
+    showStickyBar,
+    showImagePreview,
+  } = getSearchLayoutState({
+    hasResults,
+    loading,
+    hasFile: !!file,
+    drawerOpen,
+    isTextSearch,
+  });
   const stickyPreview = croppedPreviewUrl || previewUrlOrig || previewUrl;
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <main className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}${showImagePreview ? " fabric-search--previewing" : ""}`}>
-
+    <main
+      className={`fabric-search${showStickyBar ? " fabric-search--has-results" : ""}${showImagePreview ? " fabric-search--previewing" : ""}${keepTextSearchWorkspace ? " fabric-search--text-results" : ""}`}
+    >
       {/* Sticky search bar */}
       {showStickyBar && (
         <StickySearchBar
@@ -1392,7 +691,6 @@ export default function Search() {
           onRecrop={openRecrop}
           fileInputId={stickyFileId}
           onFileChange={onFileChange}
-
           selectedCategories={selectedCategories}
           onSetCategories={handleCategoryChange}
           searchLimit={searchLimit}
@@ -1401,8 +699,9 @@ export default function Search() {
       )}
 
       {/* Page body */}
-      <div className={`fabric-search__body${showStickyBar ? " fabric-search__body--results" : ""}`}>
-
+      <div
+        className={`fabric-search__body${showStickyBar ? " fabric-search__body--results" : ""}`}
+      >
         {/* Header + settings — hidden while results are shown */}
         {!showStickyBar && (
           <div className="fabric-search__top-bar">
@@ -1414,10 +713,12 @@ export default function Search() {
 
         {/* Hero */}
         {showHero && (
-          <Hero
+          <SearchHero
             textQuery={textQuery}
             setTextQuery={setTextQuery}
             onTextSearch={handleTextSearch}
+            onClear={handleClear}
+            showClear={keepTextSearchWorkspace}
             onFileChange={onFileChange}
             fileInputId={heroFileId}
             searchLimit={searchLimit}
@@ -1444,10 +745,27 @@ export default function Search() {
           />
         )}
 
-        {notification && <Notification message={notification.message} type={notification.type} />}
-        {error && <div className="fabric-search__error" role="alert">{error}</div>}
+        {notification && (
+          <Notification
+            message={notification.message}
+            type={notification.type}
+          />
+        )}
+        {error && (
+          <div
+            className="fabric-search__error"
+            role="alert"
+            aria-live="assertive"
+          >
+            {error}
+          </div>
+        )}
         {(loading || selectingImage) && (
-          <div className="fabric-search__loading-overlay" role="status" aria-live="polite">
+          <div
+            className="fabric-search__loading-overlay"
+            role="status"
+            aria-live="polite"
+          >
             <Loader />
           </div>
         )}
@@ -1459,19 +777,24 @@ export default function Search() {
             page={page}
             totalPages={totalPages}
             selectedCategories={selectedCategories}
-            onSetCategories={handleCategoryChange}   // ✅ FIXED
+            onSetCategories={handleCategoryChange}
             onPrev={safePrev}
             onNext={safeNext}
             onZoom={openLightbox}
             isTextSearch={isTextSearch}
-            onBadImage={(src) => setBadImages((prev) => new Set([...prev, src]))}
           />
         )}
 
-        {!loading && file && visibleResults.length === 0 && !error && (
-          <p className="fabric-search__empty">— no matches found —</p>
-        )}
-
+        {!loading &&
+          (file || isTextSearch) &&
+          visibleResults.length === 0 &&
+          !error && (
+            <p className="fabric-search__empty">
+              {isTextSearch && textQuery.trim()
+                ? `No results found for “${textQuery.trim()}”. Try another keyword or category.`
+                : "No matching fabrics found. Try changing crop, category, or result limit."}
+            </p>
+          )}
       </div>
 
       {/* Lightbox */}
@@ -1487,8 +810,13 @@ export default function Search() {
           onMouseMove={onLbMouseMove}
           onMouseUp={onLbMouseUp}
           onZoomIn={() => setLbScale((s) => Math.min(MAX_SCALE, s + ZOOM_STEP))}
-          onZoomOut={() => setLbScale((s) => Math.max(MIN_SCALE, s - ZOOM_STEP))}
-          onReset={() => { setLbScale(1); setLbOffset({ x: 0, y: 0 }); }}
+          onZoomOut={() =>
+            setLbScale((s) => Math.max(MIN_SCALE, s - ZOOM_STEP))
+          }
+          onReset={() => {
+            setLbScale(1);
+            setLbOffset({ x: 0, y: 0 });
+          }}
         />
       )}
 
@@ -1499,8 +827,14 @@ export default function Search() {
           cropRect={cropRect}
           imgRef={imgRef}
           onImageLoad={onCropImageLoad}
-          onDragStart={(e) => { draggingRef.current = true; lastMouseRef.current = { x: e.clientX, y: e.clientY }; }}
-          onResizeStart={(e) => { resizingRef.current = true; lastMouseRef.current = { x: e.clientX, y: e.clientY }; }}
+          onDragStart={(e) => {
+            draggingRef.current = true;
+            lastMouseRef.current = { x: e.clientX, y: e.clientY };
+          }}
+          onResizeStart={(e) => {
+            resizingRef.current = true;
+            lastMouseRef.current = { x: e.clientX, y: e.clientY };
+          }}
           onConfirm={makeCroppedPreview}
           onCancel={cancelCropAndClose}
         />

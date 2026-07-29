@@ -3,6 +3,19 @@ import { useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
 import "@/assets/styles/DescriptionBox.css";
 import Loader from "./Loader";
+import { logger } from "@/utils/logger";
+
+type DescriptionBoxProps = {
+  isValidImage: boolean | null;
+  validationMessage: string;
+  loading: boolean;
+  responses: string[];
+  currentIndex?: number;
+  typedText?: string;
+  description?: string;
+  handlePrev: () => void;
+  handleNext: () => void | Promise<void>;
+};
 
 const DescriptionBox = ({
   isValidImage,
@@ -14,7 +27,7 @@ const DescriptionBox = ({
   description = "",
   handlePrev,
   handleNext,
-}) => {
+}: DescriptionBoxProps) => {
   const [copied, setCopied] = useState(false);
   const isError = isValidImage === false && validationMessage;
 
@@ -50,15 +63,12 @@ const DescriptionBox = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.warn("Copy failed", err);
+      logger.warn("Description copy failed", err);
     }
   };
 
   // Always render the component (so nav is present). We'll show placeholder content
   // if there are no responses and not loading.
-  // Debug log (remove if you want)
-  // console.log("DescriptionBox render", { showResults, responsesLength: responses?.length, currentIndex, typedText });
-
   const hasResponses = Array.isArray(responses) && responses.length > 0;
 
   return (
@@ -68,8 +78,10 @@ const DescriptionBox = ({
         <button
           type="button"
           onClick={handlePrev}
-          disabled={!hasResponses || currentIndex === 0}
-          className={`nav-btn ${!hasResponses || currentIndex === 0 ? "disabled" : ""}`}
+          disabled={loading || !hasResponses || currentIndex === 0}
+          className={`nav-btn ${
+            loading || !hasResponses || currentIndex === 0 ? "disabled" : ""
+          }`}
           title={!hasResponses ? "No responses yet" : "Previous response"}
         >
           ⬅ Prev
@@ -78,8 +90,14 @@ const DescriptionBox = ({
         <button
           type="button"
           onClick={handleNext}
-          disabled={!hasResponses || currentIndex >= responses.length - 1}
-          className={`nav-btn ${!hasResponses || currentIndex >= responses.length - 1 ? "disabled" : ""}`}
+          disabled={
+            loading || !hasResponses || currentIndex >= responses.length - 1
+          }
+          className={`nav-btn ${
+            loading || !hasResponses || currentIndex >= responses.length - 1
+              ? "disabled"
+              : ""
+          }`}
           title={!hasResponses ? "No responses yet" : "Next response"}
         >
           Next ➡
@@ -109,9 +127,16 @@ const DescriptionBox = ({
           )}
         </div>
 
-        {/* Copy action: keep the UI clean and avoid showing response-count text. */}
         {!loading && !isError && hasResponses && (
           <div className="response-counter response-copy-only">
+            <span
+              className="response-position"
+              role="status"
+              aria-live="polite"
+              aria-label={`Response ${currentIndex + 1} of ${responses.length}`}
+            >
+              {currentIndex + 1}/{responses.length}
+            </span>
             <button
               type="button"
               className="copy-btn"

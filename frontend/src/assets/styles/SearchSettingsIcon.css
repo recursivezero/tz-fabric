@@ -1,0 +1,1386 @@
+/* Keep Search settings available without letting a full-width label compete
+   with the hero. The icon-only control lives on the page edge and opens its
+   existing database panel inward, so no settings behavior changes. */
+.fabric-search .fabric-search__top-bar {
+  min-height: 0;
+}
+
+.fabric-search .fabric-search__settings,
+.fabric-search.fabric-search--previewing .fabric-search__settings {
+  position: fixed;
+  top: clamp(76px, 8vh, 92px);
+  right: clamp(12px, 1.5vw, 24px);
+  z-index: 180;
+  display: block;
+  width: auto;
+  margin: 0;
+}
+
+.fabric-search .settings-panel,
+.fabric-search.fabric-search--previewing .settings-panel {
+  position: relative;
+  display: block;
+  width: 48px;
+  max-width: 48px;
+  overflow: visible;
+  contain: none;
+}
+
+.fabric-search .settings-panel__toggle,
+:root[data-theme="light"] .fabric-search .settings-panel__toggle,
+:root[data-theme="dark"] .fabric-search .settings-panel__toggle {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
+  gap: 0;
+  border-radius: 50%;
+  clip-path: none;
+  overflow: visible;
+  background: var(--tz-ui-surface-raised, rgba(15, 23, 42, 0.94));
+  color: var(--tz-ui-text, #f8fafc);
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.24));
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.24);
+  transition:
+    transform 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+:root[data-theme="light"] .fabric-search .settings-panel__toggle {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.16);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.fabric-search .settings-panel__toggle:hover {
+  transform: translateY(-2px);
+  color: var(--tz-action-yellow, #e0a82e);
+  border-color: color-mix(
+    in srgb,
+    var(--tz-action-yellow, #e0a82e) 62%,
+    transparent
+  );
+  box-shadow:
+    0 0 0 3px rgba(224, 168, 46, 0.14),
+    0 16px 34px rgba(2, 6, 23, 0.28);
+}
+
+.fabric-search .settings-panel__toggle:focus-visible {
+  outline: 3px solid
+    color-mix(in srgb, var(--tz-action-yellow, #e0a82e) 72%, white);
+  outline-offset: 3px;
+}
+
+.fabric-search .settings-panel__toggle--open {
+  color: var(--tz-action-yellow, #e0a82e);
+  border-color: var(--tz-action-yellow, #e0a82e);
+  box-shadow:
+    0 0 0 3px rgba(224, 168, 46, 0.16),
+    0 16px 36px rgba(2, 6, 23, 0.3);
+}
+
+.fabric-search .settings-panel__icon {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  stroke-width: 2.1;
+  transition: transform 180ms ease;
+}
+
+.fabric-search .settings-panel__toggle--open .settings-panel__icon {
+  transform: rotate(30deg);
+}
+
+.fabric-search .settings-panel__content,
+.fabric-search.fabric-search--previewing .settings-panel__content {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: min(224px, calc(100vw - 32px));
+  min-width: 0;
+  max-height: calc(100dvh - 148px);
+  margin: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* Keep the database menu as a narrow vertical utility card. Opening below the
+   side icon prevents the panel from spanning across and covering the Search
+   hero while preserving the existing database actions and notifications. */
+.fabric-search .settings-panel__content .db-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  gap: 12px;
+  padding: 16px;
+}
+
+.fabric-search .settings-panel__content .db-panel__header,
+.fabric-search .settings-panel__content .db-panel__actions,
+.fabric-search .settings-panel__content .db-panel__notification {
+  width: 100%;
+}
+
+.fabric-search .settings-panel__content .db-panel__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fabric-search .settings-panel__content .db-panel__btn {
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.fabric-search .settings-panel__content .db-panel__notification {
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 680px) {
+  .fabric-search .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .fabric-search__settings {
+    top: 78px;
+    right: 10px;
+  }
+
+  .fabric-search .settings-panel,
+  .fabric-search.fabric-search--previewing .settings-panel {
+    width: 44px;
+    max-width: 44px;
+  }
+
+  .fabric-search .settings-panel__toggle,
+  :root[data-theme="light"] .fabric-search .settings-panel__toggle,
+  :root[data-theme="dark"] .fabric-search .settings-panel__toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .fabric-search .settings-panel__content,
+  .fabric-search.fabric-search--previewing .settings-panel__content {
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(216px, calc(100vw - 20px));
+    min-width: 0;
+    max-height: calc(100dvh - 140px);
+  }
+}
+
+/* Route spacing: start Search content immediately below the shared navbar.
+   Route-level vh padding previously created an oversized blank band at wide
+   viewports and when the browser was zoomed out. */
+.fabric-search.fabric-search--text-results {
+  padding-top: 0;
+}
+
+.fabric-search:not(.fabric-search--has-results):not(.fabric-search--previewing)
+  .fabric-search__body,
+.fabric-search.fabric-search--text-results .fabric-search__body {
+  padding-top: 0;
+}
+
+.fabric-search .hero__header {
+  padding-top: 0;
+  padding-bottom: clamp(14px, 2vh, 24px);
+}
+
+@media (max-width: 680px) {
+  .fabric-search:not(.fabric-search--has-results):not(.fabric-search--previewing)
+    .fabric-search__body,
+  .fabric-search.fabric-search--text-results .fabric-search__body {
+    padding-top: 0;
+  }
+
+  .fabric-search .hero__header {
+    padding-top: 0;
+  }
+}
+
+/* Search interaction polish: keep action pills compact and keep the settings
+   utility panel viewport-bound in every Search state, including image preview.
+   These are presentation-only overrides; component behavior is unchanged. */
+.fabric-search .hero__search-row > .btn--primary,
+.fabric-search .search-bar__text-row > .btn--primary,
+.fabric-search .search-bar__image-actions > .btn--primary,
+.fabric-search .image-preview__search-row > .btn--primary {
+  min-width: 118px;
+  min-height: 42px;
+  height: 42px;
+  padding: 0 20px;
+  line-height: 1;
+}
+
+.fabric-search .image-preview__action-rail .btn {
+  min-width: 104px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 16px;
+  gap: 6px;
+  line-height: 1;
+}
+
+/* The legacy preview stylesheet changes this dropdown to a static element.
+   Pinning the already-small vertical card to the viewport prevents it from
+   being clipped by preview/result containers or ancestor containment. */
+.fabric-search .settings-panel__content,
+.fabric-search.fabric-search--previewing .settings-panel__content,
+.fabric-search.fabric-search--has-results .settings-panel__content,
+.fabric-search.fabric-search--text-results .settings-panel__content {
+  position: fixed !important;
+  top: clamp(136px, calc(8vh + 60px), 152px) !important;
+  right: clamp(12px, 1.5vw, 24px) !important;
+  left: auto !important;
+  z-index: 220 !important;
+  box-sizing: border-box;
+  width: min(224px, calc(100vw - 32px)) !important;
+  min-width: 0 !important;
+  max-width: min(224px, calc(100vw - 32px)) !important;
+  max-height: calc(100dvh - 164px) !important;
+  margin: 0 !important;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  transform: none !important;
+  clip-path: none !important;
+  contain: none !important;
+}
+
+.fabric-search .fabric-search__settings,
+.fabric-search .settings-panel,
+.fabric-search.fabric-search--previewing .fabric-search__settings,
+.fabric-search.fabric-search--previewing .settings-panel {
+  overflow: visible !important;
+  contain: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+@media (max-width: 680px) {
+  .fabric-search .hero__search-row > .btn--primary,
+  .fabric-search .search-bar__text-row > .btn--primary,
+  .fabric-search .search-bar__image-actions > .btn--primary,
+  .fabric-search .image-preview__search-row > .btn--primary {
+    min-width: 108px;
+    min-height: 40px;
+    height: 40px;
+    padding-inline: 16px;
+  }
+
+  .fabric-search .image-preview__action-rail .btn {
+    min-width: 96px;
+    min-height: 38px;
+    height: 38px;
+    padding-inline: 13px;
+  }
+
+  .fabric-search .settings-panel__content,
+  .fabric-search.fabric-search--previewing .settings-panel__content,
+  .fabric-search.fabric-search--has-results .settings-panel__content,
+  .fabric-search.fabric-search--text-results .settings-panel__content {
+    top: 132px !important;
+    right: 10px !important;
+    width: min(216px, calc(100vw - 20px)) !important;
+    max-width: min(216px, calc(100vw - 20px)) !important;
+    max-height: calc(100dvh - 146px) !important;
+  }
+}
+
+/* v25: keep the Search CTA deliberately slim in the hero, sticky text bar,
+   and cropped-image action row. This only overrides presentation dimensions;
+   the existing Search buttons, disabled states, and handlers are unchanged. */
+.fabric-search .hero__search-row > .btn--primary,
+.fabric-search .search-bar__text-row > .btn--primary,
+.fabric-search .image-preview__search-row > .btn--primary {
+  width: auto;
+  min-width: 104px;
+  min-height: 38px;
+  height: 38px;
+  padding-inline: 15px;
+  gap: 6px;
+}
+
+/* An older end-of-file rule fixes the hero CTA at 136px. Override its flex
+   basis so the v25 dimensions are visible instead of being masked. */
+.fabric-search .hero__search-row > .btn--primary {
+  flex: 0 0 104px;
+}
+
+@media (max-width: 680px) {
+  .fabric-search .hero__search-row > .btn--primary,
+  .fabric-search .search-bar__text-row > .btn--primary,
+  .fabric-search .image-preview__search-row > .btn--primary {
+    min-width: 96px;
+    min-height: 36px;
+    height: 36px;
+    padding-inline: 13px;
+  }
+
+  .fabric-search .hero__search-row > .btn--primary {
+    flex-basis: 96px;
+  }
+}
+
+/* v26: inset the cropped-image limit/action row from both card edges and make
+   its Search CTA narrower. The shared row inset also moves the Limit label
+   away from the left border without changing slider or Search behavior. */
+.fabric-search .image-preview__search-row {
+  box-sizing: border-box;
+  padding-inline: clamp(18px, 2vw, 26px);
+}
+
+.fabric-search .image-preview__search-row > .btn--primary {
+  width: 90px;
+  min-width: 90px;
+  min-height: 34px;
+  height: 34px;
+  padding-inline: 9px;
+  gap: 5px;
+  justify-self: end;
+  font-size: 13px;
+}
+
+@media (max-width: 680px) {
+  .fabric-search .image-preview__search-row {
+    padding-inline: 12px;
+  }
+
+  .fabric-search .image-preview__search-row > .btn--primary {
+    width: 86px;
+    min-width: 86px;
+    min-height: 34px;
+    height: 34px;
+    padding-inline: 8px;
+  }
+}
+
+/* v27: present the zero-result message as the same strong error alert used by
+   the other routes. Search state and result handling remain unchanged. */
+.fabric-search .fabric-search__empty {
+  box-sizing: border-box;
+  width: min(860px, calc(100% - 36px));
+  margin: clamp(24px, 4vh, 44px) auto 16px;
+  padding: 12px 16px;
+  background: var(--tz-error-surface, #dc2626) !important;
+  background-image: none !important;
+  color: var(--tz-error-text, #ffffff) !important;
+  -webkit-text-fill-color: var(--tz-error-text, #ffffff) !important;
+  border: 1px solid var(--tz-error-border, #991b1b) !important;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.24) !important;
+  text-align: center;
+  text-shadow: none !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  opacity: 1 !important;
+  font-weight: 600;
+}
+
+@media (max-width: 680px) {
+  .fabric-search .fabric-search__empty {
+    width: calc(100% - 24px);
+    margin-top: 20px;
+    padding: 11px 14px;
+  }
+}
+
+/* v28: correct the cropped-image Search pill's box model so its declared
+   height is the real outer height, then give the icon and label more horizontal
+   breathing room. Search behavior and the surrounding limit row are unchanged. */
+.fabric-search .image-preview__search-row > .btn--primary {
+  box-sizing: border-box;
+  width: 116px;
+  min-width: 116px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0 13px;
+  gap: 7px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.fabric-search .image-preview__search-row > .btn--primary > span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+@media (max-width: 680px) {
+  .fabric-search .image-preview__search-row > .btn--primary {
+    width: 112px;
+    min-width: 112px;
+    min-height: 32px;
+    height: 32px;
+    padding-inline: 12px;
+    gap: 6px;
+  }
+}
+
+/* v41: mobile Search containment and control alignment.
+   Keep the settings trigger in normal Search flow at stacked widths, give the
+   post-result workspace an explicit scroll owner, and make the two image-mode
+   replacement actions use identical dimensions. Search state and handlers are
+   unchanged. */
+@media (max-width: 900px) {
+  .fabric-search .fabric-search__top-bar {
+    box-sizing: border-box;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 2px 6px;
+  }
+
+  .fabric-search .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .fabric-search__settings {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+  }
+
+  .fabric-search.fabric-search--has-results {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 100%;
+    height: calc(100dvh - var(--site-header-height, 64px));
+    min-height: 0;
+    max-height: calc(100dvh - var(--site-header-height, 64px));
+    padding-top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .fabric-search.fabric-search--has-results .search-bar--sticky {
+    position: sticky;
+    top: 0;
+    z-index: 210;
+  }
+
+  .fabric-search.fabric-search--has-results .fabric-search__body--results {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: max-content;
+    padding-bottom: max(84px, calc(64px + env(safe-area-inset-bottom)));
+    overflow: visible;
+  }
+
+  .fabric-search.fabric-search--has-results .results-section,
+  .fabric-search.fabric-search--has-results .result-grid--full {
+    min-height: max-content;
+    overflow: visible;
+  }
+
+  .fabric-search .search-bar__image-row {
+    min-width: 0;
+  }
+
+  .fabric-search .search-bar__image-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    width: min(100%, 290px);
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .fabric-search .search-bar__image-actions .search-bar__image-action {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 10px;
+    justify-content: center;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .fabric-search .search-bar__inner {
+    flex-wrap: wrap;
+  }
+
+  .fabric-search .search-bar__image-row {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .fabric-search .search-bar__image-actions {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .fabric-search .search-bar__inner > .btn--ghost {
+    margin-left: auto;
+  }
+}
+
+
+/* v42: place the Original Image actions over the image itself and keep mobile
+   category choices balanced. Presentation only; Search handlers and state are
+   unchanged. */
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__img {
+  grid-column: 1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: block;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  transform: none;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn {
+  position: absolute;
+  right: 14px;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 112px;
+  min-height: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0 15px;
+  justify-content: center;
+  border-radius: 999px;
+  pointer-events: auto;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child {
+  position: absolute;
+  top: 14px;
+  bottom: auto;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #111827;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  position: absolute;
+  top: auto;
+  bottom: 14px;
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 23, 42, 0.28);
+  color: #111827;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child:hover:not(:disabled) {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker:not(.category-picker--compact)
+    .category-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker:not(.category-picker--compact)
+    .category-picker__chip {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn {
+    right: 10px;
+    min-width: 96px;
+    min-height: 36px;
+    height: 36px;
+    padding-inline: 12px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:first-child {
+    top: 10px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 10px;
+  }
+}
+
+
+/* v43: align preview actions with the route's theme controls, remove the
+   spacer above the post-crop workspace, and keep compact result categories in
+   the same balanced 2 × 2 mobile grid as the idle Search form. Presentation
+   only; Search state, crop handlers and filter behavior are unchanged. */
+:root[data-theme="dark"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child,
+:root[data-theme="dark"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  background: linear-gradient(
+    135deg,
+    var(--tz-action-yellow, #e0a82e),
+    var(--tz-action-yellow-hover, #f0c463)
+  );
+  border-color: var(--tz-action-yellow, #e0a82e);
+  color: #111827;
+  text-shadow: none;
+  box-shadow: 0 10px 24px rgba(224, 168, 46, 0.26);
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child,
+:root[data-theme="light"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface, #8a4f08),
+    var(--tz-accent-control-surface-hover, #a45d0a)
+  );
+  border-color: var(--tz-accent-control-surface, #8a4f08);
+  color: #ffffff;
+  text-shadow: none;
+  box-shadow: 0 10px 24px rgba(138, 79, 8, 0.22);
+}
+
+:root[data-theme="dark"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child:hover:not(:disabled),
+:root[data-theme="dark"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-action-yellow-hover, #f0c463),
+    #facc15
+  );
+  border-color: var(--tz-action-yellow-hover, #f0c463);
+  color: #111827;
+}
+
+:root[data-theme="light"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child:hover:not(:disabled),
+:root[data-theme="light"]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--tz-accent-control-surface-hover, #a45d0a),
+    #b86a0c
+  );
+  border-color: var(--tz-accent-control-surface-hover, #a45d0a);
+  color: #ffffff;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search--previewing {
+  padding-top: 0;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search--previewing
+  .fabric-search__body {
+  padding-top: 8px;
+}
+
+@media (min-width: 901px) {
+  :root[data-theme]
+    .fabric-search.fabric-search--previewing
+    .fabric-search__top-bar {
+    min-height: 0;
+    height: 0;
+    margin-bottom: 8px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker--compact
+    .category-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker--compact
+    .category-picker__chip {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search
+    .category-picker--compact
+    .category-picker__apply {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+
+/* v44: keep Search utilities anchored to the mobile page edge instead of
+   consuming a centred content row, and align the compact text-search CTA with
+   the right edge of its input. Presentation only; settings and Search handlers
+   are unchanged. */
+@media (max-width: 900px) {
+  .fabric-search .fabric-search__body {
+    position: relative;
+  }
+
+  .fabric-search .fabric-search__top-bar,
+  .fabric-search.fabric-search--previewing .fabric-search__top-bar {
+    position: relative;
+    z-index: 220;
+    width: 100%;
+    min-height: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .fabric-search .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .fabric-search__settings {
+    position: fixed;
+    top: calc(var(--site-header-height, 64px) + 10px);
+    right: 12px;
+    bottom: auto;
+    left: auto;
+    z-index: 320;
+    display: block;
+    width: 40px;
+    max-width: 40px;
+    margin: 0;
+    pointer-events: auto;
+  }
+
+  .fabric-search .settings-panel,
+  .fabric-search.fabric-search--previewing .settings-panel {
+    width: 40px;
+    max-width: 40px;
+    align-items: initial;
+  }
+
+  .fabric-search .settings-panel__toggle,
+  :root[data-theme="light"] .fabric-search .settings-panel__toggle,
+  :root[data-theme="dark"] .fabric-search .settings-panel__toggle {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  .fabric-search .hero__search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fabric-search .hero__search-input {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .fabric-search .hero__search-row > .btn--primary {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    flex: none;
+    margin-left: auto;
+  }
+
+  .fabric-search .hero__search-row > .hero__clear-btn {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 420px) {
+  .fabric-search .fabric-search__settings,
+  .fabric-search.fabric-search--previewing .fabric-search__settings {
+    right: 10px;
+  }
+}
+
+/* v46: keep the compact mobile Search CTA right-aligned, but place it slightly
+   lower beneath the input and leave a deliberate gap before the Results slider.
+   Search state, validation, keyboard submission and click handlers are unchanged. */
+@media (max-width: 900px) {
+  .fabric-search .hero__search-row > .btn--primary {
+    justify-self: end;
+    margin-top: 6px;
+    margin-right: 0;
+    margin-bottom: 8px;
+    margin-left: auto;
+  }
+
+  .fabric-search .hero__search-controls > .limit-slider {
+    margin-top: 2px;
+  }
+}
+
+
+/* v47: on mobile, place the text-search action at the left edge directly
+   beneath the input and leave a measured gap before the Results slider.
+   Search submission, validation and keyboard behavior are unchanged. */
+@media (max-width: 900px) {
+  .fabric-search .hero__search-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .fabric-search .hero__search-row > .btn--primary {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    margin: 8px auto 2px 0;
+  }
+
+  .fabric-search .hero__search-row > .hero__clear-btn {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .fabric-search .hero__search-controls > .limit-slider {
+    margin-top: 0;
+  }
+}
+
+
+/* v48: refine Search control spacing, normalize category sizing, and keep
+   Original Image actions attached to the rendered image instead of the wider
+   preview frame. Presentation only; Search, crop and category handlers are
+   unchanged. */
+@media (max-width: 900px) {
+  .fabric-search .hero__search-row > .btn--primary {
+    margin: 14px auto 10px 0;
+  }
+
+  .fabric-search
+    :is(
+      .hero__categories,
+      .image-preview__options,
+      .search-bar__filters
+    )
+    .category-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .fabric-search
+    :is(
+      .hero__categories,
+      .image-preview__options,
+      .search-bar__filters
+    )
+    .category-picker__chip {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    height: 40px;
+    padding-inline: 12px;
+    justify-content: center;
+  }
+
+  .fabric-search
+    :is(
+      .hero__categories,
+      .image-preview__options,
+      .search-bar__filters
+    )
+    .category-picker__apply {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (min-width: 901px) {
+  .fabric-search
+    :is(
+      .hero__categories,
+      .image-preview__options,
+      .search-bar__filters
+    )
+    .category-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    gap: clamp(10px, 1vw, 16px);
+  }
+
+  .fabric-search
+    :is(
+      .hero__categories,
+      .image-preview__options,
+      .search-bar__filters
+    )
+    .category-picker__chip {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions {
+    position: relative;
+    display: grid;
+    width: fit-content;
+    max-width: 100%;
+    height: min(460px, 52vh);
+    margin-inline: auto;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__img {
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (min-width: 901px) and (max-height: 700px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions {
+    height: 42vh;
+  }
+}
+
+
+/* v49: compact the Search category controls and Search CTAs, and give Recrop
+   a clearer optical inset from the Original Image frame. Presentation only;
+   category selection, crop actions, Search submission and disabled states are
+   unchanged. */
+.fabric-search
+  :is(.hero__categories, .image-preview__options)
+  .category-picker {
+  padding: 12px 14px;
+}
+
+.fabric-search
+  :is(.hero__categories, .image-preview__options)
+  .category-picker__header {
+  margin-bottom: 8px;
+}
+
+.fabric-search
+  :is(.hero__categories, .image-preview__options)
+  .category-picker__toggle-all {
+  padding-inline: 9px;
+}
+
+.fabric-search .hero__search-row > .btn--primary,
+.fabric-search .search-bar__text-row > .btn--primary,
+.fabric-search .image-preview__search-row > .btn--primary {
+  box-sizing: border-box;
+  width: 88px;
+  min-width: 88px;
+  max-width: 88px;
+  padding-inline: 10px;
+  flex-basis: 88px;
+}
+
+@media (min-width: 901px) {
+  .fabric-search
+    :is(.hero__categories, .image-preview__options)
+    .category-picker__grid {
+    grid-template-columns: repeat(4, minmax(0, 190px));
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .fabric-search
+    :is(.hero__categories, .image-preview__options)
+    .category-picker__chip {
+    min-height: 36px;
+    height: 36px;
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  .fabric-search .hero__search-row > .btn--primary {
+    flex: 0 0 88px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .fabric-search
+    :is(.hero__categories, .image-preview__options)
+    .category-picker__chip {
+    min-height: 36px;
+    height: 36px;
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  .fabric-search .hero__search-row > .btn--primary,
+  .fabric-search .search-bar__text-row > .btn--primary,
+  .fabric-search .image-preview__search-row > .btn--primary {
+    width: 84px;
+    min-width: 84px;
+    max-width: 84px;
+    padding-inline: 8px;
+    flex-basis: 84px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 14px;
+  }
+}
+
+
+/* v50: restore the compact, left-grouped desktop category placement shown in
+   the intended Search layout and mirror the Original Image action spacing
+   across the complete frame. Presentation only; category, Search and crop
+   handlers remain unchanged. */
+@media (min-width: 901px) {
+  .fabric-search
+    :is(.hero__categories, .image-preview__options)
+    .category-picker__grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fabric-search
+    :is(.hero__categories, .image-preview__options)
+    .category-picker__chip {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 112px;
+    max-width: none;
+  }
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child {
+  top: 14px;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  /* The preview header is 50px high. Adding the same 14px image inset makes
+     Recrop's distance from the outer bottom border match Clear's distance
+     from the outer top border. */
+  bottom: 64px;
+}
+
+@media (max-width: 480px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:first-child {
+    top: 10px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 60px;
+  }
+}
+
+
+/* v51: make the Original Image action insets genuinely symmetrical within
+   the media border and give only the post-crop Search CTA a small width
+   increase. Presentation only; Clear, Recrop and Search handlers remain
+   unchanged. */
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:first-child {
+  top: 14px;
+}
+
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  bottom: 14px;
+}
+
+.fabric-search .image-preview__search-row > .btn--primary {
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
+  padding-inline: 12px;
+  flex-basis: 96px;
+}
+
+@media (max-width: 900px) {
+  .fabric-search .image-preview__search-row > .btn--primary {
+    width: 92px;
+    min-width: 92px;
+    max-width: 92px;
+    padding-inline: 10px;
+    flex-basis: 92px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:first-child {
+    top: 10px;
+  }
+
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 10px;
+  }
+}
+
+
+/* v52: add an optical safety inset below Recrop so its shadow and rounded
+   edge no longer appear attached to the Original Image border, and widen only
+   the post-crop Search CTA slightly. Presentation only; crop and Search
+   handlers, disabled states and alignment remain unchanged. */
+:root[data-theme]
+  .fabric-search.fabric-search.fabric-search--previewing
+  .image-preview__media--with-actions
+  .image-preview__action-rail
+  > .btn:last-child {
+  bottom: 28px;
+}
+
+.fabric-search .image-preview__search-row > .btn--primary {
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+  padding-inline: 16px;
+  flex-basis: 108px;
+}
+
+@media (max-width: 900px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 20px;
+  }
+
+  .fabric-search .image-preview__search-row > .btn--primary {
+    width: 104px;
+    min-width: 104px;
+    max-width: 104px;
+    padding-inline: 14px;
+    flex-basis: 104px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root[data-theme]
+    .fabric-search.fabric-search.fabric-search--previewing
+    .image-preview__media--with-actions
+    .image-preview__action-rail
+    > .btn:last-child {
+    bottom: 16px;
+  }
+}
+
+
+/* v54: keep backend Search matches visible even when an individual remote
+   preview cannot load. The card remains in the result count and receives a
+   neutral placeholder instead of being removed and triggering a false
+   "No results found" state. Search requests and result data are unchanged. */
+.fabric-search .result-card__image-fallback {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px;
+  color: var(--tz-ui-text-muted, var(--color-muted));
+  background: var(--tz-ui-page, var(--color-bg, #0b1020));
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.fabric-search .result-card__image-fallback > span:first-child {
+  font-size: 24px;
+  line-height: 1;
+}

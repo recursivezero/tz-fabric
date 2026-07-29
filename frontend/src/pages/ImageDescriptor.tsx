@@ -6,6 +6,7 @@ import Header from "../components/ImageDescriptorHeader";
 import ImagePreview from "../components/ImagePreviewPanel";
 import SampleImageGallery from "../components/SampleImageGalleryCard";
 import useImageAnalysis from "../hooks/useImageAnalysis";
+import { logger } from "../utils/logger";
 import "@/assets/styles/ImageDescription.css";
 
 const ImageDescription = () => {
@@ -55,7 +56,7 @@ const ImageDescription = () => {
       const res = handleRunAnalysis?.(file, mode);
       if (res && typeof res.then === "function") await res;
     } catch (err) {
-      console.error("Error in wrappedRunAnalysis:", err);
+      logger.error("Analysis request failed", err);
     }
   };
 
@@ -110,6 +111,14 @@ const ImageDescription = () => {
     };
   }, [analysisPopupMessage, dismissAnalysisPopup]);
 
+  const popupTitle =
+    analysisPopupMessage &&
+    /upload a valid|valid fabric image|does not look like/i.test(
+      analysisPopupMessage,
+    )
+      ? "Invalid image"
+      : "Analysis unavailable";
+
   return (
     <div
       className={`home-container analysis-page ${showDrawer ? "drawer-open" : ""}`}
@@ -161,7 +170,7 @@ const ImageDescription = () => {
       {showDrawer && (
         <div className="drawer-panel">
           <SampleImageGallery
-            onAnalyze={(samplePath) => {
+            onAnalyze={(samplePath: string) => {
               handleSampleShortAnalysis(samplePath);
             }}
             loading={loading}
@@ -176,7 +185,7 @@ const ImageDescription = () => {
               ⚠️
             </div>
             <div className="analysis-popup__content">
-              <h3>Invalid image</h3>
+              <h3>{popupTitle}</h3>
               <p>{analysisPopupMessage}</p>
             </div>
             <button

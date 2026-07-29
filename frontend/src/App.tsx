@@ -3,11 +3,61 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import "./App.css";
+import "./assets/styles/GlobalUiConsistency.css";
 import { Routing } from "./Routing";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import Footer from "./components/Footer";
 import { NavBar } from "./components/NavBar";
+import { usePageTracking } from "./hooks/usePageTracking";
+import { useRouteMetadata } from "./hooks/useRouteMetadata";
 
 type ThemeMode = "light" | "dark";
+
+const ERROR_TEXT_SELECTOR = [
+  '[role="alert"]',
+  ".notification.error",
+  ".fabric-search__error",
+  ".grid-error",
+  ".upload-submit-error-below",
+  ".db-panel__notification--error",
+  ".description-wrapper .description-box.error",
+  ".analysis-popup__card",
+  ".app-error__card",
+].join(",");
+
+const setErrorTextWhite = (errorBox: HTMLElement): void => {
+  const elements = [errorBox, ...errorBox.querySelectorAll<HTMLElement>("*")];
+
+  for (const element of elements) {
+    element.style.setProperty("color", "#ffffff", "important");
+    element.style.setProperty(
+      "-webkit-text-fill-color",
+      "#ffffff",
+      "important",
+    );
+  }
+};
+
+const applyErrorTextContrast = (root: ParentNode): void => {
+  const errorBoxes = new Set<HTMLElement>();
+
+  if (root instanceof HTMLElement) {
+    if (root.matches(ERROR_TEXT_SELECTOR)) {
+      errorBoxes.add(root);
+    }
+
+    const containingError = root.closest<HTMLElement>(ERROR_TEXT_SELECTOR);
+    if (containingError) {
+      errorBoxes.add(containingError);
+    }
+  }
+
+  root
+    .querySelectorAll<HTMLElement>(ERROR_TEXT_SELECTOR)
+    .forEach((errorBox) => {errorBoxes.add(errorBox)});
+
+  errorBoxes.forEach(setErrorTextWhite);
+};
 
 const SunIcon = () => (
   <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
@@ -38,31 +88,83 @@ const getInitialTheme = (): ThemeMode => {
     return "dark";
   }
 
-  const savedTheme = window.localStorage.getItem("theme");
-  if (savedTheme === "light" || savedTheme === "dark") {
-    return savedTheme;
+  try {
+    const savedTheme = window.localStorage.getItem("theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+  } catch {
+    // Restricted storage must not prevent the app from starting.
   }
 
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  return window.matchMedia("(prefers-color-scheme: light)").matches
+    ? "light"
+    : "dark";
 };
 
 const App: React.FC = () => {
   const location = useLocation();
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+  usePageTracking();
+  useRouteMetadata();
+  const isHomeRoute = location.pathname === "/";
   const isChatRoute = location.pathname.startsWith("/chat");
   const isAnalysisRoute = location.pathname.startsWith("/analysis");
-  const isWorkspaceRoute = isChatRoute || isAnalysisRoute;
+
+  useEffect(() => {
+    if (isChatRoute) return;
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.querySelector<HTMLElement>(".main-content")?.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  }, [isChatRoute]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
-    window.localStorage.setItem("theme", theme);
+    try {
+      window.localStorage.setItem("theme", theme);
+    } catch {
+      // Keep the in-memory theme when storage is blocked or unavailable.
+    }
 
-    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    const themeColor = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
     if (themeColor) {
       themeColor.content = theme === "dark" ? "#0e1322" : "#f8fafc";
     }
   }, [theme]);
+
+  useEffect(() => {
+    applyErrorTextContrast(document);
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.target instanceof HTMLElement) {
+          applyErrorTextContrast(mutation.target);
+        }
+
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement) {
+            applyErrorTextContrast(node);
+          }
+        });
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "role"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const toggleTheme = () => {
     setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
@@ -70,23 +172,29 @@ const App: React.FC = () => {
 
   return (
     <div
-      className={`app-wrapper ${isChatRoute ? "app-wrapper--chat" : ""} ${
-        isAnalysisRoute ? "app-wrapper--analysis" : ""
-      }`}
+      className={`app-wrapper ${isHomeRoute ? "app-wrapper--home" : ""} ${
+        isChatRoute ? "app-wrapper--chat" : ""
+      } ${isAnalysisRoute ? "app-wrapper--analysis" : ""}`}
     >
       <header className="site-header">
         <div className="header-left">
-          <div className="logo-mark" aria-hidden>
+          <div className="logo-mark" aria-hidden="true">
             <svg
               width="36"
               height="36"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              role="img"
-              aria-label="FabricAI logo"
+              focusable="false"
             >
-              <rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="#2F6BFF" />
+              <rect
+                x="0.5"
+                y="0.5"
+                width="23"
+                height="23"
+                rx="6"
+                fill="#2F6BFF"
+              />
               <path
                 d="M7 12c2 2 6 2 8 0"
                 stroke="white"
@@ -105,7 +213,7 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="header-center">
-          <NavBar />
+          <NavBar theme={theme} onToggleTheme={toggleTheme} />
         </div>
         <div className="header-right action">
           <button
@@ -133,10 +241,12 @@ const App: React.FC = () => {
       </header>
 
       <main className="main-content">
-        <Routing />
+        <AppErrorBoundary resetKey={location.key}>
+          <Routing />
+        </AppErrorBoundary>
       </main>
 
-      {!isWorkspaceRoute && <Footer />}
+      {!isChatRoute && <Footer />}
     </div>
   );
 };

@@ -34,8 +34,13 @@ export default defineConfig({
       }
     }
   },
+  esbuild: {
+    // Keep diagnostics during development, but do not leak chat/API payloads
+    // or debugger statements in production bundles.
+    drop: ["console", "debugger"],
+  },
   build: {
-    chunkSizeWarningLimit: 2000
+    chunkSizeWarningLimit: 500,
   },
   preview: {
     allowedHosts: ["pro.threadzip.com"],

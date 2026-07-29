@@ -43,33 +43,63 @@
   --tz-dropzone-hover-bg: rgba(27, 34, 48, 0.78);
   --tz-upload-panel-bg: rgba(23, 31, 51, 0.94);
   --tz-lightbox-bg: rgba(8, 11, 20, 0.86);
-  --reader-page-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
-  --reader-title-gradient: linear-gradient(135deg, #fff 0%, #aaa 100%);
-  --reader-muted: #888;
-  --reader-text: #fff;
-  --reader-text-soft: #aaa;
-  --reader-tile-bg: linear-gradient(135deg, rgba(255, 107, 53, 0.06) 0%, rgba(247, 147, 30, 0.03) 100%);
-  --reader-tile-hover-bg: linear-gradient(135deg, rgba(255, 107, 53, 0.12) 0%, rgba(247, 147, 30, 0.08) 100%);
-  --reader-tile-border: rgba(255, 107, 53, 0.15);
-  --reader-tile-border-hover: rgba(255, 107, 53, 0.5);
-  --reader-tile-glow: radial-gradient(circle at 50% 50%, rgba(255, 107, 53, 0.12), transparent 70%);
-  --reader-tile-hover-shadow: 0 32px 80px rgba(255, 107, 53, 0.3);
-  --document-reader-page-bg: var(--reader-page-bg);
-  --document-reader-title-gradient: var(--reader-title-gradient);
-  --document-reader-text: #fff;
-  --document-reader-muted: #888;
-  --document-reader-muted-strong: #999;
-  --document-reader-surface: #1a1a1a;
-  --document-reader-surface-soft: rgba(255, 255, 255, 0.05);
-  --document-reader-surface-subtle: rgba(255, 255, 255, 0.03);
-  --document-reader-surface-faint: rgba(255, 255, 255, 0.02);
-  --document-reader-border: rgba(255, 255, 255, 0.1);
-  --document-reader-border-soft: rgba(255, 255, 255, 0.05);
-  --document-reader-card-bg: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
-  --document-reader-crop-bg: #000;
-  --document-reader-modal-bg: #1a1a1a;
-  --document-reader-modal-overlay: rgba(0, 0, 0, 0.95);
-  --document-reader-preview-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --tz-ui-page: var(--tz-app-bg);
+  --tz-ui-surface: rgba(15, 23, 42, 0.78);
+  --tz-ui-surface-raised: rgba(23, 31, 51, 0.96);
+  --tz-ui-surface-subtle: rgba(30, 41, 59, 0.72);
+  --tz-ui-control-bg: rgba(30, 41, 59, 0.96);
+  --tz-ui-control-hover-bg: rgba(51, 65, 85, 0.98);
+  --tz-ui-text: #f8fafc;
+  --tz-ui-text-soft: #e2e8f0;
+  --tz-ui-text-muted: #cbd5e1;
+  --tz-ui-text-faint: #94a3b8;
+  --tz-ui-border: rgba(226, 232, 240, 0.22);
+  --tz-ui-border-strong: rgba(226, 232, 240, 0.38);
+  --tz-ui-accent: var(--tz-turmeric);
+  --tz-ui-accent-contrast: #171101;
+  --tz-ui-focus-ring: rgba(224, 168, 46, 0.34);
+  --tz-ui-shadow-panel: 0 18px 48px rgba(0, 0, 0, 0.28);
+  /* Reader pages consume the same theme and typography tokens as the rest of the app. */
+  --reader-page-bg: var(--tz-page-bg);
+  --reader-muted: var(--tz-ui-text-muted);
+  --reader-text: var(--tz-ui-text);
+  --reader-text-soft: var(--tz-ui-text-muted);
+  --reader-tile-bg: var(--tz-ui-surface);
+  --reader-tile-hover-bg: var(--tz-ui-surface-raised);
+  --reader-tile-border: var(--tz-ui-border);
+  --reader-tile-border-hover: var(--tz-accent-control-surface, var(--tz-ui-accent));
+  --reader-tile-glow: radial-gradient(circle at 50% 50%, rgba(224, 168, 46, 0.12), transparent 70%);
+  --reader-tile-hover-shadow: var(--tz-ui-shadow-panel);
+  --reader-icon-shadow: drop-shadow(0 8px 24px rgba(224, 168, 46, 0.24));
+  --document-reader-page-bg: var(--tz-page-bg);
+  --document-reader-text: var(--tz-ui-text);
+  --document-reader-muted: var(--tz-ui-text-muted);
+  --document-reader-muted-strong: var(--tz-ui-text-faint);
+  --document-reader-surface: var(--tz-ui-surface-raised);
+  --document-reader-surface-soft: var(--tz-ui-surface-subtle);
+  --document-reader-surface-subtle: rgba(30, 41, 59, 0.72);
+  --document-reader-surface-faint: rgba(30, 41, 59, 0.46);
+  --document-reader-border: var(--tz-ui-border);
+  --document-reader-border-soft: rgba(226, 232, 240, 0.14);
+  --document-reader-card-bg: var(--tz-ui-surface-raised);
+  --document-reader-crop-bg: var(--tz-ink-3);
+  --document-reader-modal-bg: var(--tz-ui-surface-raised);
+  --document-reader-modal-overlay: var(--tz-lightbox-bg);
+  --document-reader-preview-shadow: var(--tz-ui-shadow-panel);
+  --document-reader-accent: var(--tz-accent-control-surface, var(--tz-ui-accent));
+  --document-reader-accent-hover: var(--tz-accent-control-surface-hover, var(--tz-turmeric-soft));
+  --document-reader-accent-contrast: var(--tz-accent-control-foreground, #111827);
+  --document-reader-accent-soft: rgba(224, 168, 46, 0.12);
+  --document-reader-accent-border: rgba(224, 168, 46, 0.34);
+  --document-reader-accent-border-soft: rgba(224, 168, 46, 0.20);
+  --document-reader-accent-muted: rgba(240, 196, 99, 0.72);
+  --document-reader-accent-shadow: 0 12px 36px rgba(224, 168, 46, 0.24);
+  --document-reader-primary-bg: linear-gradient(135deg, var(--document-reader-accent) 0%, var(--document-reader-accent-hover) 100%);
+  --document-reader-spinner-track: rgba(17, 24, 39, 0.24);
+  --document-reader-spinner-head: #111827;
+  --document-reader-danger-text: #fecaca;
+  --document-reader-danger-bg: rgba(185, 75, 54, 0.14);
+  --document-reader-danger-border: rgba(208, 92, 69, 0.42);
 }
 
 :root[data-theme="dark"] {
@@ -111,33 +141,62 @@
   --tz-dropzone-hover-bg: rgba(241, 245, 249, 0.96);
   --tz-upload-panel-bg: rgba(255, 255, 255, 0.90);
   --tz-lightbox-bg: rgba(17, 24, 39, 0.54);
-  --reader-page-bg: linear-gradient(135deg, #f8fafc 0%, #eef4fb 50%, #ffffff 100%);
-  --reader-title-gradient: linear-gradient(135deg, #111827 0%, #365ea8 100%);
-  --reader-muted: #4b5563;
-  --reader-text: #111827;
-  --reader-text-soft: #4b5563;
-  --reader-tile-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(241, 245, 249, 0.86) 100%);
-  --reader-tile-hover-bg: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(231, 238, 247, 0.98) 100%);
-  --reader-tile-border: rgba(54, 94, 168, 0.18);
-  --reader-tile-border-hover: rgba(54, 94, 168, 0.42);
-  --reader-tile-glow: radial-gradient(circle at 50% 50%, rgba(54, 94, 168, 0.12), transparent 70%);
-  --reader-tile-hover-shadow: 0 28px 70px rgba(31, 41, 55, 0.12);
-  --document-reader-page-bg: var(--reader-page-bg);
-  --document-reader-title-gradient: var(--reader-title-gradient);
-  --document-reader-text: #111827;
-  --document-reader-muted: #4b5563;
-  --document-reader-muted-strong: #64748b;
-  --document-reader-surface: #ffffff;
-  --document-reader-surface-soft: rgba(37, 99, 235, 0.07);
-  --document-reader-surface-subtle: rgba(37, 99, 235, 0.05);
-  --document-reader-surface-faint: rgba(37, 99, 235, 0.035);
-  --document-reader-border: rgba(37, 99, 235, 0.14);
-  --document-reader-border-soft: rgba(37, 99, 235, 0.10);
-  --document-reader-card-bg: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-  --document-reader-crop-bg: #eef4fb;
-  --document-reader-modal-bg: #ffffff;
-  --document-reader-modal-overlay: rgba(17, 24, 39, 0.58);
-  --document-reader-preview-shadow: 0 20px 54px rgba(31, 41, 55, 0.14);
+  --tz-ui-page: var(--tz-app-bg);
+  --tz-ui-surface: rgba(255, 255, 255, 0.82);
+  --tz-ui-surface-raised: rgba(255, 255, 255, 0.96);
+  --tz-ui-surface-subtle: rgba(241, 245, 249, 0.86);
+  --tz-ui-control-bg: rgba(255, 255, 255, 0.96);
+  --tz-ui-control-hover-bg: #edf2f8;
+  --tz-ui-text: #0f172a;
+  --tz-ui-text-soft: #1f2937;
+  --tz-ui-text-muted: #475569;
+  --tz-ui-text-faint: #64748b;
+  --tz-ui-border: rgba(15, 23, 42, 0.14);
+  --tz-ui-border-strong: rgba(15, 23, 42, 0.24);
+  --tz-ui-accent: var(--tz-turmeric);
+  --tz-ui-accent-contrast: #171101;
+  --tz-ui-focus-ring: rgba(183, 121, 31, 0.28);
+  --tz-ui-shadow-panel: 0 18px 44px rgba(31, 41, 55, 0.12);
+  --reader-page-bg: var(--tz-page-bg);
+  --reader-muted: var(--tz-ui-text-muted);
+  --reader-text: var(--tz-ui-text);
+  --reader-text-soft: var(--tz-ui-text-muted);
+  --reader-tile-bg: var(--tz-ui-surface);
+  --reader-tile-hover-bg: var(--tz-ui-surface-raised);
+  --reader-tile-border: var(--tz-ui-border);
+  --reader-tile-border-hover: var(--tz-accent-control-surface, var(--tz-ui-accent));
+  --reader-tile-glow: radial-gradient(circle at 50% 50%, rgba(138, 79, 8, 0.10), transparent 70%);
+  --reader-tile-hover-shadow: var(--tz-ui-shadow-panel);
+  --reader-icon-shadow: drop-shadow(0 8px 24px rgba(138, 79, 8, 0.18));
+  --document-reader-page-bg: var(--tz-page-bg);
+  --document-reader-text: var(--tz-ui-text);
+  --document-reader-muted: var(--tz-ui-text-muted);
+  --document-reader-muted-strong: var(--tz-ui-text-faint);
+  --document-reader-surface: var(--tz-ui-surface-raised);
+  --document-reader-surface-soft: var(--tz-ui-surface-subtle);
+  --document-reader-surface-subtle: rgba(241, 245, 249, 0.86);
+  --document-reader-surface-faint: rgba(241, 245, 249, 0.62);
+  --document-reader-border: var(--tz-ui-border);
+  --document-reader-border-soft: rgba(15, 23, 42, 0.10);
+  --document-reader-card-bg: var(--tz-ui-surface-raised);
+  --document-reader-crop-bg: var(--tz-panel-2);
+  --document-reader-modal-bg: var(--tz-ui-surface-raised);
+  --document-reader-modal-overlay: var(--tz-lightbox-bg);
+  --document-reader-preview-shadow: var(--tz-ui-shadow-panel);
+  --document-reader-accent: var(--tz-accent-control-surface, var(--tz-ui-accent));
+  --document-reader-accent-hover: var(--tz-accent-control-surface-hover, var(--tz-turmeric-soft));
+  --document-reader-accent-contrast: var(--tz-accent-control-foreground, #ffffff);
+  --document-reader-accent-soft: rgba(138, 79, 8, 0.10);
+  --document-reader-accent-border: rgba(138, 79, 8, 0.30);
+  --document-reader-accent-border-soft: rgba(138, 79, 8, 0.18);
+  --document-reader-accent-muted: rgba(138, 79, 8, 0.72);
+  --document-reader-accent-shadow: 0 12px 36px rgba(138, 79, 8, 0.18);
+  --document-reader-primary-bg: linear-gradient(135deg, var(--document-reader-accent) 0%, var(--document-reader-accent-hover) 100%);
+  --document-reader-spinner-track: rgba(255, 255, 255, 0.35);
+  --document-reader-spinner-head: #ffffff;
+  --document-reader-danger-text: #991b1b;
+  --document-reader-danger-bg: rgba(254, 226, 226, 0.95);
+  --document-reader-danger-border: rgba(220, 38, 38, 0.35);
 }
 
 /* ============================================================
@@ -2286,4 +2345,54 @@ footer a:hover,
 .grid-count-inline,
 .lb-caption {
   color: var(--tz-ui-text-muted) ;
+}
+
+/* ============================================================
+   Senior QA visual-system hardening: shared tokens and states
+   ============================================================ */
+:root {
+  --tz-action-yellow: #e0a82e;
+  --tz-action-yellow-hover: #f0c463;
+  --tz-action-yellow-text: #171101;
+  --tz-danger: #dc2626;
+  --tz-danger-hover: #b91c1c;
+  --tz-danger-text: #ffffff;
+  --tz-focus: 0 0 0 3px var(--tz-ui-focus-ring, rgba(224, 168, 46, 0.34));
+  --tz-control-height: 44px;
+  --tz-control-radius: 999px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--tz-ui-accent, var(--tz-action-yellow));
+  outline-offset: 3px;
+  box-shadow: var(--tz-focus);
+}
+
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn,
+button {
+  text-shadow: none;
+}
+
+.btn:disabled,
+button:disabled {
+  opacity: 0.68;
+  cursor: not-allowed;
+}
+
+.site-header {
+  min-height: 64px;
+}
+
+.main-content {
+  min-height: calc(100dvh - 64px);
 }

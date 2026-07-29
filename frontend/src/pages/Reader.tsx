@@ -4,10 +4,12 @@ import type { CSSProperties } from "react";
 
 const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   wrapper: {
-    minHeight: "100vh",
+    minHeight: 0,
+    width: "100%",
+    flex: "1 1 auto",
     background: "var(--reader-page-bg)",
-    padding: "60px 20px",
-    fontFamily: "'DM Sans', -apple-system, sans-serif",
+    padding: "clamp(12px, 2vh, 20px) 20px 48px",
+    fontFamily: "var(--tz-font-body)",
   },
   container: {
     maxWidth: 1200,
@@ -15,16 +17,14 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   },
   header: {
     textAlign: "center",
-    marginBottom: 80,
+    marginBottom: 40,
   },
   title: {
-    fontFamily: "'Instrument Serif', serif",
-    fontSize: 56,
-    fontWeight: 400,
+    fontFamily: "var(--tz-font-display)",
+    fontSize: "clamp(2.25rem, 6vw, 3.5rem)",
+    fontWeight: 700,
     margin: "0 0 16px 0",
-    background: "var(--reader-title-gradient)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "var(--reader-text)",
     letterSpacing: "-0.02em",
   },
   subtitle: {
@@ -34,7 +34,6 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   },
   tileGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
     gap: 40,
     maxWidth: 1000,
     margin: "0 auto",
@@ -54,6 +53,9 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 320,
+    width: "100%",
+    font: "inherit",
+    color: "inherit",
   },
 
   tileGlow: {
@@ -79,7 +81,7 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
   tileIcon: {
     fontSize: 88,
     marginBottom: 28,
-    filter: "drop-shadow(0 8px 24px rgba(255, 107, 53, 0.4))",
+    filter: "var(--reader-icon-shadow)",
     transition: "all 0.4s ease",
   },
 
@@ -97,12 +99,6 @@ const styles: Record<string, CSSProperties | Record<string, CSSProperties>> = {
     fontWeight: 500,
   },
 
-  "@media (max-width: 768px)": {
-    tileGrid: {
-      gridTemplateColumns: "1fr",
-      gap: 24,
-    },
-  },
 };
 
 const Reader = () => {
@@ -132,41 +128,83 @@ const Reader = () => {
   });
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.container}>
-        <div style={styles.header}>
+    <div className="reader-landing" style={styles.wrapper}>
+      <div className="reader-landing__container" style={styles.container}>
+        <div className="reader-landing__header" style={styles.header}>
           <h1 style={styles.title}>Select Document Type</h1>
-          <p style={styles.subtitle}>Choose a card to scan and extract information</p>
+          <p style={styles.subtitle}>
+            Choose a card to scan and extract information
+          </p>
         </div>
 
-        <div style={styles.tileGrid}>
-          <div
+        <div className="reader-landing__grid" style={styles.tileGrid}>
+          <button
+            type="button"
+            className="reader-landing__tile"
             style={getTileStyle("pan")}
             onClick={() => navigate("/reader/pan")}
             onMouseEnter={() => setHoveredTile("pan")}
             onMouseLeave={() => setHoveredTile(null)}
+            onFocus={() => setHoveredTile("pan")}
+            onBlur={() => setHoveredTile(null)}
+            aria-label="Open PAN card reader"
           >
             <div style={getGlowStyle("pan")} />
             <div style={styles.tileContent}>
-              <div style={getIconStyle("pan")}>🪪</div>
-              <div style={styles.tileTitle}>PAN Card</div>
-              <div style={styles.tileDesc}>Income Tax Department</div>
+              <div
+                className="reader-landing__tile-icon"
+                style={getIconStyle("pan")}
+              >
+                🪪
+              </div>
+              <div
+                className="reader-landing__tile-title"
+                style={styles.tileTitle}
+              >
+                PAN Card
+              </div>
+              <div
+                className="reader-landing__tile-description"
+                style={styles.tileDesc}
+              >
+                Income Tax Department
+              </div>
             </div>
-          </div>
+          </button>
 
-          <div
+          <button
+            type="button"
+            className="reader-landing__tile"
             style={getTileStyle("aadhaar")}
-            onClick={() => navigate("/reader/adhaar")}
+            onClick={() => navigate("/reader/aadhaar")}
             onMouseEnter={() => setHoveredTile("aadhaar")}
             onMouseLeave={() => setHoveredTile(null)}
+            onFocus={() => setHoveredTile("aadhaar")}
+            onBlur={() => setHoveredTile(null)}
+            aria-label="Open Aadhaar card reader"
           >
             <div style={getGlowStyle("aadhaar")} />
             <div style={styles.tileContent}>
-              <div style={getIconStyle("aadhaar")}>🆔</div>
-              <div style={styles.tileTitle}>Aadhaar Card</div>
-              <div style={styles.tileDesc}>UIDAI Identity</div>
+              <div
+                className="reader-landing__tile-icon"
+                style={getIconStyle("aadhaar")}
+              >
+                🆔
+              </div>
+              <div
+                className="reader-landing__tile-title"
+                style={styles.tileTitle}
+              >
+                Aadhaar Card
+              </div>
+              <div
+                className="reader-landing__tile-description"
+                style={styles.tileDesc}
+              >
+                UIDAI Identity
+              </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

@@ -30,7 +30,7 @@ def _make_fetch_url(key: str) -> str:
     """
     Return a URL the SigLIP/OpenCLIP embedder can actually download.
 
-    The CDN (cdn.threadzip.com) returns 403 for unauthenticated requests, so
+    The CDN (assets.threadzip.com) returns 403 for unauthenticated requests, so
     we generate a short-lived pre-signed S3 URL instead.  Falls back to the
     CDN URL on signing failure (will still fail with 403, but at least you get
     a clear error message rather than a silent hang).
@@ -58,7 +58,7 @@ def _to_cdn_url(uri: str) -> str:
       virtual-hosted  https://<bucket>.s3.<region>.amazonaws.com/<key>?X-Amz-…
       path-style      https://s3[.<region>].amazonaws.com/<bucket>/<key>?X-Amz-…
       global          https://s3.amazonaws.com/<bucket>/<key>?X-Amz-…
-      already CDN     https://cdn.threadzip.com/<key>                   (no-op)
+      already CDN     https://assets.threadzip.com/<key>                   (no-op)
       local path      /abs/or/relative/path                             (no-op)
     """
     parsed = urlparse(uri)

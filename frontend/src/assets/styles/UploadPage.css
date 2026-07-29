@@ -493,3 +493,141 @@
   background: #dc2626;
   border-color: rgba(127, 29, 29, 0.22);
 }
+
+/* v39: post-selection Upload layout on narrow phones. Keep every preview,
+   audio control, file-name field and action inside the card without changing
+   upload/record/submit behavior. Tablet and desktop layouts are untouched. */
+@media (max-width: 480px) {
+  .upload-page {
+    width: 100%;
+    min-height: 0;
+    padding: 18px 10px 30px;
+  }
+
+  .upload-page .upload-card {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 16px 12px;
+    border-radius: 16px;
+    overflow: visible;
+  }
+
+  .upload-page .upload-header {
+    margin-bottom: 16px;
+  }
+
+  .upload-page .upload-header h2 {
+    font-size: clamp(20px, 6.4vw, 23px);
+  }
+
+  .upload-page .sub {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .upload-page .grid,
+  .upload-page .preview-col,
+  .upload-page .action-col,
+  .upload-page .audio-card,
+  .upload-page .audio-clear,
+  .upload-page .audio-player,
+  .upload-page .recording-area,
+  .upload-page .name-field,
+  .upload-page .name-field > div,
+  .upload-page .submit-wrapper {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .upload-page .grid {
+    gap: 16px;
+  }
+
+  .upload-page .dropzone,
+  .upload-page .image-preview-wrap {
+    height: clamp(180px, 48vw, 210px);
+  }
+
+  .upload-page .image-preview-plain {
+    object-fit: contain;
+  }
+
+  .upload-page .rec-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+
+  .upload-page .rec-controls .btn {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+    white-space: normal;
+  }
+
+  .upload-page .audio-clear {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .upload-page .audio-player {
+    margin-top: 0;
+  }
+
+  .upload-page .audio-player audio {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .upload-page .img-footer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .upload-page .audio-clear .chip.chip-clear {
+    width: min(100%, 190px);
+    white-space: normal;
+  }
+
+  .upload-page .name-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    margin-top: 18px;
+    gap: 10px;
+  }
+
+  .upload-page .name-label {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.3;
+    text-align: left;
+  }
+
+  .upload-page input[type="text"] {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .upload-page .btn.submit,
+  .upload-page .cancel {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding-inline: 14px;
+  }
+}

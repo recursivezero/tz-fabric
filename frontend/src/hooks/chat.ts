@@ -7,6 +7,8 @@ import {
 } from "../services/chat_api";
 import { FULL_API_URL } from "../constants";
 import { extractFilenameFromText } from "../utils/extractFilenameFromText";
+import { fetchWithTimeout } from "../utils/http";
+import { logger } from "../utils/logger";
 
 type Status = "idle" | "sending" | "error" | "validating";
 
@@ -84,13 +86,10 @@ const shouldOfferMoreForQuestion = (content: unknown): boolean => {
   const isFabricQuestion = /\bfabricai\b/.test(normalized);
   const hasHowIntent = /\bhow\b/.test(normalized);
   const hasUseIntent =
-    /\b(use|using|work with|start|begin|access|operate)\b/.test(
-      normalized,
-    ) || /\bget started\b/.test(normalized);
+    /\b(use|using|work with|start|begin|access|operate)\b/.test(normalized) ||
+    /\bget started\b/.test(normalized);
   const hasHelpIntent =
-    /\b(guide|tutorial|help|steps|instructions|walkthrough)\b/.test(
-      normalized,
-    );
+    /\b(guide|tutorial|help|steps|instructions|walkthrough)\b/.test(normalized);
 
   return isFabricQuestion && ((hasHowIntent && hasUseIntent) || hasHelpIntent);
 };
@@ -238,26 +237,23 @@ export default function useChat() {
         form.append("image", file);
         const tForm = performance.now();
 
-        const ac = new AbortController();
-        const timeout = setTimeout(() => ac.abort(), 30000);
-
-        const resp = await fetch(`${FULL_API_URL}/validate-image`, {
-          method: "POST",
-          body: form,
-          signal: ac.signal,
-        });
-        clearTimeout(timeout);
+        const resp = await fetchWithTimeout(
+          `${FULL_API_URL}/validate-image`,
+          {
+            method: "POST",
+            body: form,
+          },
+          30_000,
+        );
         const tResp = performance.now();
 
         if (!resp.ok) {
           const txt = await resp.text().catch(() => "");
-          console.log(
-            "[timing] form:",
-            (tForm - t0).toFixed(0),
-            "ms | request:",
-            (tResp - tForm).toFixed(0),
-            "ms",
-          );
+          logger.debug("Image validation request timing", {
+            formMs: Math.round(tForm - t0),
+            requestMs: Math.round(tResp - tForm),
+            status: resp.status,
+          });
           return {
             ok: false as const,
             reason: `Validation service error: ${resp.status} ${txt}`,
@@ -267,15 +263,12 @@ export default function useChat() {
         const json: unknown = await resp.json().catch(() => ({}));
         const tJson = performance.now();
 
-        console.log(
-          "[timing] form:",
-          (tForm - t0).toFixed(0),
-          "ms | request:",
-          (tResp - tForm).toFixed(0),
-          "ms | json:",
-          (tJson - tResp).toFixed(0),
-          "ms",
-        );
+        logger.debug("Image validation request timing", {
+          formMs: Math.round(tForm - t0),
+          requestMs: Math.round(tResp - tForm),
+          parseMs: Math.round(tJson - tResp),
+          status: resp.status,
+        });
 
         const valid =
           typeof json === "object" &&
@@ -290,7 +283,7 @@ export default function useChat() {
           reason: "Image did not pass fabric validation.",
         };
       } catch (err: unknown) {
-        console.error("validateImageFile error:", err);
+        logger.error("Image validation request failed", err);
         return {
           ok: false as const,
           reason: errorMsg(err, "Validation request failed"),
@@ -305,7 +298,7 @@ export default function useChat() {
       if (uploadedPreviewUrl) {
         try {
           URL.revokeObjectURL(uploadedPreviewUrl);
-        } catch {}
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
       }
       setStatus("validating");
       setError("");
@@ -328,7 +321,7 @@ export default function useChat() {
         setError("");
         setPendingAction(null);
       } catch (err: unknown) {
-        console.error("handleImageUpload error:", err);
+        logger.error("Image upload validation failed", err);
         setStatus("idle");
         setError(errorMsg(err, "Failed to upload image for validation."));
       }
@@ -414,8 +407,6 @@ export default function useChat() {
   const handleResponse = useCallback(
     (res: ChatResponse) => {
       const rc = res as RichChatResponse;
-      console.debug("[useChat] handleResponse rc:", rc);
-
       setMessages((prev) => {
         const next = [...prev];
 
@@ -456,7 +447,9 @@ export default function useChat() {
                   return `[tool result: ${Object.keys(obj).join(", ")}]`;
                 }
               } catch (e) {
-                console.warn("Failed to parse JSON from bot message:", e);
+                logger.debug("Bot message was not JSON", {
+                  error: e instanceof Error ? e.message : "Unknown parse error",
+                });
                 // not parseable JSON - try TextContent extraction below
               }
             }
@@ -477,7 +470,9 @@ export default function useChat() {
                   return `[tool result: ${Object.keys(innerObj).join(", ")}]`;
                 }
               } catch (e) {
-                console.warn("Failed to parse JSON from TextContent:", e);
+                logger.debug("TextContent was not JSON", {
+                  error: e instanceof Error ? e.message : "Unknown parse error",
+                });
                 return normalizeLLMText(inner);
               }
             }
@@ -513,7 +508,7 @@ export default function useChat() {
             // otherwise: normal text
             return normalizeLLMText(s);
           } catch (e) {
-            console.error("Error in sanitizeBotString:", e);
+            logger.error("Failed to sanitise assistant response", e);
             return "[tool returned non-displayable result]";
           }
         };
@@ -665,15 +660,15 @@ export default function useChat() {
             return obj.response.response;
           if (typeof obj.text === "string") return obj.text;
           if (typeof obj.message === "string") return obj.message;
-        } catch {}
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
       }
       return raw;
     };
 
     try {
-      createAbort();
+      const signal = createAbort();
       const regenChatRes = await withAbort(
-        chatOnce([...messages, { role: "user", content: instr }]),
+        chatOnce([...messages, { role: "user", content: instr }], { signal }),
       );
       const rc = regenChatRes as RichChatResponse;
 
@@ -705,7 +700,7 @@ export default function useChat() {
       setMessages((prev) => [...prev, { role: "assistant", content: clean }]);
       setCurrentResponse(clean);
     } catch (err) {
-      console.error("[rejectAction error]", err);
+      logger.error("Alternative response request failed", err);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Failed to get a new alternative." },
@@ -722,7 +717,7 @@ export default function useChat() {
         return null;
       }
       try {
-        createAbort();
+        const signal = createAbort();
         setStatus("sending");
         setError("");
 
@@ -732,10 +727,15 @@ export default function useChat() {
         form.append("image", uploadedImageFile);
 
         const upResp = await withAbort(
-          fetch(`${FULL_API_URL}/uploads/tmp_media`, {
-            method: "POST",
-            body: form,
-          }),
+          fetchWithTimeout(
+            `${FULL_API_URL}/uploads/tmp_media`,
+            {
+              method: "POST",
+              body: form,
+              signal,
+            },
+            60_000,
+          ),
         );
 
         if (!upResp.ok) {
@@ -755,11 +755,16 @@ export default function useChat() {
           };
 
           const searchResp = await withAbort(
-            fetch(`${FULL_API_URL}/search`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(args),
-            }),
+            fetchWithTimeout(
+              `${FULL_API_URL}/search`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(args),
+                signal,
+              },
+              60_000,
+            ),
           );
 
           if (!searchResp.ok)
@@ -777,7 +782,7 @@ export default function useChat() {
 
           try {
             localStorage.setItem("mcp_last_search", JSON.stringify(payload));
-          } catch {}
+          } catch { /* Best-effort cleanup or browser storage operation. */ }
 
           const qs = new URLSearchParams({ k: String(payload.k) }).toString();
 
@@ -794,7 +799,10 @@ export default function useChat() {
 
         const searchInstruction = `Search similar images: image_url=${imageUrl} k=${k} min_sim=${min_sim} order=recent require_audio=false`;
         const chatRes = await withAbort(
-          chatOnce([...messages, { role: "user", content: searchInstruction }]),
+          chatOnce(
+            [...messages, { role: "user", content: searchInstruction }],
+            { signal },
+          ),
         );
         const rc = chatRes as RichChatResponse;
 
@@ -812,7 +820,7 @@ export default function useChat() {
 
         try {
           localStorage.setItem("mcp_last_search", JSON.stringify(payload));
-        } catch {}
+        } catch { /* Best-effort cleanup or browser storage operation. */ }
 
         const qs = new URLSearchParams({
           k: String(payload.k),
@@ -830,7 +838,7 @@ export default function useChat() {
         return payload;
       } catch (err) {
         if (!(err instanceof DOMException && err.name === "AbortError")) {
-          console.error("[searchSimilar] error:", err);
+          logger.error("Similar-image search failed", err);
           setError(errorMsg(err, "Search failed"));
         }
         return null;
@@ -872,14 +880,11 @@ export default function useChat() {
       if (!forceApi) setPendingAction(null);
 
       if (status === "sending") {
-        console.warn("[send] early return: status === 'sending'");
+        logger.debug("Send ignored because a request is already in progress");
         return;
       }
       if (!text && !uploadedImageFile && !uploadedAudioFile) {
-        console.warn(
-          "[send] early return: nothing to send (no text or media). raw:",
-          JSON.stringify(raw),
-        );
+        logger.debug("Send ignored because there is no text or media");
         return;
       }
 
@@ -902,7 +907,7 @@ export default function useChat() {
         }
       }
 
-      createAbort();
+      const signal = createAbort();
       setStatus("sending");
       setError("");
 
@@ -932,7 +937,7 @@ export default function useChat() {
               {
                 role: "assistant",
                 content:
-                  "Search did not start (see console). Please try again.",
+                  "Search did not start. Please try again.",
               },
             ]);
             return;
@@ -951,21 +956,16 @@ export default function useChat() {
           }
 
           try {
-            try {
-              const debug: Record<string, unknown> = {};
-              for (const [k, v] of form.entries()) {
-                if (v instanceof File)
-                  debug[k] = { name: v.name, type: v.type, size: v.size };
-                else debug[k] = String(v);
-              }
-              console.log("[UPLOAD DEBUG]", debug);
-            } catch {}
-
             const upResp = await withAbort(
-              fetch(`${FULL_API_URL}/uploads/tmp_media`, {
-                method: "POST",
-                body: form,
-              }),
+              fetchWithTimeout(
+                `${FULL_API_URL}/uploads/tmp_media`,
+                {
+                  method: "POST",
+                  body: form,
+                  signal,
+                },
+                60_000,
+              ),
             );
             if (!upResp.ok) {
               const t = await upResp.text().catch(() => "");
@@ -1016,10 +1016,10 @@ export default function useChat() {
             }
 
             const chatRes = await withAbort(
-              chatOnce([
-                ...messages,
-                { role: "user", content: mediaInstruction },
-              ]),
+              chatOnce(
+                [...messages, { role: "user", content: mediaInstruction }],
+                { signal },
+              ),
             );
 
             const rc = chatRes as RichChatResponse;
@@ -1053,7 +1053,7 @@ export default function useChat() {
             if (abortRef.current) abortRef.current = null;
             return;
           } catch (err: unknown) {
-            console.error("[upload→agent] error:", err);
+            logger.error("Media upload or agent request failed", err);
             setStatus("error");
             setError(errorMsg(err, "Failed to upload/process media."));
           } finally {
@@ -1062,7 +1062,10 @@ export default function useChat() {
         }
 
         const chatRes = await withAbort(
-          chatOnce([...messages, { role: "user", content: text }]),
+          chatOnce([...messages, { role: "user", content: text }], {
+            retryTransient: true,
+            signal,
+          }),
         );
         handleResponse(chatRes);
         setStatus("idle");
@@ -1099,7 +1102,7 @@ export default function useChat() {
   const onAssistantRendered = useCallback(
     (lastAssistant: Message) => {
       try {
-        if (!lastAssistant || !lastAssistant.content) return;
+        if (!lastAssistant?.content) return;
         const content = String(lastAssistant.content).trim();
 
         // If we have a pending ask-more token and the rendered content matches it,
@@ -1132,7 +1135,7 @@ export default function useChat() {
           setMorePrompt({ question: String(lastUser), prompt: content });
         }
       } catch (e) {
-        console.error("onAssistantRendered error", e);
+        logger.error("Assistant follow-up detection failed", e);
       }
     },
     [messages, morePrompt],
@@ -1172,11 +1175,11 @@ export default function useChat() {
 
   const retryLast = useCallback(async () => {
     if (status === "sending" || messages.length === 0) return;
-    createAbort();
+    const signal = createAbort();
     setStatus("sending");
     setError("");
     try {
-      const res = await withAbort(chatOnce(messages));
+      const res = await withAbort(chatOnce(messages, { signal }));
       handleResponse(res);
       setStatus("idle");
     } catch (e: unknown) {
@@ -1196,7 +1199,7 @@ export default function useChat() {
     if (abortRef.current) {
       try {
         abortRef.current.abort();
-      } catch {}
+      } catch { /* Best-effort cleanup or browser storage operation. */ }
       abortRef.current = null;
     }
     setMessages([]);

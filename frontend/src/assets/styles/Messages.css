@@ -650,3 +650,46 @@
 :root[data-theme="light"] .message-wrapper .quick-replies-prompt {
   color: #334155;
 }
+
+/* QA follow-up: keep "Want to know more?" visible in dark theme. */
+:root[data-theme="dark"] .message-wrapper .inline-quick-replies {
+  background: rgba(15, 23, 42, 0.84);
+  border: 1px solid rgba(226, 232, 240, 0.18);
+}
+
+:root[data-theme="dark"] .message-wrapper .quick-replies-prompt {
+  color: #f8fafc;
+  opacity: 1;
+  text-shadow: none;
+}
+
+/* Senior QA final: inline quick reply prompt and buttons must be readable, not decorative noise. */
+.message-wrapper .inline-quick-replies {
+  background: var(--tz-ui-surface-raised, rgba(15, 23, 42, 0.88));
+  border: 1px solid var(--tz-ui-border, rgba(226, 232, 240, 0.20));
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+}
+
+.message-wrapper .quick-replies-prompt {
+  color: var(--tz-ui-text, #f8fafc);
+  opacity: 1;
+}
+
+.message-wrapper .inline-quick-replies .chip {
+  min-height: 34px;
+  border-radius: 999px;
+  font-weight: 850;
+  color: var(--tz-action-yellow-text, #171101);
+  background: linear-gradient(135deg, var(--tz-action-yellow, #e0a82e), var(--tz-action-yellow-hover, #f0c463));
+  border: 1px solid rgba(180, 83, 9, 0.30);
+}
+
+:root[data-theme="light"] .message-wrapper .inline-quick-replies {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="light"] .message-wrapper .quick-replies-prompt {
+  color: #0f172a;
+}
