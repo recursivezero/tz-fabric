@@ -103,9 +103,7 @@ def get_lancedb_table_details(
     table_name: str,
     service: LanceDBAdminService = Depends(get_lancedb_admin_service),
 ) -> LanceTableDetailsResponse:
-    return _run_admin_operation(
-        lambda: service.get_table_details(table_name)
-    )
+    return _run_admin_operation(lambda: service.get_table_details(table_name))
 
 
 @router.get("/{table_name}/rows", response_model=LanceRowsResponse)
@@ -136,6 +134,4 @@ def get_lancedb_row(
     row_id: int = Path(ge=0),
     service: LanceDBAdminService = Depends(get_lancedb_admin_service),
 ) -> LanceRowDetailResponse:
-    return _run_admin_operation(
-        lambda: service.get_row(table_name, row_id)
-    )
+    return _run_admin_operation(lambda: service.get_row(table_name, row_id))

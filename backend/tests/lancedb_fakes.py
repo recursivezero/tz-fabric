@@ -62,14 +62,18 @@ class FakeBatch:
 
 
 class FakeQuery:
-    def __init__(self, table: "FakeTable", rows: list[dict[str, Any]] | None = None) -> None:
+    def __init__(
+        self,
+        table: "FakeTable",
+        rows: list[dict[str, Any]] | None = None,
+    ) -> None:
         self.table = table
         self.rows = list(table.rows if rows is None else rows)
         self.columns: list[str] | None = None
         self.include_row_id = False
         self.offset_value = 0
         self.limit_value: int | None = None
-        self.ordering: list[tuple[str, str]] | None = None
+        self.ordering: list[Any] | None = None
 
     def select(self, columns: list[str]) -> "FakeQuery":
         self.columns = list(columns)
@@ -85,17 +89,28 @@ class FakeQuery:
         prefix = "tag = '"
         if not expression.startswith(prefix) or not expression.endswith("'"):
             raise ValueError("unsafe expression")
+
         value = expression[len(prefix) : -1].replace("''", "'")
         self.rows = [row for row in self.rows if row.get("tag") == value]
         self.table.last_filter = expression
         return self
 
-    def order_by(self, ordering: list[tuple[str, str]]) -> "FakeQuery":
+    def order_by(self, ordering: list[Any]) -> "FakeQuery":
         self.ordering = ordering
-        self.table.last_ordering = ordering
-        column, direction = ordering[0]
+
+        order = ordering[0]
+        if isinstance(order, tuple):
+            column, direction = order
+        else:
+            column = str(order.column_name)
+            direction = "asc" if bool(order.ascending) else "desc"
+
+        self.table.last_ordering = [(column, direction)]
         self.rows.sort(
-            key=lambda row: (row.get(column) is None, row.get(column)),
+            key=lambda row: (
+                row.get(column) is None,
+                row.get(column),
+            ),
             reverse=direction == "desc",
         )
         return self
@@ -155,32 +170,36 @@ class FakeTakeQuery:
 
 class FakeTable:
     def __init__(self, rows: list[dict[str, Any]] | None = None) -> None:
-        self.rows = [
-            {
-                "_rowid": 0,
-                "vector": [0.1, 0.2, 0.3, 0.4],
-                "image_uri": "https://assets.threadzip.com/images/a.webp",
-                "tag": "product",
-                "hash": "hash-a",
-                "mtime": 10.0,
-            },
-            {
-                "_rowid": 1,
-                "vector": [0.5, 0.6, 0.7, 0.8],
-                "image_uri": "https://assets.threadzip.com/images/b.webp",
-                "tag": "embroidery",
-                "hash": "hash-b",
-                "mtime": 30.0,
-            },
-            {
-                "_rowid": 2,
-                "vector": [0.9, 1.0, 1.1, 1.2],
-                "image_uri": "https://assets.threadzip.com/images/c.webp",
-                "tag": "product",
-                "hash": "hash-c",
-                "mtime": 20.0,
-            },
-        ] if rows is None else rows
+        self.rows = (
+            [
+                {
+                    "_rowid": 0,
+                    "vector": [0.1, 0.2, 0.3, 0.4],
+                    "image_uri": "https://assets.threadzip.com/images/a.webp",
+                    "tag": "product",
+                    "hash": "hash-a",
+                    "mtime": 10.0,
+                },
+                {
+                    "_rowid": 1,
+                    "vector": [0.5, 0.6, 0.7, 0.8],
+                    "image_uri": "https://assets.threadzip.com/images/b.webp",
+                    "tag": "embroidery",
+                    "hash": "hash-b",
+                    "mtime": 30.0,
+                },
+                {
+                    "_rowid": 2,
+                    "vector": [0.9, 1.0, 1.1, 1.2],
+                    "image_uri": "https://assets.threadzip.com/images/c.webp",
+                    "tag": "product",
+                    "hash": "hash-c",
+                    "mtime": 20.0,
+                },
+            ]
+            if rows is None
+            else rows
+        )
         self.schema = FakeSchema()
         self.embedding_functions = {"vector": FakeEmbeddingConfig()}
         self.last_selected_columns: list[str] | None = None

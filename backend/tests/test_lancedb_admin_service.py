@@ -40,12 +40,15 @@ class LanceDBAdminServiceTests(unittest.TestCase):
         with self.assertRaises(LanceDBValidationError):
             self.service.get_table_details("../../database")
 
-    def test_returns_schema_redacted_metadata_embedding_and_vector_dimension(self) -> None:
+    def test_returns_schema_redacted_metadata_embedding_and_vector_dimension(
+        self,
+    ) -> None:
         details = self.service.get_table_details("tz-fabric-table")
         self.assertEqual(details.row_count, 3)
-        self.assertEqual([field.name for field in details.table_schema], [
-            "vector", "image_uri", "tag", "hash", "mtime"
-        ])
+        self.assertEqual(
+            [field.name for field in details.table_schema],
+            ["vector", "image_uri", "tag", "hash", "mtime"],
+        )
         self.assertTrue(details.table_schema[0].is_vector)
         self.assertEqual(details.vector_columns[0].dimension, 4)
         self.assertEqual(details.embedding_functions[0].name, "siglip")
@@ -165,20 +168,24 @@ class LanceDBAdminServiceTests(unittest.TestCase):
                 self.ordering = ordering
                 return self
 
-        lance_module = ModuleType("lance")
-        dataset_module = ModuleType("lance.dataset")
-        dataset_module.ColumnOrdering = StubColumnOrdering  # type: ignore[attr-defined]
-        lance_module.dataset = dataset_module  # type: ignore[attr-defined]
+        lancedb_module = ModuleType("lancedb")
+        query_module = ModuleType("lancedb.query")
+        query_module.ColumnOrdering = StubColumnOrdering  # type: ignore[attr-defined]
+        lancedb_module.query = query_module  # type: ignore[attr-defined]
         query = CapturingQuery()
 
         with patch.dict(
             sys.modules,
-            {"lance": lance_module, "lance.dataset": dataset_module},
+            {
+                "lancedb": lancedb_module,
+                "lancedb.query": query_module,
+            },
         ):
             result = self.service._apply_ordering(query, "mtime", "desc")
 
         self.assertIs(result, query)
         self.assertIsNotNone(query.ordering)
+        assert query.ordering is not None
         ordering = query.ordering[0]
         self.assertEqual(ordering.column_name, "mtime")
         self.assertFalse(ordering.ascending)

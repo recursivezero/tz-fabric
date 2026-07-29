@@ -52,9 +52,7 @@ class AdminLanceDBRouteTests(unittest.TestCase):
         self.assertEqual(authorised.headers["pragma"], "no-cache")
 
     def test_all_endpoints_return_expected_contracts(self) -> None:
-        tables = self.client.get(
-            "/api/v1/admin/lancedb/tables", headers=self.headers
-        )
+        tables = self.client.get("/api/v1/admin/lancedb/tables", headers=self.headers)
         self.assertEqual(tables.json()["tables"][0]["name"], "tz-fabric-table")
 
         details = self.client.get(
@@ -93,9 +91,7 @@ class AdminLanceDBRouteTests(unittest.TestCase):
         self.assertEqual(too_large.status_code, 422)
 
     def test_unknown_and_path_injection_table_names_are_safe(self) -> None:
-        unknown = self.client.get(
-            "/api/v1/admin/lancedb/missing", headers=self.headers
-        )
+        unknown = self.client.get("/api/v1/admin/lancedb/missing", headers=self.headers)
         self.assertEqual(unknown.status_code, 404)
         traversal = self.client.get(
             "/api/v1/admin/lancedb/..%2F..%2Fdatabase", headers=self.headers
@@ -104,9 +100,7 @@ class AdminLanceDBRouteTests(unittest.TestCase):
 
     def test_internal_errors_do_not_expose_database_paths(self) -> None:
         self.app.dependency_overrides[get_lancedb_admin_service] = FailingService
-        response = self.client.get(
-            "/api/v1/admin/lancedb/tables", headers=self.headers
-        )
+        response = self.client.get("/api/v1/admin/lancedb/tables", headers=self.headers)
         self.assertEqual(response.status_code, 503)
         self.assertNotIn("/private", response.text)
         self.assertNotIn("database", response.text.lower())

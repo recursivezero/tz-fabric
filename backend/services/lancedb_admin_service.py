@@ -319,7 +319,7 @@ class LanceDBAdminService:
         return LanceTableDetailsResponse(
             name=table_name,
             row_count=row_count,
-            table_schema=schema_fields,
+            schema=schema_fields,
             schema_metadata=self._schema_metadata(schema),
             embedding_functions=self._embedding_functions(table),
             vector_columns=vector_columns,
@@ -342,7 +342,7 @@ class LanceDBAdminService:
     @staticmethod
     def _normalise_sort(
         sort_by: SortColumn | None, sort_order: SortOrder
-    ) -> tuple[str | None, SortOrder]:
+    ) -> tuple[SortColumn | None, SortOrder]:
         if sort_by is not None and sort_by not in _SORTABLE_COLUMNS:
             raise LanceDBValidationError("Invalid sort column.")
         if sort_order not in ("asc", "desc"):
@@ -351,17 +351,12 @@ class LanceDBAdminService:
 
     @staticmethod
     def _apply_ordering(query: Any, sort_by: str, sort_order: SortOrder) -> Any:
-        """Apply Lance's native scalar ordering without importing it at startup."""
+        """Apply LanceDB's native scalar ordering contract."""
 
-        try:
-            from lance.dataset import ColumnOrdering
-        except ImportError:
-            # Test doubles and older compatible query builders commonly accept
-            # the same lightweight ``(column, direction)`` representation.
-            return query.order_by([(sort_by, sort_order)])
+        from lancedb.query import ColumnOrdering
 
         ordering = ColumnOrdering(
-            sort_by,
+            column_name=sort_by,
             ascending=sort_order == "asc",
             nulls_first=False,
         )
@@ -448,14 +443,10 @@ class LanceDBAdminService:
 
         rows = [item[2] for item in heap]
         non_null_rows = [
-            row
-            for row in rows
-            if cls._serialise_value(row.get(sort_by)) is not None
+            row for row in rows if cls._serialise_value(row.get(sort_by)) is not None
         ]
         null_rows = [
-            row
-            for row in rows
-            if cls._serialise_value(row.get(sort_by)) is None
+            row for row in rows if cls._serialise_value(row.get(sort_by)) is None
         ]
         non_null_rows.sort(
             key=lambda row: cls._sort_key(row.get(sort_by)),
@@ -499,7 +490,9 @@ class LanceDBAdminService:
         return vector_columns[0].dimension
 
     @classmethod
-    def _row_summary(cls, row: Mapping[str, Any], vector_length: int) -> LanceRowSummary:
+    def _row_summary(
+        cls, row: Mapping[str, Any], vector_length: int
+    ) -> LanceRowSummary:
         row_id = row.get("_rowid")
         if row_id is None:
             raise LanceDBUnavailable("LanceDB did not return row identifiers.")
@@ -633,9 +626,7 @@ class LanceDBAdminService:
             elif hasattr(query, "to_pylist"):
                 rows = list(query.to_pylist())
             else:
-                raise LanceDBUnavailable(
-                    "The LanceDB row result cannot be serialised."
-                )
+                raise LanceDBUnavailable("The LanceDB row result cannot be serialised.")
         except LanceDBAdminError:
             raise
         except Exception as error:

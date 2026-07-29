@@ -15,9 +15,7 @@ IS_PROD = ENVIRONMENT == "production"
 IS_DEV = ENVIRONMENT in {"development", "dev", "local"}
 # Preserve the historical non-production fallback without ever using it in
 # production. Production startup validates that a real secret exists.
-API_KEY = os.getenv(
-    "INTERNAL_API_KEY", "" if IS_PROD else "abcd1234"
-).strip()
+API_KEY = os.getenv("INTERNAL_API_KEY", "" if IS_PROD else "abcd1234").strip()
 
 
 PROJECT_DIR = Path(__file__).parent
