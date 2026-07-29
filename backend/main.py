@@ -1,7 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, Security
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,6 +14,7 @@ from routes.upload_category import router as uploads_router
 from routes.database import router as database_router
 from routes.resume import router as resume_router
 from constants import (
+    API_KEY,
     API_PREFIX,
     ASSETS,
     AUDIO_DIR,
@@ -35,11 +36,27 @@ from routes import (
 from tools.mcpserver import sse_app
 from utils.emoji_logger import get_logger
 from utils.db_utils import mongo_client, db
-from auth.admin_guard import validate_admin_configuration, verify_admin_access
-from routes.admin_lancedb import router as admin_lancedb_router
+from fastapi import Security, HTTPException, status
+from fastapi.security.api_key import APIKeyHeader
 
+
+# Default value for testing; should be set in .env for production
+api_key_header = APIKeyHeader(name="X-Internal-Secret", auto_error=False)
+
+print(
+    f"Using API key: {API_KEY[:4]}..."
+)  # Print only the first few characters for verification
 print(f"IS DEV : {IS_DEV}")
 print(f"IS PROD : {IS_PROD}")
+
+
+async def verify_internal_access(api_key: str = Security(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized: Access Restricted",
+        )
+    return api_key
 
 
 class MyApp(FastAPI):
@@ -77,8 +94,6 @@ print(f"Allowed CORS origins: {origins}")
 
 @asynccontextmanager
 async def lifespan(app: MyApp):
-    validate_admin_configuration()
-
     # Attach the client and db to the app so routes can access them
     app.mongo_client = mongo_client  # type: ignore[assignment]
     app.database = db
@@ -171,11 +186,5 @@ app.include_router(
     resume_router,
     prefix=API_PREFIX,
     tags=["V1", "Resume"],
-    dependencies=[Security(verify_admin_access)],  # THE SECURITY LOCK
-)
-
-app.include_router(
-    admin_lancedb_router,
-    prefix=API_PREFIX,
-    tags=["V1", "Admin", "LanceDB"],
+    dependencies=[Security(verify_internal_access)],  # THE SECURITY LOCK
 )
