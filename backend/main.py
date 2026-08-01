@@ -177,5 +177,4 @@ app.include_router(
 app.include_router(
     admin_lancedb_router,
     prefix=API_PREFIX,
-    tags=["V1", "Admin", "LanceDB"],
 )

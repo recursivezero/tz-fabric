@@ -24,6 +24,8 @@ describe("LanceDB Explorer components", () => {
     );
     expect(html).toContain('type="password"');
     expect(html).toContain("Internal administrator secret");
+    expect(html).toContain("INTERNAL_API_KEY");
+    expect(html).not.toContain('placeholder="abcd1234"');
     expect(html).not.toContain("VITE_ADMIN_SECRET");
   });
 

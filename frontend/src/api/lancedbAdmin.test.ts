@@ -4,6 +4,7 @@ import {
   buildLanceRowsUrl,
   fetchLanceTables,
   isAdminAccessError,
+  verifyLanceAdminAccess,
 } from "./lancedbAdmin";
 
 type FetchFunction = (
@@ -17,6 +18,38 @@ afterEach(() => {
 });
 
 describe("LanceDB administrator API", () => {
+  it("validates administrator access without reading LanceDB tables", async () => {
+    const fetchMock = vi.fn<FetchFunction>();
+
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          authenticated: true,
+          auth_mode: "internal-secret-header",
+          header_name: "X-Internal-Secret",
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      ),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(verifyLanceAdminAccess("private-secret")).resolves.toEqual({
+      authenticated: true,
+      auth_mode: "internal-secret-header",
+      header_name: "X-Internal-Secret",
+    });
+
+    const [url, requestInit] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/admin/lancedb/access");
+    expect(new Headers(requestInit?.headers).get("X-Internal-Secret")).toBe(
+      "private-secret",
+    );
+  });
+
   it("sends the private secret as a header and never as a query parameter", async () => {
     const fetchMock = vi.fn<FetchFunction>();
 
@@ -80,6 +113,7 @@ describe("LanceDB administrator API", () => {
   it("recognises only HTTP 403 as rejected administrator access", () => {
     expect(isAdminAccessError(new HttpError(403, "Rejected"))).toBe(true);
     expect(isAdminAccessError(new HttpError(404, "Missing"))).toBe(false);
+    expect(isAdminAccessError(new HttpError(503, "Unavailable"))).toBe(false);
     expect(isAdminAccessError(new Error("Rejected"))).toBe(false);
   });
 });

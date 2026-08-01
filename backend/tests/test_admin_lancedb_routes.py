@@ -51,6 +51,51 @@ class AdminLanceDBRouteTests(unittest.TestCase):
         self.assertEqual(authorised.headers["cache-control"], "no-store, max-age=0")
         self.assertEqual(authorised.headers["pragma"], "no-cache")
 
+    def test_openapi_lists_admin_routes_under_one_tag(self) -> None:
+        schema = self.app.openapi()
+        admin_paths = {
+            path: operations
+            for path, operations in schema["paths"].items()
+            if path.startswith("/api/v1/admin/lancedb")
+        }
+
+        self.assertTrue(admin_paths)
+        for operations in admin_paths.values():
+            for operation in operations.values():
+                self.assertEqual(operation["tags"], ["Admin"])
+
+    def test_access_endpoint_validates_header_without_touching_lancedb(self) -> None:
+        response = self.client.get(
+            "/api/v1/admin/lancedb/access",
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "authenticated": True,
+                "auth_mode": "internal-secret-header",
+                "header_name": "X-Internal-Secret",
+            },
+        )
+
+    def test_empty_database_is_a_successful_empty_table_response(self) -> None:
+        connection = FakeConnection({})
+        empty_service = LanceDBAdminService(
+            connection_factory=lambda _path: connection,
+            table_factory=lambda _path, name: connection.tables[name],
+        )
+        self.app.dependency_overrides[get_lancedb_admin_service] = lambda: empty_service
+
+        response = self.client.get(
+            "/api/v1/admin/lancedb/tables",
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"tables": []})
+
     def test_all_endpoints_return_expected_contracts(self) -> None:
         tables = self.client.get("/api/v1/admin/lancedb/tables", headers=self.headers)
         self.assertEqual(tables.json()["tables"][0]["name"], "tz-fabric-table")

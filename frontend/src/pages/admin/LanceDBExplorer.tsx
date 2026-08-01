@@ -6,6 +6,7 @@ import {
   fetchLanceTables,
   isAdminAccessError,
   isMissingTableError,
+  verifyLanceAdminAccess,
   type LanceRowDetail,
   type LanceRowSummary,
   type LanceRowsResponse,
@@ -37,6 +38,8 @@ import "@/assets/styles/LanceDBExplorer.css";
 const ACCESS_REJECTED_MESSAGE = "Administrator access was rejected.";
 const BACKEND_UNAVAILABLE_MESSAGE =
   "LanceDB could not be reached. Check the backend and try refreshing.";
+const ACCESS_CHECK_FAILED_MESSAGE =
+  "Administrator access could not be verified. Check the backend and try again.";
 
 function readableError(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message.trim()) return error.message;
@@ -96,6 +99,7 @@ export default function LanceDBExplorer() {
   const [vectorLoading, setVectorLoading] = useState(false);
   const [vectorError, setVectorError] = useState<string | null>(null);
   const [vectorTrigger, setVectorTrigger] = useState<HTMLButtonElement | null>(null);
+  const unlockControllerRef = useRef<AbortController | null>(null);
   const vectorControllerRef = useRef<AbortController | null>(null);
 
   const [copyStatus, setCopyStatus] = useState("");
@@ -123,6 +127,7 @@ export default function LanceDBExplorer() {
 
   const lockExplorer = useCallback(
     (message: string | null = null) => {
+      unlockControllerRef.current?.abort();
       vectorControllerRef.current?.abort();
       setSecret(null);
       setUnlocking(false);
@@ -200,7 +205,6 @@ export default function LanceDBExplorer() {
           requestRevision === currentTablesRevision.current
         ) {
           setTablesLoading(false);
-          setUnlocking(false);
         }
       });
 
@@ -328,6 +332,7 @@ export default function LanceDBExplorer() {
 
   useEffect(
     () => () => {
+      unlockControllerRef.current?.abort();
       vectorControllerRef.current?.abort();
       if (copyTimerRef.current !== null) {
         window.clearTimeout(copyTimerRef.current);
@@ -337,10 +342,33 @@ export default function LanceDBExplorer() {
   );
 
   const unlockExplorer = (enteredSecret: string) => {
+    unlockControllerRef.current?.abort();
+    const controller = new AbortController();
+    unlockControllerRef.current = controller;
+
     clearExplorerData();
     setAccessError(null);
     setUnlocking(true);
-    setSecret(enteredSecret);
+
+    void verifyLanceAdminAccess(enteredSecret, controller.signal)
+      .then(() => {
+        if (controller.signal.aborted) return;
+        setSecret(enteredSecret);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+
+        if (isAdminAccessError(error)) {
+          setAccessError(ACCESS_REJECTED_MESSAGE);
+          return;
+        }
+
+        logger.error("LanceDB administrator access check failed", error);
+        setAccessError(readableError(error, ACCESS_CHECK_FAILED_MESSAGE));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setUnlocking(false);
+      });
   };
 
   const selectTable = (tableName: string) => {
@@ -488,9 +516,13 @@ export default function LanceDBExplorer() {
         <div className="lance-admin-grid-state" role="status">
           Loading LanceDB tables…
         </div>
-      ) : tables.length === 0 ? (
+      ) : tablesError && tables.length === 0 ? null : tables.length === 0 ? (
         <div className="lance-admin-grid-state lance-admin-grid-state--empty">
           <strong>No LanceDB tables were found.</strong>
+          <p>
+            Administrator access is valid, but this database does not currently
+            contain any tables.
+          </p>
           <button
             type="button"
             className="lance-admin-button lance-admin-button--secondary"

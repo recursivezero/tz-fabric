@@ -30,6 +30,19 @@ class LanceDBAdminServiceTests(unittest.TestCase):
     def test_lists_tables_without_opening_rows(self) -> None:
         response = self.service.list_tables()
         self.assertEqual([item.name for item in response.tables], ["tz-fabric-table"])
+        self.assertEqual(self.connection.list_tables_calls, 1)
+
+    def test_empty_database_returns_an_authenticated_empty_collection(self) -> None:
+        connection = FakeConnection({})
+        service = LanceDBAdminService(
+            connection_factory=lambda _path: connection,
+            table_factory=lambda _path, name: connection.tables[name],
+        )
+
+        response = service.list_tables()
+
+        self.assertEqual(response.tables, [])
+        self.assertEqual(connection.list_tables_calls, 1)
 
     def test_rejects_unknown_and_unsafe_table_names(self) -> None:
         with self.assertRaises(LanceDBTableNotFound):

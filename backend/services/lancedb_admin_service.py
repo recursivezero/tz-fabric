@@ -108,11 +108,28 @@ class LanceDBAdminService:
         except Exception as error:  # pragma: no cover - real driver path
             raise LanceDBUnavailable("Unable to connect to LanceDB.") from error
 
+    @staticmethod
+    def _normalise_table_names(result: Any) -> list[str]:
+        if result is None:
+            return []
+
+        if isinstance(result, Mapping):
+            raw_names = result.get("tables", [])
+        elif hasattr(result, "tables"):
+            raw_names = result.tables
+        else:
+            raw_names = result
+
+        return sorted(str(name) for name in raw_names)
+
     def _list_table_names(self) -> list[str]:
         connection = self._get_connection()
         try:
-            table_names = connection.table_names()
-            return sorted(str(name) for name in table_names)
+            if hasattr(connection, "list_tables"):
+                return self._normalise_table_names(connection.list_tables())
+
+            # Compatibility with older LanceDB releases.
+            return self._normalise_table_names(connection.table_names())
         except Exception as error:
             raise LanceDBUnavailable("Unable to list LanceDB tables.") from error
 

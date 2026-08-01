@@ -16,6 +16,7 @@ from fastapi import (
 
 from auth.admin_guard import verify_admin_access
 from models.admin_lancedb import (
+    LanceAdminAccessResponse,
     LanceRowDetailResponse,
     LanceRowsResponse,
     LanceTableDetailsResponse,
@@ -45,6 +46,7 @@ def _disable_admin_caching(response: Response) -> None:
 
 router = APIRouter(
     prefix="/admin/lancedb",
+    tags=["Admin"],
     dependencies=[
         Security(verify_admin_access),
         Depends(_disable_admin_caching),
@@ -89,6 +91,17 @@ def _run_admin_operation(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to process the LanceDB administrator request.",
         ) from error
+
+
+@router.get(
+    "/access",
+    response_model=LanceAdminAccessResponse,
+    summary="Validate administrator access",
+)
+def validate_lancedb_admin_access() -> LanceAdminAccessResponse:
+    """Validate the internal-secret header without touching LanceDB storage."""
+
+    return LanceAdminAccessResponse()
 
 
 @router.get("/tables", response_model=LanceTablesResponse)

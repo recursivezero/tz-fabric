@@ -242,9 +242,19 @@ class FakeTable:
         return FakeTakeQuery(rows)
 
 
+@dataclass
+class FakeListTablesResponse:
+    tables: list[str]
+
+
 class FakeConnection:
     def __init__(self, tables: dict[str, FakeTable]) -> None:
         self.tables = tables
+        self.list_tables_calls = 0
+
+    def list_tables(self) -> FakeListTablesResponse:
+        self.list_tables_calls += 1
+        return FakeListTablesResponse(list(self.tables))
 
     def table_names(self) -> list[str]:
-        return list(self.tables)
+        raise AssertionError("list_tables() should be preferred when available")

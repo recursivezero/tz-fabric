@@ -9,6 +9,12 @@ SortColumn = Literal["image_uri", "tag", "hash", "mtime"]
 SortOrder = Literal["asc", "desc"]
 
 
+class LanceAdminAccessResponse(BaseModel):
+    authenticated: Literal[True] = True
+    auth_mode: Literal["internal-secret-header"] = "internal-secret-header"
+    header_name: Literal["X-Internal-Secret"] = "X-Internal-Secret"
+
+
 class LanceTableItem(BaseModel):
     name: str
 

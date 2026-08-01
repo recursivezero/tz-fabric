@@ -38,7 +38,7 @@ export default function LanceAdminGate({
           type="password"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="abcd1234"
+          placeholder="Enter configured secret"
           autoComplete="off"
           spellCheck={false}
           autoCapitalize="none"
@@ -55,8 +55,9 @@ export default function LanceAdminGate({
         </div>
       )}
       <p className="lance-admin-gate__privacy">
-        The secret is held only in this page session and is not placed in a
-        public frontend environment variable.
+        Use the server-side <code>INTERNAL_API_KEY</code> value. The secret is
+        held only in this page session and is not placed in a public frontend
+        environment variable.
       </p>
     </section>
   );

@@ -13,6 +13,12 @@ export interface LanceTableItem {
   name: string;
 }
 
+export interface LanceAdminAccessResponse {
+  authenticated: true;
+  auth_mode: "internal-secret-header";
+  header_name: "X-Internal-Secret";
+}
+
 export interface LanceTablesResponse {
   tables: LanceTableItem[];
 }
@@ -150,6 +156,17 @@ export function buildLanceRowsUrl(
   if (request.sortOrder) params.set("sort_order", request.sortOrder);
 
   return `${ADMIN_BASE_URL}/${encodeURIComponent(tableName)}/rows?${params.toString()}`;
+}
+
+export function verifyLanceAdminAccess(
+  secret: string,
+  signal?: AbortSignal,
+): Promise<LanceAdminAccessResponse> {
+  return getAdminJson<LanceAdminAccessResponse>(
+    `${ADMIN_BASE_URL}/access`,
+    secret,
+    signal,
+  );
 }
 
 export function fetchLanceTables(
