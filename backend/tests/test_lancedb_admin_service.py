@@ -5,6 +5,7 @@ import tests.bootstrap  # noqa: F401
 import math
 import unittest
 
+from models.admin_lancedb import LanceDataSource
 from services.lancedb_admin_service import (
     LanceDBAdminService,
     LanceDBRowNotFound,
@@ -30,6 +31,7 @@ class LanceDBAdminServiceTests(unittest.TestCase):
     def test_lists_tables_without_opening_rows(self) -> None:
         response = self.service.list_tables()
         self.assertEqual([item.name for item in response.tables], ["tz-fabric-table"])
+        self.assertEqual(response.source.storage, "local")
         self.assertEqual(self.connection.list_tables_calls, 1)
 
     def test_empty_database_returns_an_authenticated_empty_collection(self) -> None:
@@ -43,6 +45,31 @@ class LanceDBAdminServiceTests(unittest.TestCase):
 
         self.assertEqual(response.tables, [])
         self.assertEqual(connection.list_tables_calls, 1)
+
+    def test_selected_s3_source_is_passed_to_lancedb_connection(self) -> None:
+        locations: list[str] = []
+        connection = FakeConnection({})
+        service = LanceDBAdminService(
+            source=LanceDataSource(
+                storage="s3",
+                location="s3://fabric-bucket/admin/database/",
+            ),
+            connection_factory=lambda location: locations.append(location)
+            or connection,
+        )
+
+        response = service.list_tables()
+
+        self.assertEqual(locations, ["s3://fabric-bucket/admin/database"])
+        self.assertEqual(response.source.storage, "s3")
+        self.assertEqual(response.source.location, "s3://fabric-bucket/admin/database")
+
+    def test_rejects_invalid_s3_source_uri(self) -> None:
+        with self.assertRaisesRegex(LanceDBValidationError, "s3://bucket"):
+            LanceDBAdminService(
+                source=LanceDataSource(storage="s3", location="https://bucket/path"),
+                connection_factory=lambda _location: FakeConnection({}),
+            )
 
     def test_rejects_unknown_and_unsafe_table_names(self) -> None:
         with self.assertRaises(LanceDBTableNotFound):

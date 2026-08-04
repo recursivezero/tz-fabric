@@ -10,18 +10,24 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from heapq import heappush, heapreplace
+from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 from constants import DATABASE_PATH
 from models.admin_lancedb import (
+    LanceDataSource,
     LanceEmbeddingFunction,
     LanceFilterState,
+    LanceLocalBrowseResponse,
+    LanceLocalDirectoryItem,
     LancePagination,
     LanceRowDetailResponse,
     LanceRowsResponse,
@@ -91,20 +97,137 @@ class LanceDBAdminService:
 
     def __init__(
         self,
+        source: LanceDataSource | None = None,
         connection_factory: Callable[[str], Any] | None = None,
         table_factory: Callable[[str, str], Any] | None = None,
     ) -> None:
+        self._source = self._normalise_source(
+            source or LanceDataSource(storage="local", location=DATABASE_PATH),
+            require_local_exists=connection_factory is None,
+        )
         self._connection_factory = connection_factory
         self._table_factory = table_factory
+
+    @staticmethod
+    def _normalise_source(
+        source: LanceDataSource,
+        *,
+        require_local_exists: bool = True,
+    ) -> LanceDataSource:
+        location = source.location.strip()
+        if not location or "\x00" in location:
+            raise LanceDBValidationError("A LanceDB location is required.")
+
+        if source.storage == "s3":
+            parsed = urlsplit(location)
+            if (
+                parsed.scheme.lower() != "s3"
+                or not parsed.netloc
+                or parsed.username
+                or parsed.password
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise LanceDBValidationError(
+                    "Enter an S3 location such as s3://bucket/path/to/database."
+                )
+            clean_path = parsed.path.rstrip("/")
+            return LanceDataSource(
+                storage="s3",
+                location=f"s3://{parsed.netloc}{clean_path}",
+            )
+
+        if location.lower().startswith("file://"):
+            parsed = urlsplit(location)
+            location = unquote(parsed.path)
+            if os.name == "nt" and re.match(r"^/[A-Za-z]:", location):
+                location = location[1:]
+
+        path = Path(location).expanduser()
+        try:
+            resolved = path.resolve(strict=require_local_exists)
+        except (OSError, RuntimeError) as error:
+            raise LanceDBValidationError(
+                "The selected local LanceDB directory does not exist."
+            ) from error
+        if require_local_exists and not resolved.is_dir():
+            raise LanceDBValidationError(
+                "The selected local LanceDB location must be a directory."
+            )
+        return LanceDataSource(storage="local", location=str(resolved))
+
+    @classmethod
+    def browse_local_directories(
+        cls, path: str | None = None
+    ) -> LanceLocalBrowseResponse:
+        requested = (
+            path.strip()
+            if path and path.strip()
+            else str(Path(DATABASE_PATH).parent)
+        )
+        if requested.lower().startswith("file://"):
+            parsed = urlsplit(requested)
+            requested = unquote(parsed.path)
+            if os.name == "nt" and re.match(r"^/[A-Za-z]:", requested):
+                requested = requested[1:]
+
+        candidate = Path(requested).expanduser()
+        try:
+            current = candidate.resolve(strict=True)
+        except (OSError, RuntimeError) as error:
+            raise LanceDBValidationError(
+                "The selected directory does not exist."
+            ) from error
+        if not current.is_dir():
+            raise LanceDBValidationError("The selected path is not a directory.")
+
+        try:
+            directories = sorted(
+                (
+                    LanceLocalDirectoryItem(
+                        name=child.name,
+                        path=str(child.resolve()),
+                    )
+                    for child in current.iterdir()
+                    if child.is_dir()
+                ),
+                key=lambda item: item.name.casefold(),
+            )
+        except PermissionError as error:
+            raise LanceDBUnavailable(
+                "Unable to browse the selected directory."
+            ) from error
+
+        parent = current.parent
+        return LanceLocalBrowseResponse(
+            current_path=str(current),
+            parent_path=str(parent) if parent != current else None,
+            directories=directories,
+        )
+
+    @property
+    def source(self) -> LanceDataSource:
+        return self._source
 
     def _get_connection(self) -> Any:
         try:
             if self._connection_factory is not None:
-                return self._connection_factory(DATABASE_PATH)
+                return self._connection_factory(self._source.location)
 
-            from image_search.db.connection import get_db_connection
+            import lancedb
 
-            return get_db_connection(DATABASE_PATH)
+            storage_options: dict[str, str] | None = None
+            if self._source.storage == "s3":
+                region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
+                if region:
+                    storage_options = {"aws_region": region}
+
+            return lancedb.connect(
+                self._source.location,
+                storage_options=storage_options,
+            )
+        except LanceDBAdminError:
+            raise
         except Exception as error:  # pragma: no cover - real driver path
             raise LanceDBUnavailable("Unable to connect to LanceDB.") from error
 
@@ -135,7 +258,8 @@ class LanceDBAdminService:
 
     def list_tables(self) -> LanceTablesResponse:
         return LanceTablesResponse(
-            tables=[LanceTableItem(name=name) for name in self._list_table_names()]
+            source=self._source,
+            tables=[LanceTableItem(name=name) for name in self._list_table_names()],
         )
 
     def _validate_table_name(self, table_name: str) -> None:
@@ -149,11 +273,9 @@ class LanceDBAdminService:
 
         try:
             if self._table_factory is not None:
-                return self._table_factory(DATABASE_PATH, table_name)
+                return self._table_factory(self._source.location, table_name)
 
-            from image_search.db.connection import get_table
-
-            return get_table(DATABASE_PATH, table_name)
+            return self._get_connection().open_table(table_name)
         except LanceDBAdminError:
             raise
         except Exception as error:

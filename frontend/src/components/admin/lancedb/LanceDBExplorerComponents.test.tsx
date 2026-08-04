@@ -5,6 +5,7 @@ import LanceAdminGate from "./LanceAdminGate";
 import LanceMetadataPanel from "./LanceMetadataPanel";
 import LancePagination from "./LancePagination";
 import LanceRowGrid from "./LanceRowGrid";
+import LanceSourceSelector from "./LanceSourceSelector";
 import LanceTableSelector from "./LanceTableSelector";
 import VectorViewer from "./VectorViewer";
 
@@ -27,6 +28,31 @@ describe("LanceDB Explorer components", () => {
     expect(html).toContain("INTERNAL_API_KEY");
     expect(html).not.toContain('placeholder="abcd1234"');
     expect(html).not.toContain("VITE_ADMIN_SECRET");
+  });
+
+
+  it("requires an explicit source scan after administrator login", () => {
+    const html = renderToStaticMarkup(
+      <LanceSourceSelector
+        value={{ storage: "local", location: "" }}
+        loading={false}
+        error={null}
+        browser={null}
+        browserLoading={false}
+        browserError={null}
+        onChange={vi.fn()}
+        onScan={vi.fn()}
+        onBrowse={vi.fn()}
+        onCloseBrowser={vi.fn()}
+        onLock={vi.fn()}
+      />,
+    );
+
+    expect(html).toContain("Select a LanceDB location");
+    expect(html).toContain("Scan database");
+    expect(html).toContain("Browse server");
+    expect(html).toContain("Amazon S3");
+    expect(html).toContain("No database is scanned until");
   });
 
   it("keeps full vectors collapsed in the row grid", () => {
@@ -67,17 +93,21 @@ describe("LanceDB Explorer components", () => {
   it("renders the table selector and refresh controls", () => {
     const html = renderToStaticMarkup(
       <LanceTableSelector
+        source={{ storage: "s3", location: "s3://bucket/fabric" }}
         tables={[{ name: "tz-fabric-table" }]}
         selectedTable="tz-fabric-table"
         loading={false}
         refreshing={false}
         onSelect={vi.fn()}
         onRefresh={vi.fn()}
+        onChangeSource={vi.fn()}
         onLock={vi.fn()}
       />,
     );
     expect(html).toContain("tz-fabric-table");
     expect(html).toContain("Refresh");
+    expect(html).toContain("Change source");
+    expect(html).toContain("s3://bucket/fabric");
     expect(html).toContain("Lock explorer");
   });
 

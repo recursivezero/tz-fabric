@@ -1,26 +1,34 @@
-import type { LanceTableItem } from "@/api/lancedbAdmin";
+import type { LanceDataSource, LanceTableItem } from "@/api/lancedbAdmin";
 
 interface LanceTableSelectorProps {
+  source: LanceDataSource;
   tables: LanceTableItem[];
   selectedTable: string | null;
   loading: boolean;
   refreshing: boolean;
   onSelect: (tableName: string) => void;
   onRefresh: () => void;
+  onChangeSource: () => void;
   onLock: () => void;
 }
 
 export default function LanceTableSelector({
+  source,
   tables,
   selectedTable,
   loading,
   refreshing,
   onSelect,
   onRefresh,
+  onChangeSource,
   onLock,
 }: LanceTableSelectorProps) {
   return (
     <section className="lance-admin-toolbar" aria-label="LanceDB table controls">
+      <div className="lance-admin-toolbar__source">
+        <span>{source.storage === "s3" ? "Amazon S3" : "Local source"}</span>
+        <code title={source.location}>{source.location}</code>
+      </div>
       <label className="lance-admin-field lance-admin-field--table">
         <span>Table</span>
         <select
@@ -47,6 +55,13 @@ export default function LanceTableSelector({
           disabled={refreshing || loading}
         >
           {refreshing ? "Refreshing…" : "Refresh"}
+        </button>
+        <button
+          type="button"
+          className="lance-admin-button lance-admin-button--secondary"
+          onClick={onChangeSource}
+        >
+          Change source
         </button>
         <button
           type="button"

@@ -8,6 +8,23 @@ import {
 
 export type LanceSortColumn = "image_uri" | "tag" | "hash" | "mtime";
 export type LanceSortOrder = "asc" | "desc";
+export type LanceStorageType = "local" | "s3";
+
+export interface LanceDataSource {
+  storage: LanceStorageType;
+  location: string;
+}
+
+export interface LanceLocalDirectoryItem {
+  name: string;
+  path: string;
+}
+
+export interface LanceLocalBrowseResponse {
+  current_path: string;
+  parent_path: string | null;
+  directories: LanceLocalDirectoryItem[];
+}
 
 export interface LanceTableItem {
   name: string;
@@ -20,6 +37,7 @@ export interface LanceAdminAccessResponse {
 }
 
 export interface LanceTablesResponse {
+  source: LanceDataSource;
   tables: LanceTableItem[];
 }
 
@@ -104,24 +122,35 @@ export interface LanceRowsRequest {
 const ADMIN_BASE_URL = `${FULL_API_URL}/admin/lancedb`;
 const ADMIN_TIMEOUT_MS = 20_000;
 
-function adminHeaders(secret: string): HeadersInit {
-  return {
+function adminHeaders(
+  secret: string,
+  source?: LanceDataSource,
+): HeadersInit {
+  const headers: Record<string, string> = {
     Accept: "application/json",
     "X-Internal-Secret": secret,
   };
+
+  if (source) {
+    headers["X-LanceDB-Storage"] = source.storage;
+    headers["X-LanceDB-Location"] = source.location;
+  }
+
+  return headers;
 }
 
 async function getAdminJson<T>(
   url: string,
   secret: string,
   signal?: AbortSignal,
+  source?: LanceDataSource,
 ): Promise<T> {
   try {
     const response = await fetchWithTimeout(
       url,
       {
         method: "GET",
-        headers: adminHeaders(secret),
+        headers: adminHeaders(secret, source),
         cache: "no-store",
         signal,
       },
@@ -169,7 +198,24 @@ export function verifyLanceAdminAccess(
   );
 }
 
+export function browseLanceLocalDirectories(
+  secret: string,
+  path?: string,
+  signal?: AbortSignal,
+): Promise<LanceLocalBrowseResponse> {
+  const params = new URLSearchParams();
+  const cleanPath = path?.trim();
+  if (cleanPath) params.set("path", cleanPath);
+  const suffix = params.size > 0 ? `?${params.toString()}` : "";
+  return getAdminJson<LanceLocalBrowseResponse>(
+    `${ADMIN_BASE_URL}/sources/local${suffix}`,
+    secret,
+    signal,
+  );
+}
+
 export function fetchLanceTables(
+  source: LanceDataSource,
   secret: string,
   signal?: AbortSignal,
 ): Promise<LanceTablesResponse> {
@@ -177,11 +223,13 @@ export function fetchLanceTables(
     `${ADMIN_BASE_URL}/tables`,
     secret,
     signal,
+    source,
   );
 }
 
 export function fetchLanceTableDetails(
   tableName: string,
+  source: LanceDataSource,
   secret: string,
   signal?: AbortSignal,
 ): Promise<LanceTableDetails> {
@@ -189,11 +237,13 @@ export function fetchLanceTableDetails(
     `${ADMIN_BASE_URL}/${encodeURIComponent(tableName)}`,
     secret,
     signal,
+    source,
   );
 }
 
 export function fetchLanceRows(
   tableName: string,
+  source: LanceDataSource,
   secret: string,
   request: LanceRowsRequest,
   signal?: AbortSignal,
@@ -202,12 +252,14 @@ export function fetchLanceRows(
     buildLanceRowsUrl(tableName, request),
     secret,
     signal,
+    source,
   );
 }
 
 export function fetchLanceRowDetail(
   tableName: string,
   rowId: number,
+  source: LanceDataSource,
   secret: string,
   signal?: AbortSignal,
 ): Promise<LanceRowDetail> {
@@ -215,6 +267,7 @@ export function fetchLanceRowDetail(
     `${ADMIN_BASE_URL}/${encodeURIComponent(tableName)}/rows/${rowId}`,
     secret,
     signal,
+    source,
   );
 }
 

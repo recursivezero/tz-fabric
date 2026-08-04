@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import tests.bootstrap  # noqa: F401
 
+import tempfile
 import unittest
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -14,6 +16,9 @@ from tests.lancedb_fakes import FakeConnection, FakeTable
 
 
 class FailingService(LanceDBAdminService):
+    def __init__(self) -> None:
+        super().__init__(connection_factory=lambda _location: None)
+
     def list_tables(self):
         raise LanceDBUnavailable("/private/backend/database/secret.lance")
 
@@ -94,7 +99,43 @@ class AdminLanceDBRouteTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"tables": []})
+        self.assertEqual(response.json()["tables"], [])
+        self.assertEqual(response.json()["source"]["storage"], "local")
+
+    def test_source_headers_are_required_before_scanning_tables(self) -> None:
+        app = FastAPI()
+        app.include_router(router, prefix="/api/v1")
+        client = TestClient(app)
+
+        response = client.get(
+            "/api/v1/admin/lancedb/tables",
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("X-LanceDB-Storage", response.text)
+        self.assertIn("X-LanceDB-Location", response.text)
+
+    def test_local_directory_browser_does_not_scan_tables(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            child = Path(directory) / "selected.lancedb"
+            child.mkdir()
+
+            response = self.client.get(
+                "/api/v1/admin/lancedb/sources/local",
+                headers=self.headers,
+                params={"path": directory},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["current_path"],
+            str(Path(directory).resolve()),
+        )
+        self.assertEqual(
+            response.json()["directories"],
+            [{"name": "selected.lancedb", "path": str(child.resolve())}],
+        )
 
     def test_all_endpoints_return_expected_contracts(self) -> None:
         tables = self.client.get("/api/v1/admin/lancedb/tables", headers=self.headers)

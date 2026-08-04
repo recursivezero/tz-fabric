@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 SortColumn = Literal["image_uri", "tag", "hash", "mtime"]
 SortOrder = Literal["asc", "desc"]
+LanceStorageType = Literal["local", "s3"]
 
 
 class LanceAdminAccessResponse(BaseModel):
@@ -15,11 +16,28 @@ class LanceAdminAccessResponse(BaseModel):
     header_name: Literal["X-Internal-Secret"] = "X-Internal-Secret"
 
 
+class LanceDataSource(BaseModel):
+    storage: LanceStorageType
+    location: str = Field(min_length=1, max_length=2048)
+
+
+class LanceLocalDirectoryItem(BaseModel):
+    name: str
+    path: str
+
+
+class LanceLocalBrowseResponse(BaseModel):
+    current_path: str
+    parent_path: str | None = None
+    directories: list[LanceLocalDirectoryItem]
+
+
 class LanceTableItem(BaseModel):
     name: str
 
 
 class LanceTablesResponse(BaseModel):
+    source: LanceDataSource
     tables: list[LanceTableItem]
 
 

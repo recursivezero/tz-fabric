@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  browseLanceLocalDirectories,
   fetchLanceRowDetail,
   fetchLanceRows,
   fetchLanceTableDetails,
@@ -7,13 +8,15 @@ import {
   isAdminAccessError,
   isMissingTableError,
   verifyLanceAdminAccess,
+  type LanceDataSource,
+  type LanceLocalBrowseResponse,
   type LanceRowDetail,
   type LanceRowSummary,
   type LanceRowsResponse,
-  type LanceTableDetails,
-  type LanceTableItem,
   type LanceSortColumn,
   type LanceSortOrder,
+  type LanceTableDetails,
+  type LanceTableItem,
 } from "@/api/lancedbAdmin";
 import LanceAdminGate from "@/components/admin/lancedb/LanceAdminGate";
 import LanceFilterBar from "@/components/admin/lancedb/LanceFilterBar";
@@ -21,6 +24,7 @@ import LanceMetadataPanel from "@/components/admin/lancedb/LanceMetadataPanel";
 import LancePagination from "@/components/admin/lancedb/LancePagination";
 import LanceRowGrid from "@/components/admin/lancedb/LanceRowGrid";
 import LanceSchemaPanel from "@/components/admin/lancedb/LanceSchemaPanel";
+import LanceSourceSelector from "@/components/admin/lancedb/LanceSourceSelector";
 import LanceSummaryCards from "@/components/admin/lancedb/LanceSummaryCards";
 import LanceTableSelector from "@/components/admin/lancedb/LanceTableSelector";
 import VectorViewer from "@/components/admin/lancedb/VectorViewer";
@@ -36,10 +40,9 @@ import { logger } from "@/utils/logger";
 import "@/assets/styles/LanceDBExplorer.css";
 
 const ACCESS_REJECTED_MESSAGE = "Administrator access was rejected.";
-const BACKEND_UNAVAILABLE_MESSAGE =
-  "LanceDB could not be reached. Check the backend and try refreshing.";
 const ACCESS_CHECK_FAILED_MESSAGE =
   "Administrator access could not be verified. Check the backend and try again.";
+const DEFAULT_SOURCE: LanceDataSource = { storage: "local", location: "" };
 
 function readableError(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message.trim()) return error.message;
@@ -63,6 +66,14 @@ export default function LanceDBExplorer() {
   const [unlocking, setUnlocking] = useState(false);
   const [accessError, setAccessError] = useState<string | null>(null);
 
+  const [sourceDraft, setSourceDraft] = useState<LanceDataSource>(DEFAULT_SOURCE);
+  const [source, setSource] = useState<LanceDataSource | null>(null);
+  const [sourceLoading, setSourceLoading] = useState(false);
+  const [sourceError, setSourceError] = useState<string | null>(null);
+  const [browser, setBrowser] = useState<LanceLocalBrowseResponse | null>(null);
+  const [browserLoading, setBrowserLoading] = useState(false);
+  const [browserError, setBrowserError] = useState<string | null>(null);
+
   const [tables, setTables] = useState<LanceTableItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const selectedTableRef = useRef<string | null>(null);
@@ -79,11 +90,6 @@ export default function LanceDBExplorer() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const {
-    revision: tablesRevision,
-    currentRevision: currentTablesRevision,
-    refresh: refreshTables,
-  } = useRequestRevision();
-  const {
     revision: detailsRevision,
     currentRevision: currentDetailsRevision,
     refresh: refreshDetails,
@@ -99,8 +105,12 @@ export default function LanceDBExplorer() {
   const [vectorLoading, setVectorLoading] = useState(false);
   const [vectorError, setVectorError] = useState<string | null>(null);
   const [vectorTrigger, setVectorTrigger] = useState<HTMLButtonElement | null>(null);
+
   const unlockControllerRef = useRef<AbortController | null>(null);
+  const sourceControllerRef = useRef<AbortController | null>(null);
+  const browseControllerRef = useRef<AbortController | null>(null);
   const vectorControllerRef = useRef<AbortController | null>(null);
+  const tablesRequestIdRef = useRef(0);
 
   const [copyStatus, setCopyStatus] = useState("");
   const copyTimerRef = useRef<number | null>(null);
@@ -128,10 +138,17 @@ export default function LanceDBExplorer() {
   const lockExplorer = useCallback(
     (message: string | null = null) => {
       unlockControllerRef.current?.abort();
+      sourceControllerRef.current?.abort();
+      browseControllerRef.current?.abort();
       vectorControllerRef.current?.abort();
       setSecret(null);
       setUnlocking(false);
       setAccessError(message);
+      setSource(null);
+      setSourceDraft(DEFAULT_SOURCE);
+      setSourceError(null);
+      setBrowser(null);
+      setBrowserError(null);
       clearExplorerData();
     },
     [clearExplorerData],
@@ -153,78 +170,102 @@ export default function LanceDBExplorer() {
     [lockExplorer],
   );
 
-  useEffect(() => {
-    if (!secret) return undefined;
+  const applyTablesResponse = useCallback(
+    (available: LanceTableItem[]) => {
+      const current = selectedTableRef.current;
+      setTables(available);
 
-    const requestRevision = tablesRevision;
-    const controller = new AbortController();
-    setTablesLoading(true);
-    setTablesError(null);
+      if (current && available.some((table) => table.name === current)) return;
 
-    void fetchLanceTables(secret, controller.signal)
-      .then((response) => {
-        if (requestRevision !== currentTablesRevision.current) return;
-        const available = response.tables;
-        const current = selectedTableRef.current;
-        setTables(available);
-
-        if (current && available.some((table) => table.name === current)) {
-          return;
-        }
-
-        if (current) {
-          setNotice(
-            "The previously selected table no longer exists. The table list was refreshed.",
-          );
-        }
-
-        const nextTable = available[0]?.name ?? null;
-        selectedTableRef.current = nextTable;
-        setSelectedTable(nextTable);
-        setDetails(null);
-        setRowsResponse(null);
-        setQuery(resetExplorerQuery());
-        setVectorRow(null);
-        setVectorDetail(null);
-      })
-      .catch((error: unknown) => {
-        if (
-          controller.signal.aborted ||
-          requestRevision !== currentTablesRevision.current
-        )
-          return;
-        handleRequestFailure(
-          error,
-          BACKEND_UNAVAILABLE_MESSAGE,
-          setTablesError,
+      if (current) {
+        setNotice(
+          "The previously selected table no longer exists. The table list was refreshed.",
         );
-      })
-      .finally(() => {
-        if (
-          !controller.signal.aborted &&
-          requestRevision === currentTablesRevision.current
-        ) {
+      }
+
+      const nextTable = available[0]?.name ?? null;
+      selectedTableRef.current = nextTable;
+      setSelectedTable(nextTable);
+      setDetails(null);
+      setRowsResponse(null);
+      setQuery(resetExplorerQuery());
+      setVectorRow(null);
+      setVectorDetail(null);
+    },
+    [],
+  );
+
+  const loadTables = useCallback(
+    async (requestedSource: LanceDataSource, activateSource: boolean) => {
+      if (!secret) return false;
+
+      sourceControllerRef.current?.abort();
+      const controller = new AbortController();
+      sourceControllerRef.current = controller;
+      const requestId = tablesRequestIdRef.current + 1;
+      tablesRequestIdRef.current = requestId;
+
+      if (activateSource) setSourceLoading(true);
+      else setTablesLoading(true);
+      setSourceError(null);
+      setTablesError(null);
+
+      try {
+        const response = await fetchLanceTables(
+          requestedSource,
+          secret,
+          controller.signal,
+        );
+        if (controller.signal.aborted || requestId !== tablesRequestIdRef.current) {
+          return false;
+        }
+        setSource(response.source);
+        setSourceDraft(response.source);
+        applyTablesResponse(response.tables);
+        return true;
+      } catch (error) {
+        if (controller.signal.aborted || requestId !== tablesRequestIdRef.current) {
+          return false;
+        }
+        if (isAdminAccessError(error)) {
+          lockExplorer(ACCESS_REJECTED_MESSAGE);
+          return false;
+        }
+        logger.error("LanceDB source scan failed", error, {
+          storage: requestedSource.storage,
+          location: requestedSource.location,
+        });
+        const message = readableError(
+          error,
+          "Unable to scan the selected LanceDB location.",
+        );
+        if (activateSource) setSourceError(message);
+        else setTablesError(message);
+        return false;
+      } finally {
+        if (!controller.signal.aborted && requestId === tablesRequestIdRef.current) {
+          setSourceLoading(false);
           setTablesLoading(false);
         }
-      });
-
-    return () => controller.abort();
-  }, [
-    currentTablesRevision,
-    handleRequestFailure,
-    secret,
-    tablesRevision,
-  ]);
+      }
+    },
+    [applyTablesResponse, lockExplorer, secret],
+  );
 
   useEffect(() => {
-    if (!secret || !selectedTable) return undefined;
+    if (!secret || !source || !selectedTable) return undefined;
 
     const requestRevision = detailsRevision;
     const controller = new AbortController();
     setDetailsLoading(true);
     setDetailsError(null);
 
-    void fetchLanceTableDetails(selectedTable, secret, controller.signal)
+    void fetchLanceTableDetails(
+      selectedTable,
+      source,
+      secret,
+      controller.signal,
+    )
       .then((response) => {
         if (requestRevision !== currentDetailsRevision.current) return;
         setDetails(response);
@@ -237,7 +278,7 @@ export default function LanceDBExplorer() {
           return;
         if (isMissingTableError(error)) {
           setNotice("The selected table no longer exists. Reloading available tables.");
-          refreshTables();
+          void loadTables(source, false);
           return;
         }
         handleRequestFailure(
@@ -259,13 +300,14 @@ export default function LanceDBExplorer() {
     currentDetailsRevision,
     detailsRevision,
     handleRequestFailure,
-    refreshTables,
+    loadTables,
     secret,
     selectedTable,
+    source,
   ]);
 
   useEffect(() => {
-    if (!secret || !selectedTable) return undefined;
+    if (!secret || !source || !selectedTable) return undefined;
 
     const requestRevision = rowsRevision;
     const controller = new AbortController();
@@ -274,6 +316,7 @@ export default function LanceDBExplorer() {
 
     void fetchLanceRows(
       selectedTable,
+      source,
       secret,
       {
         page: query.page,
@@ -302,7 +345,7 @@ export default function LanceDBExplorer() {
           return;
         if (isMissingTableError(error)) {
           setNotice("The selected table no longer exists. Reloading available tables.");
-          refreshTables();
+          void loadTables(source, false);
           return;
         }
         handleRequestFailure(
@@ -323,16 +366,19 @@ export default function LanceDBExplorer() {
   }, [
     currentRowsRevision,
     handleRequestFailure,
+    loadTables,
     query,
-    refreshTables,
     rowsRevision,
     secret,
     selectedTable,
+    source,
   ]);
 
   useEffect(
     () => () => {
       unlockControllerRef.current?.abort();
+      sourceControllerRef.current?.abort();
+      browseControllerRef.current?.abort();
       vectorControllerRef.current?.abort();
       if (copyTimerRef.current !== null) {
         window.clearTimeout(copyTimerRef.current);
@@ -347,6 +393,8 @@ export default function LanceDBExplorer() {
     unlockControllerRef.current = controller;
 
     clearExplorerData();
+    setSource(null);
+    setSourceError(null);
     setAccessError(null);
     setUnlocking(true);
 
@@ -357,17 +405,42 @@ export default function LanceDBExplorer() {
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
-
         if (isAdminAccessError(error)) {
           setAccessError(ACCESS_REJECTED_MESSAGE);
           return;
         }
-
         logger.error("LanceDB administrator access check failed", error);
         setAccessError(readableError(error, ACCESS_CHECK_FAILED_MESSAGE));
       })
       .finally(() => {
         if (!controller.signal.aborted) setUnlocking(false);
+      });
+  };
+
+  const browseLocal = (path?: string) => {
+    if (!secret) return;
+    browseControllerRef.current?.abort();
+    const controller = new AbortController();
+    browseControllerRef.current = controller;
+    setBrowserLoading(true);
+    setBrowserError(null);
+
+    void browseLanceLocalDirectories(secret, path, controller.signal)
+      .then((response) => {
+        if (!controller.signal.aborted) setBrowser(response);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        if (isAdminAccessError(error)) {
+          lockExplorer(ACCESS_REJECTED_MESSAGE);
+          return;
+        }
+        setBrowserError(
+          readableError(error, "Unable to browse server directories."),
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setBrowserLoading(false);
       });
   };
 
@@ -386,13 +459,26 @@ export default function LanceDBExplorer() {
   };
 
   const refreshExplorer = () => {
+    if (!source) return;
     setTablesError(null);
     setDetailsError(null);
     setRowsError(null);
     setNotice(null);
-    refreshTables();
-    refreshDetails();
-    refreshRows();
+    void loadTables(source, false).then((loaded) => {
+      if (loaded) {
+        refreshDetails();
+        refreshRows();
+      }
+    });
+  };
+
+  const changeSource = () => {
+    sourceControllerRef.current?.abort();
+    setSource(null);
+    setSourceError(null);
+    setBrowser(null);
+    setBrowserError(null);
+    clearExplorerData();
   };
 
   const copyText = async (value: string, successMessage: string) => {
@@ -421,7 +507,7 @@ export default function LanceDBExplorer() {
 
   const loadVector = useCallback(
     (row: LanceRowSummary, trigger: HTMLButtonElement | null) => {
-      if (!secret || !selectedTable) return;
+      if (!secret || !source || !selectedTable) return;
 
       vectorControllerRef.current?.abort();
       const controller = new AbortController();
@@ -435,6 +521,7 @@ export default function LanceDBExplorer() {
       void fetchLanceRowDetail(
         selectedTable,
         row.row_id,
+        source,
         secret,
         controller.signal,
       )
@@ -455,7 +542,7 @@ export default function LanceDBExplorer() {
           if (!controller.signal.aborted) setVectorLoading(false);
         });
     },
-    [lockExplorer, secret, selectedTable],
+    [lockExplorer, secret, selectedTable, source],
   );
 
   if (!secret) {
@@ -465,6 +552,44 @@ export default function LanceDBExplorer() {
           loading={unlocking}
           error={accessError}
           onUnlock={unlockExplorer}
+        />
+      </div>
+    );
+  }
+
+  if (!source) {
+    return (
+      <div className="lance-admin-page">
+        <header className="lance-admin-hero">
+          <div>
+            <p className="lance-admin-eyebrow">Admin · Read-only</p>
+            <h1>LanceDB Explorer</h1>
+            <p>
+              Choose a local server directory or an Amazon S3 URI, then scan it
+              for LanceDB tables.
+            </p>
+          </div>
+          <span className="lance-admin-readonly">No write operations</span>
+        </header>
+        <LanceSourceSelector
+          value={sourceDraft}
+          loading={sourceLoading}
+          error={sourceError}
+          browser={browser}
+          browserLoading={browserLoading}
+          browserError={browserError}
+          onChange={(value) => {
+            setSourceDraft(value);
+            setSourceError(null);
+          }}
+          onScan={() => void loadTables(sourceDraft, true)}
+          onBrowse={browseLocal}
+          onCloseBrowser={() => {
+            browseControllerRef.current?.abort();
+            setBrowser(null);
+            setBrowserError(null);
+          }}
+          onLock={() => lockExplorer()}
         />
       </div>
     );
@@ -489,12 +614,14 @@ export default function LanceDBExplorer() {
       </header>
 
       <LanceTableSelector
+        source={source}
         tables={tables}
         selectedTable={selectedTable}
         loading={tablesLoading}
         refreshing={refreshing}
         onSelect={selectTable}
         onRefresh={refreshExplorer}
+        onChangeSource={changeSource}
         onLock={() => lockExplorer()}
       />
 
@@ -514,22 +641,31 @@ export default function LanceDBExplorer() {
 
       {tablesLoading && tables.length === 0 ? (
         <div className="lance-admin-grid-state" role="status">
-          Loading LanceDB tables…
+          Scanning LanceDB tables…
         </div>
       ) : tablesError && tables.length === 0 ? null : tables.length === 0 ? (
         <div className="lance-admin-grid-state lance-admin-grid-state--empty">
-          <strong>No LanceDB tables were found.</strong>
+          <strong>No LanceDB tables were found at this location.</strong>
           <p>
-            Administrator access is valid, but this database does not currently
-            contain any tables.
+            The selected database is reachable, but it does not currently contain
+            any tables. Choose another source or refresh after creating a table.
           </p>
-          <button
-            type="button"
-            className="lance-admin-button lance-admin-button--secondary"
-            onClick={refreshExplorer}
-          >
-            Refresh tables
-          </button>
+          <div className="lance-admin-empty-actions">
+            <button
+              type="button"
+              className="lance-admin-button lance-admin-button--secondary"
+              onClick={refreshExplorer}
+            >
+              Scan again
+            </button>
+            <button
+              type="button"
+              className="lance-admin-button lance-admin-button--secondary"
+              onClick={changeSource}
+            >
+              Choose another source
+            </button>
+          </div>
         </div>
       ) : (
         <>

@@ -1,11 +1,12 @@
 """Secure, read-only administrator endpoints for LanceDB inspection."""
 
 from collections.abc import Callable
-from typing import TypeVar
+from typing import Annotated, TypeVar
 
 from fastapi import (
     APIRouter,
     Depends,
+    Header,
     HTTPException,
     Path,
     Query,
@@ -17,8 +18,11 @@ from fastapi import (
 from auth.admin_guard import verify_admin_access
 from models.admin_lancedb import (
     LanceAdminAccessResponse,
+    LanceDataSource,
+    LanceLocalBrowseResponse,
     LanceRowDetailResponse,
     LanceRowsResponse,
+    LanceStorageType,
     LanceTableDetailsResponse,
     LanceTablesResponse,
     SortColumn,
@@ -54,8 +58,27 @@ router = APIRouter(
 )
 
 
-def get_lancedb_admin_service() -> LanceDBAdminService:
-    return LanceDBAdminService()
+def get_lancedb_admin_service(
+    storage: Annotated[
+        LanceStorageType,
+        Header(alias="X-LanceDB-Storage"),
+    ],
+    location: Annotated[
+        str,
+        Header(alias="X-LanceDB-Location", min_length=1, max_length=2048),
+    ],
+) -> LanceDBAdminService:
+    """Build a read-only service for the source selected by the administrator."""
+
+    try:
+        return LanceDBAdminService(
+            source=LanceDataSource(storage=storage, location=location),
+        )
+    except LanceDBValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
 
 
 def _run_admin_operation(
@@ -102,6 +125,21 @@ def validate_lancedb_admin_access() -> LanceAdminAccessResponse:
     """Validate the internal-secret header without touching LanceDB storage."""
 
     return LanceAdminAccessResponse()
+
+
+@router.get(
+    "/sources/local",
+    response_model=LanceLocalBrowseResponse,
+    summary="Browse local server directories",
+)
+def browse_lancedb_local_directories(
+    path: str | None = Query(default=None, max_length=2048),
+) -> LanceLocalBrowseResponse:
+    """Browse server-side directories before choosing a local LanceDB path."""
+
+    return _run_admin_operation(
+        lambda: LanceDBAdminService.browse_local_directories(path)
+    )
 
 
 @router.get("/tables", response_model=LanceTablesResponse)

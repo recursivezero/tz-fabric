@@ -28,8 +28,8 @@ export default function LanceAdminGate({
       <p className="lance-admin-eyebrow">Private administrator tool</p>
       <h1 id="lance-admin-gate-title">LanceDB Explorer</h1>
       <p className="lance-admin-gate__copy">
-        Enter the internal administrator secret to inspect read-only table,
-        schema, metadata, and row information.
+        Enter the internal administrator secret. After access is verified, choose
+        a local or Amazon S3 database location to scan.
       </p>
       <form className="lance-admin-gate__form" onSubmit={submit}>
         <label htmlFor={inputId}>Internal administrator secret</label>

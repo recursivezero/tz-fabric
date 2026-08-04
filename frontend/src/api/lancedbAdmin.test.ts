@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HttpError } from "@/utils/http";
 import {
+  browseLanceLocalDirectories,
   buildLanceRowsUrl,
   fetchLanceTables,
   isAdminAccessError,
@@ -12,6 +13,11 @@ type FetchFunction = (
   init?: RequestInit,
 ) => Promise<Response>;
 
+const localSource = {
+  storage: "local" as const,
+  location: "C:\\data\\fabric.lancedb",
+};
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -20,7 +26,6 @@ afterEach(() => {
 describe("LanceDB administrator API", () => {
   it("validates administrator access without reading LanceDB tables", async () => {
     const fetchMock = vi.fn<FetchFunction>();
-
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -28,57 +33,62 @@ describe("LanceDB administrator API", () => {
           auth_mode: "internal-secret-header",
           header_name: "X-Internal-Secret",
         }),
-        {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        },
+        { status: 200, headers: { "content-type": "application/json" } },
       ),
     );
-
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(verifyLanceAdminAccess("private-secret")).resolves.toEqual({
-      authenticated: true,
-      auth_mode: "internal-secret-header",
-      header_name: "X-Internal-Secret",
-    });
+    await verifyLanceAdminAccess("private-secret");
 
     const [url, requestInit] = fetchMock.mock.calls[0];
     expect(String(url)).toContain("/admin/lancedb/access");
-    expect(new Headers(requestInit?.headers).get("X-Internal-Secret")).toBe(
-      "private-secret",
-    );
+    const headers = new Headers(requestInit?.headers);
+    expect(headers.get("X-Internal-Secret")).toBe("private-secret");
+    expect(headers.get("X-LanceDB-Location")).toBeNull();
   });
 
-  it("sends the private secret as a header and never as a query parameter", async () => {
+  it("browses server directories without scanning a database", async () => {
     const fetchMock = vi.fn<FetchFunction>();
-
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({
-          tables: [{ name: "tz-fabric-table" }],
+          current_path: "C:\\data",
+          parent_path: "C:\\",
+          directories: [],
         }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        },
+        { status: 200, headers: { "content-type": "application/json" } },
       ),
     );
-
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(fetchLanceTables("private-secret")).resolves.toEqual({
-      tables: [{ name: "tz-fabric-table" }],
+    await browseLanceLocalDirectories("private-secret", "C:\\data");
+
+    const [url, requestInit] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/sources/local?path=C%3A%5Cdata");
+    expect(new Headers(requestInit?.headers).get("X-LanceDB-Location")).toBeNull();
+  });
+
+  it("sends the selected source only when scanning tables", async () => {
+    const fetchMock = vi.fn<FetchFunction>();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ source: localSource, tables: [{ name: "fabric" }] }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchLanceTables(localSource, "private-secret")).resolves.toEqual({
+      source: localSource,
+      tables: [{ name: "fabric" }],
     });
 
     const [url, requestInit] = fetchMock.mock.calls[0];
-
+    const headers = new Headers(requestInit?.headers);
     expect(String(url)).not.toContain("private-secret");
-    expect(new Headers(requestInit?.headers).get("X-Internal-Secret")).toBe(
-      "private-secret",
-    );
+    expect(headers.get("X-Internal-Secret")).toBe("private-secret");
+    expect(headers.get("X-LanceDB-Storage")).toBe("local");
+    expect(headers.get("X-LanceDB-Location")).toBe(localSource.location);
     expect(requestInit?.cache).toBe("no-store");
   });
 
@@ -105,7 +115,7 @@ describe("LanceDB administrator API", () => {
       vi.fn(async () => Promise.reject(new TypeError("raw"))),
     );
 
-    await expect(fetchLanceTables("private-secret")).rejects.toThrow(
+    await expect(fetchLanceTables(localSource, "private-secret")).rejects.toThrow(
       "LanceDB could not be reached. Try refreshing.",
     );
   });

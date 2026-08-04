@@ -42,6 +42,27 @@ returns `200` with `{ "tables": [] }`, and the frontend keeps the Explorer
 unlocked while showing an empty state. Generic storage or network failures must
 not clear a valid secret; only an actual `403` locks the Explorer.
 
+
+## LanceDB Source Selection
+
+Administrator login validates only the `X-Internal-Secret`; it does not open the
+configured database or call the tables endpoint. After authentication, the
+administrator explicitly chooses a source and starts a scan.
+
+Supported sources:
+
+- `local`: a directory on the backend server. The authenticated directory
+  browser lists server-side folders and never reads folders from the browser
+  device.
+- `s3`: an `s3://bucket/path/to/database` URI. LanceDB uses the backend process'
+  standard AWS environment variables or IAM role. Cloud credentials are never
+  accepted from or stored in the frontend.
+
+Every table, schema, row, and vector request carries the selected source in the
+`X-LanceDB-Storage` and `X-LanceDB-Location` headers. The API remains read-only.
+Cloudflare R2 can be introduced later through a separately configured
+S3-compatible endpoint without changing the source-selection UI contract.
+
 ## Python Dependency Management
 
 `backend/pyproject.toml` and `backend/poetry.lock` are the dependency source of

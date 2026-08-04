@@ -814,3 +814,180 @@
     transition: none;
   }
 }
+
+.lance-source-card {
+  max-width: 980px;
+  margin: 12px auto 0;
+  padding: clamp(22px, 4vw, 36px);
+  border: 1px solid var(--lance-border);
+  border-radius: 22px;
+  background: var(--lance-surface);
+  box-shadow: 0 20px 70px rgba(2, 6, 23, 0.2);
+}
+
+.lance-source-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.lance-source-card__heading h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 2.2rem);
+}
+
+.lance-source-card__heading p:not(.lance-admin-eyebrow) {
+  max-width: 700px;
+  margin: 10px 0 0;
+  color: var(--lance-muted);
+  line-height: 1.6;
+}
+
+.lance-source-card__grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.35fr) minmax(320px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.lance-admin-field--source-location {
+  min-width: 0;
+}
+
+.lance-source-card__actions,
+.lance-admin-empty-actions,
+.lance-source-browser__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lance-source-card__hint {
+  margin: 14px 0 0;
+  color: var(--lance-muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.lance-source-browser {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--lance-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--lance-surface-strong) 72%, transparent);
+}
+
+.lance-source-browser__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.lance-source-browser__header > div {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.lance-source-browser__header span,
+.lance-admin-toolbar__source span {
+  color: var(--lance-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lance-source-browser__header code,
+.lance-admin-toolbar__source code {
+  max-width: 100%;
+  color: var(--lance-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lance-source-browser__actions {
+  margin-bottom: 12px;
+}
+
+.lance-source-browser__list {
+  display: grid;
+  max-height: 320px;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.lance-source-browser__list > button {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 0.35fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--lance-border);
+  border-radius: 11px;
+  color: var(--lance-text);
+  background: var(--lance-surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lance-source-browser__list > button:hover {
+  border-color: var(--lance-accent);
+}
+
+.lance-source-browser__list code {
+  color: var(--lance-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lance-admin-toolbar__source {
+  display: grid;
+  min-width: 0;
+  max-width: 360px;
+  gap: 6px;
+}
+
+@media (max-width: 1040px) {
+  .lance-source-card__grid {
+    grid-template-columns: minmax(180px, 0.4fr) minmax(0, 1fr);
+  }
+
+  .lance-source-card__actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .lance-source-card__heading,
+  .lance-source-browser__header {
+    flex-direction: column;
+  }
+
+  .lance-source-card__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lance-source-card__actions {
+    grid-column: auto;
+  }
+
+  .lance-admin-toolbar__source {
+    max-width: 100%;
+  }
+
+  .lance-source-browser__list > button {
+    grid-template-columns: auto 1fr;
+  }
+
+  .lance-source-browser__list code {
+    grid-column: 2;
+  }
+}
