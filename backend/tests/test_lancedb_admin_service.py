@@ -49,13 +49,17 @@ class LanceDBAdminServiceTests(unittest.TestCase):
     def test_selected_s3_source_is_passed_to_lancedb_connection(self) -> None:
         locations: list[str] = []
         connection = FakeConnection({})
+
+        def connection_factory(location: str) -> FakeConnection:
+            locations.append(location)
+            return connection
+
         service = LanceDBAdminService(
             source=LanceDataSource(
                 storage="s3",
                 location="s3://fabric-bucket/admin/database/",
             ),
-            connection_factory=lambda location: locations.append(location)
-            or connection,
+            connection_factory=connection_factory,
         )
 
         response = service.list_tables()

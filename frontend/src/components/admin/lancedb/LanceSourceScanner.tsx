@@ -124,7 +124,11 @@ export default function LanceSourceScanner({
       )}
 
       {value.storage === "local" && (browser || browserError) && (
-        <div className="lance-source-browser" aria-label="Server directory browser">
+        <div
+          className="lance-source-browser"
+          role="region"
+          aria-label="Server directory browser"
+        >
           <div className="lance-source-browser__header">
             <div>
               <span>Current directory</span>
