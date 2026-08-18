@@ -5,8 +5,8 @@ import LanceAdminGate from "./LanceAdminGate";
 import LanceMetadataPanel from "./LanceMetadataPanel";
 import LancePagination from "./LancePagination";
 import LanceRowGrid from "./LanceRowGrid";
-import LanceSourceSelector from "./LanceSourceSelector";
-import LanceTableSelector from "./LanceTableSelector";
+import LanceSourceScanner from "./LanceSourceScanner";
+import LanceScanToolbar from "./LanceScanToolbar";
 import VectorViewer from "./VectorViewer";
 
 const row = {
@@ -33,7 +33,7 @@ describe("LanceDB Explorer components", () => {
 
   it("requires an explicit source scan after administrator login", () => {
     const html = renderToStaticMarkup(
-      <LanceSourceSelector
+      <LanceSourceScanner
         value={{ storage: "local", location: "" }}
         loading={false}
         error={null}
@@ -48,7 +48,7 @@ describe("LanceDB Explorer components", () => {
       />,
     );
 
-    expect(html).toContain("Select a LanceDB location");
+    expect(html).toContain("Scan a LanceDB location");
     expect(html).toContain("Scan database");
     expect(html).toContain("Browse server");
     expect(html).toContain("Amazon S3");
@@ -90,9 +90,9 @@ describe("LanceDB Explorer components", () => {
   });
 
 
-  it("renders the table selector and refresh controls", () => {
+  it("renders the scan toolbar and rescan controls", () => {
     const html = renderToStaticMarkup(
-      <LanceTableSelector
+      <LanceScanToolbar
         source={{ storage: "s3", location: "s3://bucket/fabric" }}
         tables={[{ name: "tz-fabric-table" }]}
         selectedTable="tz-fabric-table"
@@ -105,7 +105,7 @@ describe("LanceDB Explorer components", () => {
       />,
     );
     expect(html).toContain("tz-fabric-table");
-    expect(html).toContain("Refresh");
+    expect(html).toContain("Rescan");
     expect(html).toContain("Change source");
     expect(html).toContain("s3://bucket/fabric");
     expect(html).toContain("Lock explorer");

@@ -214,18 +214,24 @@ export function browseLanceLocalDirectories(
   );
 }
 
-export function fetchLanceTables(
+export function scanLanceTables(
   source: LanceDataSource,
   secret: string,
   signal?: AbortSignal,
 ): Promise<LanceTablesResponse> {
   return getAdminJson<LanceTablesResponse>(
-    `${ADMIN_BASE_URL}/tables`,
+    `${ADMIN_BASE_URL}/scan`,
     secret,
     signal,
     source,
   );
 }
+
+/**
+ * Backward-compatible alias for code that still imports the old method name.
+ * New code should use scanLanceTables so the client terminology mirrors /scan.
+ */
+export const fetchLanceTables = scanLanceTables;
 
 export function fetchLanceTableDetails(
   tableName: string,

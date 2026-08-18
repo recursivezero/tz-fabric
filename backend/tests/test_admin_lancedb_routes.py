@@ -40,17 +40,17 @@ class AdminLanceDBRouteTests(unittest.TestCase):
 
     def test_requires_valid_admin_secret(self) -> None:
         self.assertEqual(
-            self.client.get("/api/v1/admin/lancedb/tables").status_code, 403
+            self.client.get("/api/v1/admin/lancedb/scan").status_code, 403
         )
         self.assertEqual(
             self.client.get(
-                "/api/v1/admin/lancedb/tables",
+                "/api/v1/admin/lancedb/scan",
                 headers={"X-Internal-Secret": "wrong"},
             ).status_code,
             403,
         )
         authorised = self.client.get(
-            "/api/v1/admin/lancedb/tables", headers=self.headers
+            "/api/v1/admin/lancedb/scan", headers=self.headers
         )
         self.assertEqual(authorised.status_code, 200)
         self.assertEqual(authorised.headers["cache-control"], "no-store, max-age=0")
@@ -94,7 +94,7 @@ class AdminLanceDBRouteTests(unittest.TestCase):
         self.app.dependency_overrides[get_lancedb_admin_service] = lambda: empty_service
 
         response = self.client.get(
-            "/api/v1/admin/lancedb/tables",
+            "/api/v1/admin/lancedb/scan",
             headers=self.headers,
         )
 
@@ -102,13 +102,26 @@ class AdminLanceDBRouteTests(unittest.TestCase):
         self.assertEqual(response.json()["tables"], [])
         self.assertEqual(response.json()["source"]["storage"], "local")
 
+    def test_legacy_tables_route_remains_available_for_existing_clients(self) -> None:
+        response = self.client.get(
+            "/api/v1/admin/lancedb/tables",
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["tables"][0]["name"], "tz-fabric-table")
+        self.assertNotIn(
+            "/api/v1/admin/lancedb/tables",
+            self.app.openapi()["paths"],
+        )
+
     def test_source_headers_are_required_before_scanning_tables(self) -> None:
         app = FastAPI()
         app.include_router(router, prefix="/api/v1")
         client = TestClient(app)
 
         response = client.get(
-            "/api/v1/admin/lancedb/tables",
+            "/api/v1/admin/lancedb/scan",
             headers=self.headers,
         )
 
@@ -138,7 +151,7 @@ class AdminLanceDBRouteTests(unittest.TestCase):
         )
 
     def test_all_endpoints_return_expected_contracts(self) -> None:
-        tables = self.client.get("/api/v1/admin/lancedb/tables", headers=self.headers)
+        tables = self.client.get("/api/v1/admin/lancedb/scan", headers=self.headers)
         self.assertEqual(tables.json()["tables"][0]["name"], "tz-fabric-table")
 
         details = self.client.get(
@@ -186,7 +199,7 @@ class AdminLanceDBRouteTests(unittest.TestCase):
 
     def test_internal_errors_do_not_expose_database_paths(self) -> None:
         self.app.dependency_overrides[get_lancedb_admin_service] = FailingService
-        response = self.client.get("/api/v1/admin/lancedb/tables", headers=self.headers)
+        response = self.client.get("/api/v1/admin/lancedb/scan", headers=self.headers)
         self.assertEqual(response.status_code, 503)
         self.assertNotIn("/private", response.text)
         self.assertNotIn("database", response.text.lower())

@@ -1,6 +1,6 @@
 import type { LanceDataSource, LanceTableItem } from "@/api/lancedbAdmin";
 
-interface LanceTableSelectorProps {
+interface LanceScanToolbarProps {
   source: LanceDataSource;
   tables: LanceTableItem[];
   selectedTable: string | null;
@@ -12,7 +12,7 @@ interface LanceTableSelectorProps {
   onLock: () => void;
 }
 
-export default function LanceTableSelector({
+export default function LanceScanToolbar({
   source,
   tables,
   selectedTable,
@@ -22,7 +22,7 @@ export default function LanceTableSelector({
   onRefresh,
   onChangeSource,
   onLock,
-}: LanceTableSelectorProps) {
+}: LanceScanToolbarProps) {
   return (
     <section className="lance-admin-toolbar" aria-label="LanceDB table controls">
       <div className="lance-admin-toolbar__source">
@@ -54,7 +54,7 @@ export default function LanceTableSelector({
           onClick={onRefresh}
           disabled={refreshing || loading}
         >
-          {refreshing ? "Refreshing…" : "Refresh"}
+          {refreshing ? "Scanning…" : "Rescan"}
         </button>
         <button
           type="button"

@@ -3,7 +3,7 @@ import { HttpError } from "@/utils/http";
 import {
   browseLanceLocalDirectories,
   buildLanceRowsUrl,
-  fetchLanceTables,
+  scanLanceTables,
   isAdminAccessError,
   verifyLanceAdminAccess,
 } from "./lancedbAdmin";
@@ -78,13 +78,14 @@ describe("LanceDB administrator API", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(fetchLanceTables(localSource, "private-secret")).resolves.toEqual({
+    await expect(scanLanceTables(localSource, "private-secret")).resolves.toEqual({
       source: localSource,
       tables: [{ name: "fabric" }],
     });
 
     const [url, requestInit] = fetchMock.mock.calls[0];
     const headers = new Headers(requestInit?.headers);
+    expect(String(url)).toContain("/admin/lancedb/scan");
     expect(String(url)).not.toContain("private-secret");
     expect(headers.get("X-Internal-Secret")).toBe("private-secret");
     expect(headers.get("X-LanceDB-Storage")).toBe("local");
@@ -115,7 +116,7 @@ describe("LanceDB administrator API", () => {
       vi.fn(async () => Promise.reject(new TypeError("raw"))),
     );
 
-    await expect(fetchLanceTables(localSource, "private-secret")).rejects.toThrow(
+    await expect(scanLanceTables(localSource, "private-secret")).rejects.toThrow(
       "LanceDB could not be reached. Try refreshing.",
     );
   });

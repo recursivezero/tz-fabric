@@ -40,11 +40,26 @@ X-Internal-Secret: <configured secret>
 Read-only endpoints:
 
 ```http
-GET /api/v1/admin/lancedb/tables
+GET /api/v1/admin/lancedb/access
+GET /api/v1/admin/lancedb/sources/local
+GET /api/v1/admin/lancedb/scan
 GET /api/v1/admin/lancedb/{table_name}
 GET /api/v1/admin/lancedb/{table_name}/rows
 GET /api/v1/admin/lancedb/{table_name}/rows/{row_id}
 ```
+
+`/access` validates administrator authentication only; it does not connect to or
+scan LanceDB. The administrator then chooses a local server directory (optionally
+using `/sources/local`) or an `s3://bucket/path` URI and explicitly calls `/scan`.
+The old `/tables` route remains as a non-documented compatibility alias so
+existing clients are not broken while the UI and public API terminology move to
+"scanner" / `/scan`.
+
+For S3, credentials stay on the backend. LanceDB accepts the standard
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_SESSION_TOKEN`, and
+AWS region environment configuration (or an IAM role). The browser never asks
+for or receives AWS credentials. `boto3` is already an explicit backend runtime
+dependency, while LanceDB itself opens the selected S3 URI.
 
 Row-list parameters:
 
@@ -79,7 +94,7 @@ sort_order  asc | desc
 The explorer provides:
 
 - private access gate;
-- table selector and refresh;
+- database scanner, table selector, and rescan;
 - row count, schema-field count, and vector dimension summaries;
 - Arrow schema, schema metadata, and embedding metadata panels;
 - exact tag filter, scalar sort, and page-size controls;

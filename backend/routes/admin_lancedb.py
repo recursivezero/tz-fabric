@@ -142,10 +142,27 @@ def browse_lancedb_local_directories(
     )
 
 
-@router.get("/tables", response_model=LanceTablesResponse)
-def list_lancedb_tables(
+@router.get(
+    "/scan",
+    response_model=LanceTablesResponse,
+    summary="Scan a selected LanceDB source for tables",
+)
+def scan_lancedb_tables(
     service: LanceDBAdminService = Depends(get_lancedb_admin_service),
 ) -> LanceTablesResponse:
+    return _run_admin_operation(service.list_tables)
+
+
+@router.get(
+    "/tables",
+    response_model=LanceTablesResponse,
+    include_in_schema=False,
+)
+def list_lancedb_tables_legacy(
+    service: LanceDBAdminService = Depends(get_lancedb_admin_service),
+) -> LanceTablesResponse:
+    """Compatibility route for older clients; new clients should use /scan."""
+
     return _run_admin_operation(service.list_tables)
 
 

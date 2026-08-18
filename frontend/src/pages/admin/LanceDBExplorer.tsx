@@ -4,7 +4,7 @@ import {
   fetchLanceRowDetail,
   fetchLanceRows,
   fetchLanceTableDetails,
-  fetchLanceTables,
+  scanLanceTables,
   isAdminAccessError,
   isMissingTableError,
   verifyLanceAdminAccess,
@@ -24,9 +24,9 @@ import LanceMetadataPanel from "@/components/admin/lancedb/LanceMetadataPanel";
 import LancePagination from "@/components/admin/lancedb/LancePagination";
 import LanceRowGrid from "@/components/admin/lancedb/LanceRowGrid";
 import LanceSchemaPanel from "@/components/admin/lancedb/LanceSchemaPanel";
-import LanceSourceSelector from "@/components/admin/lancedb/LanceSourceSelector";
+import LanceSourceScanner from "@/components/admin/lancedb/LanceSourceScanner";
 import LanceSummaryCards from "@/components/admin/lancedb/LanceSummaryCards";
-import LanceTableSelector from "@/components/admin/lancedb/LanceTableSelector";
+import LanceScanToolbar from "@/components/admin/lancedb/LanceScanToolbar";
 import VectorViewer from "@/components/admin/lancedb/VectorViewer";
 import {
   applyExplorerPageSize,
@@ -211,7 +211,7 @@ export default function LanceDBExplorer() {
       setTablesError(null);
 
       try {
-        const response = await fetchLanceTables(
+        const response = await scanLanceTables(
           requestedSource,
           secret,
           controller.signal,
@@ -571,7 +571,7 @@ export default function LanceDBExplorer() {
           </div>
           <span className="lance-admin-readonly">No write operations</span>
         </header>
-        <LanceSourceSelector
+        <LanceSourceScanner
           value={sourceDraft}
           loading={sourceLoading}
           error={sourceError}
@@ -613,7 +613,7 @@ export default function LanceDBExplorer() {
         <span className="lance-admin-readonly">No write operations</span>
       </header>
 
-      <LanceTableSelector
+      <LanceScanToolbar
         source={source}
         tables={tables}
         selectedTable={selectedTable}

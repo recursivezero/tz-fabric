@@ -4,7 +4,7 @@ import type {
   LanceStorageType,
 } from "@/api/lancedbAdmin";
 
-interface LanceSourceSelectorProps {
+interface LanceSourceScannerProps {
   value: LanceDataSource;
   loading: boolean;
   error: string | null;
@@ -18,7 +18,7 @@ interface LanceSourceSelectorProps {
   onLock: () => void;
 }
 
-export default function LanceSourceSelector({
+export default function LanceSourceScanner({
   value,
   loading,
   error,
@@ -30,7 +30,7 @@ export default function LanceSourceSelector({
   onBrowse,
   onCloseBrowser,
   onLock,
-}: LanceSourceSelectorProps) {
+}: LanceSourceScannerProps) {
   const setStorage = (storage: LanceStorageType) => {
     onCloseBrowser();
     onChange({ storage, location: "" });
@@ -40,8 +40,8 @@ export default function LanceSourceSelector({
     <section className="lance-source-card" aria-labelledby="lance-source-title">
       <div className="lance-source-card__heading">
         <div>
-          <p className="lance-admin-eyebrow">Step 2 · Choose database</p>
-          <h2 id="lance-source-title">Select a LanceDB location</h2>
+          <p className="lance-admin-eyebrow">Step 2 · Database scanner</p>
+          <h2 id="lance-source-title">Scan a LanceDB location</h2>
           <p>
             Authentication is complete. No database is scanned until you choose a
             location and press <strong>Scan database</strong>.
