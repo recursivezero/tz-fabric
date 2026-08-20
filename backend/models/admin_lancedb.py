@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 SortColumn = Literal["image_uri", "tag", "hash", "mtime"]
 SortOrder = Literal["asc", "desc"]
-LanceStorageType = Literal["local", "s3"]
+LanceStorageType = Literal["local", "s3", "r2"]
 
 
 class LanceAdminAccessResponse(BaseModel):
@@ -18,18 +18,10 @@ class LanceAdminAccessResponse(BaseModel):
 
 class LanceDataSource(BaseModel):
     storage: LanceStorageType
-    location: str = Field(min_length=1, max_length=2048)
-
-
-class LanceLocalDirectoryItem(BaseModel):
-    name: str
-    path: str
-
-
-class LanceLocalBrowseResponse(BaseModel):
-    current_path: str
-    parent_path: str | None = None
-    directories: list[LanceLocalDirectoryItem]
+    # Empty means "use the backend-configured source". This keeps server
+    # filesystem paths and default bucket names out of the browser while still
+    # allowing an administrator to provide an explicit cloud database URI.
+    location: str = Field(default="", max_length=2048)
 
 
 class LanceTableItem(BaseModel):

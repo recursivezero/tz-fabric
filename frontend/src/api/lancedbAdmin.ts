@@ -8,22 +8,11 @@ import {
 
 export type LanceSortColumn = "image_uri" | "tag" | "hash" | "mtime";
 export type LanceSortOrder = "asc" | "desc";
-export type LanceStorageType = "local" | "s3";
+export type LanceStorageType = "local" | "s3" | "r2";
 
 export interface LanceDataSource {
   storage: LanceStorageType;
   location: string;
-}
-
-export interface LanceLocalDirectoryItem {
-  name: string;
-  path: string;
-}
-
-export interface LanceLocalBrowseResponse {
-  current_path: string;
-  parent_path: string | null;
-  directories: LanceLocalDirectoryItem[];
 }
 
 export interface LanceTableItem {
@@ -133,7 +122,8 @@ function adminHeaders(
 
   if (source) {
     headers["X-LanceDB-Storage"] = source.storage;
-    headers["X-LanceDB-Location"] = source.location;
+    const location = source.location.trim();
+    if (location) headers["X-LanceDB-Location"] = location;
   }
 
   return headers;
@@ -198,22 +188,6 @@ export function verifyLanceAdminAccess(
   );
 }
 
-export function browseLanceLocalDirectories(
-  secret: string,
-  path?: string,
-  signal?: AbortSignal,
-): Promise<LanceLocalBrowseResponse> {
-  const params = new URLSearchParams();
-  const cleanPath = path?.trim();
-  if (cleanPath) params.set("path", cleanPath);
-  const suffix = params.size > 0 ? `?${params.toString()}` : "";
-  return getAdminJson<LanceLocalBrowseResponse>(
-    `${ADMIN_BASE_URL}/sources/local${suffix}`,
-    secret,
-    signal,
-  );
-}
-
 export function scanLanceTables(
   source: LanceDataSource,
   secret: string,
@@ -226,12 +200,6 @@ export function scanLanceTables(
     source,
   );
 }
-
-/**
- * Backward-compatible alias for code that still imports the old method name.
- * New code should use scanLanceTables so the client terminology mirrors /scan.
- */
-export const fetchLanceTables = scanLanceTables;
 
 export function fetchLanceTableDetails(
   tableName: string,

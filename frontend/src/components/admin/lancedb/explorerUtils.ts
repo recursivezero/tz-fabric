@@ -1,4 +1,5 @@
 import type {
+  LanceDataSource,
   LanceRowDetail,
   LanceRowSummary,
   LanceSortColumn,
@@ -20,6 +21,50 @@ export const DEFAULT_EXPLORER_QUERY: ExplorerQueryState = {
   sortBy: null,
   sortOrder: "asc",
 };
+
+function validBucketName(storage: LanceDataSource["storage"], bucket: string) {
+  if (storage === "r2") {
+    return /^[a-z0-9](?:[a-z0-9-]{1,61})[a-z0-9]$/.test(bucket);
+  }
+
+  return (
+    /^[a-z0-9](?:[a-z0-9.-]{1,61})[a-z0-9]$/.test(bucket) &&
+    !bucket.includes("..") &&
+    !/^(?:\d{1,3}\.){3}\d{1,3}$/.test(bucket)
+  );
+}
+
+export function validateLanceSource(source: LanceDataSource): string | null {
+  const location = source.location.trim();
+  if (location.length > 2048) {
+    return "The LanceDB location must be 2,048 characters or fewer.";
+  }
+  if (location.includes("\0")) {
+    return "The LanceDB location contains an invalid character.";
+  }
+
+  if (source.storage === "local" || !location) return null;
+
+  try {
+    const parsed = new URL(location);
+    if (
+      parsed.protocol.toLowerCase() !== "s3:" ||
+      !parsed.hostname ||
+      parsed.username ||
+      parsed.password ||
+      parsed.port ||
+      parsed.search ||
+      parsed.hash ||
+      !validBucketName(source.storage, parsed.hostname)
+    ) {
+      return "Enter an S3-compatible location with a valid bucket name, such as s3://bucket/path/to/database.";
+    }
+  } catch {
+    return "Enter an S3-compatible location with a valid bucket name, such as s3://bucket/path/to/database.";
+  }
+
+  return null;
+}
 
 export function resetExplorerQuery(): ExplorerQueryState {
   return { ...DEFAULT_EXPLORER_QUERY };

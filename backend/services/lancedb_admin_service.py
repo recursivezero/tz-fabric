@@ -19,15 +19,13 @@ from decimal import Decimal
 from heapq import heappush, heapreplace
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote, urlsplit
+from urllib.parse import urlsplit
 
 from constants import DATABASE_PATH
 from models.admin_lancedb import (
     LanceDataSource,
     LanceEmbeddingFunction,
     LanceFilterState,
-    LanceLocalBrowseResponse,
-    LanceLocalDirectoryItem,
     LancePagination,
     LanceRowDetailResponse,
     LanceRowsResponse,
@@ -45,6 +43,9 @@ from models.admin_lancedb import (
 )
 
 _TABLE_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
+_AWS_BUCKET_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9.-]{1,61})[a-z0-9]$")
+_R2_BUCKET_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]{1,61})[a-z0-9]$")
+_IPV4_ADDRESS_PATTERN = re.compile(r"^(?:\d{1,3}\.){3}\d{1,3}$")
 _SORTABLE_COLUMNS: set[str] = {"image_uri", "tag", "hash", "mtime"}
 _GRID_COLUMNS = ["image_uri", "tag", "hash", "mtime"]
 _SENSITIVE_METADATA_PARTS = (
@@ -101,24 +102,55 @@ class LanceDBAdminService:
         connection_factory: Callable[[str], Any] | None = None,
         table_factory: Callable[[str, str], Any] | None = None,
     ) -> None:
-        self._source = self._normalise_source(
-            source or LanceDataSource(storage="local", location=DATABASE_PATH),
+        self._source, self._connection_location = self._normalise_source(
+            source or LanceDataSource(storage="local"),
             require_local_exists=connection_factory is None,
         )
         self._connection_factory = connection_factory
         self._table_factory = table_factory
 
     @staticmethod
+    def _validate_bucket_name(storage: str, bucket: str) -> bool:
+        if storage == "r2":
+            return bool(_R2_BUCKET_PATTERN.fullmatch(bucket))
+
+        return bool(
+            _AWS_BUCKET_PATTERN.fullmatch(bucket)
+            and ".." not in bucket
+            and not _IPV4_ADDRESS_PATTERN.fullmatch(bucket)
+        )
+
+    @staticmethod
     def _normalise_source(
         source: LanceDataSource,
         *,
         require_local_exists: bool = True,
-    ) -> LanceDataSource:
+    ) -> tuple[LanceDataSource, str]:
         location = source.location.strip()
-        if not location or "\x00" in location:
-            raise LanceDBValidationError("A LanceDB location is required.")
+        if "\x00" in location:
+            raise LanceDBValidationError(
+                "The LanceDB location contains an invalid character."
+            )
 
-        if source.storage == "s3":
+        if source.storage in {"s3", "r2"}:
+            if not location:
+                bucket_environment_key = (
+                    "AWS_BUCKET_NAME" if source.storage == "s3" else "R2_BUCKET_NAME"
+                )
+                bucket = (os.getenv(bucket_environment_key) or "").strip()
+                if not LanceDBAdminService._validate_bucket_name(
+                    source.storage, bucket
+                ):
+                    storage_name = (
+                        "Amazon S3"
+                        if source.storage == "s3"
+                        else "Cloudflare R2"
+                    )
+                    raise LanceDBValidationError(
+                        f"{storage_name} is not configured on the backend."
+                    )
+                return LanceDataSource(storage=source.storage), f"s3://{bucket}"
+
             parsed = urlsplit(location)
             if (
                 parsed.scheme.lower() != "s3"
@@ -129,102 +161,109 @@ class LanceDBAdminService:
                 or parsed.fragment
             ):
                 raise LanceDBValidationError(
-                    "Enter an S3 location such as s3://bucket/path/to/database."
+                    "Enter an S3-compatible location such as "
+                    "s3://bucket/path/to/database."
+                )
+            if not LanceDBAdminService._validate_bucket_name(
+                source.storage, parsed.netloc
+            ):
+                raise LanceDBValidationError(
+                    "The configured object-storage bucket name is invalid."
                 )
             clean_path = parsed.path.rstrip("/")
-            return LanceDataSource(
-                storage="s3",
-                location=f"s3://{parsed.netloc}{clean_path}",
+            normalised_location = f"s3://{parsed.netloc}{clean_path}"
+            return (
+                LanceDataSource(
+                    storage=source.storage,
+                    location=normalised_location,
+                ),
+                normalised_location,
             )
 
-        if location.lower().startswith("file://"):
-            parsed = urlsplit(location)
-            location = unquote(parsed.path)
-            if os.name == "nt" and re.match(r"^/[A-Za-z]:", location):
-                location = location[1:]
+        # Local admin inspection is intentionally pinned to the application's
+        # configured LanceDB directory.  The browser must never become a
+        # general-purpose server filesystem explorer.
+        if location:
+            raise LanceDBValidationError(
+                "Local path selection is disabled; use the configured LanceDB database."
+            )
 
-        path = Path(location).expanduser()
+        configured_path = Path(DATABASE_PATH).expanduser()
         try:
-            resolved = path.resolve(strict=require_local_exists)
+            resolved = configured_path.resolve(strict=require_local_exists)
         except (OSError, RuntimeError) as error:
             raise LanceDBValidationError(
-                "The selected local LanceDB directory does not exist."
+                "The configured local LanceDB directory does not exist."
             ) from error
         if require_local_exists and not resolved.is_dir():
             raise LanceDBValidationError(
-                "The selected local LanceDB location must be a directory."
+                "The configured local LanceDB location must be a directory."
             )
-        return LanceDataSource(storage="local", location=str(resolved))
-
-    @classmethod
-    def browse_local_directories(
-        cls, path: str | None = None
-    ) -> LanceLocalBrowseResponse:
-        requested = (
-            path.strip()
-            if path and path.strip()
-            else str(Path(DATABASE_PATH).parent)
-        )
-        if requested.lower().startswith("file://"):
-            parsed = urlsplit(requested)
-            requested = unquote(parsed.path)
-            if os.name == "nt" and re.match(r"^/[A-Za-z]:", requested):
-                requested = requested[1:]
-
-        candidate = Path(requested).expanduser()
-        try:
-            current = candidate.resolve(strict=True)
-        except (OSError, RuntimeError) as error:
-            raise LanceDBValidationError(
-                "The selected directory does not exist."
-            ) from error
-        if not current.is_dir():
-            raise LanceDBValidationError("The selected path is not a directory.")
-
-        try:
-            directories = sorted(
-                (
-                    LanceLocalDirectoryItem(
-                        name=child.name,
-                        path=str(child.resolve()),
-                    )
-                    for child in current.iterdir()
-                    if child.is_dir()
-                ),
-                key=lambda item: item.name.casefold(),
-            )
-        except PermissionError as error:
-            raise LanceDBUnavailable(
-                "Unable to browse the selected directory."
-            ) from error
-
-        parent = current.parent
-        return LanceLocalBrowseResponse(
-            current_path=str(current),
-            parent_path=str(parent) if parent != current else None,
-            directories=directories,
-        )
+        return LanceDataSource(storage="local"), str(resolved)
 
     @property
     def source(self) -> LanceDataSource:
         return self._source
 
+    def _storage_options(self) -> dict[str, str] | None:
+        if self._source.storage == "local":
+            return None
+
+        if self._source.storage == "s3":
+            # LanceDB reads AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (and the
+            # normal AWS credential chain) itself.  Only pass the region here;
+            # the supported storage option name is `region`, not `aws_region`.
+            region = (
+                os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or ""
+            ).strip()
+            return {"region": region} if region else None
+
+        access_key = (os.getenv("R2_ACCESS_KEY_ID") or "").strip()
+        secret_key = (os.getenv("R2_SECRET_ACCESS_KEY") or "").strip()
+        endpoint = (os.getenv("R2_ENDPOINT") or "").strip()
+        account_id = (os.getenv("R2_ACCOUNT_ID") or "").strip()
+        region = (os.getenv("R2_REGION") or "auto").strip() or "auto"
+
+        if not endpoint and account_id:
+            endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
+
+        if not access_key or not secret_key or not endpoint:
+            raise LanceDBValidationError(
+                "Cloudflare R2 credentials and endpoint are not configured on the "
+                "backend."
+            )
+
+        parsed_endpoint = urlsplit(endpoint)
+        if (
+            parsed_endpoint.scheme.lower() != "https"
+            or not parsed_endpoint.netloc
+            or parsed_endpoint.username
+            or parsed_endpoint.password
+            or parsed_endpoint.path not in {"", "/"}
+            or parsed_endpoint.query
+            or parsed_endpoint.fragment
+        ):
+            raise LanceDBValidationError(
+                "The configured Cloudflare R2 endpoint is invalid."
+            )
+
+        return {
+            "endpoint": endpoint.rstrip("/"),
+            "access_key_id": access_key,
+            "secret_access_key": secret_key,
+            "region": region,
+        }
+
     def _get_connection(self) -> Any:
         try:
             if self._connection_factory is not None:
-                return self._connection_factory(self._source.location)
+                return self._connection_factory(self._connection_location)
 
             import lancedb
 
-            storage_options: dict[str, str] | None = None
-            if self._source.storage == "s3":
-                region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
-                if region:
-                    storage_options = {"aws_region": region}
-
             return lancedb.connect(
-                self._source.location,
-                storage_options=storage_options,
+                self._connection_location,
+                storage_options=self._storage_options(),
             )
         except LanceDBAdminError:
             raise
@@ -273,7 +312,7 @@ class LanceDBAdminService:
 
         try:
             if self._table_factory is not None:
-                return self._table_factory(self._source.location, table_name)
+                return self._table_factory(self._connection_location, table_name)
 
             return self._get_connection().open_table(table_name)
         except LanceDBAdminError:

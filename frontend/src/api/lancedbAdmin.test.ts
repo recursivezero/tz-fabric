@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HttpError } from "@/utils/http";
 import {
-  browseLanceLocalDirectories,
   buildLanceRowsUrl,
-  scanLanceTables,
   isAdminAccessError,
+  scanLanceTables,
   verifyLanceAdminAccess,
 } from "./lancedbAdmin";
 
@@ -15,7 +14,7 @@ type FetchFunction = (
 
 const localSource = {
   storage: "local" as const,
-  location: "C:\\data\\fabric.lancedb",
+  location: "",
 };
 
 afterEach(() => {
@@ -47,27 +46,6 @@ describe("LanceDB administrator API", () => {
     expect(headers.get("X-LanceDB-Location")).toBeNull();
   });
 
-  it("browses server directories without scanning a database", async () => {
-    const fetchMock = vi.fn<FetchFunction>();
-    fetchMock.mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          current_path: "C:\\data",
-          parent_path: "C:\\",
-          directories: [],
-        }),
-        { status: 200, headers: { "content-type": "application/json" } },
-      ),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    await browseLanceLocalDirectories("private-secret", "C:\\data");
-
-    const [url, requestInit] = fetchMock.mock.calls[0];
-    expect(String(url)).toContain("/sources/local?path=C%3A%5Cdata");
-    expect(new Headers(requestInit?.headers).get("X-LanceDB-Location")).toBeNull();
-  });
-
   it("sends the selected source only when scanning tables", async () => {
     const fetchMock = vi.fn<FetchFunction>();
     fetchMock.mockResolvedValue(
@@ -89,8 +67,31 @@ describe("LanceDB administrator API", () => {
     expect(String(url)).not.toContain("private-secret");
     expect(headers.get("X-Internal-Secret")).toBe("private-secret");
     expect(headers.get("X-LanceDB-Storage")).toBe("local");
-    expect(headers.get("X-LanceDB-Location")).toBe(localSource.location);
+    expect(headers.get("X-LanceDB-Location")).toBeNull();
     expect(requestInit?.cache).toBe("no-store");
+  });
+
+  it("sends an explicit R2 database URI without sending credentials", async () => {
+    const source = {
+      storage: "r2" as const,
+      location: "s3://example-r2-bucket/lancedb",
+    };
+    const fetchMock = vi.fn<FetchFunction>();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ source, tables: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await scanLanceTables(source, "private-secret");
+
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const headers = new Headers(requestInit?.headers);
+    expect(headers.get("X-LanceDB-Storage")).toBe("r2");
+    expect(headers.get("X-LanceDB-Location")).toBe(source.location);
+    expect(JSON.stringify(requestInit)).not.toContain("R2_SECRET_ACCESS_KEY");
   });
 
   it("builds a server-pagination URL with encoded table and exact tag filter", () => {

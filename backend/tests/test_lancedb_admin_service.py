@@ -4,6 +4,7 @@ import tests.bootstrap  # noqa: F401
 
 import math
 import unittest
+from unittest.mock import patch
 
 from models.admin_lancedb import LanceDataSource
 from services.lancedb_admin_service import (
@@ -32,6 +33,7 @@ class LanceDBAdminServiceTests(unittest.TestCase):
         response = self.service.list_tables()
         self.assertEqual([item.name for item in response.tables], ["tz-fabric-table"])
         self.assertEqual(response.source.storage, "local")
+        self.assertEqual(response.source.location, "")
         self.assertEqual(self.connection.list_tables_calls, 1)
 
     def test_empty_database_returns_an_authenticated_empty_collection(self) -> None:
@@ -68,10 +70,106 @@ class LanceDBAdminServiceTests(unittest.TestCase):
         self.assertEqual(response.source.storage, "s3")
         self.assertEqual(response.source.location, "s3://fabric-bucket/admin/database")
 
+    def test_configured_s3_bucket_is_used_without_exposing_it_in_source(self) -> None:
+        locations: list[str] = []
+        connection = FakeConnection({})
+
+        def connection_factory(location: str) -> FakeConnection:
+            locations.append(location)
+            return connection
+
+        with patch.dict("os.environ", {"AWS_BUCKET_NAME": "configured-bucket"}):
+            service = LanceDBAdminService(
+                source=LanceDataSource(storage="s3"),
+                connection_factory=connection_factory,
+            )
+            response = service.list_tables()
+
+        self.assertEqual(locations, ["s3://configured-bucket"])
+        self.assertEqual(response.source, LanceDataSource(storage="s3"))
+
+    def test_r2_uses_s3_compatible_endpoint_and_separate_credentials(self) -> None:
+        environment = {
+            "R2_BUCKET_NAME": "configured-r2-bucket",
+            "R2_ACCESS_KEY_ID": "test-r2-key",
+            "R2_SECRET_ACCESS_KEY": "test-r2-secret",
+            "R2_ACCOUNT_ID": "test-account",
+            "R2_REGION": "auto",
+        }
+
+        with patch.dict("os.environ", environment, clear=False):
+            service = LanceDBAdminService(
+                source=LanceDataSource(storage="r2"),
+                connection_factory=lambda _location: FakeConnection({}),
+            )
+            options = service._storage_options()
+
+        self.assertEqual(service._connection_location, "s3://configured-r2-bucket")
+        self.assertEqual(service.source, LanceDataSource(storage="r2"))
+        self.assertEqual(
+            options,
+            {
+                "endpoint": "https://test-account.r2.cloudflarestorage.com",
+                "access_key_id": "test-r2-key",
+                "secret_access_key": "test-r2-secret",
+                "region": "auto",
+            },
+        )
+
+    def test_r2_requires_backend_credentials(self) -> None:
+        environment = {
+            "R2_BUCKET_NAME": "configured-r2-bucket",
+            "R2_ACCESS_KEY_ID": "",
+            "R2_SECRET_ACCESS_KEY": "",
+            "R2_ENDPOINT": "",
+            "R2_ACCOUNT_ID": "",
+        }
+        with patch.dict("os.environ", environment, clear=False):
+            service = LanceDBAdminService(
+                source=LanceDataSource(storage="r2"),
+                connection_factory=lambda _location: FakeConnection({}),
+            )
+            with self.assertRaisesRegex(LanceDBValidationError, "R2 credentials"):
+                service._storage_options()
+
+    def test_s3_region_uses_supported_storage_option_name(self) -> None:
+        with patch.dict("os.environ", {"AWS_REGION": "ap-south-1"}, clear=False):
+            service = LanceDBAdminService(
+                source=LanceDataSource(storage="s3", location="s3://bucket/db"),
+                connection_factory=lambda _location: FakeConnection({}),
+            )
+            options = service._storage_options()
+
+        self.assertEqual(options, {"region": "ap-south-1"})
+        self.assertNotIn("aws_region", options or {})
+
     def test_rejects_invalid_s3_source_uri(self) -> None:
         with self.assertRaisesRegex(LanceDBValidationError, "s3://bucket"):
             LanceDBAdminService(
                 source=LanceDataSource(storage="s3", location="https://bucket/path"),
+                connection_factory=lambda _location: FakeConnection({}),
+            )
+
+    def test_rejects_invalid_cloud_bucket_names(self) -> None:
+        invalid_sources = [
+            LanceDataSource(storage="s3", location="s3://UPPERCASE/database"),
+            LanceDataSource(storage="s3", location="s3://192.168.1.10/database"),
+            LanceDataSource(storage="r2", location="s3://bucket.with.dots/database"),
+        ]
+        for source in invalid_sources:
+            with self.subTest(storage=source.storage, location=source.location):
+                with self.assertRaisesRegex(
+                    LanceDBValidationError, "bucket name is invalid"
+                ):
+                    LanceDBAdminService(
+                        source=source,
+                        connection_factory=lambda _location: FakeConnection({}),
+                    )
+
+    def test_local_source_rejects_client_supplied_server_paths(self) -> None:
+        with self.assertRaisesRegex(LanceDBValidationError, "path selection is disabled"):
+            LanceDBAdminService(
+                source=LanceDataSource(storage="local", location="/tmp/other-path"),
                 connection_factory=lambda _location: FakeConnection({}),
             )
 

@@ -37,22 +37,36 @@ describe("LanceDB Explorer components", () => {
         value={{ storage: "local", location: "" }}
         loading={false}
         error={null}
-        browser={null}
-        browserLoading={false}
-        browserError={null}
         onChange={vi.fn()}
         onScan={vi.fn()}
-        onBrowse={vi.fn()}
-        onCloseBrowser={vi.fn()}
         onLock={vi.fn()}
       />,
     );
 
-    expect(html).toContain("Scan a LanceDB location");
-    expect(html).toContain("Scan database");
-    expect(html).toContain("Browse server");
+    expect(html).toContain("Choose storage and scan tables");
+    expect(html).toContain("Scan tables");
+    expect(html).not.toContain("Browse server");
     expect(html).toContain("Amazon S3");
-    expect(html).toContain("No database is scanned until");
+    expect(html).toContain("Cloudflare R2");
+    expect(html).toContain("Server folders and files are never exposed");
+  });
+
+  it("renders the R2 source without exposing credential inputs", () => {
+    const html = renderToStaticMarkup(
+      <LanceSourceScanner
+        value={{ storage: "r2", location: "" }}
+        loading={false}
+        error={null}
+        onChange={vi.fn()}
+        onScan={vi.fn()}
+        onLock={vi.fn()}
+      />,
+    );
+
+    expect(html).toContain("R2 database URI (optional)");
+    expect(html).toContain("R2_BUCKET_NAME");
+    expect(html).not.toContain("R2_ACCESS_KEY_ID");
+    expect(html).not.toContain("R2_SECRET_ACCESS_KEY");
   });
 
   it("keeps full vectors collapsed in the row grid", () => {

@@ -41,7 +41,6 @@ Read-only endpoints:
 
 ```http
 GET /api/v1/admin/lancedb/access
-GET /api/v1/admin/lancedb/sources/local
 GET /api/v1/admin/lancedb/scan
 GET /api/v1/admin/lancedb/{table_name}
 GET /api/v1/admin/lancedb/{table_name}/rows
@@ -49,8 +48,10 @@ GET /api/v1/admin/lancedb/{table_name}/rows/{row_id}
 ```
 
 `/access` validates administrator authentication only; it does not connect to or
-scan LanceDB. The administrator then chooses a local server directory (optionally
-using `/sources/local`) or an `s3://bucket/path` URI and explicitly calls `/scan`.
+scan LanceDB. The administrator then chooses the configured local database,
+Amazon S3, or Cloudflare R2 and explicitly calls `/scan`. The local mode is
+intentionally pinned to the backend's configured `DATABASE_PATH`; the admin UI
+does not expose a general server filesystem browser.
 The old `/tables` route remains as a non-documented compatibility alias so
 existing clients are not broken while the UI and public API terminology move to
 "scanner" / `/scan`.
@@ -58,8 +59,14 @@ existing clients are not broken while the UI and public API terminology move to
 For S3, credentials stay on the backend. LanceDB accepts the standard
 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_SESSION_TOKEN`, and
 AWS region environment configuration (or an IAM role). The browser never asks
-for or receives AWS credentials. `boto3` is already an explicit backend runtime
-dependency, while LanceDB itself opens the selected S3 URI.
+for or receives AWS credentials. If the administrator leaves the S3 URI empty,
+the backend scans `AWS_BUCKET_NAME`.
+
+R2 uses the same `s3://` LanceDB URI contract with a Cloudflare endpoint and its
+own backend-only credentials: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+`R2_ENDPOINT` (or `R2_ACCOUNT_ID`), `R2_BUCKET_NAME`, and `R2_REGION` (normally
+`auto`). This keeps AWS and R2 credentials independent when both are configured
+on the same backend process.
 
 Row-list parameters:
 
@@ -75,6 +82,8 @@ sort_order  asc | desc
 
 - Table names are validated and resolved only from the active LanceDB
   connection.
+- Local scanning cannot be redirected to arbitrary backend directories from the
+  browser.
 - Standard row requests select scalar columns only; vectors are not included.
 - Filtering, counting, pagination, and supported sorting are executed by the
   backend.
@@ -94,7 +103,7 @@ sort_order  asc | desc
 The explorer provides:
 
 - private access gate;
-- database scanner, table selector, and rescan;
+- database scanner, table picker, and rescan;
 - row count, schema-field count, and vector dimension summaries;
 - Arrow schema, schema metadata, and embedding metadata panels;
 - exact tag filter, scalar sort, and page-size controls;

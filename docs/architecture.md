@@ -51,17 +51,19 @@ administrator explicitly chooses a source and starts a scan.
 
 Supported sources:
 
-- `local`: a directory on the backend server. The authenticated directory
-  browser lists server-side folders and never reads folders from the browser
-  device.
-- `s3`: an `s3://bucket/path/to/database` URI. LanceDB uses the backend process'
-  standard AWS environment variables or IAM role. Cloud credentials are never
-  accepted from or stored in the frontend.
+- `local`: the backend's configured LanceDB database (`DATABASE_PATH`). The
+  frontend cannot browse arbitrary server directories or override that path.
+- `s3`: an optional `s3://bucket/path/to/database` URI. When omitted, the backend
+  uses `AWS_BUCKET_NAME`. LanceDB uses the backend process' standard AWS
+  environment variables or IAM role.
+- `r2`: an optional S3-compatible URI. When omitted, the backend uses
+  `R2_BUCKET_NAME` and connects with the R2 endpoint, `auto` region, and separate
+  R2 credentials configured only on the server.
 
 Every table, schema, row, and vector request carries the selected source in the
-`X-LanceDB-Storage` and `X-LanceDB-Location` headers. The API remains read-only.
-Cloudflare R2 can be introduced later through a separately configured
-S3-compatible endpoint without changing the source-selection UI contract.
+`X-LanceDB-Storage` header and, only for an explicit cloud path,
+`X-LanceDB-Location`. The API remains read-only. Cloud credentials are never
+accepted from or stored in the frontend.
 
 ## Python Dependency Management
 

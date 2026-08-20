@@ -7,6 +7,7 @@ import {
   formatLanceMtime,
   resetExplorerQuery,
   rowCopyPayload,
+  validateLanceSource,
 } from "./explorerUtils";
 
 describe("LanceDB explorer query state", () => {
@@ -30,6 +31,33 @@ describe("LanceDB explorer query state", () => {
       page: 1,
       pageSize: 100,
     });
+  });
+
+  it("validates configured and explicit cloud sources before a scan", () => {
+    expect(
+      validateLanceSource({ storage: "s3", location: "s3://bucket/database" }),
+    ).toBeNull();
+    expect(validateLanceSource({ storage: "s3", location: "" })).toBeNull();
+    expect(validateLanceSource({ storage: "r2", location: "" })).toBeNull();
+    expect(
+      validateLanceSource({ storage: "r2", location: "s3://bucket/database" }),
+    ).toBeNull();
+    expect(
+      validateLanceSource({ storage: "s3", location: "https://bucket/database" }),
+    ).toContain("S3-compatible");
+    expect(
+      validateLanceSource({ storage: "s3", location: "s3://bucket/db?token=x" }),
+    ).toContain("S3-compatible");
+    expect(
+      validateLanceSource({ storage: "r2", location: "s3://bucket.with.dots/db" }),
+    ).toContain("valid bucket name");
+    expect(
+      validateLanceSource({ storage: "s3", location: "s3://192.168.1.10/db" }),
+    ).toContain("valid bucket name");
+    expect(validateLanceSource({ storage: "local", location: "   " })).toBeNull();
+    expect(
+      validateLanceSource({ storage: "local", location: "x".repeat(2049) }),
+    ).toContain("2,048");
   });
 
   it("copies collapsed row JSON without vector values", () => {

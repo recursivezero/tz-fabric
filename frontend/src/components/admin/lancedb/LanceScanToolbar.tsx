@@ -23,11 +23,19 @@ export default function LanceScanToolbar({
   onChangeSource,
   onLock,
 }: LanceScanToolbarProps) {
+  const storageLabel =
+    source.storage === "s3"
+      ? "Amazon S3"
+      : source.storage === "r2"
+        ? "Cloudflare R2"
+        : "Local database";
+  const sourceLocation = source.location || "Backend configured source";
+
   return (
     <section className="lance-admin-toolbar" aria-label="LanceDB table controls">
       <div className="lance-admin-toolbar__source">
-        <span>{source.storage === "s3" ? "Amazon S3" : "Local source"}</span>
-        <code title={source.location}>{source.location}</code>
+        <span>{storageLabel}</span>
+        <code title={sourceLocation}>{sourceLocation}</code>
       </div>
       <label className="lance-admin-field lance-admin-field--table">
         <span>Table</span>

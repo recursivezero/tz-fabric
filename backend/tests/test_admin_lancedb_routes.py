@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import tests.bootstrap  # noqa: F401
 
-import tempfile
 import unittest
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -115,7 +113,7 @@ class AdminLanceDBRouteTests(unittest.TestCase):
             self.app.openapi()["paths"],
         )
 
-    def test_source_headers_are_required_before_scanning_tables(self) -> None:
+    def test_storage_header_is_required_but_location_is_optional(self) -> None:
         app = FastAPI()
         app.include_router(router, prefix="/api/v1")
         client = TestClient(app)
@@ -127,27 +125,18 @@ class AdminLanceDBRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 422)
         self.assertIn("X-LanceDB-Storage", response.text)
-        self.assertIn("X-LanceDB-Location", response.text)
+        self.assertNotIn("X-LanceDB-Location", response.text)
 
-    def test_local_directory_browser_does_not_scan_tables(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            child = Path(directory) / "selected.lancedb"
-            child.mkdir()
-
-            response = self.client.get(
-                "/api/v1/admin/lancedb/sources/local",
-                headers=self.headers,
-                params={"path": directory},
-            )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.json()["current_path"],
-            str(Path(directory).resolve()),
+    def test_local_filesystem_browser_is_not_exposed(self) -> None:
+        response = self.client.get(
+            "/api/v1/admin/lancedb/sources/local",
+            headers=self.headers,
         )
-        self.assertEqual(
-            response.json()["directories"],
-            [{"name": "selected.lancedb", "path": str(child.resolve())}],
+
+        self.assertEqual(response.status_code, 404)
+        self.assertNotIn(
+            "/api/v1/admin/lancedb/sources/local",
+            self.app.openapi()["paths"],
         )
 
     def test_all_endpoints_return_expected_contracts(self) -> None:

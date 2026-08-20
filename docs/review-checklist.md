@@ -15,10 +15,14 @@ Before approving a Pull Request, verify:
 - Admin endpoints appear under one OpenAPI tag only.
 - Empty LanceDB databases return a successful empty response and do not log the
   administrator out.
-- Administrator login does not scan tables; a local or S3 source must be selected
+- Administrator login does not scan tables; local, S3, or R2 must be selected
   explicitly first.
+- Local LanceDB inspection uses only the configured database and does not expose
+  a backend filesystem browser.
 - S3 credentials stay server-side and are supplied through the AWS environment or
   IAM role, never through the frontend.
+- R2 credentials and endpoint stay server-side and are never sent to the
+  frontend.
 - Python dependency changes are made through Poetry (`pyproject.toml` and
   `poetry.lock`), not by hand-editing `requirements.txt`.
 

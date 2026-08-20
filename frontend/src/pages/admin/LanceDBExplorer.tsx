@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  browseLanceLocalDirectories,
   fetchLanceRowDetail,
   fetchLanceRows,
   fetchLanceTableDetails,
@@ -9,7 +8,6 @@ import {
   isMissingTableError,
   verifyLanceAdminAccess,
   type LanceDataSource,
-  type LanceLocalBrowseResponse,
   type LanceRowDetail,
   type LanceRowSummary,
   type LanceRowsResponse,
@@ -33,6 +31,7 @@ import {
   applyExplorerSort,
   applyExplorerTag,
   resetExplorerQuery,
+  validateLanceSource,
   writeTextToClipboard,
   type ExplorerQueryState,
 } from "@/components/admin/lancedb/explorerUtils";
@@ -70,9 +69,6 @@ export default function LanceDBExplorer() {
   const [source, setSource] = useState<LanceDataSource | null>(null);
   const [sourceLoading, setSourceLoading] = useState(false);
   const [sourceError, setSourceError] = useState<string | null>(null);
-  const [browser, setBrowser] = useState<LanceLocalBrowseResponse | null>(null);
-  const [browserLoading, setBrowserLoading] = useState(false);
-  const [browserError, setBrowserError] = useState<string | null>(null);
 
   const [tables, setTables] = useState<LanceTableItem[]>([]);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
@@ -108,12 +104,19 @@ export default function LanceDBExplorer() {
 
   const unlockControllerRef = useRef<AbortController | null>(null);
   const sourceControllerRef = useRef<AbortController | null>(null);
-  const browseControllerRef = useRef<AbortController | null>(null);
   const vectorControllerRef = useRef<AbortController | null>(null);
   const tablesRequestIdRef = useRef(0);
 
   const [copyStatus, setCopyStatus] = useState("");
   const copyTimerRef = useRef<number | null>(null);
+
+  const resetLoadingState = useCallback(() => {
+    setSourceLoading(false);
+    setTablesLoading(false);
+    setDetailsLoading(false);
+    setRowsLoading(false);
+    setVectorLoading(false);
+  }, []);
 
   useEffect(() => {
     selectedTableRef.current = selectedTable;
@@ -133,25 +136,25 @@ export default function LanceDBExplorer() {
     setVectorRow(null);
     setVectorDetail(null);
     setVectorError(null);
+    setVectorTrigger(null);
   }, []);
 
   const lockExplorer = useCallback(
     (message: string | null = null) => {
       unlockControllerRef.current?.abort();
       sourceControllerRef.current?.abort();
-      browseControllerRef.current?.abort();
       vectorControllerRef.current?.abort();
+      tablesRequestIdRef.current += 1;
+      resetLoadingState();
       setSecret(null);
       setUnlocking(false);
       setAccessError(message);
       setSource(null);
       setSourceDraft(DEFAULT_SOURCE);
       setSourceError(null);
-      setBrowser(null);
-      setBrowserError(null);
       clearExplorerData();
     },
-    [clearExplorerData],
+    [clearExplorerData, resetLoadingState],
   );
 
   const handleRequestFailure = useCallback(
@@ -184,13 +187,19 @@ export default function LanceDBExplorer() {
       }
 
       const nextTable = available[0]?.name ?? null;
+      vectorControllerRef.current?.abort();
       selectedTableRef.current = nextTable;
       setSelectedTable(nextTable);
       setDetails(null);
       setRowsResponse(null);
+      setDetailsLoading(false);
+      setRowsLoading(false);
       setQuery(resetExplorerQuery());
       setVectorRow(null);
       setVectorDetail(null);
+      setVectorError(null);
+      setVectorLoading(false);
+      setVectorTrigger(null);
     },
     [],
   );
@@ -267,7 +276,11 @@ export default function LanceDBExplorer() {
       controller.signal,
     )
       .then((response) => {
-        if (requestRevision !== currentDetailsRevision.current) return;
+        if (
+          controller.signal.aborted ||
+          requestRevision !== currentDetailsRevision.current
+        )
+          return;
         setDetails(response);
       })
       .catch((error: unknown) => {
@@ -328,7 +341,11 @@ export default function LanceDBExplorer() {
       controller.signal,
     )
       .then((response) => {
-        if (requestRevision !== currentRowsRevision.current) return;
+        if (
+          controller.signal.aborted ||
+          requestRevision !== currentRowsRevision.current
+        )
+          return;
         setRowsResponse(response);
         if (response.pagination.page !== query.page) {
           setQuery((current) => ({
@@ -378,7 +395,6 @@ export default function LanceDBExplorer() {
     () => () => {
       unlockControllerRef.current?.abort();
       sourceControllerRef.current?.abort();
-      browseControllerRef.current?.abort();
       vectorControllerRef.current?.abort();
       if (copyTimerRef.current !== null) {
         window.clearTimeout(copyTimerRef.current);
@@ -417,34 +433,10 @@ export default function LanceDBExplorer() {
       });
   };
 
-  const browseLocal = (path?: string) => {
-    if (!secret) return;
-    browseControllerRef.current?.abort();
-    const controller = new AbortController();
-    browseControllerRef.current = controller;
-    setBrowserLoading(true);
-    setBrowserError(null);
-
-    void browseLanceLocalDirectories(secret, path, controller.signal)
-      .then((response) => {
-        if (!controller.signal.aborted) setBrowser(response);
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        if (isAdminAccessError(error)) {
-          lockExplorer(ACCESS_REJECTED_MESSAGE);
-          return;
-        }
-        setBrowserError(
-          readableError(error, "Unable to browse server directories."),
-        );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setBrowserLoading(false);
-      });
-  };
-
   const selectTable = (tableName: string) => {
+    vectorControllerRef.current?.abort();
+    setVectorLoading(false);
+    setVectorTrigger(null);
     selectedTableRef.current = tableName;
     setTablesError(null);
     setSelectedTable(tableName);
@@ -456,6 +448,20 @@ export default function LanceDBExplorer() {
     setNotice(null);
     setVectorRow(null);
     setVectorDetail(null);
+  };
+
+  const scanSourceDraft = () => {
+    const validationError = validateLanceSource(sourceDraft);
+    if (validationError) {
+      setSourceError(validationError);
+      return;
+    }
+
+    const requestedSource = {
+      ...sourceDraft,
+      location: sourceDraft.location.trim(),
+    };
+    void loadTables(requestedSource, true);
   };
 
   const refreshExplorer = () => {
@@ -474,10 +480,11 @@ export default function LanceDBExplorer() {
 
   const changeSource = () => {
     sourceControllerRef.current?.abort();
+    vectorControllerRef.current?.abort();
+    tablesRequestIdRef.current += 1;
+    resetLoadingState();
     setSource(null);
     setSourceError(null);
-    setBrowser(null);
-    setBrowserError(null);
     clearExplorerData();
   };
 
@@ -525,7 +532,9 @@ export default function LanceDBExplorer() {
         secret,
         controller.signal,
       )
-        .then((response) => setVectorDetail(response))
+        .then((response) => {
+          if (!controller.signal.aborted) setVectorDetail(response);
+        })
         .catch((error: unknown) => {
           if (controller.signal.aborted) return;
           if (isAdminAccessError(error)) {
@@ -565,8 +574,8 @@ export default function LanceDBExplorer() {
             <p className="lance-admin-eyebrow">Admin · Read-only</p>
             <h1>LanceDB Explorer</h1>
             <p>
-              Choose a local server directory or an Amazon S3 URI, then scan it
-              for LanceDB tables.
+              Choose the configured local database, Amazon S3, or Cloudflare R2,
+              then scan it for LanceDB tables.
             </p>
           </div>
           <span className="lance-admin-readonly">No write operations</span>
@@ -575,20 +584,11 @@ export default function LanceDBExplorer() {
           value={sourceDraft}
           loading={sourceLoading}
           error={sourceError}
-          browser={browser}
-          browserLoading={browserLoading}
-          browserError={browserError}
           onChange={(value) => {
             setSourceDraft(value);
             setSourceError(null);
           }}
-          onScan={() => void loadTables(sourceDraft, true)}
-          onBrowse={browseLocal}
-          onCloseBrowser={() => {
-            browseControllerRef.current?.abort();
-            setBrowser(null);
-            setBrowserError(null);
-          }}
+          onScan={scanSourceDraft}
           onLock={() => lockExplorer()}
         />
       </div>

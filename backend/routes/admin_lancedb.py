@@ -19,7 +19,6 @@ from auth.admin_guard import verify_admin_access
 from models.admin_lancedb import (
     LanceAdminAccessResponse,
     LanceDataSource,
-    LanceLocalBrowseResponse,
     LanceRowDetailResponse,
     LanceRowsResponse,
     LanceStorageType,
@@ -64,15 +63,15 @@ def get_lancedb_admin_service(
         Header(alias="X-LanceDB-Storage"),
     ],
     location: Annotated[
-        str,
-        Header(alias="X-LanceDB-Location", min_length=1, max_length=2048),
-    ],
+        str | None,
+        Header(alias="X-LanceDB-Location", max_length=2048),
+    ] = None,
 ) -> LanceDBAdminService:
     """Build a read-only service for the source selected by the administrator."""
 
     try:
         return LanceDBAdminService(
-            source=LanceDataSource(storage=storage, location=location),
+            source=LanceDataSource(storage=storage, location=location or ""),
         )
     except LanceDBValidationError as error:
         raise HTTPException(
@@ -125,21 +124,6 @@ def validate_lancedb_admin_access() -> LanceAdminAccessResponse:
     """Validate the internal-secret header without touching LanceDB storage."""
 
     return LanceAdminAccessResponse()
-
-
-@router.get(
-    "/sources/local",
-    response_model=LanceLocalBrowseResponse,
-    summary="Browse local server directories",
-)
-def browse_lancedb_local_directories(
-    path: str | None = Query(default=None, max_length=2048),
-) -> LanceLocalBrowseResponse:
-    """Browse server-side directories before choosing a local LanceDB path."""
-
-    return _run_admin_operation(
-        lambda: LanceDBAdminService.browse_local_directories(path)
-    )
 
 
 @router.get(
