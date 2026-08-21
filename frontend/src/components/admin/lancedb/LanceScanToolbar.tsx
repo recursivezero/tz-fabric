@@ -29,7 +29,8 @@ export default function LanceScanToolbar({
       : source.storage === "r2"
         ? "Cloudflare R2"
         : "Local database";
-  const sourceLocation = source.location || "Backend configured source";
+  const sourceLocation =
+    source.location?.trim() || "Backend configured source";
 
   return (
     <section className="lance-admin-toolbar" aria-label="LanceDB table controls">

@@ -54,7 +54,13 @@ describe("LanceDB explorer query state", () => {
     expect(
       validateLanceSource({ storage: "s3", location: "s3://192.168.1.10/db" }),
     ).toContain("valid bucket name");
-    expect(validateLanceSource({ storage: "local", location: "   " })).toBeNull();
+    expect(validateLanceSource({ storage: "local" })).toBeNull();
+    expect(
+      validateLanceSource({
+        storage: "local",
+        location: "unexpected-client-path",
+      }),
+    ).toContain("client filesystem path is not accepted");
     expect(
       validateLanceSource({ storage: "local", location: "x".repeat(2049) }),
     ).toContain("2,048");

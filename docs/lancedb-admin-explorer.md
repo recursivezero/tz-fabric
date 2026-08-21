@@ -51,7 +51,9 @@ GET /api/v1/admin/lancedb/{table_name}/rows/{row_id}
 scan LanceDB. The administrator then chooses the configured local database,
 Amazon S3, or Cloudflare R2 and explicitly calls `/scan`. The local mode is
 intentionally pinned to the backend's configured `DATABASE_PATH`; the admin UI
-does not expose a general server filesystem browser.
+does not expose a general server filesystem browser. The frontend local-source
+object therefore carries no machine-specific filesystem path, and local requests
+do not send `X-LanceDB-Location`.
 The old `/tables` route remains as a non-documented compatibility alias so
 existing clients are not broken while the UI and public API terminology move to
 "scanner" / `/scan`.
@@ -65,8 +67,10 @@ the backend scans `AWS_BUCKET_NAME`.
 R2 uses the same `s3://` LanceDB URI contract with a Cloudflare endpoint and its
 own backend-only credentials: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
 `R2_ENDPOINT` (or `R2_ACCOUNT_ID`), `R2_BUCKET_NAME`, and `R2_REGION` (normally
-`auto`). This keeps AWS and R2 credentials independent when both are configured
-on the same backend process.
+`auto`). `R2_ENDPOINT` is backend connection configuration, not a database URI
+for the admin page. An explicit R2 database location still uses the S3-compatible
+form `s3://<bucket>/<database-prefix>`. This keeps AWS and R2 credentials
+independent when both are configured on the same backend process.
 
 Row-list parameters:
 

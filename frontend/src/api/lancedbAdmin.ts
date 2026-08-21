@@ -12,7 +12,8 @@ export type LanceStorageType = "local" | "s3" | "r2";
 
 export interface LanceDataSource {
   storage: LanceStorageType;
-  location: string;
+  /** Cloud database URI. Local mode intentionally has no client path. */
+  location?: string;
 }
 
 export interface LanceTableItem {
@@ -122,8 +123,10 @@ function adminHeaders(
 
   if (source) {
     headers["X-LanceDB-Storage"] = source.storage;
-    const location = source.location.trim();
-    if (location) headers["X-LanceDB-Location"] = location;
+    if (source.storage !== "local") {
+      const location = source.location?.trim();
+      if (location) headers["X-LanceDB-Location"] = location;
+    }
   }
 
   return headers;

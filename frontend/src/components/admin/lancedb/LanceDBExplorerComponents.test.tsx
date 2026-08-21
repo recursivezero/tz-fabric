@@ -34,7 +34,7 @@ describe("LanceDB Explorer components", () => {
   it("requires an explicit source scan after administrator login", () => {
     const html = renderToStaticMarkup(
       <LanceSourceScanner
-        value={{ storage: "local", location: "" }}
+        value={{ storage: "local" }}
         loading={false}
         error={null}
         onChange={vi.fn()}
@@ -63,8 +63,9 @@ describe("LanceDB Explorer components", () => {
       />,
     );
 
-    expect(html).toContain("R2 database URI (optional)");
+    expect(html).toContain("R2 LanceDB URI (optional)");
     expect(html).toContain("R2_BUCKET_NAME");
+    expect(html).toContain("Do not paste R2_ENDPOINT here");
     expect(html).not.toContain("R2_ACCESS_KEY_ID");
     expect(html).not.toContain("R2_SECRET_ACCESS_KEY");
   });

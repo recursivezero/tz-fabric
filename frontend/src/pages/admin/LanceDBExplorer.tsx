@@ -41,7 +41,7 @@ import "@/assets/styles/LanceDBExplorer.css";
 const ACCESS_REJECTED_MESSAGE = "Administrator access was rejected.";
 const ACCESS_CHECK_FAILED_MESSAGE =
   "Administrator access could not be verified. Check the backend and try again.";
-const DEFAULT_SOURCE: LanceDataSource = { storage: "local", location: "" };
+const DEFAULT_SOURCE: LanceDataSource = { storage: "local" };
 
 function readableError(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message.trim()) return error.message;
@@ -457,10 +457,13 @@ export default function LanceDBExplorer() {
       return;
     }
 
-    const requestedSource = {
-      ...sourceDraft,
-      location: sourceDraft.location.trim(),
-    };
+    const requestedSource: LanceDataSource =
+      sourceDraft.storage === "local"
+        ? { storage: "local" }
+        : {
+            ...sourceDraft,
+            location: sourceDraft.location?.trim() ?? "",
+          };
     void loadTables(requestedSource, true);
   };
 

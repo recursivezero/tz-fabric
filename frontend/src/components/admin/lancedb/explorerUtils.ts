@@ -35,7 +35,7 @@ function validBucketName(storage: LanceDataSource["storage"], bucket: string) {
 }
 
 export function validateLanceSource(source: LanceDataSource): string | null {
-  const location = source.location.trim();
+  const location = source.location?.trim() ?? "";
   if (location.length > 2048) {
     return "The LanceDB location must be 2,048 characters or fewer.";
   }
@@ -43,7 +43,12 @@ export function validateLanceSource(source: LanceDataSource): string | null {
     return "The LanceDB location contains an invalid character.";
   }
 
-  if (source.storage === "local" || !location) return null;
+  if (source.storage === "local") {
+    return location
+      ? "Local scanning uses the backend-configured LanceDB database; a client filesystem path is not accepted."
+      : null;
+  }
+  if (!location) return null;
 
   try {
     const parsed = new URL(location);

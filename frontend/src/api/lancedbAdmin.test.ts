@@ -14,7 +14,6 @@ type FetchFunction = (
 
 const localSource = {
   storage: "local" as const,
-  location: "",
 };
 
 afterEach(() => {
@@ -69,6 +68,27 @@ describe("LanceDB administrator API", () => {
     expect(headers.get("X-LanceDB-Storage")).toBe("local");
     expect(headers.get("X-LanceDB-Location")).toBeNull();
     expect(requestInit?.cache).toBe("no-store");
+  });
+
+  it("never sends a client filesystem location for local scans", async () => {
+    const fetchMock = vi.fn<FetchFunction>();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ source: localSource, tables: [] }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await scanLanceTables(
+      { storage: "local", location: "unexpected-client-path" },
+      "private-secret",
+    );
+
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const headers = new Headers(requestInit?.headers);
+    expect(headers.get("X-LanceDB-Storage")).toBe("local");
+    expect(headers.get("X-LanceDB-Location")).toBeNull();
   });
 
   it("sends an explicit R2 database URI without sending credentials", async () => {

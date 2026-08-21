@@ -23,15 +23,15 @@ function sourceCopy(storage: LanceStorageType) {
 
   if (storage === "r2") {
     return {
-      label: "R2 database URI (optional)",
-      placeholder: "s3://bucket/path/to/lancedb",
-      hint: "Leave the URI empty to use R2_BUCKET_NAME. R2 credentials and endpoint stay on the backend.",
+      label: "R2 LanceDB URI (optional)",
+      placeholder: "s3://<R2_BUCKET_NAME>/<database-prefix>",
+      hint: "R2 uses an S3-compatible s3:// URI. Leave this empty to use R2_BUCKET_NAME. Do not paste R2_ENDPOINT here; credentials and the endpoint stay on the backend.",
     };
   }
 
   return {
     label: "S3 database URI (optional)",
-    placeholder: "s3://bucket/path/to/lancedb",
+    placeholder: "s3://<AWS_BUCKET_NAME>/<database-prefix>",
     hint: "Leave the URI empty to use AWS_BUCKET_NAME. AWS credentials or IAM configuration stay on the backend.",
   };
 }
@@ -47,7 +47,7 @@ export default function LanceSourceScanner({
   const copy = sourceCopy(value.storage);
 
   const setStorage = (storage: LanceStorageType) => {
-    onChange({ storage, location: "" });
+    onChange(storage === "local" ? { storage } : { storage, location: "" });
   };
 
   return (
@@ -90,7 +90,7 @@ export default function LanceSourceScanner({
           <label className="lance-admin-field lance-admin-field--source-location">
             <span>{copy.label}</span>
             <input
-              value={value.location}
+              value={value.location ?? ""}
               onChange={(event) =>
                 onChange({ ...value, location: event.target.value })
               }
