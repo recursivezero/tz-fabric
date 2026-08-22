@@ -4,6 +4,7 @@ import tests.bootstrap  # noqa: F401
 
 import math
 import unittest
+from types import ModuleType
 from unittest.mock import patch
 
 from models.admin_lancedb import LanceDataSource
@@ -90,6 +91,9 @@ class LanceDBAdminServiceTests(unittest.TestCase):
 
     def test_r2_uses_s3_compatible_endpoint_and_separate_credentials(self) -> None:
         environment = {
+            "AWS_ACCESS_KEY_ID": "aws-key-that-must-not-be-used",
+            "AWS_SECRET_ACCESS_KEY": "aws-secret-that-must-not-be-used",
+            "AWS_REGION": "ap-south-1",
             "R2_BUCKET_NAME": "configured-r2-bucket",
             "R2_ACCESS_KEY_ID": "test-r2-key",
             "R2_SECRET_ACCESS_KEY": "test-r2-secret",
@@ -110,10 +114,58 @@ class LanceDBAdminServiceTests(unittest.TestCase):
             options,
             {
                 "endpoint": "https://test-account.r2.cloudflarestorage.com",
-                "access_key_id": "test-r2-key",
-                "secret_access_key": "test-r2-secret",
-                "region": "auto",
+                "aws_access_key_id": "test-r2-key",
+                "aws_secret_access_key": "test-r2-secret",
+                "aws_region": "auto",
             },
+        )
+
+    def test_r2_passes_explicit_credentials_to_lancedb_connect(self) -> None:
+        calls: list[tuple[str, dict[str, str] | None]] = []
+        connection = FakeConnection({})
+
+        def connect(
+            location: str,
+            *,
+            storage_options: dict[str, str] | None = None,
+        ) -> FakeConnection:
+            calls.append((location, storage_options))
+            return connection
+
+        environment = {
+            "AWS_ACCESS_KEY_ID": "aws-key-that-must-not-be-used",
+            "AWS_SECRET_ACCESS_KEY": "aws-secret-that-must-not-be-used",
+            "AWS_REGION": "ap-south-1",
+            "R2_BUCKET_NAME": "configured-r2-bucket",
+            "R2_ACCESS_KEY_ID": "test-r2-key",
+            "R2_SECRET_ACCESS_KEY": "test-r2-secret",
+            "R2_ENDPOINT": "https://test-account.r2.cloudflarestorage.com",
+            "R2_REGION": "auto",
+        }
+        fake_lancedb = ModuleType("lancedb")
+        setattr(fake_lancedb, "connect", connect)
+
+        with (
+            patch.dict("os.environ", environment, clear=False),
+            patch.dict("sys.modules", {"lancedb": fake_lancedb}),
+        ):
+            service = LanceDBAdminService(source=LanceDataSource(storage="r2"))
+            response = service.list_tables()
+
+        self.assertEqual(response.tables, [])
+        self.assertEqual(
+            calls,
+            [
+                (
+                    "s3://configured-r2-bucket",
+                    {
+                        "endpoint": "https://test-account.r2.cloudflarestorage.com",
+                        "aws_access_key_id": "test-r2-key",
+                        "aws_secret_access_key": "test-r2-secret",
+                        "aws_region": "auto",
+                    },
+                )
+            ],
         )
 
     def test_r2_requires_backend_credentials(self) -> None:
@@ -132,16 +184,29 @@ class LanceDBAdminServiceTests(unittest.TestCase):
             with self.assertRaisesRegex(LanceDBValidationError, "R2 credentials"):
                 service._storage_options()
 
-    def test_s3_region_uses_supported_storage_option_name(self) -> None:
-        with patch.dict("os.environ", {"AWS_REGION": "ap-south-1"}, clear=False):
+    def test_s3_uses_documented_storage_option_names(self) -> None:
+        environment = {
+            "AWS_ACCESS_KEY_ID": "test-aws-key",
+            "AWS_SECRET_ACCESS_KEY": "test-aws-secret",
+            "AWS_SESSION_TOKEN": "test-session-token",
+            "AWS_REGION": "ap-south-1",
+        }
+        with patch.dict("os.environ", environment, clear=False):
             service = LanceDBAdminService(
                 source=LanceDataSource(storage="s3", location="s3://bucket/db"),
                 connection_factory=lambda _location: FakeConnection({}),
             )
             options = service._storage_options()
 
-        self.assertEqual(options, {"region": "ap-south-1"})
-        self.assertNotIn("aws_region", options or {})
+        self.assertEqual(
+            options,
+            {
+                "aws_access_key_id": "test-aws-key",
+                "aws_secret_access_key": "test-aws-secret",
+                "aws_session_token": "test-session-token",
+                "aws_region": "ap-south-1",
+            },
+        )
 
     def test_rejects_invalid_s3_source_uri(self) -> None:
         with self.assertRaisesRegex(LanceDBValidationError, "s3://bucket"):

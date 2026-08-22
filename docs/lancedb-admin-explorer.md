@@ -69,8 +69,11 @@ own backend-only credentials: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
 `R2_ENDPOINT` (or `R2_ACCOUNT_ID`), `R2_BUCKET_NAME`, and `R2_REGION` (normally
 `auto`). `R2_ENDPOINT` is backend connection configuration, not a database URI
 for the admin page. An explicit R2 database location still uses the S3-compatible
-form `s3://<bucket>/<database-prefix>`. This keeps AWS and R2 credentials
-independent when both are configured on the same backend process.
+form `s3://<bucket>/<database-prefix>`. The service passes R2 credentials,
+endpoint, and region explicitly to LanceDB, so an AWS profile or `AWS_*`
+environment variables on the same machine cannot be reused for R2. This keeps
+AWS and R2 credentials independent when both are configured on the same backend
+process.
 
 Row-list parameters:
 

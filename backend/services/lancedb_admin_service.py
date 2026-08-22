@@ -210,13 +210,27 @@ class LanceDBAdminService:
             return None
 
         if self._source.storage == "s3":
-            # LanceDB reads AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (and the
-            # normal AWS credential chain) itself.  Only pass the region here;
-            # the supported storage option name is `region`, not `aws_region`.
+            # Use LanceDB's documented AWS storage-option names.  Explicit
+            # environment credentials win when present, while leaving them
+            # unset preserves the normal AWS credential chain (profiles, IAM
+            # roles, workload identity, etc.).
+            options: dict[str, str] = {}
+            access_key = (os.getenv("AWS_ACCESS_KEY_ID") or "").strip()
+            secret_key = (os.getenv("AWS_SECRET_ACCESS_KEY") or "").strip()
+            session_token = (os.getenv("AWS_SESSION_TOKEN") or "").strip()
             region = (
                 os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or ""
             ).strip()
-            return {"region": region} if region else None
+
+            if access_key and secret_key:
+                options["aws_access_key_id"] = access_key
+                options["aws_secret_access_key"] = secret_key
+                if session_token:
+                    options["aws_session_token"] = session_token
+            if region:
+                options["aws_region"] = region
+
+            return options or None
 
         access_key = (os.getenv("R2_ACCESS_KEY_ID") or "").strip()
         secret_key = (os.getenv("R2_SECRET_ACCESS_KEY") or "").strip()
@@ -247,11 +261,17 @@ class LanceDBAdminService:
                 "The configured Cloudflare R2 endpoint is invalid."
             )
 
+        # R2 speaks the S3 API but must never fall back to the process-wide
+        # AWS credentials/region.  The aws_* names below are LanceDB's
+        # documented storage-option keys; using generic access_key_id / region
+        # allows the underlying S3 client to ignore them and inherit AWS_*
+        # values from the host, which breaks when S3 and R2 are configured
+        # together.
         return {
             "endpoint": endpoint.rstrip("/"),
-            "access_key_id": access_key,
-            "secret_access_key": secret_key,
-            "region": region,
+            "aws_access_key_id": access_key,
+            "aws_secret_access_key": secret_key,
+            "aws_region": region,
         }
 
     def _get_connection(self) -> Any:
