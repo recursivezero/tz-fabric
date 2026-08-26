@@ -932,3 +932,41 @@
   }
 
 }
+
+/* Session-only credential setup for the admin explorer. */
+.lance-admin-page--locked .lance-admin-gate {
+  width: min(980px, 100%);
+}
+
+.lance-admin-credential-section {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--lance-border);
+  border-radius: 14px;
+}
+
+.lance-admin-credential-section legend {
+  padding: 0 7px;
+  color: var(--lance-text);
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+.lance-admin-credential-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.lance-admin-credential-grid label {
+  align-self: end;
+}
+
+@media (max-width: 720px) {
+  .lance-admin-credential-grid {
+    grid-template-columns: 1fr;
+  }
+}

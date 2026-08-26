@@ -19,10 +19,11 @@ Before approving a Pull Request, verify:
   explicitly first.
 - Local LanceDB inspection uses only the configured database and does not expose
   a backend filesystem browser.
-- S3 credentials stay server-side and are supplied through the AWS environment or
-  IAM role, never through the frontend.
-- R2 credentials and endpoint stay server-side and are never sent to the
-  frontend.
+- S3/R2 credentials entered on the admin page are kept only in page memory, are
+  sent only to the private LanceDB API for the selected source, and are never
+  persisted or included in URLs/log messages.
+- The expected administrator secret remains server-side; the frontend only holds
+  the value entered by the administrator for the current page session.
 - Python dependency changes are made through Poetry (`pyproject.toml` and
   `poetry.lock`), not by hand-editing `requirements.txt`.
 

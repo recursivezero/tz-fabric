@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 import math
-import os
 import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -89,6 +88,27 @@ class _ReverseKey:
         return self.value > other.value
 
 
+@dataclass(frozen=True)
+class LanceAdminCredentials:
+    """Ephemeral object-storage credentials supplied by the admin UI.
+
+    These values are request-scoped. They are never returned in API responses and
+    are not read from backend environment variables by the LanceDB explorer.
+    """
+
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
+    s3_session_token: str = ""
+    s3_region: str = ""
+    s3_bucket_name: str = ""
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
+    r2_account_id: str = ""
+    r2_bucket_name: str = ""
+    r2_endpoint: str = ""
+    r2_region: str = "auto"
+
+
 class LanceDBAdminService:
     """Inspection façade around a LanceDB connection.
 
@@ -99,11 +119,14 @@ class LanceDBAdminService:
     def __init__(
         self,
         source: LanceDataSource | None = None,
+        credentials: LanceAdminCredentials | None = None,
         connection_factory: Callable[[str], Any] | None = None,
         table_factory: Callable[[str, str], Any] | None = None,
     ) -> None:
+        self._credentials = credentials or LanceAdminCredentials()
         self._source, self._connection_location = self._normalise_source(
             source or LanceDataSource(storage="local"),
+            self._credentials,
             require_local_exists=connection_factory is None,
         )
         self._connection_factory = connection_factory
@@ -123,6 +146,7 @@ class LanceDBAdminService:
     @staticmethod
     def _normalise_source(
         source: LanceDataSource,
+        credentials: LanceAdminCredentials,
         *,
         require_local_exists: bool = True,
     ) -> tuple[LanceDataSource, str]:
@@ -134,10 +158,11 @@ class LanceDBAdminService:
 
         if source.storage in {"s3", "r2"}:
             if not location:
-                bucket_environment_key = (
-                    "AWS_BUCKET_NAME" if source.storage == "s3" else "R2_BUCKET_NAME"
-                )
-                bucket = (os.getenv(bucket_environment_key) or "").strip()
+                bucket = (
+                    credentials.s3_bucket_name
+                    if source.storage == "s3"
+                    else credentials.r2_bucket_name
+                ).strip()
                 if not LanceDBAdminService._validate_bucket_name(
                     source.storage, bucket
                 ):
@@ -147,7 +172,7 @@ class LanceDBAdminService:
                         else "Cloudflare R2"
                     )
                     raise LanceDBValidationError(
-                        f"{storage_name} is not configured on the backend."
+                        f"Enter a valid {storage_name} bucket name in the admin setup."
                     )
                 return LanceDataSource(storage=source.storage), f"s3://{bucket}"
 
@@ -210,41 +235,39 @@ class LanceDBAdminService:
             return None
 
         if self._source.storage == "s3":
-            # Use LanceDB's documented AWS storage-option names.  Explicit
-            # environment credentials win when present, while leaving them
-            # unset preserves the normal AWS credential chain (profiles, IAM
-            # roles, workload identity, etc.).
-            options: dict[str, str] = {}
-            access_key = (os.getenv("AWS_ACCESS_KEY_ID") or "").strip()
-            secret_key = (os.getenv("AWS_SECRET_ACCESS_KEY") or "").strip()
-            session_token = (os.getenv("AWS_SESSION_TOKEN") or "").strip()
-            region = (
-                os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or ""
-            ).strip()
+            access_key = self._credentials.s3_access_key_id.strip()
+            secret_key = self._credentials.s3_secret_access_key.strip()
+            session_token = self._credentials.s3_session_token.strip()
+            region = self._credentials.s3_region.strip()
 
-            if access_key and secret_key:
-                options["aws_access_key_id"] = access_key
-                options["aws_secret_access_key"] = secret_key
-                if session_token:
-                    options["aws_session_token"] = session_token
-            if region:
-                options["aws_region"] = region
+            if not access_key or not secret_key or not region:
+                raise LanceDBValidationError(
+                    "Enter the Amazon S3 access key, secret key, and region in the "
+                    "admin setup before scanning S3."
+                )
 
-            return options or None
+            options = {
+                "aws_access_key_id": access_key,
+                "aws_secret_access_key": secret_key,
+                "aws_region": region,
+            }
+            if session_token:
+                options["aws_session_token"] = session_token
+            return options
 
-        access_key = (os.getenv("R2_ACCESS_KEY_ID") or "").strip()
-        secret_key = (os.getenv("R2_SECRET_ACCESS_KEY") or "").strip()
-        endpoint = (os.getenv("R2_ENDPOINT") or "").strip()
-        account_id = (os.getenv("R2_ACCOUNT_ID") or "").strip()
-        region = (os.getenv("R2_REGION") or "auto").strip() or "auto"
+        access_key = self._credentials.r2_access_key_id.strip()
+        secret_key = self._credentials.r2_secret_access_key.strip()
+        endpoint = self._credentials.r2_endpoint.strip()
+        account_id = self._credentials.r2_account_id.strip()
+        region = self._credentials.r2_region.strip() or "auto"
 
         if not endpoint and account_id:
             endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
 
         if not access_key or not secret_key or not endpoint:
             raise LanceDBValidationError(
-                "Cloudflare R2 credentials and endpoint are not configured on the "
-                "backend."
+                "Enter the Cloudflare R2 access key, secret key, and endpoint or "
+                "account ID in the admin setup before scanning R2."
             )
 
         parsed_endpoint = urlsplit(endpoint)
@@ -258,15 +281,9 @@ class LanceDBAdminService:
             or parsed_endpoint.fragment
         ):
             raise LanceDBValidationError(
-                "The configured Cloudflare R2 endpoint is invalid."
+                "The Cloudflare R2 endpoint entered in the admin setup is invalid."
             )
 
-        # R2 speaks the S3 API but must never fall back to the process-wide
-        # AWS credentials/region.  The aws_* names below are LanceDB's
-        # documented storage-option keys; using generic access_key_id / region
-        # allows the underlying S3 client to ignore them and inherit AWS_*
-        # values from the host, which breaks when S3 and R2 are configured
-        # together.
         return {
             "endpoint": endpoint.rstrip("/"),
             "aws_access_key_id": access_key,

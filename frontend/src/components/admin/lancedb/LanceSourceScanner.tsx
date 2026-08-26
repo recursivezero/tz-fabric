@@ -17,22 +17,22 @@ function sourceCopy(storage: LanceStorageType) {
     return {
       label: null,
       placeholder: null,
-      hint: "Uses the backend's configured LanceDB database. Server folders and files are never exposed in the browser.",
+      hint: "Uses the application's local LanceDB database on the server. No browser-provided filesystem path is required.",
     };
   }
 
   if (storage === "r2") {
     return {
       label: "R2 LanceDB URI (optional)",
-      placeholder: "s3://<R2_BUCKET_NAME>/<database-prefix>",
-      hint: "R2 uses an S3-compatible s3:// URI. Leave this empty to use R2_BUCKET_NAME. Do not paste R2_ENDPOINT here; credentials and the endpoint stay on the backend.",
+      placeholder: "s3://<r2-bucket-name>/<database-prefix>",
+      hint: "R2 uses an S3-compatible s3:// URI. Leave this empty to use the R2 bucket entered in Step 1. The endpoint and credentials come from the current admin-page session.",
     };
   }
 
   return {
     label: "S3 database URI (optional)",
-    placeholder: "s3://<AWS_BUCKET_NAME>/<database-prefix>",
-    hint: "Leave the URI empty to use AWS_BUCKET_NAME. AWS credentials or IAM configuration stay on the backend.",
+    placeholder: "s3://<s3-bucket-name>/<database-prefix>",
+    hint: "Leave the URI empty to use the S3 bucket entered in Step 1. The S3 credentials come from the current admin-page session.",
   };
 }
 
@@ -105,7 +105,7 @@ export default function LanceSourceScanner({
           <div className="lance-admin-field lance-admin-field--source-location">
             <span>Database</span>
             <div className="lance-source-card__configured">
-              Backend configured LanceDB
+              Application local LanceDB
             </div>
           </div>
         )}

@@ -8,6 +8,7 @@ import {
   isMissingTableError,
   verifyLanceAdminAccess,
   type LanceDataSource,
+  type LanceExplorerCredentials,
   type LanceRowDetail,
   type LanceRowSummary,
   type LanceRowsResponse,
@@ -48,6 +49,37 @@ function readableError(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function validateCredentialsForSource(
+  credentials: LanceExplorerCredentials,
+  source: LanceDataSource,
+): string | null {
+  if (source.storage === "local") return null;
+
+  if (source.storage === "s3") {
+    if (!credentials.s3.accessKeyId.trim() || !credentials.s3.secretAccessKey) {
+      return "Enter the Amazon S3 access key and secret key in Step 1.";
+    }
+    if (!credentials.s3.region.trim()) {
+      return "Enter the Amazon S3 region in Step 1.";
+    }
+    if (!source.location?.trim() && !credentials.s3.bucketName.trim()) {
+      return "Enter the Amazon S3 bucket name in Step 1 or provide an S3 database URI.";
+    }
+    return null;
+  }
+
+  if (!credentials.r2.accessKeyId.trim() || !credentials.r2.secretAccessKey) {
+    return "Enter the Cloudflare R2 access key and secret key in Step 1.";
+  }
+  if (!credentials.r2.endpoint.trim() && !credentials.r2.accountId.trim()) {
+    return "Enter the Cloudflare R2 endpoint or account ID in Step 1.";
+  }
+  if (!source.location?.trim() && !credentials.r2.bucketName.trim()) {
+    return "Enter the Cloudflare R2 bucket name in Step 1 or provide an R2 database URI.";
+  }
+  return null;
+}
+
 function useRequestRevision() {
   const [revision, setRevision] = useState(0);
   const currentRevision = useRef(0);
@@ -61,7 +93,7 @@ function useRequestRevision() {
 }
 
 export default function LanceDBExplorer() {
-  const [secret, setSecret] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<LanceExplorerCredentials | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [accessError, setAccessError] = useState<string | null>(null);
 
@@ -146,7 +178,7 @@ export default function LanceDBExplorer() {
       vectorControllerRef.current?.abort();
       tablesRequestIdRef.current += 1;
       resetLoadingState();
-      setSecret(null);
+      setCredentials(null);
       setUnlocking(false);
       setAccessError(message);
       setSource(null);
@@ -206,7 +238,7 @@ export default function LanceDBExplorer() {
 
   const loadTables = useCallback(
     async (requestedSource: LanceDataSource, activateSource: boolean) => {
-      if (!secret) return false;
+      if (!credentials) return false;
 
       sourceControllerRef.current?.abort();
       const controller = new AbortController();
@@ -222,7 +254,7 @@ export default function LanceDBExplorer() {
       try {
         const response = await scanLanceTables(
           requestedSource,
-          secret,
+          credentials,
           controller.signal,
         );
         if (controller.signal.aborted || requestId !== tablesRequestIdRef.current) {
@@ -258,11 +290,11 @@ export default function LanceDBExplorer() {
         }
       }
     },
-    [applyTablesResponse, lockExplorer, secret],
+    [applyTablesResponse, credentials, lockExplorer],
   );
 
   useEffect(() => {
-    if (!secret || !source || !selectedTable) return undefined;
+    if (!credentials || !source || !selectedTable) return undefined;
 
     const requestRevision = detailsRevision;
     const controller = new AbortController();
@@ -272,7 +304,7 @@ export default function LanceDBExplorer() {
     void fetchLanceTableDetails(
       selectedTable,
       source,
-      secret,
+      credentials,
       controller.signal,
     )
       .then((response) => {
@@ -314,13 +346,13 @@ export default function LanceDBExplorer() {
     detailsRevision,
     handleRequestFailure,
     loadTables,
-    secret,
+    credentials,
     selectedTable,
     source,
   ]);
 
   useEffect(() => {
-    if (!secret || !source || !selectedTable) return undefined;
+    if (!credentials || !source || !selectedTable) return undefined;
 
     const requestRevision = rowsRevision;
     const controller = new AbortController();
@@ -330,7 +362,7 @@ export default function LanceDBExplorer() {
     void fetchLanceRows(
       selectedTable,
       source,
-      secret,
+      credentials,
       {
         page: query.page,
         pageSize: query.pageSize,
@@ -386,7 +418,7 @@ export default function LanceDBExplorer() {
     loadTables,
     query,
     rowsRevision,
-    secret,
+    credentials,
     selectedTable,
     source,
   ]);
@@ -403,7 +435,7 @@ export default function LanceDBExplorer() {
     [],
   );
 
-  const unlockExplorer = (enteredSecret: string) => {
+  const unlockExplorer = (enteredCredentials: LanceExplorerCredentials) => {
     unlockControllerRef.current?.abort();
     const controller = new AbortController();
     unlockControllerRef.current = controller;
@@ -414,10 +446,10 @@ export default function LanceDBExplorer() {
     setAccessError(null);
     setUnlocking(true);
 
-    void verifyLanceAdminAccess(enteredSecret, controller.signal)
+    void verifyLanceAdminAccess(enteredCredentials, controller.signal)
       .then(() => {
         if (controller.signal.aborted) return;
-        setSecret(enteredSecret);
+        setCredentials(enteredCredentials);
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -454,6 +486,13 @@ export default function LanceDBExplorer() {
     const validationError = validateLanceSource(sourceDraft);
     if (validationError) {
       setSourceError(validationError);
+      return;
+    }
+    if (!credentials) return;
+
+    const credentialsError = validateCredentialsForSource(credentials, sourceDraft);
+    if (credentialsError) {
+      setSourceError(credentialsError);
       return;
     }
 
@@ -517,7 +556,7 @@ export default function LanceDBExplorer() {
 
   const loadVector = useCallback(
     (row: LanceRowSummary, trigger: HTMLButtonElement | null) => {
-      if (!secret || !source || !selectedTable) return;
+      if (!credentials || !source || !selectedTable) return;
 
       vectorControllerRef.current?.abort();
       const controller = new AbortController();
@@ -532,7 +571,7 @@ export default function LanceDBExplorer() {
         selectedTable,
         row.row_id,
         source,
-        secret,
+        credentials,
         controller.signal,
       )
         .then((response) => {
@@ -554,10 +593,10 @@ export default function LanceDBExplorer() {
           if (!controller.signal.aborted) setVectorLoading(false);
         });
     },
-    [lockExplorer, secret, selectedTable, source],
+    [credentials, lockExplorer, selectedTable, source],
   );
 
-  if (!secret) {
+  if (!credentials) {
     return (
       <div className="lance-admin-page lance-admin-page--locked">
         <LanceAdminGate
@@ -577,8 +616,8 @@ export default function LanceDBExplorer() {
             <p className="lance-admin-eyebrow">Admin · Read-only</p>
             <h1>LanceDB Explorer</h1>
             <p>
-              Choose the configured local database, Amazon S3, or Cloudflare R2,
-              then scan it for LanceDB tables.
+              Choose the local database, Amazon S3, or Cloudflare R2, then scan
+              it using the credentials held in this page session.
             </p>
           </div>
           <span className="lance-admin-readonly">No write operations</span>

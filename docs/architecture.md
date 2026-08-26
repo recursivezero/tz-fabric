@@ -53,17 +53,18 @@ Supported sources:
 
 - `local`: the backend's configured LanceDB database (`DATABASE_PATH`). The
   frontend cannot browse arbitrary server directories or override that path.
-- `s3`: an optional `s3://bucket/path/to/database` URI. When omitted, the backend
-  uses `AWS_BUCKET_NAME`. LanceDB uses the backend process' standard AWS
-  environment variables or IAM role.
-- `r2`: an optional S3-compatible URI. When omitted, the backend uses
-  `R2_BUCKET_NAME` and connects with the R2 endpoint, `auto` region, and separate
-  R2 credentials configured only on the server.
+- `s3`: an optional `s3://bucket/path/to/database` URI. S3 credentials, region,
+  and the default bucket are entered on the admin page for the current session.
+- `r2`: an optional S3-compatible URI. R2 credentials, bucket, endpoint/account
+  ID, and region are entered on the admin page for the current session.
 
 Every table, schema, row, and vector request carries the selected source in the
 `X-LanceDB-Storage` header and, only for an explicit cloud path,
-`X-LanceDB-Location`. The API remains read-only. Cloud credentials are never
-accepted from or stored in the frontend.
+`X-LanceDB-Location`. For S3/R2, the request also carries the selected
+request-scoped credential headers. The backend uses those values only to create
+the current LanceDB connection and does not persist or return them. The frontend
+keeps them only in React memory and clears them when the page is refreshed,
+closed, or locked. The API remains read-only.
 
 ## Python Dependency Management
 

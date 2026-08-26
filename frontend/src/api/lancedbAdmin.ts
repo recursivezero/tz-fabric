@@ -16,6 +16,29 @@ export interface LanceDataSource {
   location?: string;
 }
 
+export interface LanceS3Credentials {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken: string;
+  region: string;
+  bucketName: string;
+}
+
+export interface LanceR2Credentials {
+  accessKeyId: string;
+  secretAccessKey: string;
+  accountId: string;
+  bucketName: string;
+  endpoint: string;
+  region: string;
+}
+
+export interface LanceExplorerCredentials {
+  adminSecret: string;
+  s3: LanceS3Credentials;
+  r2: LanceR2Credentials;
+}
+
 export interface LanceTableItem {
   name: string;
 }
@@ -113,20 +136,48 @@ const ADMIN_BASE_URL = `${FULL_API_URL}/admin/lancedb`;
 const ADMIN_TIMEOUT_MS = 20_000;
 
 function adminHeaders(
-  secret: string,
+  credentials: LanceExplorerCredentials,
   source?: LanceDataSource,
 ): HeadersInit {
   const headers: Record<string, string> = {
     Accept: "application/json",
-    "X-Internal-Secret": secret,
+    "X-Internal-Secret": credentials.adminSecret,
   };
 
-  if (source) {
-    headers["X-LanceDB-Storage"] = source.storage;
-    if (source.storage !== "local") {
-      const location = source.location?.trim();
-      if (location) headers["X-LanceDB-Location"] = location;
-    }
+  if (!source) return headers;
+
+  headers["X-LanceDB-Storage"] = source.storage;
+  if (source.storage !== "local") {
+    const location = source.location?.trim();
+    if (location) headers["X-LanceDB-Location"] = location;
+  }
+
+  if (source.storage === "s3") {
+    const s3 = credentials.s3;
+    if (s3.accessKeyId.trim())
+      headers["X-LanceDB-AWS-Access-Key-ID"] = s3.accessKeyId.trim();
+    if (s3.secretAccessKey)
+      headers["X-LanceDB-AWS-Secret-Access-Key"] = s3.secretAccessKey;
+    if (s3.sessionToken)
+      headers["X-LanceDB-AWS-Session-Token"] = s3.sessionToken;
+    if (s3.region.trim()) headers["X-LanceDB-AWS-Region"] = s3.region.trim();
+    if (s3.bucketName.trim())
+      headers["X-LanceDB-AWS-Bucket"] = s3.bucketName.trim();
+  }
+
+  if (source.storage === "r2") {
+    const r2 = credentials.r2;
+    if (r2.accessKeyId.trim())
+      headers["X-LanceDB-R2-Access-Key-ID"] = r2.accessKeyId.trim();
+    if (r2.secretAccessKey)
+      headers["X-LanceDB-R2-Secret-Access-Key"] = r2.secretAccessKey;
+    if (r2.accountId.trim())
+      headers["X-LanceDB-R2-Account-ID"] = r2.accountId.trim();
+    if (r2.bucketName.trim())
+      headers["X-LanceDB-R2-Bucket"] = r2.bucketName.trim();
+    if (r2.endpoint.trim())
+      headers["X-LanceDB-R2-Endpoint"] = r2.endpoint.trim();
+    if (r2.region.trim()) headers["X-LanceDB-R2-Region"] = r2.region.trim();
   }
 
   return headers;
@@ -134,7 +185,7 @@ function adminHeaders(
 
 async function getAdminJson<T>(
   url: string,
-  secret: string,
+  credentials: LanceExplorerCredentials,
   signal?: AbortSignal,
   source?: LanceDataSource,
 ): Promise<T> {
@@ -143,7 +194,7 @@ async function getAdminJson<T>(
       url,
       {
         method: "GET",
-        headers: adminHeaders(secret, source),
+        headers: adminHeaders(credentials, source),
         cache: "no-store",
         signal,
       },
@@ -181,24 +232,24 @@ export function buildLanceRowsUrl(
 }
 
 export function verifyLanceAdminAccess(
-  secret: string,
+  credentials: LanceExplorerCredentials,
   signal?: AbortSignal,
 ): Promise<LanceAdminAccessResponse> {
   return getAdminJson<LanceAdminAccessResponse>(
     `${ADMIN_BASE_URL}/access`,
-    secret,
+    credentials,
     signal,
   );
 }
 
 export function scanLanceTables(
   source: LanceDataSource,
-  secret: string,
+  credentials: LanceExplorerCredentials,
   signal?: AbortSignal,
 ): Promise<LanceTablesResponse> {
   return getAdminJson<LanceTablesResponse>(
     `${ADMIN_BASE_URL}/scan`,
-    secret,
+    credentials,
     signal,
     source,
   );
@@ -207,12 +258,12 @@ export function scanLanceTables(
 export function fetchLanceTableDetails(
   tableName: string,
   source: LanceDataSource,
-  secret: string,
+  credentials: LanceExplorerCredentials,
   signal?: AbortSignal,
 ): Promise<LanceTableDetails> {
   return getAdminJson<LanceTableDetails>(
     `${ADMIN_BASE_URL}/${encodeURIComponent(tableName)}`,
-    secret,
+    credentials,
     signal,
     source,
   );
@@ -221,13 +272,13 @@ export function fetchLanceTableDetails(
 export function fetchLanceRows(
   tableName: string,
   source: LanceDataSource,
-  secret: string,
+  credentials: LanceExplorerCredentials,
   request: LanceRowsRequest,
   signal?: AbortSignal,
 ): Promise<LanceRowsResponse> {
   return getAdminJson<LanceRowsResponse>(
     buildLanceRowsUrl(tableName, request),
-    secret,
+    credentials,
     signal,
     source,
   );
@@ -237,12 +288,12 @@ export function fetchLanceRowDetail(
   tableName: string,
   rowId: number,
   source: LanceDataSource,
-  secret: string,
+  credentials: LanceExplorerCredentials,
   signal?: AbortSignal,
 ): Promise<LanceRowDetail> {
   return getAdminJson<LanceRowDetail>(
     `${ADMIN_BASE_URL}/${encodeURIComponent(tableName)}/rows/${rowId}`,
-    secret,
+    credentials,
     signal,
     source,
   );

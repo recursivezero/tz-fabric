@@ -28,6 +28,7 @@ from models.admin_lancedb import (
     SortOrder,
 )
 from services.lancedb_admin_service import (
+    LanceAdminCredentials,
     LanceDBAdminError,
     LanceDBAdminService,
     LanceDBRowNotFound,
@@ -66,12 +67,64 @@ def get_lancedb_admin_service(
         str | None,
         Header(alias="X-LanceDB-Location", max_length=2048),
     ] = None,
+    s3_access_key_id: Annotated[
+        str | None, Header(alias="X-LanceDB-AWS-Access-Key-ID", max_length=256)
+    ] = None,
+    s3_secret_access_key: Annotated[
+        str | None, Header(alias="X-LanceDB-AWS-Secret-Access-Key", max_length=512)
+    ] = None,
+    s3_session_token: Annotated[
+        str | None, Header(alias="X-LanceDB-AWS-Session-Token", max_length=4096)
+    ] = None,
+    s3_region: Annotated[
+        str | None, Header(alias="X-LanceDB-AWS-Region", max_length=128)
+    ] = None,
+    s3_bucket_name: Annotated[
+        str | None, Header(alias="X-LanceDB-AWS-Bucket", max_length=255)
+    ] = None,
+    r2_access_key_id: Annotated[
+        str | None, Header(alias="X-LanceDB-R2-Access-Key-ID", max_length=256)
+    ] = None,
+    r2_secret_access_key: Annotated[
+        str | None, Header(alias="X-LanceDB-R2-Secret-Access-Key", max_length=512)
+    ] = None,
+    r2_account_id: Annotated[
+        str | None, Header(alias="X-LanceDB-R2-Account-ID", max_length=256)
+    ] = None,
+    r2_bucket_name: Annotated[
+        str | None, Header(alias="X-LanceDB-R2-Bucket", max_length=255)
+    ] = None,
+    r2_endpoint: Annotated[
+        str | None, Header(alias="X-LanceDB-R2-Endpoint", max_length=2048)
+    ] = None,
+    r2_region: Annotated[
+        str | None, Header(alias="X-LanceDB-R2-Region", max_length=128)
+    ] = None,
 ) -> LanceDBAdminService:
-    """Build a read-only service for the source selected by the administrator."""
+    """Build a read-only service from request-scoped admin credentials.
+
+    Object-storage credentials are supplied by the admin page for the current
+    browser session; the LanceDB explorer does not read them from backend env.
+    """
+
+    credentials = LanceAdminCredentials(
+        s3_access_key_id=s3_access_key_id or "",
+        s3_secret_access_key=s3_secret_access_key or "",
+        s3_session_token=s3_session_token or "",
+        s3_region=s3_region or "",
+        s3_bucket_name=s3_bucket_name or "",
+        r2_access_key_id=r2_access_key_id or "",
+        r2_secret_access_key=r2_secret_access_key or "",
+        r2_account_id=r2_account_id or "",
+        r2_bucket_name=r2_bucket_name or "",
+        r2_endpoint=r2_endpoint or "",
+        r2_region=r2_region or "auto",
+    )
 
     try:
         return LanceDBAdminService(
             source=LanceDataSource(storage=storage, location=location or ""),
+            credentials=credentials,
         )
     except LanceDBValidationError as error:
         raise HTTPException(
