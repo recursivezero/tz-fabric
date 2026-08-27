@@ -167,9 +167,7 @@ class LanceDBAdminService:
                     source.storage, bucket
                 ):
                     storage_name = (
-                        "Amazon S3"
-                        if source.storage == "s3"
-                        else "Cloudflare R2"
+                        "Amazon S3" if source.storage == "s3" else "Cloudflare R2"
                     )
                     raise LanceDBValidationError(
                         f"Enter a valid {storage_name} bucket name in the admin setup."
