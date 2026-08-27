@@ -1,6 +1,6 @@
 import { Suspense, lazy, type ComponentType } from "react";
-import Home from "./pages/Home";
 import { Navigate, Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
 
 type RouteModule = { default: ComponentType };
 type RouteLoader = () => Promise<RouteModule>;
@@ -38,11 +38,16 @@ const Search = lazyRoute(() => import("./pages/FabricSearch"));
 const Chat = lazyRoute(() => import("./pages/FabricChat"));
 const ComingSoon = lazyRoute(() => import("./pages/ComingSoon"));
 const ContactUs = lazyRoute(() =>
-  import("./pages/Contact").then((module) => ({ default: module.ContactUs })),
+  import("./pages/Contact").then((module) => ({
+    default: module.ContactUs,
+  })),
 );
 const Reader = lazyRoute(() => import("./pages/Reader"));
 const CardReader = lazyRoute(() => import("./pages/PanCardReader"));
 const AadhaarCardReader = lazyRoute(() => import("./pages/AadhaarCardReader"));
+const LanceDBExplorer = lazyRoute(
+  () => import("./pages/admin/LanceDBExplorer"),
+);
 const NotFound = lazyRoute(() =>
   import("./components/NotFound").then((module) => ({
     default: module.NotFound,
@@ -71,7 +76,7 @@ export const Routing = () => {
         <Route path="/docs" element={<ComingSoon />} />
         <Route path="/help" element={<ComingSoon />} />
         <Route path="/contact" element={<ContactUs />} />
-        <Route path="*" element={<NotFound />} />
+
         <Route path="/reader" element={<Reader />} />
         <Route path="/reader/pan" element={<CardReader />} />
         <Route path="/reader/aadhaar" element={<AadhaarCardReader />} />
@@ -79,6 +84,10 @@ export const Routing = () => {
           path="/reader/adhaar"
           element={<Navigate to="/reader/aadhaar" replace />}
         />
+
+        <Route path="/admin/lancedb" element={<LanceDBExplorer />} />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );
