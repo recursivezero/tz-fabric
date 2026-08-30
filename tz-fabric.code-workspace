@@ -30,7 +30,8 @@
       "activityBarTop.inactiveForeground": "#e7e7e799",
       "commandCenter.foreground": "#e7e7e7",
       "statusBar.debuggingBackground": "#ff0087",
-      "statusBar.debuggingForeground": "#e7e7e7"
+      "statusBar.debuggingForeground": "#e7e7e7",
+      "tab.activeBorder": "#ff339f"
     },
     "peacock.color": "#FF0087",
     "cSpell.words": [
