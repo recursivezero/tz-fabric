@@ -36,4 +36,8 @@ All notable changes to this repository will be documented in this file.
 
 - Added Dark Theme
 
+## [1.7.0] Thu, Sep 07, 2026
+
+- R2 integration
+
 [Unreleased]

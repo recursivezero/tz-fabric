@@ -1,6 +1,6 @@
 {
   "name": "tz-fabric",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "type": "module",
   "homepage": "https://pro.threadzip.com",
   "description": "A AI enabled fabric analysis, chatbot integration with image search",

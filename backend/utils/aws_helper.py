@@ -1,27 +1,54 @@
+import hashlib
+import hmac
 import io
-import os
+import time
 import boto3
 from datetime import datetime
 from xmlrpc.client import Boolean
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
-from constants import CDN_URL
+from constants import (
+    CDN_URL,
+    ENVIRONMENT,
+    IMAGE_SIGNING_SECRET,
+    R2_ACCESS_KEY_ID,
+    R2_BUCKET_NAME,
+    R2_ENDPOINT,
+    R2_REGION,
+    R2_SECRET_ACCESS_KEY,
+)
+
+print(f"Environment: {ENVIRONMENT}")
+print(f"R2 bucket: {R2_BUCKET_NAME}")
+print(f"R2 endpoint: {R2_ENDPOINT}")
+
+
+# s3_client = boto3.client(
+#    "s3",
+#    region_name=os.getenv("AWS_REGION"),
+#    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+#    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+# )
+# AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
+# optional CDN/domain
+
 
 s3_client = boto3.client(
     "s3",
-    region_name=os.getenv("AWS_REGION"),
-    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    endpoint_url=R2_ENDPOINT,
+    region_name=R2_REGION,
+    aws_access_key_id=R2_ACCESS_KEY_ID,
+    aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+    config=Config(
+        signature_version="s3v4",
+        s3={"addressing_style": "path"},
+    ),
 )
-AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
-# optional CDN/domain
-
-# s3_client = boto3.client("s3", region_name=AWS_REGION)
 
 
 def upload_file(
-    file_obj, key: str, bucket_name: str | None = AWS_BUCKET_NAME
+    file_obj, key: str, bucket_name: str | None = R2_BUCKET_NAME
 ) -> Boolean:
     """
     Upload a file-like object to S3.
@@ -65,7 +92,7 @@ def generate_cdn_url(object_key: str) -> str:
 
 
 def generate_presigned_url(
-    key: str, expires: int = 3600, bucket_name: str | None = AWS_BUCKET_NAME
+    key: str, expires: int = 3600, bucket_name: str | None = R2_BUCKET_NAME
 ) -> dict:
     """
     Generate a presigned GET URL for an S3 object.
@@ -78,7 +105,7 @@ def generate_presigned_url(
     Returns:
         Dict with signed URL string and generation timestamp
     """
-    REGION = "ap-south-1"
+    REGION = R2_REGION
 
     config = Config(
         signature_version="s3v4",
@@ -93,7 +120,7 @@ def generate_presigned_url(
             region_name=REGION,
             config=config,
             # Regional endpoint ensures SigV4 signing matches URL host
-            endpoint_url=f"https://s3.{REGION}.amazonaws.com",
+            endpoint_url=R2_ENDPOINT,
         )
         # --- DEBUG: remove this block once confirmed working ---
         try:
@@ -122,3 +149,22 @@ def generate_presigned_url(
         )
     except Exception as e:
         raise RuntimeError(f"Failed to generate presigned URL: {e}")
+
+
+def create_signed_image_url(
+    key: str,
+    expires_in_seconds: int = 600,
+) -> str:
+    if not IMAGE_SIGNING_SECRET:
+        raise ValueError("IMAGE_SIGNING_SECRET is not configured")
+
+    expires = int(time.time()) + expires_in_seconds
+    data = f"{expires}:{key}"
+
+    signature = hmac.new(
+        IMAGE_SIGNING_SECRET.encode("utf-8"),
+        data.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return f"{CDN_URL.rstrip('/')}/{key}?access={expires}.{signature}"

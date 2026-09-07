@@ -42,4 +42,9 @@ All notable changes to this repository will be documented in this file.
 - Added Dark theme
 - Mobile viewport compatible
 
+## [1.7.0] Thu, Sep 07, 2026
+
+- Watermark security on images
+- show summy image when no image found
+
 [Unreleased]
