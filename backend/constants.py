@@ -6,23 +6,30 @@ from utils.env_config import init_env
 init_env()
 # env variables
 API_PREFIX = os.getenv("API_PREFIX", "/api/v1")
-CDN_URL = os.getenv("AWS_PUBLIC_URL", "https://assets.threadzip.com")
+CDN_URL = os.getenv("R2_PUBLIC_CDN", "https://assets.threadzip.com")
+R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
+R2_ENDPOINT = os.getenv("R2_ENDPOINT")
+R2_REGION = os.getenv("R2_REGION", "auto")
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+BUCKET_NAME = R2_BUCKET_NAME
+
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 API_KEY = os.getenv("INTERNAL_API_KEY", "abcd1234")
-BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
+IMAGE_SIGNING_SECRET = os.getenv("IMAGE_SIGNING_SECRET", "")
 
 IS_PROD = ENVIRONMENT == "production"
 IS_DEV = ENVIRONMENT in {"development", "dev", "local"}
 
 
 PROJECT_DIR = Path(__file__).parent
-RELATIVE_GENERATED_FOLDER = f"s3://{BUCKET_NAME}/images/"
+RELATIVE_GENERATED_FOLDER = f"s3://{R2_BUCKET_NAME}/images/"
 ASSETS = PROJECT_DIR / "assets"
 UPLOAD_FOLDER_FABRIC = ASSETS / "search"
 IMAGE_DIR = ASSETS / "images"
 AUDIO_DIR = ASSETS / "audios"
-CACHE_DIR = Path.home() / ".cache" / "tz_script"
+CACHE_DIR = Path.home() / ".cache" / "tz_fabric"
 
 TABLE_NAME = "tz-fabric-table"
 MCP_URL = "http://localhost:8002/mcp/sse?transport=sse"

@@ -1,8 +1,15 @@
-# utils/paths.py
 from pathlib import Path
 from typing import Optional
 
-from constants import API_PREFIX, AUDIO_DIR, CDN_URL, IMAGE_DIR, IS_PROD, PROJECT_DIR
+from constants import (
+    API_PREFIX,
+    AUDIO_DIR,
+    CDN_URL,
+    IMAGE_DIR,
+    IS_PROD,
+    PROJECT_DIR,
+)
+from utils.aws_helper import create_signed_image_url
 
 
 def _url_from_path(
@@ -10,10 +17,12 @@ def _url_from_path(
 ) -> Optional[str]:
     if not filename:
         return None
+
     try:
         relative = dir_path.relative_to(PROJECT_DIR).as_posix()
     except Exception:
         relative = dir_path.as_posix().lstrip("/")
+
     return f"{api_prefix}/{relative}/{filename}"
 
 
@@ -22,8 +31,14 @@ def build_image_url(filename: str) -> Optional[str]:
         return None
 
     if IS_PROD:
-        return f"{CDN_URL}/images/fabric/{filename}"
-    return _url_from_path(IMAGE_DIR, filename, api_prefix=API_PREFIX)
+        image_key = f"images/fabric/{filename}"
+        return create_signed_image_url(key=image_key)
+
+    return _url_from_path(
+        IMAGE_DIR,
+        filename,
+        api_prefix=API_PREFIX,
+    )
 
 
 def build_audio_url(filename: str) -> Optional[str]:
@@ -32,4 +47,9 @@ def build_audio_url(filename: str) -> Optional[str]:
 
     if IS_PROD:
         return f"{CDN_URL}/audios/{filename}"
-    return _url_from_path(AUDIO_DIR, filename, api_prefix=API_PREFIX)
+
+    return _url_from_path(
+        AUDIO_DIR,
+        filename,
+        api_prefix=API_PREFIX,
+    )
